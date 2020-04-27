@@ -1,0 +1,19 @@
+<configuration>
+  <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>[%thread] %highlight(%-5level) %cyan(%logger{15}): %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="io.github.iozhik.Application" level="info" additivity="false">
+    <appender name="cliout" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>%cyan(CLI) %highlight(%-5marker): %msg</pattern>
+      </encoder>
+    </appender>
+  </logger>
+
+  <root level="info">
+    <appender-ref ref="stdout" />
+  </root>
+</configuration>

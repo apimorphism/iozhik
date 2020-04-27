@@ -1,0 +1,36 @@
+
+namespace iozhik {
+
+    namespace geometry {
+
+        Point {
+            x: Int
+            y: Int
+        }
+
+        enum Figure {
+
+            area: Int
+
+            Square {
+                type: "square:1"
+                width: Int
+                height: Int
+                use Point
+            }
+
+            Circle {
+                type: "circle:2"
+                radius: Int
+                use Point
+            }
+
+            Triangle {
+                type: "triangle:3"
+                a: Point
+                b: Point
+                c: Point
+            }
+        }
+    }
+}

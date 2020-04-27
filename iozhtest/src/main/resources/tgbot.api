@@ -1,0 +1,4046 @@
+
+namespace telegramium {
+  namespace bots(snake circe http4s upack) {
+
+    enum ParseMode {
+      item Markdown  = "Markdown"
+      item Markdown2 = "MarkdownV2"
+      item Html      = "HTML"
+    }
+
+    /* Chat ID. */
+    enum ChatId {
+      /* Integer chat ID */
+      wrap ChatIntId (id) = Long
+      /* Chat ID starting with @. */
+      wrap ChatStrId (id) = String
+    }
+
+    enum KeyboardMarkup {
+          
+      /* This object represents an inline keyboard that appears right next to the 
+        message it belongs to.  */
+      InlineKeyboardMarkup {
+        /* Array of button rows, each represented by an Array of 
+        InlineKeyboardButton objects */
+        inlineKeyboard : List[List[InlineKeyboardButton]]
+      }
+             
+    
+      /* Upon receiving a message with this object, Telegram clients will display a 
+        reply interface to the user (act as if the user has selected the bot‘s message 
+        and tapped ’Reply'). This can be extremely useful if you want to create 
+        user-friendly step-by-step interfaces without having to sacrifice privacy mode.  */
+      ForceReply {
+        /* Shows reply interface to the user, as if they manually 
+        selected the bot‘s message and tapped ’Reply' */
+        forceReply : Boolean
+        /* Optional. Use this parameter if you want to force reply 
+        from specific users only. Targets: 1) users that are 
+        @mentioned in the text of the Message object; 2) if the 
+        bot's message is a reply (has reply_to_message_id), sender 
+        of the original message. */
+        selective  : Option[Boolean]
+      }
+             
+    
+      /* Upon receiving a message with this object, Telegram clients will remove the 
+        current custom keyboard and display the default letter-keyboard. By default, 
+        custom keyboards are displayed until a new keyboard is sent by a bot. An 
+        exception is made for one-time keyboards that are hidden immediately after the 
+        user presses a button (see ReplyKeyboardMarkup).  */
+      ReplyKeyboardRemove {
+        /* Requests clients to remove the custom keyboard (user will 
+        not be able to summon this keyboard; if you want to hide the 
+        keyboard from sight but keep it accessible, use 
+        one_time_keyboard in ReplyKeyboardMarkup) */
+        removeKeyboard : Boolean
+        /* Optional. Use this parameter if you want to remove the 
+        keyboard for specific users only. Targets: 1) users that are 
+        @mentioned in the text of the Message object; 2) if the 
+        bot's message is a reply (has reply_to_message_id), sender 
+        of the original message. Example: A user votes in a poll, 
+        bot returns confirmation message in reply to the vote and 
+        removes the keyboard for that user, while still showing the 
+        keyboard with poll options to users who haven't voted yet. */
+        selective      : Option[Boolean]
+      }
+             
+    
+      /* This object represents a custom keyboard with reply options (see Introduction 
+        to bots for details and examples).  */
+      ReplyKeyboardMarkup {
+        /* Array of button rows, each represented by an Array of 
+        KeyboardButton objects */
+        keyboard        : List[List[KeyboardButton]]
+        /* Optional. Requests clients to resize the keyboard 
+        vertically for optimal fit (e.g., make the keyboard smaller 
+        if there are just two rows of buttons). Defaults to false, 
+        in which case the custom keyboard is always of the same 
+        height as the app's standard keyboard. */
+        resizeKeyboard  : Option[Boolean]
+        /* Optional. Requests clients to hide the keyboard as soon as 
+        it's been used. The keyboard will still be available, but 
+        clients will automatically display the usual letter-keyboard 
+        in the chat – the user can press a special button in the 
+        input field to see the custom keyboard again. Defaults to 
+        false. */
+        oneTimeKeyboard : Option[Boolean]
+        /* Optional. Use this parameter if you want to show the 
+        keyboard to specific users only. Targets: 1) users that are 
+        @mentioned in the text of the Message object; 2) if the 
+        bot's message is a reply (has reply_to_message_id), sender 
+        of the original message. Example: A user requests to change 
+        the bot‘s language, bot replies to the request with a 
+        keyboard to select the new language. Other users in the 
+        group don’t see the keyboard. */
+        selective       : Option[Boolean]
+      }
+             
+    }
+
+    /** A file to send. */
+    enum IFile {
+      /* Use InputPartFile to send file on a local file system. */
+      wrap InputPartFile (file) = java.io.File
+      /* Use InputLinkFile to send a file accessible via some URL. */
+      wrap InputLinkFile (file) = String
+    }
+
+      
+    enum InputMedia {
+    
+      /* Represents an animation file (GIF or H.264/MPEG-4 AVC video without sound) to 
+        be sent.  */
+      InputMediaAnimation {
+        type : "animation:0"
+        /* File to send. Pass a file_id to send a file that exists on 
+        the Telegram servers (recommended), pass an HTTP URL for 
+        Telegram to get a file from the Internet, or pass 
+        “attach://<file_attach_name>” to upload a new one using 
+        multipart/form-data under <file_attach_name> name. More info 
+        on Sending Files » */
+        media     : String
+        /* Optional. Thumbnail of the file sent; can be ignored if 
+        thumbnail generation for the file is supported server-side. 
+        The thumbnail should be in JPEG format and less than 200 kB 
+        in size. A thumbnail‘s width and height should not exceed 
+        320. Ignored if the file is not uploaded using 
+        multipart/form-data. Thumbnails can’t be reused and can be 
+        only uploaded as a new file, so you can pass 
+        “attach://<file_attach_name>” if the thumbnail was uploaded 
+        using multipart/form-data under <file_attach_name>. More 
+        info on Sending Files » */
+        thumb     : Option[IFile]
+        /* Optional. Caption of the animation to be sent, 0-1024 
+        characters after entities parsing */
+        caption   : Option[String]
+        /* Optional. Mode for parsing entities in the animation 
+        caption. See formatting options for more details. */
+        parseMode : Option[ParseMode]
+        /* Optional. Animation width */
+        width     : Option[Int]
+        /* Optional. Animation height */
+        height    : Option[Int]
+        /* Optional. Animation duration */
+        duration  : Option[Int]
+      }
+             
+      /* Represents a photo to be sent.  */
+      InputMediaPhoto {
+        type : "photo:1"
+        /* File to send. Pass a file_id to send a file that exists on 
+        the Telegram servers (recommended), pass an HTTP URL for 
+        Telegram to get a file from the Internet, or pass 
+        “attach://<file_attach_name>” to upload a new one using 
+        multipart/form-data under <file_attach_name> name. More info 
+        on Sending Files » */
+        media     : String
+        /* Optional. Caption of the photo to be sent, 0-1024 
+        characters after entities parsing */
+        caption   : Option[String]
+        /* Optional. Mode for parsing entities in the photo caption. 
+        See formatting options for more details. */
+        parseMode : Option[ParseMode]
+      }
+             
+      /* Represents a video to be sent.  */
+      InputMediaVideo {
+        type : "video:2"
+        /* File to send. Pass a file_id to send a file that exists on 
+        the Telegram servers (recommended), pass an HTTP URL for 
+        Telegram to get a file from the Internet, or pass 
+        “attach://<file_attach_name>” to upload a new one using 
+        multipart/form-data under <file_attach_name> name. More info 
+        on Sending Files » */
+        media             : String
+        /* Optional. Thumbnail of the file sent; can be ignored if 
+        thumbnail generation for the file is supported server-side. 
+        The thumbnail should be in JPEG format and less than 200 kB 
+        in size. A thumbnail‘s width and height should not exceed 
+        320. Ignored if the file is not uploaded using 
+        multipart/form-data. Thumbnails can’t be reused and can be 
+        only uploaded as a new file, so you can pass 
+        “attach://<file_attach_name>” if the thumbnail was uploaded 
+        using multipart/form-data under <file_attach_name>. More 
+        info on Sending Files » */
+        thumb             : Option[IFile]
+        /* Optional. Caption of the video to be sent, 0-1024 
+        characters after entities parsing */
+        caption           : Option[String]
+        /* Optional. Mode for parsing entities in the video caption. 
+        See formatting options for more details. */
+        parseMode         : Option[ParseMode]
+        /* Optional. Video width */
+        width             : Option[Int]
+        /* Optional. Video height */
+        height            : Option[Int]
+        /* Optional. Video duration */
+        duration          : Option[Int]
+        /* Optional. Pass True, if the uploaded video is suitable for 
+        streaming */
+        supportsStreaming : Option[Boolean]
+      }
+             
+      /* Represents a general file to be sent.  */
+      InputMediaDocument {
+        type : "document:3"
+        /* File to send. Pass a file_id to send a file that exists on 
+        the Telegram servers (recommended), pass an HTTP URL for 
+        Telegram to get a file from the Internet, or pass 
+        “attach://<file_attach_name>” to upload a new one using 
+        multipart/form-data under <file_attach_name> name. More info 
+        on Sending Files » */
+        media     : String
+        /* Optional. Thumbnail of the file sent; can be ignored if 
+        thumbnail generation for the file is supported server-side. 
+        The thumbnail should be in JPEG format and less than 200 kB 
+        in size. A thumbnail‘s width and height should not exceed 
+        320. Ignored if the file is not uploaded using 
+        multipart/form-data. Thumbnails can’t be reused and can be 
+        only uploaded as a new file, so you can pass 
+        “attach://<file_attach_name>” if the thumbnail was uploaded 
+        using multipart/form-data under <file_attach_name>. More 
+        info on Sending Files » */
+        thumb     : Option[IFile]
+        /* Optional. Caption of the document to be sent, 0-1024 
+        characters after entities parsing */
+        caption   : Option[String]
+        /* Optional. Mode for parsing entities in the document 
+        caption. See formatting options for more details. */
+        parseMode : Option[ParseMode]
+      }
+             
+      /* Represents an audio file to be treated as music to be sent.  */
+      InputMediaAudio {
+        type : "audio:4"
+        /* File to send. Pass a file_id to send a file that exists on 
+        the Telegram servers (recommended), pass an HTTP URL for 
+        Telegram to get a file from the Internet, or pass 
+        “attach://<file_attach_name>” to upload a new one using 
+        multipart/form-data under <file_attach_name> name. More info 
+        on Sending Files » */
+        media     : String
+        /* Optional. Thumbnail of the file sent; can be ignored if 
+        thumbnail generation for the file is supported server-side. 
+        The thumbnail should be in JPEG format and less than 200 kB 
+        in size. A thumbnail‘s width and height should not exceed 
+        320. Ignored if the file is not uploaded using 
+        multipart/form-data. Thumbnails can’t be reused and can be 
+        only uploaded as a new file, so you can pass 
+        “attach://<file_attach_name>” if the thumbnail was uploaded 
+        using multipart/form-data under <file_attach_name>. More 
+        info on Sending Files » */
+        thumb     : Option[IFile]
+        /* Optional. Caption of the audio to be sent, 0-1024 
+        characters after entities parsing */
+        caption   : Option[String]
+        /* Optional. Mode for parsing entities in the audio caption. 
+        See formatting options for more details. */
+        parseMode : Option[ParseMode]
+        /* Optional. Duration of the audio in seconds */
+        duration  : Option[Int]
+        /* Optional. Performer of the audio */
+        performer : Option[String]
+        /* Optional. Title of the audio */
+        title     : Option[String]
+      }
+             
+    }
+          
+    enum InlineQueryResult {
+    
+      /* Represents a link to an animated GIF file. By default, this animated GIF file 
+        will be sent by the user with optional caption. Alternatively, you can use 
+        input_message_content to send a message with the specified content instead of 
+        the animation.  */
+      InlineQueryResultGif {
+        type : "gif:0"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid URL for the GIF file. File size must not exceed 1MB */
+        gifUrl              : String
+        /* Optional. Width of the GIF */
+        gifWidth            : Option[Int]
+        /* Optional. Height of the GIF */
+        gifHeight           : Option[Int]
+        /* Optional. Duration of the GIF */
+        gifDuration         : Option[Int]
+        /* URL of the static thumbnail for the result (jpeg or gif) */
+        thumbUrl            : String
+        /* Optional. Title for the result */
+        title               : Option[String]
+        /* Optional. Caption of the GIF file to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the caption. See 
+        formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        GIF animation */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a venue. By default, the venue will be sent by the user. 
+        Alternatively, you can use input_message_content to send a message with the 
+        specified content instead of the venue.  */
+      InlineQueryResultVenue {
+        type : "venue:1"
+        /* Unique identifier for this result, 1-64 Bytes */
+        id                  : String
+        /* Latitude of the venue location in degrees */
+        latitude            : Float
+        /* Longitude of the venue location in degrees */
+        longitude           : Float
+        /* Title of the venue */
+        title               : String
+        /* Address of the venue */
+        address             : String
+        /* Optional. Foursquare identifier of the venue if known */
+        foursquareId        : Option[String]
+        /* Optional. Foursquare type of the venue, if known. (For 
+        example, “arts_entertainment/default”, 
+        “arts_entertainment/aquarium” or “food/icecream”.) */
+        foursquareType      : Option[String]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        venue */
+        inputMessageContent : Option[InputMessageContent]
+        /* Optional. Url of the thumbnail for the result */
+        thumbUrl            : Option[String]
+        /* Optional. Thumbnail width */
+        thumbWidth          : Option[Int]
+        /* Optional. Thumbnail height */
+        thumbHeight         : Option[Int]
+      }
+             
+      /* Represents a contact with a phone number. By default, this contact will be sent 
+        by the user. Alternatively, you can use input_message_content to send a message 
+        with the specified content instead of the contact.  */
+      InlineQueryResultContact {
+        type : "contact:2"
+        /* Unique identifier for this result, 1-64 Bytes */
+        id                  : String
+        /* Contact's phone number */
+        phoneNumber         : String
+        /* Contact's first name */
+        firstName           : String
+        /* Optional. Contact's last name */
+        lastName            : Option[String]
+        /* Optional. Additional data about the contact in the form of 
+        a vCard, 0-2048 bytes */
+        vcard               : Option[String]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        contact */
+        inputMessageContent : Option[InputMessageContent]
+        /* Optional. Url of the thumbnail for the result */
+        thumbUrl            : Option[String]
+        /* Optional. Thumbnail width */
+        thumbWidth          : Option[Int]
+        /* Optional. Thumbnail height */
+        thumbHeight         : Option[Int]
+      }
+             
+      /* Represents a link to a photo. By default, this photo will be sent by the user 
+        with optional caption. Alternatively, you can use input_message_content to send 
+        a message with the specified content instead of the photo.  */
+      InlineQueryResultPhoto {
+        type : "photo:3"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid URL of the photo. Photo must be in jpeg format. 
+        Photo size must not exceed 5MB */
+        photoUrl            : String
+        /* URL of the thumbnail for the photo */
+        thumbUrl            : String
+        /* Optional. Width of the photo */
+        photoWidth          : Option[Int]
+        /* Optional. Height of the photo */
+        photoHeight         : Option[Int]
+        /* Optional. Title for the result */
+        title               : Option[String]
+        /* Optional. Short description of the result */
+        description         : Option[String]
+        /* Optional. Caption of the photo to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the photo caption. 
+        See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        photo */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to a file. By default, this file will be sent by the user 
+        with an optional caption. Alternatively, you can use input_message_content to 
+        send a message with the specified content instead of the file. Currently, only 
+        .PDF and .ZIP files can be sent using this method.  */
+      InlineQueryResultDocument {
+        type : "document:4"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* Title for the result */
+        title               : String
+        /* Optional. Caption of the document to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the document 
+        caption. See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* A valid URL for the file */
+        documentUrl         : String
+        /* Mime type of the content of the file, either 
+        “application/pdf” or “application/zip” */
+        mimeType            : String
+        /* Optional. Short description of the result */
+        description         : Option[String]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        file */
+        inputMessageContent : Option[InputMessageContent]
+        /* Optional. URL of the thumbnail (jpeg only) for the file */
+        thumbUrl            : Option[String]
+        /* Optional. Thumbnail width */
+        thumbWidth          : Option[Int]
+        /* Optional. Thumbnail height */
+        thumbHeight         : Option[Int]
+      }
+             
+      /* Represents a link to a voice message stored on the Telegram servers. By 
+        default, this voice message will be sent by the user. Alternatively, you can use 
+        input_message_content to send a message with the specified content instead of 
+        the voice message.  */
+      InlineQueryResultCachedVoice {
+        type : "voice:5"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid file identifier for the voice message */
+        voiceFileId         : String
+        /* Voice message title */
+        title               : String
+        /* Optional. Caption, 0-1024 characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the voice message 
+        caption. See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        voice message */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to an article or web page.  */
+      InlineQueryResultArticle {
+        type : "article:6"
+        /* Unique identifier for this result, 1-64 Bytes */
+        id                  : String
+        /* Title of the result */
+        title               : String
+        /* Content of the message to be sent */
+        inputMessageContent : InputMessageContent
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. URL of the result */
+        url                 : Option[String]
+        /* Optional. Pass True, if you don't want the URL to be shown 
+        in the message */
+        hideUrl             : Option[Boolean]
+        /* Optional. Short description of the result */
+        description         : Option[String]
+        /* Optional. Url of the thumbnail for the result */
+        thumbUrl            : Option[String]
+        /* Optional. Thumbnail width */
+        thumbWidth          : Option[Int]
+        /* Optional. Thumbnail height */
+        thumbHeight         : Option[Int]
+      }
+             
+      /* Represents a link to an MP3 audio file. By default, this audio file will be 
+        sent by the user. Alternatively, you can use input_message_content to send a 
+        message with the specified content instead of the audio.  */
+      InlineQueryResultAudio {
+        type : "audio:7"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid URL for the audio file */
+        audioUrl            : String
+        /* Title */
+        title               : String
+        /* Optional. Caption, 0-1024 characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the audio caption. 
+        See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Performer */
+        performer           : Option[String]
+        /* Optional. Audio duration in seconds */
+        audioDuration       : Option[Int]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        audio */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to a video animation (H.264/MPEG-4 AVC video without sound). 
+        By default, this animated MPEG-4 file will be sent by the user with optional 
+        caption. Alternatively, you can use input_message_content to send a message with 
+        the specified content instead of the animation.  */
+      InlineQueryResultMpeg4Gif {
+        type : "mpeg4_gif:8"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid URL for the MP4 file. File size must not exceed 1MB */
+        mpeg4Url            : String
+        /* Optional. Video width */
+        mpeg4Width          : Option[Int]
+        /* Optional. Video height */
+        mpeg4Height         : Option[Int]
+        /* Optional. Video duration */
+        mpeg4Duration       : Option[Int]
+        /* URL of the static thumbnail (jpeg or gif) for the result */
+        thumbUrl            : String
+        /* Optional. Title for the result */
+        title               : Option[String]
+        /* Optional. Caption of the MPEG-4 file to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the caption. See 
+        formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        video animation */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to a video animation (H.264/MPEG-4 AVC video without sound) 
+        stored on the Telegram servers. By default, this animated MPEG-4 file will be 
+        sent by the user with an optional caption. Alternatively, you can use 
+        input_message_content to send a message with the specified content instead of 
+        the animation.  */
+      InlineQueryResultCachedMpeg4Gif {
+        type : "mpeg4_gif:9"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid file identifier for the MP4 file */
+        mpeg4FileId         : String
+        /* Optional. Title for the result */
+        title               : Option[String]
+        /* Optional. Caption of the MPEG-4 file to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the caption. See 
+        formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        video animation */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to a file stored on the Telegram servers. By default, this 
+        file will be sent by the user with an optional caption. Alternatively, you can 
+        use input_message_content to send a message with the specified content instead 
+        of the file.  */
+      InlineQueryResultCachedDocument {
+        type : "document:10"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* Title for the result */
+        title               : String
+        /* A valid file identifier for the file */
+        documentFileId      : String
+        /* Optional. Short description of the result */
+        description         : Option[String]
+        /* Optional. Caption of the document to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the document 
+        caption. See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        file */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to a video file stored on the Telegram servers. By default, 
+        this video file will be sent by the user with an optional caption. 
+        Alternatively, you can use input_message_content to send a message with the 
+        specified content instead of the video.  */
+      InlineQueryResultCachedVideo {
+        type : "video:11"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid file identifier for the video file */
+        videoFileId         : String
+        /* Title for the result */
+        title               : String
+        /* Optional. Short description of the result */
+        description         : Option[String]
+        /* Optional. Caption of the video to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the video caption. 
+        See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        video */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a Game.  */
+      InlineQueryResultGame {
+        type : "game:12"
+        /* Unique identifier for this result, 1-64 bytes */
+        id            : String
+        /* Short name of the game */
+        gameShortName : String
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup   : Option[InlineKeyboardMarkup]
+      }
+             
+      /* Represents a link to a photo stored on the Telegram servers. By default, this 
+        photo will be sent by the user with an optional caption. Alternatively, you can 
+        use input_message_content to send a message with the specified content instead 
+        of the photo.  */
+      InlineQueryResultCachedPhoto {
+        type : "photo:13"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid file identifier of the photo */
+        photoFileId         : String
+        /* Optional. Title for the result */
+        title               : Option[String]
+        /* Optional. Short description of the result */
+        description         : Option[String]
+        /* Optional. Caption of the photo to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the photo caption. 
+        See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        photo */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to a sticker stored on the Telegram servers. By default, this 
+        sticker will be sent by the user. Alternatively, you can use 
+        input_message_content to send a message with the specified content instead of 
+        the sticker.  */
+      InlineQueryResultCachedSticker {
+        type : "sticker:14"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid file identifier of the sticker */
+        stickerFileId       : String
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        sticker */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to a page containing an embedded video player or a video 
+        file. By default, this video file will be sent by the user with an optional 
+        caption. Alternatively, you can use input_message_content to send a message with 
+        the specified content instead of the video.  */
+      InlineQueryResultVideo {
+        type : "video:15"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid URL for the embedded video player or video file */
+        videoUrl            : String
+        /* Mime type of the content of video url, “text/html” or 
+        “video/mp4” */
+        mimeType            : String
+        /* URL of the thumbnail (jpeg only) for the video */
+        thumbUrl            : String
+        /* Title for the result */
+        title               : String
+        /* Optional. Caption of the video to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the video caption. 
+        See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Video width */
+        videoWidth          : Option[Int]
+        /* Optional. Video height */
+        videoHeight         : Option[Int]
+        /* Optional. Video duration in seconds */
+        videoDuration       : Option[Int]
+        /* Optional. Short description of the result */
+        description         : Option[String]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        video. This field is required if InlineQueryResultVideo is 
+        used to send an HTML-page as a result (e.g., a YouTube 
+        video). */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to an MP3 audio file stored on the Telegram servers. By 
+        default, this audio file will be sent by the user. Alternatively, you can use 
+        input_message_content to send a message with the specified content instead of 
+        the audio.  */
+      InlineQueryResultCachedAudio {
+        type : "audio:16"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid file identifier for the audio file */
+        audioFileId         : String
+        /* Optional. Caption, 0-1024 characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the audio caption. 
+        See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        audio */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a location on a map. By default, the location will be sent by the 
+        user. Alternatively, you can use input_message_content to send a message with 
+        the specified content instead of the location.  */
+      InlineQueryResultLocation {
+        type : "location:17"
+        /* Unique identifier for this result, 1-64 Bytes */
+        id                  : String
+        /* Location latitude in degrees */
+        latitude            : Float
+        /* Location longitude in degrees */
+        longitude           : Float
+        /* Location title */
+        title               : String
+        /* Optional. Period in seconds for which the location can be 
+        updated, should be between 60 and 86400. */
+        livePeriod          : Option[Int]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        location */
+        inputMessageContent : Option[InputMessageContent]
+        /* Optional. Url of the thumbnail for the result */
+        thumbUrl            : Option[String]
+        /* Optional. Thumbnail width */
+        thumbWidth          : Option[Int]
+        /* Optional. Thumbnail height */
+        thumbHeight         : Option[Int]
+      }
+             
+      /* Represents a link to an animated GIF file stored on the Telegram servers. By 
+        default, this animated GIF file will be sent by the user with an optional 
+        caption. Alternatively, you can use input_message_content to send a message with 
+        specified content instead of the animation.  */
+      InlineQueryResultCachedGif {
+        type : "gif:18"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid file identifier for the GIF file */
+        gifFileId           : String
+        /* Optional. Title for the result */
+        title               : Option[String]
+        /* Optional. Caption of the GIF file to be sent, 0-1024 
+        characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the caption. See 
+        formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        GIF animation */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+      /* Represents a link to a voice recording in an .OGG container encoded with OPUS. 
+        By default, this voice recording will be sent by the user. Alternatively, you 
+        can use input_message_content to send a message with the specified content 
+        instead of the the voice message.  */
+      InlineQueryResultVoice {
+        type : "voice:19"
+        /* Unique identifier for this result, 1-64 bytes */
+        id                  : String
+        /* A valid URL for the voice recording */
+        voiceUrl            : String
+        /* Recording title */
+        title               : String
+        /* Optional. Caption, 0-1024 characters after entities parsing */
+        caption             : Option[String]
+        /* Optional. Mode for parsing entities in the voice message 
+        caption. See formatting options for more details. */
+        parseMode           : Option[ParseMode]
+        /* Optional. Recording duration in seconds */
+        voiceDuration       : Option[Int]
+        /* Optional. Inline keyboard attached to the message */
+        replyMarkup         : Option[InlineKeyboardMarkup]
+        /* Optional. Content of the message to be sent instead of the 
+        voice recording */
+        inputMessageContent : Option[InputMessageContent]
+      }
+             
+    }
+          
+    enum InputMessageContent {
+    
+      /* Represents the content of a venue message to be sent as the result of an inline 
+        query.  */
+      InputVenueMessageContent {
+        /* Latitude of the venue in degrees */
+        latitude       : Float
+        /* Longitude of the venue in degrees */
+        longitude      : Float
+        /* Name of the venue */
+        title          : String
+        /* Address of the venue */
+        address        : String
+        /* Optional. Foursquare identifier of the venue, if known */
+        foursquareId   : Option[String]
+        /* Optional. Foursquare type of the venue, if known. (For 
+        example, “arts_entertainment/default”, 
+        “arts_entertainment/aquarium” or “food/icecream”.) */
+        foursquareType : Option[String]
+      }
+             
+      /* Represents the content of a contact message to be sent as the result of an 
+        inline query.  */
+      InputContactMessageContent {
+        /* Contact's phone number */
+        phoneNumber : String
+        /* Contact's first name */
+        firstName   : String
+        /* Optional. Contact's last name */
+        lastName    : Option[String]
+        /* Optional. Additional data about the contact in the form of 
+        a vCard, 0-2048 bytes */
+        vcard       : Option[String]
+      }
+             
+      /* Represents the content of a location message to be sent as the result of an 
+        inline query.  */
+      InputLocationMessageContent {
+        /* Latitude of the location in degrees */
+        latitude   : Float
+        /* Longitude of the location in degrees */
+        longitude  : Float
+        /* Optional. Period in seconds for which the location can be 
+        updated, should be between 60 and 86400. */
+        livePeriod : Option[Int]
+      }
+             
+      /* Represents the content of a text message to be sent as the result of an inline 
+        query.  */
+      InputTextMessageContent {
+        /* Text of the message to be sent, 1-4096 characters */
+        messageText           : String
+        /* Optional. Mode for parsing entities in the message text. 
+        See formatting options for more details. */
+        parseMode             : Option[ParseMode]
+        /* Optional. Disables link previews for links in the sent 
+        message */
+        disableWebPagePreview : Option[Boolean]
+      }
+             
+    }
+          
+    enum PassportElementError {
+    
+      /* Represents an issue with a list of scans. The error is considered resolved when 
+        the list of files containing the scans changes.  */
+      PassportElementErrorFiles {
+        type : "files:0"
+        /* The section of the user's Telegram Passport which has the 
+        issue, one of “utility_bill”, “bank_statement”, 
+        “rental_agreement”, “passport_registration”, 
+        “temporary_registration” */
+        type       : String
+        /* List of base64-encoded file hashes */
+        fileHashes : List[String]
+        /* Error message */
+        message    : String
+      }
+             
+      /* Represents an issue in one of the data fields that was provided by the user. 
+        The error is considered resolved when the field's value changes.  */
+      PassportElementErrorDataField {
+        type : "data:1"
+        /* The section of the user's Telegram Passport which has the 
+        error, one of “personal_details”, “passport”, 
+        “driver_license”, “identity_card”, “internal_passport”, 
+        “address” */
+        type      : String
+        /* Name of the data field which has the error */
+        fieldName : String
+        /* Base64-encoded data hash */
+        dataHash  : String
+        /* Error message */
+        message   : String
+      }
+             
+      /* Represents an issue with the reverse side of a document. The error is 
+        considered resolved when the file with reverse side of the document changes.  */
+      PassportElementErrorReverseSide {
+        type : "reverse_side:2"
+        /* The section of the user's Telegram Passport which has the 
+        issue, one of “driver_license”, “identity_card” */
+        type     : String
+        /* Base64-encoded hash of the file with the reverse side of 
+        the document */
+        fileHash : String
+        /* Error message */
+        message  : String
+      }
+             
+      /* Represents an issue with the selfie with a document. The error is considered 
+        resolved when the file with the selfie changes.  */
+      PassportElementErrorSelfie {
+        type : "selfie:3"
+        /* The section of the user's Telegram Passport which has the 
+        issue, one of “passport”, “driver_license”, “identity_card”, 
+        “internal_passport” */
+        type     : String
+        /* Base64-encoded hash of the file with the selfie */
+        fileHash : String
+        /* Error message */
+        message  : String
+      }
+             
+      /* Represents an issue with the front side of a document. The error is considered 
+        resolved when the file with the front side of the document changes.  */
+      PassportElementErrorFrontSide {
+        type : "front_side:4"
+        /* The section of the user's Telegram Passport which has the 
+        issue, one of “passport”, “driver_license”, “identity_card”, 
+        “internal_passport” */
+        type     : String
+        /* Base64-encoded hash of the file with the front side of the 
+        document */
+        fileHash : String
+        /* Error message */
+        message  : String
+      }
+             
+      /* Represents an issue with a document scan. The error is considered resolved when 
+        the file with the document scan changes.  */
+      PassportElementErrorFile {
+        type : "file:5"
+        /* The section of the user's Telegram Passport which has the 
+        issue, one of “utility_bill”, “bank_statement”, 
+        “rental_agreement”, “passport_registration”, 
+        “temporary_registration” */
+        type     : String
+        /* Base64-encoded file hash */
+        fileHash : String
+        /* Error message */
+        message  : String
+      }
+             
+      /* Represents an issue in an unspecified place. The error is considered resolved 
+        when new data is added.  */
+      PassportElementErrorUnspecified {
+        type : "unspecified:6"
+        /* Type of element of the user's Telegram Passport which has 
+        the issue */
+        type        : String
+        /* Base64-encoded element hash */
+        elementHash : String
+        /* Error message */
+        message     : String
+      }
+             
+      /* Represents an issue with one of the files that constitute the translation of a 
+        document. The error is considered resolved when the file changes.  */
+      PassportElementErrorTranslationFile {
+        type : "translation_file:7"
+        /* Type of element of the user's Telegram Passport which has 
+        the issue, one of “passport”, “driver_license”, 
+        “identity_card”, “internal_passport”, “utility_bill”, 
+        “bank_statement”, “rental_agreement”, 
+        “passport_registration”, “temporary_registration” */
+        type     : String
+        /* Base64-encoded file hash */
+        fileHash : String
+        /* Error message */
+        message  : String
+      }
+             
+      /* Represents an issue with the translated version of a document. The error is 
+        considered resolved when a file with the document translation change.  */
+      PassportElementErrorTranslationFiles {
+        type : "translation_files:8"
+        /* Type of element of the user's Telegram Passport which has 
+        the issue, one of “passport”, “driver_license”, 
+        “identity_card”, “internal_passport”, “utility_bill”, 
+        “bank_statement”, “rental_agreement”, 
+        “passport_registration”, “temporary_registration” */
+        type       : String
+        /* List of base64-encoded file hashes */
+        fileHashes : List[String]
+        /* Error message */
+        message    : String
+      }
+             
+    }
+          
+    /* Contains information about why a request was unsuccessful.  */
+    ResponseParameters {
+      /* Optional. The group has been migrated to a supergroup with 
+      the specified identifier. This number may be greater than 32 
+      bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it is 
+      smaller than 52 bits, so a signed 64 bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. */
+      migrateToChatId : Option[Long]
+      /* Optional. In case of exceeding flood control, the number of 
+      seconds left to wait before the request can be repeated */
+      retryAfter      : Option[Int]
+    }
+           
+    /* This object represents an animation file (GIF or H.264/MPEG-4 AVC video without 
+      sound).  */
+    Animation {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Video width as defined by sender */
+      width        : Int
+      /* Video height as defined by sender */
+      height       : Int
+      /* Duration of the video in seconds as defined by sender */
+      duration     : Int
+      /* Optional. Animation thumbnail as defined by sender */
+      thumb        : Option[PhotoSize]
+      /* Optional. Original animation filename as defined by sender */
+      fileName     : Option[String]
+      /* Optional. MIME type of the file as defined by sender */
+      mimeType     : Option[String]
+      /* Optional. File size */
+      fileSize     : Option[Int]
+    }
+           
+    /* This object represents a chat.  */
+    Chat {
+      /* Unique identifier for this chat. This number may be greater 
+      than 32 bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it is 
+      smaller than 52 bits, so a signed 64 bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. */
+      id               : Long
+      /* Type of chat, can be either “private”, “group”, 
+      “supergroup” or “channel” */
+      type             : String
+      /* Optional. Title, for supergroups, channels and group chats */
+      title            : Option[String]
+      /* Optional. Username, for private chats, supergroups and 
+      channels if available */
+      username         : Option[String]
+      /* Optional. First name of the other party in a private chat */
+      firstName        : Option[String]
+      /* Optional. Last name of the other party in a private chat */
+      lastName         : Option[String]
+      /* Optional. Chat photo. Returned only in getChat. */
+      photo            : Option[ChatPhoto]
+      /* Optional. Description, for groups, supergroups and channel 
+      chats. Returned only in getChat. */
+      description      : Option[String]
+      /* Optional. Chat invite link, for groups, supergroups and 
+      channel chats. Each administrator in a chat generates their 
+      own invite links, so the bot must first generate the link 
+      using exportChatInviteLink. Returned only in getChat. */
+      inviteLink       : Option[String]
+      /* Optional. Pinned message, for groups, supergroups and 
+      channels. Returned only in getChat. */
+      pinnedMessage    : Option[Message]
+      /* Optional. Default chat member permissions, for groups and 
+      supergroups. Returned only in getChat. */
+      permissions      : Option[ChatPermissions]
+      /* Optional. For supergroups, the minimum allowed delay 
+      between consecutive messages sent by each unpriviledged 
+      user. Returned only in getChat. */
+      slowModeDelay    : Option[Int]
+      /* Optional. For supergroups, name of group sticker set. 
+      Returned only in getChat. */
+      stickerSetName   : Option[String]
+      /* Optional. True, if the bot can change the group sticker 
+      set. Returned only in getChat. */
+      canSetStickerSet : Option[Boolean]
+    }
+           
+    /* This object represents a video message (available in Telegram apps as of 
+      v.4.0).  */
+    VideoNote {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Video width and height (diameter of the video message) as 
+      defined by sender */
+      length       : Int
+      /* Duration of the video in seconds as defined by sender */
+      duration     : Int
+      /* Optional. Video thumbnail */
+      thumb        : Option[PhotoSize]
+      /* Optional. File size */
+      fileSize     : Option[Int]
+    }
+           
+    /* This object represents a point on the map.  */
+    Location {
+      /* Longitude as defined by sender */
+      longitude : Float
+      /* Latitude as defined by sender */
+      latitude  : Float
+    }
+           
+    /* This object contains information about an incoming shipping query.  */
+    ShippingQuery {
+      /* Unique query identifier */
+      id              : String
+      /* User who sent the query */
+      from            : User
+      /* Bot specified invoice payload */
+      invoicePayload  : String
+      /* User specified shipping address */
+      shippingAddress : ShippingAddress
+    }
+           
+    /* Describes actions that a non-administrator user is allowed to take in a chat.  */
+    ChatPermissions {
+      /* Optional. True, if the user is allowed to send text 
+      messages, contacts, locations and venues */
+      canSendMessages       : Option[Boolean]
+      /* Optional. True, if the user is allowed to send audios, 
+      documents, photos, videos, video notes and voice notes, 
+      implies can_send_messages */
+      canSendMediaMessages  : Option[Boolean]
+      /* Optional. True, if the user is allowed to send polls, 
+      implies can_send_messages */
+      canSendPolls          : Option[Boolean]
+      /* Optional. True, if the user is allowed to send animations, 
+      games, stickers and use inline bots, implies 
+      can_send_media_messages */
+      canSendOtherMessages  : Option[Boolean]
+      /* Optional. True, if the user is allowed to add web page 
+      previews to their messages, implies can_send_media_messages */
+      canAddWebPagePreviews : Option[Boolean]
+      /* Optional. True, if the user is allowed to change the chat 
+      title, photo and other settings. Ignored in public 
+      supergroups */
+      canChangeInfo         : Option[Boolean]
+      /* Optional. True, if the user is allowed to invite new users 
+      to the chat */
+      canInviteUsers        : Option[Boolean]
+      /* Optional. True, if the user is allowed to pin messages. 
+      Ignored in public supergroups */
+      canPinMessages        : Option[Boolean]
+    }
+           
+    /* This object contains information about one answer option in a poll.  */
+    PollOption {
+      /* Option text, 1-100 characters */
+      text       : String
+      /* Number of users that voted for this option */
+      voterCount : Int
+    }
+           
+    /* This object represents a shipping address.  */
+    ShippingAddress {
+      /* ISO 3166-1 alpha-2 country code */
+      countryCode : String
+      /* State, if applicable */
+      state       : String
+      /* City */
+      city        : String
+      /* First line for the address */
+      streetLine1 : String
+      /* Second line for the address */
+      streetLine2 : String
+      /* Address post code */
+      postCode    : String
+    }
+           
+    /* This object represents information about an order.  */
+    OrderInfo {
+      /* Optional. User name */
+      name            : Option[String]
+      /* Optional. User's phone number */
+      phoneNumber     : Option[String]
+      /* Optional. User email */
+      email           : Option[String]
+      /* Optional. User shipping address */
+      shippingAddress : Option[ShippingAddress]
+    }
+           
+    /* This object represents the contents of a file to be uploaded. Must be posted 
+      using multipart/form-data in the usual way that files are uploaded via the 
+      browser.  */
+    InputFile {
+  
+    }
+           
+    /* This object represents an incoming update. At most one of the optional 
+      parameters can be present in any given update.  */
+    Update {
+      /* The update‘s unique identifier. Update identifiers start 
+      from a certain positive number and increase sequentially. 
+      This ID becomes especially handy if you’re using Webhooks, 
+      since it allows you to ignore repeated updates or to restore 
+      the correct update sequence, should they get out of order. 
+      If there are no new updates for at least a week, then 
+      identifier of the next update will be chosen randomly 
+      instead of sequentially. */
+      updateId           : Int
+      /* Optional. New incoming message of any kind — text, photo, 
+      sticker, etc. */
+      message            : Option[Message]
+      /* Optional. New version of a message that is known to the bot 
+      and was edited */
+      editedMessage      : Option[Message]
+      /* Optional. New incoming channel post of any kind — text, 
+      photo, sticker, etc. */
+      channelPost        : Option[Message]
+      /* Optional. New version of a channel post that is known to 
+      the bot and was edited */
+      editedChannelPost  : Option[Message]
+      /* Optional. New incoming inline query */
+      inlineQuery        : Option[InlineQuery]
+      /* Optional. The result of an inline query that was chosen by 
+      a user and sent to their chat partner. Please see our 
+      documentation on the feedback collecting for details on how 
+      to enable these updates for your bot. */
+      chosenInlineResult : Option[ChosenInlineResult]
+      /* Optional. New incoming callback query */
+      callbackQuery      : Option[CallbackQuery]
+      /* Optional. New incoming shipping query. Only for invoices 
+      with flexible price */
+      shippingQuery      : Option[ShippingQuery]
+      /* Optional. New incoming pre-checkout query. Contains full 
+      information about checkout */
+      preCheckoutQuery   : Option[PreCheckoutQuery]
+      /* Optional. New poll state. Bots receive only updates about 
+      stopped polls and polls, which are sent by the bot */
+      poll               : Option[Poll]
+      /* Optional. A user changed their answer in a non-anonymous 
+      poll. Bots receive new votes only in polls that were sent by 
+      the bot itself. */
+      pollAnswer         : Option[PollAnswer]
+    }
+           
+    /* This object describes the position on faces where a mask should be placed by 
+      default.  */
+    MaskPosition {
+      /* The part of the face relative to which the mask should be 
+      placed. One of “forehead”, “eyes”, “mouth”, or “chin”. */
+      point  : String
+      /* Shift by X-axis measured in widths of the mask scaled to 
+      the face size, from left to right. For example, choosing 
+      -1.0 will place mask just to the left of the default mask 
+      position. */
+      xShift : Float
+      /* Shift by Y-axis measured in heights of the mask scaled to 
+      the face size, from top to bottom. For example, 1.0 will 
+      place the mask just below the default mask position. */
+      yShift : Float
+      /* Mask scaling coefficient. For example, 2.0 means double 
+      size. */
+      scale  : Float
+    }
+           
+    /* A placeholder, currently holds no information. Use BotFather to set up your 
+      game.  */
+    CallbackGame {
+  
+    }
+           
+    /* This object represents one button of the reply keyboard. For simple text 
+      buttons String can be used instead of this object to specify text of the button. 
+      Optional fields request_contact, request_location, and request_poll are mutually 
+      exclusive.  */
+    KeyboardButton {
+      /* Text of the button. If none of the optional fields are 
+      used, it will be sent as a message when the button is 
+      pressed */
+      text            : String
+      /* Optional. If True, the user's phone number will be sent as 
+      a contact when the button is pressed. Available in private 
+      chats only */
+      requestContact  : Option[Boolean]
+      /* Optional. If True, the user's current location will be sent 
+      when the button is pressed. Available in private chats only */
+      requestLocation : Option[Boolean]
+      /* Optional. If specified, the user will be asked to create a 
+      poll and send it to the bot when the button is pressed. 
+      Available in private chats only */
+      requestPoll     : Option[KeyboardButtonPollType]
+    }
+           
+    /* This object represents a file uploaded to Telegram Passport. Currently all 
+      Telegram Passport files are in JPEG format when decrypted and don't exceed 10MB.  */
+    PassportFile {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* File size */
+      fileSize     : Int
+      /* Unix time when the file was uploaded */
+      fileDate     : Int
+    }
+           
+    /* This object represents one size of a photo or a file / sticker thumbnail.  */
+    PhotoSize {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Photo width */
+      width        : Int
+      /* Photo height */
+      height       : Int
+      /* Optional. File size */
+      fileSize     : Option[Int]
+    }
+           
+    /* This object represents type of a poll, which is allowed to be created and sent 
+      when the corresponding button is pressed.  */
+    KeyboardButtonPollType {
+      /* Optional. If quiz is passed, the user will be allowed to 
+      create only polls in the quiz mode. If regular is passed, 
+      only regular polls will be allowed. Otherwise, the user will 
+      be allowed to create a poll of any type. */
+      type : Option[String]
+    }
+           
+    /* This object contains information about a poll.  */
+    Poll {
+      /* Unique poll identifier */
+      id                    : String
+      /* Poll question, 1-255 characters */
+      question              : String
+      /* List of poll options */
+      options               : List[PollOption]
+      /* Total number of users that voted in the poll */
+      totalVoterCount       : Int
+      /* True, if the poll is closed */
+      isClosed              : Boolean
+      /* True, if the poll is anonymous */
+      isAnonymous           : Boolean
+      /* Poll type, currently can be “regular” or “quiz” */
+      type                  : String
+      /* True, if the poll allows multiple answers */
+      allowsMultipleAnswers : Boolean
+      /* Optional. 0-based identifier of the correct answer option. 
+      Available only for polls in the quiz mode, which are closed, 
+      or was sent (not forwarded) by the bot or to the private 
+      chat with the bot. */
+      correctOptionId       : Option[Int]
+      /* Optional. Text that is shown when a user chooses an 
+      incorrect answer or taps on the lamp icon in a quiz-style 
+      poll, 0-200 characters */
+      explanation           : Option[String]
+      /* Optional. Special entities like usernames, URLs, bot 
+      commands, etc. that appear in the explanation */
+      explanationEntities   : List[MessageEntity]
+      /* Optional. Amount of time in seconds the poll will be active 
+      after creation */
+      openPeriod            : Option[Int]
+      /* Optional. Point in time (Unix timestamp) when the poll will 
+      be automatically closed */
+      closeDate             : Option[Int]
+    }
+           
+    /* This object represents a sticker set.  */
+    StickerSet {
+      /* Sticker set name */
+      name          : String
+      /* Sticker set title */
+      title         : String
+      /* True, if the sticker set contains animated stickers */
+      isAnimated    : Boolean
+      /* True, if the sticker set contains masks */
+      containsMasks : Boolean
+      /* List of all set stickers */
+      stickers      : List[Sticker]
+      /* Optional. Sticker set thumbnail in the .WEBP or .TGS format */
+      thumb         : Option[PhotoSize]
+    }
+           
+    /* This object represents an answer of a user in a non-anonymous poll.  */
+    PollAnswer {
+      /* Unique poll identifier */
+      pollId    : String
+      /* The user, who changed the answer to the poll */
+      user      : User
+      /* 0-based identifiers of answer options, chosen by the user. 
+      May be empty if the user retracted their vote. */
+      optionIds : List[Int]
+    }
+           
+    /* This object represents a phone contact.  */
+    Contact {
+      /* Contact's phone number */
+      phoneNumber : String
+      /* Contact's first name */
+      firstName   : String
+      /* Optional. Contact's last name */
+      lastName    : Option[String]
+      /* Optional. Contact's user identifier in Telegram */
+      userId      : Option[Int]
+      /* Optional. Additional data about the contact in the form of 
+      a vCard */
+      vcard       : Option[String]
+    }
+           
+    /* This object represents one row of the high scores table for a game.  */
+    GameHighScore {
+      /* Position in high score table for the game */
+      position : Int
+      /* User */
+      user     : User
+      /* Score */
+      score    : Int
+    }
+           
+    /* This object represents a portion of the price for goods or services.  */
+    LabeledPrice {
+      /* Portion label */
+      label  : String
+      /* Price of the product in the smallest units of the currency 
+      (integer, not float/double). For example, for a price of US$ 
+      1.45 pass amount = 145. See the exp parameter in 
+      currencies.json, it shows the number of digits past the 
+      decimal point for each currency (2 for the majority of 
+      currencies). */
+      amount : Int
+    }
+           
+    /* This object represents a venue.  */
+    Venue {
+      /* Venue location */
+      location       : Location
+      /* Name of the venue */
+      title          : String
+      /* Address of the venue */
+      address        : String
+      /* Optional. Foursquare identifier of the venue */
+      foursquareId   : Option[String]
+      /* Optional. Foursquare type of the venue. (For example, 
+      “arts_entertainment/default”, “arts_entertainment/aquarium” 
+      or “food/icecream”.) */
+      foursquareType : Option[String]
+    }
+           
+    /* This object contains basic information about a successful payment.  */
+    SuccessfulPayment {
+      /* Three-letter ISO 4217 currency code */
+      currency                : String
+      /* Total price in the smallest units of the currency (integer, 
+      not float/double). For example, for a price of US$ 1.45 pass 
+      amount = 145. See the exp parameter in currencies.json, it 
+      shows the number of digits past the decimal point for each 
+      currency (2 for the majority of currencies). */
+      totalAmount             : Int
+      /* Bot specified invoice payload */
+      invoicePayload          : String
+      /* Optional. Identifier of the shipping option chosen by the 
+      user */
+      shippingOptionId        : Option[String]
+      /* Optional. Order info provided by the user */
+      orderInfo               : Option[OrderInfo]
+      /* Telegram payment identifier */
+      telegramPaymentChargeId : String
+      /* Provider payment identifier */
+      providerPaymentChargeId : String
+    }
+           
+    /* This object represents a dice with a random value from 1 to 6 for currently 
+      supported base emoji. (Yes, we're aware of the “proper” singular of die. But 
+      it's awkward, and we decided to help it change. One dice at a time!)  */
+    Dice {
+      /* Emoji on which the dice throw animation is based */
+      emoji : String
+      /* Value of the dice, 1-6 for currently supported base emoji */
+      value : Int
+    }
+           
+    /* Contains information about Telegram Passport data shared with the bot by the 
+      user.  */
+    PassportData {
+      /* Array with information about documents and other Telegram 
+      Passport elements that was shared with the bot */
+      data        : List[EncryptedPassportElement]
+      /* Encrypted credentials required to decrypt the data */
+      credentials : EncryptedCredentials
+    }
+           
+    /* This object represents a file ready to be downloaded. The file can be 
+      downloaded via the link https://api.telegram.org/file/bot<token>/<file_path>. It 
+      is guaranteed that the link will be valid for at least 1 hour. When the link 
+      expires, a new one can be requested by calling getFile.  */
+    File {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Optional. File size, if known */
+      fileSize     : Option[Int]
+      /* Optional. File path. Use 
+      https://api.telegram.org/file/bot<token>/<file_path> to get 
+      the file. */
+      filePath     : Option[String]
+    }
+           
+    /* This object represents a game. Use BotFather to create and edit games, their 
+      short names will act as unique identifiers.  */
+    Game {
+      /* Title of the game */
+      title        : String
+      /* Description of the game */
+      description  : String
+      /* Photo that will be displayed in the game message in chats. */
+      photo        : List[PhotoSize]
+      /* Optional. Brief description of the game or high scores 
+      included in the game message. Can be automatically edited to 
+      include current high scores for the game when the bot calls 
+      setGameScore, or manually edited using editMessageText. 
+      0-4096 characters. */
+      text         : Option[String]
+      /* Optional. Special entities that appear in text, such as 
+      usernames, URLs, bot commands, etc. */
+      textEntities : List[MessageEntity]
+      /* Optional. Animation that will be displayed in the game 
+      message in chats. Upload via BotFather */
+      animation    : Option[Animation]
+    }
+           
+    /* Represents a result of an inline query that was chosen by the user and sent to 
+      their chat partner.  */
+    ChosenInlineResult {
+      /* The unique identifier for the result that was chosen */
+      resultId        : String
+      /* The user that chose the result */
+      from            : User
+      /* Optional. Sender location, only for bots that require user 
+      location */
+      location        : Option[Location]
+      /* Optional. Identifier of the sent inline message. Available 
+      only if there is an inline keyboard attached to the message. 
+      Will be also received in callback queries and can be used to 
+      edit the message. */
+      inlineMessageId : Option[String]
+      /* The query that was used to obtain the result */
+      query           : String
+    }
+           
+    /* This object represents a bot command.  */
+    BotCommand {
+      /* Text of the command, 1-32 characters. Can contain only 
+      lowercase English letters, digits and underscores. */
+      command     : String
+      /* Description of the command, 3-256 characters. */
+      description : String
+    }
+           
+    /* This object represents an audio file to be treated as music by the Telegram 
+      clients.  */
+    Audio {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Duration of the audio in seconds as defined by sender */
+      duration     : Int
+      /* Optional. Performer of the audio as defined by sender or by 
+      audio tags */
+      performer    : Option[String]
+      /* Optional. Title of the audio as defined by sender or by 
+      audio tags */
+      title        : Option[String]
+      /* Optional. MIME type of the file as defined by sender */
+      mimeType     : Option[String]
+      /* Optional. File size */
+      fileSize     : Option[Int]
+      /* Optional. Thumbnail of the album cover to which the music 
+      file belongs */
+      thumb        : Option[PhotoSize]
+    }
+           
+    /* Contains information about the current status of a webhook.  */
+    WebhookInfo {
+      /* Webhook URL, may be empty if webhook is not set up */
+      url                  : String
+      /* True, if a custom certificate was provided for webhook 
+      certificate checks */
+      hasCustomCertificate : Boolean
+      /* Number of updates awaiting delivery */
+      pendingUpdateCount   : Int
+      /* Optional. Unix time for the most recent error that happened 
+      when trying to deliver an update via webhook */
+      lastErrorDate        : Option[Int]
+      /* Optional. Error message in human-readable format for the 
+      most recent error that happened when trying to deliver an 
+      update via webhook */
+      lastErrorMessage     : Option[String]
+      /* Optional. Maximum allowed number of simultaneous HTTPS 
+      connections to the webhook for update delivery */
+      maxConnections       : Option[Int]
+      /* Optional. A list of update types the bot is subscribed to. 
+      Defaults to all update types */
+      allowedUpdates       : List[String]
+    }
+           
+    /* This object contains basic information about an invoice.  */
+    Invoice {
+      /* Product name */
+      title          : String
+      /* Product description */
+      description    : String
+      /* Unique bot deep-linking parameter that can be used to 
+      generate this invoice */
+      startParameter : String
+      /* Three-letter ISO 4217 currency code */
+      currency       : String
+      /* Total price in the smallest units of the currency (integer, 
+      not float/double). For example, for a price of US$ 1.45 pass 
+      amount = 145. See the exp parameter in currencies.json, it 
+      shows the number of digits past the decimal point for each 
+      currency (2 for the majority of currencies). */
+      totalAmount    : Int
+    }
+           
+    /* This object represents a chat photo.  */
+    ChatPhoto {
+      /* File identifier of small (160x160) chat photo. This file_id 
+      can be used only for photo download and only for as long as 
+      the photo is not changed. */
+      smallFileId       : String
+      /* Unique file identifier of small (160x160) chat photo, which 
+      is supposed to be the same over time and for different bots. 
+      Can't be used to download or reuse the file. */
+      smallFileUniqueId : String
+      /* File identifier of big (640x640) chat photo. This file_id 
+      can be used only for photo download and only for as long as 
+      the photo is not changed. */
+      bigFileId         : String
+      /* Unique file identifier of big (640x640) chat photo, which 
+      is supposed to be the same over time and for different bots. 
+      Can't be used to download or reuse the file. */
+      bigFileUniqueId   : String
+    }
+           
+    /* This object represents an incoming inline query. When the user sends an empty 
+      query, your bot could return some default or trending results.  */
+    InlineQuery {
+      /* Unique identifier for this query */
+      id       : String
+      /* Sender */
+      from     : User
+      /* Optional. Sender location, only for bots that request user 
+      location */
+      location : Option[Location]
+      /* Text of the query (up to 256 characters) */
+      query    : String
+      /* Offset of the results to be returned, can be controlled by 
+      the bot */
+      offset   : String
+    }
+           
+    /* This object represents a Telegram user or bot.  */
+    User {
+      /* Unique identifier for this user or bot */
+      id                      : Int
+      /* True, if this user is a bot */
+      isBot                   : Boolean
+      /* User‘s or bot’s first name */
+      firstName               : String
+      /* Optional. User‘s or bot’s last name */
+      lastName                : Option[String]
+      /* Optional. User‘s or bot’s username */
+      username                : Option[String]
+      /* Optional. IETF language tag of the user's language */
+      languageCode            : Option[String]
+      /* Optional. True, if the bot can be invited to groups. 
+      Returned only in getMe. */
+      canJoinGroups           : Option[Boolean]
+      /* Optional. True, if privacy mode is disabled for the bot. 
+      Returned only in getMe. */
+      canReadAllGroupMessages : Option[Boolean]
+      /* Optional. True, if the bot supports inline queries. 
+      Returned only in getMe. */
+      supportsInlineQueries   : Option[Boolean]
+    }
+           
+    /* Contains information about documents or other Telegram Passport elements shared 
+      with the bot by the user.  */
+    EncryptedPassportElement {
+      /* Element type. One of “personal_details”, “passport”, 
+      “driver_license”, “identity_card”, “internal_passport”, 
+      “address”, “utility_bill”, “bank_statement”, 
+      “rental_agreement”, “passport_registration”, 
+      “temporary_registration”, “phone_number”, “email”. */
+      type        : String
+      /* Optional. Base64-encoded encrypted Telegram Passport 
+      element data provided by the user, available for 
+      “personal_details”, “passport”, “driver_license”, 
+      “identity_card”, “internal_passport” and “address” types. 
+      Can be decrypted and verified using the accompanying 
+      EncryptedCredentials. */
+      data        : Option[String]
+      /* Optional. User's verified phone number, available only for 
+      “phone_number” type */
+      phoneNumber : Option[String]
+      /* Optional. User's verified email address, available only for 
+      “email” type */
+      email       : Option[String]
+      /* Optional. Array of encrypted files with documents provided 
+      by the user, available for “utility_bill”, “bank_statement”, 
+      “rental_agreement”, “passport_registration” and 
+      “temporary_registration” types. Files can be decrypted and 
+      verified using the accompanying EncryptedCredentials. */
+      files       : List[PassportFile]
+      /* Optional. Encrypted file with the front side of the 
+      document, provided by the user. Available for “passport”, 
+      “driver_license”, “identity_card” and “internal_passport”. 
+      The file can be decrypted and verified using the 
+      accompanying EncryptedCredentials. */
+      frontSide   : Option[PassportFile]
+      /* Optional. Encrypted file with the reverse side of the 
+      document, provided by the user. Available for 
+      “driver_license” and “identity_card”. The file can be 
+      decrypted and verified using the accompanying 
+      EncryptedCredentials. */
+      reverseSide : Option[PassportFile]
+      /* Optional. Encrypted file with the selfie of the user 
+      holding a document, provided by the user; available for 
+      “passport”, “driver_license”, “identity_card” and 
+      “internal_passport”. The file can be decrypted and verified 
+      using the accompanying EncryptedCredentials. */
+      selfie      : Option[PassportFile]
+      /* Optional. Array of encrypted files with translated versions 
+      of documents provided by the user. Available if requested 
+      for “passport”, “driver_license”, “identity_card”, 
+      “internal_passport”, “utility_bill”, “bank_statement”, 
+      “rental_agreement”, “passport_registration” and 
+      “temporary_registration” types. Files can be decrypted and 
+      verified using the accompanying EncryptedCredentials. */
+      translation : List[PassportFile]
+      /* Base64-encoded element hash for using in 
+      PassportElementErrorUnspecified */
+      hash        : String
+    }
+           
+    /* This object represents a sticker.  */
+    Sticker {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Sticker width */
+      width        : Int
+      /* Sticker height */
+      height       : Int
+      /* True, if the sticker is animated */
+      isAnimated   : Boolean
+      /* Optional. Sticker thumbnail in the .WEBP or .JPG format */
+      thumb        : Option[PhotoSize]
+      /* Optional. Emoji associated with the sticker */
+      emoji        : Option[String]
+      /* Optional. Name of the sticker set to which the sticker 
+      belongs */
+      setName      : Option[String]
+      /* Optional. For mask stickers, the position where the mask 
+      should be placed */
+      maskPosition : Option[MaskPosition]
+      /* Optional. File size */
+      fileSize     : Option[Int]
+    }
+           
+    /* This object represents a message.  */
+    Message {
+      /* Unique message identifier inside this chat */
+      messageId             : Int
+      /* Optional. Sender, empty for messages sent to channels */
+      from                  : Option[User]
+      /* Date the message was sent in Unix time */
+      date                  : Int
+      /* Conversation the message belongs to */
+      chat                  : Chat
+      /* Optional. For forwarded messages, sender of the original 
+      message */
+      forwardFrom           : Option[User]
+      /* Optional. For messages forwarded from channels, information 
+      about the original channel */
+      forwardFromChat       : Option[Chat]
+      /* Optional. For messages forwarded from channels, identifier 
+      of the original message in the channel */
+      forwardFromMessageId  : Option[Int]
+      /* Optional. For messages forwarded from channels, signature 
+      of the post author if present */
+      forwardSignature      : Option[String]
+      /* Optional. Sender's name for messages forwarded from users 
+      who disallow adding a link to their account in forwarded 
+      messages */
+      forwardSenderName     : Option[String]
+      /* Optional. For forwarded messages, date the original message 
+      was sent in Unix time */
+      forwardDate           : Option[Int]
+      /* Optional. For replies, the original message. Note that the 
+      Message object in this field will not contain further 
+      reply_to_message fields even if it itself is a reply. */
+      replyToMessage        : Option[Message]
+      /* Optional. Date the message was last edited in Unix time */
+      editDate              : Option[Int]
+      /* Optional. The unique identifier of a media message group 
+      this message belongs to */
+      mediaGroupId          : Option[String]
+      /* Optional. Signature of the post author for messages in 
+      channels */
+      authorSignature       : Option[String]
+      /* Optional. For text messages, the actual UTF-8 text of the 
+      message, 0-4096 characters */
+      text                  : Option[String]
+      /* Optional. For text messages, special entities like 
+      usernames, URLs, bot commands, etc. that appear in the text */
+      entities              : List[MessageEntity]
+      /* Optional. For messages with a caption, special entities 
+      like usernames, URLs, bot commands, etc. that appear in the 
+      caption */
+      captionEntities       : List[MessageEntity]
+      /* Optional. Message is an audio file, information about the 
+      file */
+      audio                 : Option[Audio]
+      /* Optional. Message is a general file, information about the 
+      file */
+      document              : Option[Document]
+      /* Optional. Message is an animation, information about the 
+      animation. For backward compatibility, when this field is 
+      set, the document field will also be set */
+      animation             : Option[Animation]
+      /* Optional. Message is a game, information about the game. 
+      More about games » */
+      game                  : Option[Game]
+      /* Optional. Message is a photo, available sizes of the photo */
+      photo                 : List[PhotoSize]
+      /* Optional. Message is a sticker, information about the 
+      sticker */
+      sticker               : Option[Sticker]
+      /* Optional. Message is a video, information about the video */
+      video                 : Option[Video]
+      /* Optional. Message is a voice message, information about the 
+      file */
+      voice                 : Option[Voice]
+      /* Optional. Message is a video note, information about the 
+      video message */
+      videoNote             : Option[VideoNote]
+      /* Optional. Caption for the animation, audio, document, 
+      photo, video or voice, 0-1024 characters */
+      caption               : Option[String]
+      /* Optional. Message is a shared contact, information about 
+      the contact */
+      contact               : Option[Contact]
+      /* Optional. Message is a shared location, information about 
+      the location */
+      location              : Option[Location]
+      /* Optional. Message is a venue, information about the venue */
+      venue                 : Option[Venue]
+      /* Optional. Message is a native poll, information about the 
+      poll */
+      poll                  : Option[Poll]
+      /* Optional. Message is a dice with random value from 1 to 6 */
+      dice                  : Option[Dice]
+      /* Optional. New members that were added to the group or 
+      supergroup and information about them (the bot itself may be 
+      one of these members) */
+      newChatMembers        : List[User]
+      /* Optional. A member was removed from the group, information 
+      about them (this member may be the bot itself) */
+      leftChatMember        : Option[User]
+      /* Optional. A chat title was changed to this value */
+      newChatTitle          : Option[String]
+      /* Optional. A chat photo was change to this value */
+      newChatPhoto          : List[PhotoSize]
+      /* Optional. Service message: the chat photo was deleted */
+      deleteChatPhoto       : Option[Boolean]
+      /* Optional. Service message: the group has been created */
+      groupChatCreated      : Option[Boolean]
+      /* Optional. Service message: the supergroup has been created. 
+      This field can‘t be received in a message coming through 
+      updates, because bot can’t be a member of a supergroup when 
+      it is created. It can only be found in reply_to_message if 
+      someone replies to a very first message in a directly 
+      created supergroup. */
+      supergroupChatCreated : Option[Boolean]
+      /* Optional. Service message: the channel has been created. 
+      This field can‘t be received in a message coming through 
+      updates, because bot can’t be a member of a channel when it 
+      is created. It can only be found in reply_to_message if 
+      someone replies to a very first message in a channel. */
+      channelChatCreated    : Option[Boolean]
+      /* Optional. The group has been migrated to a supergroup with 
+      the specified identifier. This number may be greater than 32 
+      bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it is 
+      smaller than 52 bits, so a signed 64 bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. */
+      migrateToChatId       : Option[Long]
+      /* Optional. The supergroup has been migrated from a group 
+      with the specified identifier. This number may be greater 
+      than 32 bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it is 
+      smaller than 52 bits, so a signed 64 bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. */
+      migrateFromChatId     : Option[Long]
+      /* Optional. Specified message was pinned. Note that the 
+      Message object in this field will not contain further 
+      reply_to_message fields even if it is itself a reply. */
+      pinnedMessage         : Option[Message]
+      /* Optional. Message is an invoice for a payment, information 
+      about the invoice. More about payments » */
+      invoice               : Option[Invoice]
+      /* Optional. Message is a service message about a successful 
+      payment, information about the payment. More about payments 
+      » */
+      successfulPayment     : Option[SuccessfulPayment]
+      /* Optional. The domain name of the website on which the user 
+      has logged in. More about Telegram Login » */
+      connectedWebsite      : Option[String]
+      /* Optional. Telegram Passport data */
+      passportData          : Option[PassportData]
+      /* Optional. Inline keyboard attached to the message. 
+      login_url buttons are represented as ordinary url buttons. */
+      replyMarkup           : Option[InlineKeyboardMarkup]
+    }
+           
+    /* This object represents one shipping option.  */
+    ShippingOption {
+      /* Shipping option identifier */
+      id     : String
+      /* Option title */
+      title  : String
+      /* List of price portions */
+      prices : List[LabeledPrice]
+    }
+           
+    /* This object contains information about an incoming pre-checkout query.  */
+    PreCheckoutQuery {
+      /* Unique query identifier */
+      id               : String
+      /* User who sent the query */
+      from             : User
+      /* Three-letter ISO 4217 currency code */
+      currency         : String
+      /* Total price in the smallest units of the currency (integer, 
+      not float/double). For example, for a price of US$ 1.45 pass 
+      amount = 145. See the exp parameter in currencies.json, it 
+      shows the number of digits past the decimal point for each 
+      currency (2 for the majority of currencies). */
+      totalAmount      : Int
+      /* Bot specified invoice payload */
+      invoicePayload   : String
+      /* Optional. Identifier of the shipping option chosen by the 
+      user */
+      shippingOptionId : Option[String]
+      /* Optional. Order info provided by the user */
+      orderInfo        : Option[OrderInfo]
+    }
+           
+    /* Contains data required for decrypting and authenticating 
+      EncryptedPassportElement. See the Telegram Passport Documentation for a complete 
+      description of the data decryption and authentication processes.  */
+    EncryptedCredentials {
+      /* Base64-encoded encrypted JSON-serialized data with unique 
+      user's payload, data hashes and secrets required for 
+      EncryptedPassportElement decryption and authentication */
+      data   : String
+      /* Base64-encoded data hash for data authentication */
+      hash   : String
+      /* Base64-encoded secret, encrypted with the bot's public RSA 
+      key, required for data decryption */
+      secret : String
+    }
+           
+    /* This object represents one button of an inline keyboard. You must use exactly 
+      one of the optional fields.  */
+    InlineKeyboardButton {
+      /* Label text on the button */
+      text                         : String
+      /* Optional. HTTP or tg:// url to be opened when button is 
+      pressed */
+      url                          : Option[String]
+      /* Optional. An HTTP URL used to automatically authorize the 
+      user. Can be used as a replacement for the Telegram Login 
+      Widget. */
+      loginUrl                     : Option[LoginUrl]
+      /* Optional. Data to be sent in a callback query to the bot 
+      when button is pressed, 1-64 bytes */
+      callbackData                 : Option[String]
+      /* Optional. If set, pressing the button will prompt the user 
+      to select one of their chats, open that chat and insert the 
+      bot‘s username and the specified inline query in the input 
+      field. Can be empty, in which case just the bot’s username 
+      will be inserted. Note: This offers an easy way for users to 
+      start using your bot in inline mode when they are currently 
+      in a private chat with it. Especially useful when combined 
+      with switch_pm… actions – in this case the user will be 
+      automatically returned to the chat they switched from, 
+      skipping the chat selection screen. */
+      switchInlineQuery            : Option[String]
+      /* Optional. If set, pressing the button will insert the bot‘s 
+      username and the specified inline query in the current 
+      chat’s input field. Can be empty, in which case only the 
+      bot's username will be inserted. This offers a quick way for 
+      the user to open your bot in inline mode in the same chat – 
+      good for selecting something from multiple options. */
+      switchInlineQueryCurrentChat : Option[String]
+      /* Optional. Description of the game that will be launched 
+      when the user presses the button. NOTE: This type of button 
+      must always be the first button in the first row. */
+      callbackGame                 : Option[String]
+      /* Optional. Specify True, to send a Pay button. NOTE: This 
+      type of button must always be the first button in the first 
+      row. */
+      pay                          : Option[Boolean]
+    }
+           
+    /* This object represents a parameter of the inline keyboard button used to 
+      automatically authorize a user. Serves as a great replacement for the Telegram 
+      Login Widget when the user is coming from Telegram. All the user needs to do is 
+      tap/click a button and confirm that they want to log in:  */
+    LoginUrl {
+      /* An HTTP URL to be opened with user authorization data added 
+      to the query string when the button is pressed. If the user 
+      refuses to provide authorization data, the original URL 
+      without information about the user will be opened. The data 
+      added is the same as described in Receiving authorization 
+      data. NOTE: You must always check the hash of the received 
+      data to verify the authentication and the integrity of the 
+      data as described in Checking authorization. */
+      url                : String
+      /* Optional. New text of the button in forwarded messages. */
+      forwardText        : Option[String]
+      /* Optional. Username of a bot, which will be used for user 
+      authorization. See Setting up a bot for more details. If not 
+      specified, the current bot's username will be assumed. The 
+      url's domain must be the same as the domain linked with the 
+      bot. See Linking your domain to the bot for more details. */
+      botUsername        : Option[String]
+      /* Optional. Pass True to request the permission for your bot 
+      to send messages to the user. */
+      requestWriteAccess : Option[Boolean]
+    }
+           
+    /* This object represents a voice note.  */
+    Voice {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Duration of the audio in seconds as defined by sender */
+      duration     : Int
+      /* Optional. MIME type of the file as defined by sender */
+      mimeType     : Option[String]
+      /* Optional. File size */
+      fileSize     : Option[Int]
+    }
+           
+    /* This object represent a user's profile pictures.  */
+    UserProfilePhotos {
+      /* Total number of profile pictures the target user has */
+      totalCount : Int
+      /* Requested profile pictures (in up to 4 sizes each) */
+      photos     : List[List[PhotoSize]]
+    }
+           
+    /* This object represents an incoming callback query from a callback button in an 
+      inline keyboard. If the button that originated the query was attached to a 
+      message sent by the bot, the field message will be present. If the button was 
+      attached to a message sent via the bot (in inline mode), the field 
+      inline_message_id will be present. Exactly one of the fields data or 
+      game_short_name will be present.  */
+    CallbackQuery {
+      /* Unique identifier for this query */
+      id              : String
+      /* Sender */
+      from            : User
+      /* Optional. Message with the callback button that originated 
+      the query. Note that message content and message date will 
+      not be available if the message is too old */
+      message         : Option[Message]
+      /* Optional. Identifier of the message sent via the bot in 
+      inline mode, that originated the query. */
+      inlineMessageId : Option[String]
+      /* Global identifier, uniquely corresponding to the chat to 
+      which the message with the callback button was sent. Useful 
+      for high scores in games. */
+      chatInstance    : String
+      /* Optional. Data associated with the callback button. Be 
+      aware that a bad client can send arbitrary data in this 
+      field. */
+      data            : Option[String]
+      /* Optional. Short name of a Game to be returned, serves as 
+      the unique identifier for the game */
+      gameShortName   : Option[String]
+    }
+           
+    /* This object contains information about one member of a chat.  */
+    ChatMember {
+      /* Information about the user */
+      user                  : User
+      /* The member's status in the chat. Can be “creator”, 
+      “administrator”, “member”, “restricted”, “left” or “kicked” */
+      status                : String
+      /* Optional. Owner and administrators only. Custom title for 
+      this user */
+      customTitle           : Option[String]
+      /* Optional. Restricted and kicked only. Date when 
+      restrictions will be lifted for this user; unix time */
+      untilDate             : Option[Int]
+      /* Optional. Administrators only. True, if the bot is allowed 
+      to edit administrator privileges of that user */
+      canBeEdited           : Option[Boolean]
+      /* Optional. Administrators only. True, if the administrator 
+      can post in the channel; channels only */
+      canPostMessages       : Option[Boolean]
+      /* Optional. Administrators only. True, if the administrator 
+      can edit messages of other users and can pin messages; 
+      channels only */
+      canEditMessages       : Option[Boolean]
+      /* Optional. Administrators only. True, if the administrator 
+      can delete messages of other users */
+      canDeleteMessages     : Option[Boolean]
+      /* Optional. Administrators only. True, if the administrator 
+      can restrict, ban or unban chat members */
+      canRestrictMembers    : Option[Boolean]
+      /* Optional. Administrators only. True, if the administrator 
+      can add new administrators with a subset of their own 
+      privileges or demote administrators that he has promoted, 
+      directly or indirectly (promoted by administrators that were 
+      appointed by the user) */
+      canPromoteMembers     : Option[Boolean]
+      /* Optional. Administrators and restricted only. True, if the 
+      user is allowed to change the chat title, photo and other 
+      settings */
+      canChangeInfo         : Option[Boolean]
+      /* Optional. Administrators and restricted only. True, if the 
+      user is allowed to invite new users to the chat */
+      canInviteUsers        : Option[Boolean]
+      /* Optional. Administrators and restricted only. True, if the 
+      user is allowed to pin messages; groups and supergroups only */
+      canPinMessages        : Option[Boolean]
+      /* Optional. Restricted only. True, if the user is a member of 
+      the chat at the moment of the request */
+      isMember              : Option[Boolean]
+      /* Optional. Restricted only. True, if the user is allowed to 
+      send text messages, contacts, locations and venues */
+      canSendMessages       : Option[Boolean]
+      /* Optional. Restricted only. True, if the user is allowed to 
+      send audios, documents, photos, videos, video notes and 
+      voice notes */
+      canSendMediaMessages  : Option[Boolean]
+      /* Optional. Restricted only. True, if the user is allowed to 
+      send polls */
+      canSendPolls          : Option[Boolean]
+      /* Optional. Restricted only. True, if the user is allowed to 
+      send animations, games, stickers and use inline bots */
+      canSendOtherMessages  : Option[Boolean]
+      /* Optional. Restricted only. True, if the user is allowed to 
+      add web page previews to their messages */
+      canAddWebPagePreviews : Option[Boolean]
+    }
+           
+    /* This object represents one special entity in a text message. For example, 
+      hashtags, usernames, URLs, etc.  */
+    MessageEntity {
+      /* Type of the entity. Can be “mention” (@username), “hashtag” 
+      (#hashtag), “cashtag” ($USD), “bot_command” 
+      (/start@jobs_bot), “url” (https://telegram.org), “email” 
+      (do-not-reply@telegram.org), “phone_number” 
+      (+1-212-555-0123), “bold” (bold text), “italic” (italic 
+      text), “underline” (underlined text), “strikethrough” 
+      (strikethrough text), “code” (monowidth string), “pre” 
+      (monowidth block), “text_link” (for clickable text URLs), 
+      “text_mention” (for users without usernames) */
+      type     : String
+      /* Offset in UTF-16 code units to the start of the entity */
+      offset   : Int
+      /* Length of the entity in UTF-16 code units */
+      length   : Int
+      /* Optional. For “text_link” only, url that will be opened 
+      after user taps on the text */
+      url      : Option[String]
+      /* Optional. For “text_mention” only, the mentioned user */
+      user     : Option[User]
+      /* Optional. For “pre” only, the programming language of the 
+      entity text */
+      language : Option[String]
+    }
+           
+    /* This object represents a video file.  */
+    Video {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Video width as defined by sender */
+      width        : Int
+      /* Video height as defined by sender */
+      height       : Int
+      /* Duration of the video in seconds as defined by sender */
+      duration     : Int
+      /* Optional. Video thumbnail */
+      thumb        : Option[PhotoSize]
+      /* Optional. Mime type of a file as defined by sender */
+      mimeType     : Option[String]
+      /* Optional. File size */
+      fileSize     : Option[Int]
+    }
+           
+    /* This object represents a general file (as opposed to photos, voice messages and 
+      audio files).  */
+    Document {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Optional. Document thumbnail as defined by sender */
+      thumb        : Option[PhotoSize]
+      /* Optional. Original filename as defined by sender */
+      fileName     : Option[String]
+      /* Optional. MIME type of the file as defined by sender */
+      mimeType     : Option[String]
+      /* Optional. File size */
+      fileSize     : Option[Int]
+    }
+           
+
+    WebhookService (server) {
+      def handleUpdate {
+        use Update
+      } => {
+        result: String
+      }
+    }
+
+    namespace client {
+      Response {
+        ok          : Boolean
+        description : Option[String]
+      }
+
+      Api (client) {
+              
+        /* Use this method to get current webhook status. Requires no parameters. On 
+          success, returns a WebhookInfo object. If the bot is using getUpdates, will 
+          return an object with the url field empty.  */
+        def getWebhookInfo {
+      
+        } => {
+          use Response
+          result: Option[WebhookInfo]
+        }
+                
+      
+        /* Use this method to change the list of the bot's commands. Returns True on 
+          success.  */
+        def setMyCommands {
+          /* A JSON-serialized list of bot commands to be set as the 
+          list of the bot's commands. At most 100 commands can be 
+          specified. */
+          commands : List[BotCommand]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to set a new profile photo for the chat. Photos can't be 
+          changed for private chats. The bot must be an administrator in the chat for this 
+          to work and must have the appropriate admin rights. Returns True on success.  */
+        def setChatPhoto {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId : ChatId
+          /* New chat photo, uploaded using multipart/form-data */
+          photo  : (file) IFile
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to get data for high score tables. Will return the score of the 
+          specified user and several of their neighbors in a game. On success, returns an 
+          Array of GameHighScore objects.  */
+        def getGameHighScores {
+          /* Target user id */
+          userId          : Int
+          /* Required if inline_message_id is not specified. Unique 
+          identifier for the target chat */
+          chatId          : Option[Int]
+          /* Required if inline_message_id is not specified. Identifier 
+          of the sent message */
+          messageId       : Option[Int]
+          /* Required if chat_id and message_id are not specified. 
+          Identifier of the inline message */
+          inlineMessageId : Option[String]
+        } => {
+          use Response
+          result: List[GameHighScore]
+        }
+                
+      
+        /* Use this method to send answers to callback queries sent from inline keyboards. 
+          The answer will be displayed to the user as a notification at the top of the 
+          chat screen or as an alert. On success, True is returned.  */
+        def answerCallbackQuery {
+          /* Unique identifier for the query to be answered */
+          callbackQueryId : String
+          /* Text of the notification. If not specified, nothing will be 
+          shown to the user, 0-200 characters */
+          text            : Option[String]
+          /* If true, an alert will be shown by the client instead of a 
+          notification at the top of the chat screen. Defaults to 
+          false. */
+          showAlert       : Option[Boolean]
+          /* URL that will be opened by the user's client. If you have 
+          created a Game and accepted the conditions via @Botfather, 
+          specify the URL that opens your game — note that this will 
+          only work if the query comes from a callback_game button. 
+          Otherwise, you may use links like t.me/your_bot?start=XXXX 
+          that open your bot with a parameter. */
+          url             : Option[String]
+          /* The maximum amount of time in seconds that the result of 
+          the callback query may be cached client-side. Telegram apps 
+          will support caching starting in version 3.14. Defaults to 
+          0. */
+          cacheTime       : Option[Int]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to send text messages. On success, the sent Message is 
+          returned.  */
+        def sendMessage {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId                : ChatId
+          /* Text of the message to be sent, 1-4096 characters after 
+          entities parsing */
+          text                  : String
+          /* Mode for parsing entities in the message text. See 
+          formatting options for more details. */
+          parseMode             : Option[ParseMode]
+          /* Disables link previews for links in this message */
+          disableWebPagePreview : Option[Boolean]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification   : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId      : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup           : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to get a list of profile pictures for a user. Returns a 
+          UserProfilePhotos object.  */
+        def getUserProfilePhotos {
+          /* Unique identifier of the target user */
+          userId : Int
+          /* Sequential number of the first photo to be returned. By 
+          default, all photos are returned. */
+          offset : Option[Int]
+          /* Limits the number of photos to be retrieved. Values between 
+          1-100 are accepted. Defaults to 100. */
+          limit  : Option[Int]
+        } => {
+          use Response
+          result: Option[UserProfilePhotos]
+        }
+                
+      
+        /* Use this method to send a native poll. On success, the sent Message is 
+          returned.  */
+        def sendPoll {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId                : ChatId
+          /* Poll question, 1-255 characters */
+          question              : String
+          /* A JSON-serialized list of answer options, 2-10 strings 
+          1-100 characters each */
+          options               : List[String]
+          /* True, if the poll needs to be anonymous, defaults to True */
+          isAnonymous           : Option[Boolean]
+          /* Poll type, “quiz” or “regular”, defaults to “regular” */
+          type                  : Option[String]
+          /* True, if the poll allows multiple answers, ignored for 
+          polls in quiz mode, defaults to False */
+          allowsMultipleAnswers : Option[Boolean]
+          /* 0-based identifier of the correct answer option, required 
+          for polls in quiz mode */
+          correctOptionId       : Option[Int]
+          /* Text that is shown when a user chooses an incorrect answer 
+          or taps on the lamp icon in a quiz-style poll, 0-200 
+          characters with at most 2 line feeds after entities parsing */
+          explanation           : Option[String]
+          /* Mode for parsing entities in the explanation. See 
+          formatting options for more details. */
+          explanationParseMode  : Option[String]
+          /* Amount of time in seconds the poll will be active after 
+          creation, 5-600. Can't be used together with close_date. */
+          openPeriod            : Option[Int]
+          /* Point in time (Unix timestamp) when the poll will be 
+          automatically closed. Must be at least 5 and no more than 
+          600 seconds in the future. Can't be used together with 
+          open_period. */
+          closeDate             : Option[Int]
+          /* Pass True, if the poll needs to be immediately closed. This 
+          can be useful for poll preview. */
+          isClosed              : Option[Boolean]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification   : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId      : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup           : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to send phone contacts. On success, the sent Message is 
+          returned.  */
+        def sendContact {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Contact's phone number */
+          phoneNumber         : String
+          /* Contact's first name */
+          firstName           : String
+          /* Contact's last name */
+          lastName            : Option[String]
+          /* Additional data about the contact in the form of a vCard, 
+          0-2048 bytes */
+          vcard               : Option[String]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to create a new sticker set owned by a user. The bot will be 
+          able to edit the sticker set thus created. You must use exactly one of the 
+          fields png_sticker or tgs_sticker. Returns True on success.  */
+        def createNewStickerSet {
+          /* User identifier of created sticker set owner */
+          userId        : Int
+          /* Short name of sticker set, to be used in t.me/addstickers/ 
+          URLs (e.g., animals). Can contain only english letters, 
+          digits and underscores. Must begin with a letter, can't 
+          contain consecutive underscores and must end in “_by_<bot 
+          username>”. <bot_username> is case insensitive. 1-64 
+          characters. */
+          name          : String
+          /* Sticker set title, 1-64 characters */
+          title         : String
+          /* PNG image with the sticker, must be up to 512 kilobytes in 
+          size, dimensions must not exceed 512px, and either width or 
+          height must be exactly 512px. Pass a file_id as a String to 
+          send a file that already exists on the Telegram servers, 
+          pass an HTTP URL as a String for Telegram to get a file from 
+          the Internet, or upload a new one using multipart/form-data. 
+          More info on Sending Files » */
+          pngSticker    : (file) Option[IFile]
+          /* TGS animation with the sticker, uploaded using 
+          multipart/form-data. See 
+          https://core.telegram.org/animated_stickers#technical-requirements 
+          for technical requirements */
+          tgsSticker    : (file) Option[IFile]
+          /* One or more emoji corresponding to the sticker */
+          emojis        : String
+          /* Pass True, if a set of mask stickers should be created */
+          containsMasks : Option[Boolean]
+          /* A JSON-serialized object for position where the mask should 
+          be placed on faces */
+          maskPosition  : Option[MaskPosition]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to upload a .PNG file with a sticker for later use in 
+          createNewStickerSet and addStickerToSet methods (can be used multiple times). 
+          Returns the uploaded File on success.  */
+        def uploadStickerFile {
+          /* User identifier of sticker file owner */
+          userId     : Int
+          /* PNG image with the sticker, must be up to 512 kilobytes in 
+          size, dimensions must not exceed 512px, and either width or 
+          height must be exactly 512px. More info on Sending Files » */
+          pngSticker : (file) IFile
+        } => {
+          use Response
+          result: Option[File]
+        }
+                
+      
+        /* Use this method to set default chat permissions for all members. The bot must 
+          be an administrator in the group or a supergroup for this to work and must have 
+          the can_restrict_members admin rights. Returns True on success.  */
+        def setChatPermissions {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format @supergroupusername) */
+          chatId      : ChatId
+          /* New default chat permissions */
+          permissions : ChatPermissions
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to send point on the map. On success, the sent Message is 
+          returned.  */
+        def sendLocation {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Latitude of the location */
+          latitude            : Float
+          /* Longitude of the location */
+          longitude           : Float
+          /* Period in seconds for which the location will be updated 
+          (see Live Locations, should be between 60 and 86400. */
+          livePeriod          : Option[Int]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to delete a group sticker set from a supergroup. The bot must 
+          be an administrator in the chat for this to work and must have the appropriate 
+          admin rights. Use the field can_set_sticker_set optionally returned in getChat 
+          requests to check if the bot can use this method. Returns True on success.  */
+        def deleteChatStickerSet {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format @supergroupusername) */
+          chatId : ChatId
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to stop updating a live location message before live_period 
+          expires. On success, if the message was sent by the bot, the sent Message is 
+          returned, otherwise True is returned.  */
+        def stopMessageLiveLocation {
+          /* Required if inline_message_id is not specified. Unique 
+          identifier for the target chat or username of the target 
+          channel (in the format @channelusername) */
+          chatId          : Option[ChatId]
+          /* Required if inline_message_id is not specified. Identifier 
+          of the message with live location to stop */
+          messageId       : Option[Int]
+          /* Required if chat_id and message_id are not specified. 
+          Identifier of the inline message */
+          inlineMessageId : Option[String]
+          /* A JSON-serialized object for a new inline keyboard. */
+          replyMarkup     : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to generate a new invite link for a chat; any previously 
+          generated link is revoked. The bot must be an administrator in the chat for this 
+          to work and must have the appropriate admin rights. Returns the new invite link 
+          as String on success.  */
+        def exportChatInviteLink {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId : ChatId
+        } => {
+          use Response
+          result: Option[String]
+        }
+                
+      
+        /* Use this method to send a dice, which will have a random value from 1 to 6. On 
+          success, the sent Message is returned. (Yes, we're aware of the “proper” 
+          singular of die. But it's awkward, and we decided to help it change. One dice at 
+          a time!)  */
+        def sendDice {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Emoji on which the dice throw animation is based. 
+          Currently, must be one of “” or “”. Defauts to “” */
+          emoji               : Option[String]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method when you need to tell the user that something is happening on 
+          the bot's side. The status is set for 5 seconds or less (when a message arrives 
+          from your bot, Telegram clients clear its typing status). Returns True on 
+          success.  */
+        def sendChatAction {
+      
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to add a new sticker to a set created by the bot. You must use 
+          exactly one of the fields png_sticker or tgs_sticker. Animated stickers can be 
+          added to animated sticker sets and only to them. Animated sticker sets can have 
+          up to 50 stickers. Static sticker sets can have up to 120 stickers. Returns True 
+          on success.  */
+        def addStickerToSet {
+          /* User identifier of sticker set owner */
+          userId       : Int
+          /* Sticker set name */
+          name         : String
+          /* PNG image with the sticker, must be up to 512 kilobytes in 
+          size, dimensions must not exceed 512px, and either width or 
+          height must be exactly 512px. Pass a file_id as a String to 
+          send a file that already exists on the Telegram servers, 
+          pass an HTTP URL as a String for Telegram to get a file from 
+          the Internet, or upload a new one using multipart/form-data. 
+          More info on Sending Files » */
+          pngSticker   : (file) IFile
+          /* TGS animation with the sticker, uploaded using 
+          multipart/form-data. See 
+          https://core.telegram.org/animated_stickers#technical-requirements 
+          for technical requirements */
+          tgsSticker   : (file) Option[IFile]
+          /* One or more emoji corresponding to the sticker */
+          emojis       : String
+          /* A JSON-serialized object for position where the mask should 
+          be placed on faces */
+          maskPosition : Option[MaskPosition]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to delete a sticker from a set created by the bot. Returns True 
+          on success.  */
+        def deleteStickerFromSet {
+          /* File identifier of the sticker */
+          sticker : String
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to stop a poll which was sent by the bot. On success, the 
+          stopped Poll with the final results is returned.  */
+        def stopPoll {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId      : ChatId
+          /* Identifier of the original message with the poll */
+          messageId   : Int
+          /* A JSON-serialized object for a new message inline keyboard. */
+          replyMarkup : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Poll]
+        }
+                
+      
+        /* Use this method to unpin a message in a group, a supergroup, or a channel. The 
+          bot must be an administrator in the chat for this to work and must have the 
+          ‘can_pin_messages’ admin right in the supergroup or ‘can_edit_messages’ admin 
+          right in the channel. Returns True on success.  */
+        def unpinChatMessage {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId : ChatId
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to send a group of photos or videos as an album. On success, an 
+          array of the sent Messages is returned.  */
+        def sendMediaGroup {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* A JSON-serialized array describing photos and videos to be 
+          sent, must include 2-10 items */
+          media               : List[InputMedia]
+          /* Sends the messages silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the messages are a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+        } => {
+          use Response
+          result: List[Message]
+        }
+                
+      
+        /* Use this method to send a game. On success, the sent Message is returned.  */
+        def sendGame {
+          /* Unique identifier for the target chat */
+          chatId              : Int
+          /* Short name of the game, serves as the unique identifier for 
+          the game. Set up your games via Botfather. */
+          gameShortName       : String
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* A JSON-serialized object for an inline keyboard. If empty, 
+          one ‘Play game_title’ button will be shown. If not empty, 
+          the first button must launch the game. */
+          replyMarkup         : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to send information about a venue. On success, the sent Message 
+          is returned.  */
+        def sendVenue {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Latitude of the venue */
+          latitude            : Float
+          /* Longitude of the venue */
+          longitude           : Float
+          /* Name of the venue */
+          title               : String
+          /* Address of the venue */
+          address             : String
+          /* Foursquare identifier of the venue */
+          foursquareId        : Option[String]
+          /* Foursquare type of the venue, if known. (For example, 
+          “arts_entertainment/default”, “arts_entertainment/aquarium” 
+          or “food/icecream”.) */
+          foursquareType      : Option[String]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to unban a previously kicked user in a supergroup or channel. 
+          The user will not return to the group or channel automatically, but will be able 
+          to join via link, etc. The bot must be an administrator for this to work. 
+          Returns True on success.  */
+        def unbanChatMember {
+          /* Unique identifier for the target group or username of the 
+          target supergroup or channel (in the format @username) */
+          chatId : ChatId
+          /* Unique identifier of the target user */
+          userId : Int
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to change the description of a group, a supergroup or a 
+          channel. The bot must be an administrator in the chat for this to work and must 
+          have the appropriate admin rights. Returns True on success.  */
+        def setChatDescription {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId      : ChatId
+          /* New chat description, 0-255 characters */
+          description : Option[String]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to edit text and game messages. On success, if edited message 
+          is sent by the bot, the edited Message is returned, otherwise True is returned.  */
+        def editMessageText {
+          /* Required if inline_message_id is not specified. Unique 
+          identifier for the target chat or username of the target 
+          channel (in the format @channelusername) */
+          chatId                : Option[ChatId]
+          /* Required if inline_message_id is not specified. Identifier 
+          of the message to edit */
+          messageId             : Option[Int]
+          /* Required if chat_id and message_id are not specified. 
+          Identifier of the inline message */
+          inlineMessageId       : Option[String]
+          /* New text of the message, 1-4096 characters after entities 
+          parsing */
+          text                  : String
+          /* Mode for parsing entities in the message text. See 
+          formatting options for more details. */
+          parseMode             : Option[ParseMode]
+          /* Disables link previews for links in this message */
+          disableWebPagePreview : Option[Boolean]
+          /* A JSON-serialized object for an inline keyboard. */
+          replyMarkup           : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to edit live location messages. A location can be edited until 
+          its live_period expires or editing is explicitly disabled by a call to 
+          stopMessageLiveLocation. On success, if the edited message was sent by the bot, 
+          the edited Message is returned, otherwise True is returned.  */
+        def editMessageLiveLocation {
+          /* Required if inline_message_id is not specified. Unique 
+          identifier for the target chat or username of the target 
+          channel (in the format @channelusername) */
+          chatId          : Option[ChatId]
+          /* Required if inline_message_id is not specified. Identifier 
+          of the message to edit */
+          messageId       : Option[Int]
+          /* Required if chat_id and message_id are not specified. 
+          Identifier of the inline message */
+          inlineMessageId : Option[String]
+          /* Latitude of new location */
+          latitude        : Float
+          /* Longitude of new location */
+          longitude       : Float
+          /* A JSON-serialized object for a new inline keyboard. */
+          replyMarkup     : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to get basic info about a file and prepare it for downloading. 
+          For the moment, bots can download files of up to 20MB in size. On success, a 
+          File object is returned. The file can then be downloaded via the link 
+          https://api.telegram.org/file/bot<token>/<file_path>, where <file_path> is taken 
+          from the response. It is guaranteed that the link will be valid for at least 1 
+          hour. When the link expires, a new one can be requested by calling getFile 
+          again.  */
+        def getFile {
+          /* File identifier to get info about */
+          fileId : String
+        } => {
+          use Response
+          result: Option[File]
+        }
+                
+      
+        /* Use this method to set the score of the specified user in a game. On success, 
+          if the message was sent by the bot, returns the edited Message, otherwise 
+          returns True. Returns an error, if the new score is not greater than the user's 
+          current score in the chat and force is False.  */
+        def setGameScore {
+          /* User identifier */
+          userId             : Int
+          /* New score, must be non-negative */
+          score              : Int
+          /* Pass True, if the high score is allowed to decrease. This 
+          can be useful when fixing mistakes or banning cheaters */
+          force              : Option[Boolean]
+          /* Pass True, if the game message should not be automatically 
+          edited to include the current scoreboard */
+          disableEditMessage : Option[Boolean]
+          /* Required if inline_message_id is not specified. Unique 
+          identifier for the target chat */
+          chatId             : Option[Int]
+          /* Required if inline_message_id is not specified. Identifier 
+          of the sent message */
+          messageId          : Option[Int]
+          /* Required if chat_id and message_id are not specified. 
+          Identifier of the inline message */
+          inlineMessageId    : Option[String]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method for your bot to leave a group, supergroup or channel. Returns 
+          True on success.  */
+        def leaveChat {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup or channel (in the format 
+          @channelusername) */
+          chatId : ChatId
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to change the title of a chat. Titles can't be changed for 
+          private chats. The bot must be an administrator in the chat for this to work and 
+          must have the appropriate admin rights. Returns True on success.  */
+        def setChatTitle {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId : ChatId
+          /* New chat title, 1-255 characters */
+          title  : String
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* As of v.4.0, Telegram clients support rounded square mp4 videos of up to 1 
+          minute long. Use this method to send video messages. On success, the sent 
+          Message is returned.  */
+        def sendVideoNote {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Video note to send. Pass a file_id as String to send a 
+          video note that exists on the Telegram servers (recommended) 
+          or upload a new video using multipart/form-data. More info 
+          on Sending Files ». Sending video notes by a URL is 
+          currently unsupported */
+          videoNote           : (file) IFile
+          /* Duration of sent video in seconds */
+          duration            : Option[Int]
+          /* Video width and height, i.e. diameter of the video message */
+          length              : Option[Int]
+          /* Thumbnail of the file sent; can be ignored if thumbnail 
+          generation for the file is supported server-side. The 
+          thumbnail should be in JPEG format and less than 200 kB in 
+          size. A thumbnail‘s width and height should not exceed 320. 
+          Ignored if the file is not uploaded using 
+          multipart/form-data. Thumbnails can’t be reused and can be 
+          only uploaded as a new file, so you can pass 
+          “attach://<file_attach_name>” if the thumbnail was uploaded 
+          using multipart/form-data under <file_attach_name>. More 
+          info on Sending Files » */
+          thumb               : (file) Option[IFile]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Informs a user that some of the Telegram Passport elements they provided 
+          contains errors. The user will not be able to re-submit their Passport to you 
+          until the errors are fixed (the contents of the field for which you returned the 
+          error must change). Returns True on success. Use this if the data submitted by 
+          the user doesn't satisfy the standards your service requires for any reason. For 
+          example, if a birthday date seems invalid, a submitted document is blurry, a 
+          scan shows evidence of tampering, etc. Supply some details in the error message 
+          to make sure the user knows how to correct the issues.  */
+        def setPassportDataErrors {
+          /* User identifier */
+          userId : Int
+          /* A JSON-serialized array describing the errors */
+          errors : List[PassportElementError]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to delete a chat photo. Photos can't be changed for private 
+          chats. The bot must be an administrator in the chat for this to work and must 
+          have the appropriate admin rights. Returns True on success.  */
+        def deleteChatPhoto {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId : ChatId
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to send invoices. On success, the sent Message is returned.  */
+        def sendInvoice {
+          /* Unique identifier for the target private chat */
+          chatId                    : Int
+          /* Product name, 1-32 characters */
+          title                     : String
+          /* Product description, 1-255 characters */
+          description               : String
+          /* Bot-defined invoice payload, 1-128 bytes. This will not be 
+          displayed to the user, use for your internal processes. */
+          payload                   : String
+          /* Payments provider token, obtained via Botfather */
+          providerToken             : String
+          /* Unique deep-linking parameter that can be used to generate 
+          this invoice when used as a start parameter */
+          startParameter            : String
+          /* Three-letter ISO 4217 currency code, see more on currencies */
+          currency                  : String
+          /* Price breakdown, a JSON-serialized list of components (e.g. 
+          product price, tax, discount, delivery cost, delivery tax, 
+          bonus, etc.) */
+          prices                    : List[LabeledPrice]
+          /* JSON-encoded data about the invoice, which will be shared 
+          with the payment provider. A detailed description of 
+          required fields should be provided by the payment provider. */
+          providerData              : Option[String]
+          /* URL of the product photo for the invoice. Can be a photo of 
+          the goods or a marketing image for a service. People like it 
+          better when they see what they are paying for. */
+          photoUrl                  : Option[String]
+          /* Photo size */
+          photoSize                 : Option[Int]
+          /* Photo width */
+          photoWidth                : Option[Int]
+          /* Photo height */
+          photoHeight               : Option[Int]
+          /* Pass True, if you require the user's full name to complete 
+          the order */
+          needName                  : Option[Boolean]
+          /* Pass True, if you require the user's phone number to 
+          complete the order */
+          needPhoneNumber           : Option[Boolean]
+          /* Pass True, if you require the user's email address to 
+          complete the order */
+          needEmail                 : Option[Boolean]
+          /* Pass True, if you require the user's shipping address to 
+          complete the order */
+          needShippingAddress       : Option[Boolean]
+          /* Pass True, if user's phone number should be sent to 
+          provider */
+          sendPhoneNumberToProvider : Option[Boolean]
+          /* Pass True, if user's email address should be sent to 
+          provider */
+          sendEmailToProvider       : Option[Boolean]
+          /* Pass True, if the final price depends on the shipping 
+          method */
+          isFlexible                : Option[Boolean]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification       : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId          : Option[Int]
+          /* A JSON-serialized object for an inline keyboard. If empty, 
+          one 'Pay total price' button will be shown. If not empty, 
+          the first button must be a Pay button. */
+          replyMarkup               : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to send general files. On success, the sent Message is 
+          returned. Bots can currently send files of any type of up to 50 MB in size, this 
+          limit may be changed in the future.  */
+        def sendDocument {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* File to send. Pass a file_id as String to send a file that 
+          exists on the Telegram servers (recommended), pass an HTTP 
+          URL as a String for Telegram to get a file from the 
+          Internet, or upload a new one using multipart/form-data. 
+          More info on Sending Files » */
+          document            : (file) IFile
+          /* Thumbnail of the file sent; can be ignored if thumbnail 
+          generation for the file is supported server-side. The 
+          thumbnail should be in JPEG format and less than 200 kB in 
+          size. A thumbnail‘s width and height should not exceed 320. 
+          Ignored if the file is not uploaded using 
+          multipart/form-data. Thumbnails can’t be reused and can be 
+          only uploaded as a new file, so you can pass 
+          “attach://<file_attach_name>” if the thumbnail was uploaded 
+          using multipart/form-data under <file_attach_name>. More 
+          info on Sending Files » */
+          thumb               : (file) Option[IFile]
+          /* Document caption (may also be used when resending documents 
+          by file_id), 0-1024 characters after entities parsing */
+          caption             : Option[String]
+          /* Mode for parsing entities in the document caption. See 
+          formatting options for more details. */
+          parseMode           : Option[ParseMode]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to delete a message, including service messages, with the 
+          following limitations: - A message can only be deleted if it was sent less than 
+          48 hours ago. - A dice message in a private chat can only be deleted if it was 
+          sent more than 24 hours ago. - Bots can delete outgoing messages in private 
+          chats, groups, and supergroups. - Bots can delete incoming messages in private 
+          chats. - Bots granted can_post_messages permissions can delete outgoing messages 
+          in channels. - If the bot is an administrator of a group, it can delete any 
+          message there. - If the bot has can_delete_messages permission in a supergroup 
+          or a channel, it can delete any message there. Returns True on success.  */
+        def deleteMessage {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId    : ChatId
+          /* Identifier of the message to delete */
+          messageId : Int
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to send answers to an inline query. On success, True is 
+          returned. No more than 50 results per query are allowed.  */
+        def answerInlineQuery {
+          /* Unique identifier for the answered query */
+          inlineQueryId     : String
+          /* A JSON-serialized array of results for the inline query */
+          results           : List[InlineQueryResult]
+          /* The maximum amount of time in seconds that the result of 
+          the inline query may be cached on the server. Defaults to 
+          300. */
+          cacheTime         : Option[Int]
+          /* Pass True, if results may be cached on the server side only 
+          for the user that sent the query. By default, results may be 
+          returned to any user who sends the same query */
+          isPersonal        : Option[Boolean]
+          /* Pass the offset that a client should send in the next query 
+          with the same text to receive more results. Pass an empty 
+          string if there are no more results or if you don‘t support 
+          pagination. Offset length can’t exceed 64 bytes. */
+          nextOffset        : Option[String]
+          /* If passed, clients will display a button with specified 
+          text that switches the user to a private chat with the bot 
+          and sends the bot a start message with the parameter 
+          switch_pm_parameter */
+          switchPmText      : Option[String]
+          /* Deep-linking parameter for the /start message sent to the 
+          bot when user presses the switch button. 1-64 characters, 
+          only A-Z, a-z, 0-9, _ and - are allowed. Example: An inline 
+          bot that sends YouTube videos can ask the user to connect 
+          the bot to their YouTube account to adapt search results 
+          accordingly. To do this, it displays a ‘Connect your YouTube 
+          account’ button above the results, or even before showing 
+          any. The user presses the button, switches to a private chat 
+          with the bot and, in doing so, passes a start parameter that 
+          instructs the bot to return an oauth link. Once done, the 
+          bot can offer a switch_inline button so that the user can 
+          easily return to the chat where they wanted to use the bot's 
+          inline capabilities. */
+          switchPmParameter : Option[String]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to kick a user from a group, a supergroup or a channel. In the 
+          case of supergroups and channels, the user will not be able to return to the 
+          group on their own using invite links, etc., unless unbanned first. The bot must 
+          be an administrator in the chat for this to work and must have the appropriate 
+          admin rights. Returns True on success.  */
+        def kickChatMember {
+          /* Unique identifier for the target group or username of the 
+          target supergroup or channel (in the format 
+          @channelusername) */
+          chatId    : ChatId
+          /* Unique identifier of the target user */
+          userId    : Int
+          /* Date when the user will be unbanned, unix time. If user is 
+          banned for more than 366 days or less than 30 seconds from 
+          the current time they are considered to be banned forever */
+          untilDate : Option[Int]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to send audio files, if you want Telegram clients to display 
+          them in the music player. Your audio must be in the .MP3 or .M4A format. On 
+          success, the sent Message is returned. Bots can currently send audio files of up 
+          to 50 MB in size, this limit may be changed in the future. For sending voice 
+          messages, use the sendVoice method instead.  */
+        def sendAudio {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Audio file to send. Pass a file_id as String to send an 
+          audio file that exists on the Telegram servers 
+          (recommended), pass an HTTP URL as a String for Telegram to 
+          get an audio file from the Internet, or upload a new one 
+          using multipart/form-data. More info on Sending Files » */
+          audio               : (file) IFile
+          /* Audio caption, 0-1024 characters after entities parsing */
+          caption             : Option[String]
+          /* Mode for parsing entities in the audio caption. See 
+          formatting options for more details. */
+          parseMode           : Option[ParseMode]
+          /* Duration of the audio in seconds */
+          duration            : Option[Int]
+          /* Performer */
+          performer           : Option[String]
+          /* Track name */
+          title               : Option[String]
+          /* Thumbnail of the file sent; can be ignored if thumbnail 
+          generation for the file is supported server-side. The 
+          thumbnail should be in JPEG format and less than 200 kB in 
+          size. A thumbnail‘s width and height should not exceed 320. 
+          Ignored if the file is not uploaded using 
+          multipart/form-data. Thumbnails can’t be reused and can be 
+          only uploaded as a new file, so you can pass 
+          “attach://<file_attach_name>” if the thumbnail was uploaded 
+          using multipart/form-data under <file_attach_name>. More 
+          info on Sending Files » */
+          thumb               : (file) Option[IFile]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to restrict a user in a supergroup. The bot must be an 
+          administrator in the supergroup for this to work and must have the appropriate 
+          admin rights. Pass True for all permissions to lift restrictions from a user. 
+          Returns True on success.  */
+        def restrictChatMember {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format @supergroupusername) */
+          chatId      : ChatId
+          /* Unique identifier of the target user */
+          userId      : Int
+          /* New user permissions */
+          permissions : ChatPermissions
+          /* Date when restrictions will be lifted for the user, unix 
+          time. If user is restricted for more than 366 days or less 
+          than 30 seconds from the current time, they are considered 
+          to be restricted forever */
+          untilDate   : Option[Int]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* A simple method for testing your bot's auth token. Requires no parameters. 
+          Returns basic information about the bot in form of a User object.  */
+        def getMe {
+      
+        } => {
+          use Response
+          result: Option[User]
+        }
+                
+      
+        /* Use this method to forward messages of any kind. On success, the sent Message 
+          is returned.  */
+        def forwardMessage {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Unique identifier for the chat where the original message 
+          was sent (or channel username in the format 
+          @channelusername) */
+          fromChatId          : ChatId
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* Message identifier in the chat specified in from_chat_id */
+          messageId           : Int
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to get information about a member of a chat. Returns a 
+          ChatMember object on success.  */
+        def getChatMember {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup or channel (in the format 
+          @channelusername) */
+          chatId : ChatId
+          /* Unique identifier of the target user */
+          userId : Int
+        } => {
+          use Response
+          result: Option[ChatMember]
+        }
+                
+      
+        /* Use this method to get the current list of the bot's commands. Requires no 
+          parameters. Returns Array of BotCommand on success.  */
+        def getMyCommands {
+      
+        } => {
+          use Response
+          result: List[BotCommand]
+        }
+                
+      
+        /* Use this method to get a list of administrators in a chat. On success, returns 
+          an Array of ChatMember objects that contains information about all chat 
+          administrators except other bots. If the chat is a group or a supergroup and no 
+          administrators were appointed, only the creator will be returned.  */
+        def getChatAdministrators {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup or channel (in the format 
+          @channelusername) */
+          chatId : ChatId
+        } => {
+          use Response
+          result: List[ChatMember]
+        }
+                
+      
+        /* Use this method to send audio files, if you want Telegram clients to display 
+          the file as a playable voice message. For this to work, your audio must be in an 
+          .OGG file encoded with OPUS (other formats may be sent as Audio or Document). On 
+          success, the sent Message is returned. Bots can currently send voice messages of 
+          up to 50 MB in size, this limit may be changed in the future.  */
+        def sendVoice {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Audio file to send. Pass a file_id as String to send a file 
+          that exists on the Telegram servers (recommended), pass an 
+          HTTP URL as a String for Telegram to get a file from the 
+          Internet, or upload a new one using multipart/form-data. 
+          More info on Sending Files » */
+          voice               : (file) IFile
+          /* Voice message caption, 0-1024 characters after entities 
+          parsing */
+          caption             : Option[String]
+          /* Mode for parsing entities in the voice message caption. See 
+          formatting options for more details. */
+          parseMode           : Option[ParseMode]
+          /* Duration of the voice message in seconds */
+          duration            : Option[Int]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Audio]
+        }
+                
+      
+        /* Use this method to promote or demote a user in a supergroup or a channel. The 
+          bot must be an administrator in the chat for this to work and must have the 
+          appropriate admin rights. Pass False for all boolean parameters to demote a 
+          user. Returns True on success.  */
+        def promoteChatMember {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId             : ChatId
+          /* Unique identifier of the target user */
+          userId             : Int
+          /* Pass True, if the administrator can change chat title, 
+          photo and other settings */
+          canChangeInfo      : Option[Boolean]
+          /* Pass True, if the administrator can create channel posts, 
+          channels only */
+          canPostMessages    : Option[Boolean]
+          /* Pass True, if the administrator can edit messages of other 
+          users and can pin messages, channels only */
+          canEditMessages    : Option[Boolean]
+          /* Pass True, if the administrator can delete messages of 
+          other users */
+          canDeleteMessages  : Option[Boolean]
+          /* Pass True, if the administrator can invite new users to the 
+          chat */
+          canInviteUsers     : Option[Boolean]
+          /* Pass True, if the administrator can restrict, ban or unban 
+          chat members */
+          canRestrictMembers : Option[Boolean]
+          /* Pass True, if the administrator can pin messages, 
+          supergroups only */
+          canPinMessages     : Option[Boolean]
+          /* Pass True, if the administrator can add new administrators 
+          with a subset of their own privileges or demote 
+          administrators that he has promoted, directly or indirectly 
+          (promoted by administrators that were appointed by him) */
+          canPromoteMembers  : Option[Boolean]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to edit captions of messages. On success, if edited message is 
+          sent by the bot, the edited Message is returned, otherwise True is returned.  */
+        def editMessageCaption {
+          /* Required if inline_message_id is not specified. Unique 
+          identifier for the target chat or username of the target 
+          channel (in the format @channelusername) */
+          chatId          : Option[ChatId]
+          /* Required if inline_message_id is not specified. Identifier 
+          of the message to edit */
+          messageId       : Option[Int]
+          /* Required if chat_id and message_id are not specified. 
+          Identifier of the inline message */
+          inlineMessageId : Option[String]
+          /* New caption of the message, 0-1024 characters after 
+          entities parsing */
+          caption         : Option[String]
+          /* Mode for parsing entities in the message caption. See 
+          formatting options for more details. */
+          parseMode       : Option[ParseMode]
+          /* A JSON-serialized object for an inline keyboard. */
+          replyMarkup     : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to edit animation, audio, document, photo, or video messages. 
+          If a message is a part of a message album, then it can be edited only to a photo 
+          or a video. Otherwise, message type can be changed arbitrarily. When inline 
+          message is edited, new file can't be uploaded. Use previously uploaded file via 
+          its file_id or specify a URL. On success, if the edited message was sent by the 
+          bot, the edited Message is returned, otherwise True is returned.  */
+        def editMessageMedia {
+          /* Required if inline_message_id is not specified. Unique 
+          identifier for the target chat or username of the target 
+          channel (in the format @channelusername) */
+          chatId          : Option[ChatId]
+          /* Required if inline_message_id is not specified. Identifier 
+          of the message to edit */
+          messageId       : Option[Int]
+          /* Required if chat_id and message_id are not specified. 
+          Identifier of the inline message */
+          inlineMessageId : Option[String]
+          /* A JSON-serialized object for a new media content of the 
+          message */
+          media           : InputMedia
+          /* A JSON-serialized object for a new inline keyboard. */
+          replyMarkup     : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to pin a message in a group, a supergroup, or a channel. The 
+          bot must be an administrator in the chat for this to work and must have the 
+          ‘can_pin_messages’ admin right in the supergroup or ‘can_edit_messages’ admin 
+          right in the channel. Returns True on success.  */
+        def pinChatMessage {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Identifier of a message to pin */
+          messageId           : Int
+          /* Pass True, if it is not necessary to send a notification to 
+          all chat members about the new pinned message. Notifications 
+          are always disabled in channels. */
+          disableNotification : Option[Boolean]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to set the thumbnail of a sticker set. Animated thumbnails can 
+          be set for animated sticker sets only. Returns True on success.  */
+        def setStickerSetThumb {
+          /* Sticker set name */
+          name   : String
+          /* User identifier of the sticker set owner */
+          userId : Int
+          /* A PNG image with the thumbnail, must be up to 128 kilobytes 
+          in size and have width and height exactly 100px, or a TGS 
+          animation with the thumbnail up to 32 kilobytes in size; see 
+          https://core.telegram.org/animated_stickers#technical-requirements 
+          for animated sticker technical requirements. Pass a file_id 
+          as a String to send a file that already exists on the 
+          Telegram servers, pass an HTTP URL as a String for Telegram 
+          to get a file from the Internet, or upload a new one using 
+          multipart/form-data. More info on Sending Files ». Animated 
+          sticker set thumbnail can't be uploaded via HTTP URL. */
+          thumb  : (file) Option[IFile]
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to edit only the reply markup of messages. On success, if 
+          edited message is sent by the bot, the edited Message is returned, otherwise 
+          True is returned.  */
+        def editMessageReplyMarkup {
+          /* Required if inline_message_id is not specified. Unique 
+          identifier for the target chat or username of the target 
+          channel (in the format @channelusername) */
+          chatId          : Option[ChatId]
+          /* Required if inline_message_id is not specified. Identifier 
+          of the message to edit */
+          messageId       : Option[Int]
+          /* Required if chat_id and message_id are not specified. 
+          Identifier of the inline message */
+          inlineMessageId : Option[String]
+          /* A JSON-serialized object for an inline keyboard. */
+          replyMarkup     : Option[InlineKeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to send video files, Telegram clients support mp4 videos (other 
+          formats may be sent as Document). On success, the sent Message is returned. Bots 
+          can currently send video files of up to 50 MB in size, this limit may be changed 
+          in the future.  */
+        def sendVideo {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Video to send. Pass a file_id as String to send a video 
+          that exists on the Telegram servers (recommended), pass an 
+          HTTP URL as a String for Telegram to get a video from the 
+          Internet, or upload a new video using multipart/form-data. 
+          More info on Sending Files » */
+          video               : (file) IFile
+          /* Duration of sent video in seconds */
+          duration            : Option[Int]
+          /* Video width */
+          width               : Option[Int]
+          /* Video height */
+          height              : Option[Int]
+          /* Thumbnail of the file sent; can be ignored if thumbnail 
+          generation for the file is supported server-side. The 
+          thumbnail should be in JPEG format and less than 200 kB in 
+          size. A thumbnail‘s width and height should not exceed 320. 
+          Ignored if the file is not uploaded using 
+          multipart/form-data. Thumbnails can’t be reused and can be 
+          only uploaded as a new file, so you can pass 
+          “attach://<file_attach_name>” if the thumbnail was uploaded 
+          using multipart/form-data under <file_attach_name>. More 
+          info on Sending Files » */
+          thumb               : (file) Option[IFile]
+          /* Video caption (may also be used when resending videos by 
+          file_id), 0-1024 characters after entities parsing */
+          caption             : Option[String]
+          /* Mode for parsing entities in the video caption. See 
+          formatting options for more details. */
+          parseMode           : Option[ParseMode]
+          /* Pass True, if the uploaded video is suitable for streaming */
+          supportsStreaming   : Option[Boolean]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Document]
+        }
+                
+      
+        /* Use this method to set a new group sticker set for a supergroup. The bot must 
+          be an administrator in the chat for this to work and must have the appropriate 
+          admin rights. Use the field can_set_sticker_set optionally returned in getChat 
+          requests to check if the bot can use this method. Returns True on success.  */
+        def setChatStickerSet {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format @supergroupusername) */
+          chatId         : ChatId
+          /* Name of the sticker set to be set as the group sticker set */
+          stickerSetName : String
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to get up to date information about the chat (current name of 
+          the user for one-on-one conversations, current username of a user, group or 
+          channel, etc.). Returns a Chat object on success.  */
+        def getChat {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup or channel (in the format 
+          @channelusername) */
+          chatId : ChatId
+        } => {
+          use Response
+          result: Option[Chat]
+        }
+                
+      
+        /* Use this method to remove webhook integration if you decide to switch back to 
+          getUpdates. Returns True on success. Requires no parameters.  */
+        def deleteWebhook {
+      
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to move a sticker in a set created by the bot to a specific 
+          position. Returns True on success.  */
+        def setStickerPositionInSet {
+          /* File identifier of the sticker */
+          sticker  : String
+          /* New sticker position in the set, zero-based */
+          position : Int
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to set a custom title for an administrator in a supergroup 
+          promoted by the bot. Returns True on success.  */
+        def setChatAdministratorCustomTitle {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format @supergroupusername) */
+          chatId      : ChatId
+          /* Unique identifier of the target user */
+          userId      : Int
+          /* New custom title for the administrator; 0-16 characters, 
+          emoji are not allowed */
+          customTitle : String
+        } => {
+          use Response
+          result: Option[Boolean]
+        }
+                
+      
+        /* Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without 
+          sound). On success, the sent Message is returned. Bots can currently send 
+          animation files of up to 50 MB in size, this limit may be changed in the future.  */
+        def sendAnimation {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Animation to send. Pass a file_id as String to send an 
+          animation that exists on the Telegram servers (recommended), 
+          pass an HTTP URL as a String for Telegram to get an 
+          animation from the Internet, or upload a new animation using 
+          multipart/form-data. More info on Sending Files » */
+          animation           : (file) IFile
+          /* Duration of sent animation in seconds */
+          duration            : Option[Int]
+          /* Animation width */
+          width               : Option[Int]
+          /* Animation height */
+          height              : Option[Int]
+          /* Thumbnail of the file sent; can be ignored if thumbnail 
+          generation for the file is supported server-side. The 
+          thumbnail should be in JPEG format and less than 200 kB in 
+          size. A thumbnail‘s width and height should not exceed 320. 
+          Ignored if the file is not uploaded using 
+          multipart/form-data. Thumbnails can’t be reused and can be 
+          only uploaded as a new file, so you can pass 
+          “attach://<file_attach_name>” if the thumbnail was uploaded 
+          using multipart/form-data under <file_attach_name>. More 
+          info on Sending Files » */
+          thumb               : (file) Option[IFile]
+          /* Animation caption (may also be used when resending 
+          animation by file_id), 0-1024 characters after entities 
+          parsing */
+          caption             : Option[String]
+          /* Mode for parsing entities in the animation caption. See 
+          formatting options for more details. */
+          parseMode           : Option[ParseMode]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* If you sent an invoice requesting a shipping address and the parameter 
+          is_flexible was specified, the Bot API will send an Update with a shipping_query 
+          field to the bot. Use this method to reply to shipping queries. On success, True 
+          is returned.  */
+        def answerShippingQuery {
+          /* Unique identifier for the query to be answered */
+          shippingQueryId : String
+          /* Specify True if delivery to the specified address is 
+          possible and False if there are any problems (for example, 
+          if delivery to the specified address is not possible) */
+          ok              : Boolean
+          /* Required if ok is True. A JSON-serialized array of 
+          available shipping options. */
+          shippingOptions : List[ShippingOption]
+          /* Required if ok is False. Error message in human readable 
+          form that explains why it is impossible to complete the 
+          order (e.g. "Sorry, delivery to your desired address is 
+          unavailable'). Telegram will display this message to the 
+          user. */
+          errorMessage    : Option[String]
+        } => {
+          use Response
+          result: Option[Update]
+        }
+                
+      
+        /* Once the user has confirmed their payment and shipping details, the Bot API 
+          sends the final confirmation in the form of an Update with the field 
+          pre_checkout_query. Use this method to respond to such pre-checkout queries. On 
+          success, True is returned. Note: The Bot API must receive an answer within 10 
+          seconds after the pre-checkout query was sent.  */
+        def answerPreCheckoutQuery {
+          /* Unique identifier for the query to be answered */
+          preCheckoutQueryId : String
+          /* Specify True if everything is alright (goods are available, 
+          etc.) and the bot is ready to proceed with the order. Use 
+          False if there are any problems. */
+          ok                 : Boolean
+          /* Required if ok is False. Error message in human readable 
+          form that explains the reason for failure to proceed with 
+          the checkout (e.g. "Sorry, somebody just bought the last of 
+          our amazing black T-shirts while you were busy filling out 
+          your payment details. Please choose a different color or 
+          garment!"). Telegram will display this message to the user. */
+          errorMessage       : Option[String]
+        } => {
+          use Response
+          result: Option[Update]
+        }
+                
+      
+        /* Use this method to send static .WEBP or animated .TGS stickers. On success, the 
+          sent Message is returned.  */
+        def sendSticker {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Sticker to send. Pass a file_id as String to send a file 
+          that exists on the Telegram servers (recommended), pass an 
+          HTTP URL as a String for Telegram to get a .WEBP file from 
+          the Internet, or upload a new one using multipart/form-data. 
+          More info on Sending Files » */
+          sticker             : (file) IFile
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to get the number of members in a chat. Returns Int on success.  */
+        def getChatMembersCount {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup or channel (in the format 
+          @channelusername) */
+          chatId : ChatId
+        } => {
+          use Response
+          result: Option[Int]
+        }
+                
+      
+        /* Use this method to send photos. On success, the sent Message is returned.  */
+        def sendPhoto {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format @channelusername) */
+          chatId              : ChatId
+          /* Photo to send. Pass a file_id as String to send a photo 
+          that exists on the Telegram servers (recommended), pass an 
+          HTTP URL as a String for Telegram to get a photo from the 
+          Internet, or upload a new photo using multipart/form-data. 
+          More info on Sending Files » */
+          photo               : (file) IFile
+          /* Photo caption (may also be used when resending photos by 
+          file_id), 0-1024 characters after entities parsing */
+          caption             : Option[String]
+          /* Mode for parsing entities in the photo caption. See 
+          formatting options for more details. */
+          parseMode           : Option[ParseMode]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification : Option[Boolean]
+          /* If the message is a reply, ID of the original message */
+          replyToMessageId    : Option[Int]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove reply keyboard or to force a reply from the user. */
+          replyMarkup         : Option[KeyboardMarkup]
+        } => {
+          use Response
+          result: Option[Message]
+        }
+                
+      
+        /* Use this method to receive incoming updates using long polling (wiki). An Array 
+          of Update objects is returned.  */
+        def getUpdates {
+          /* Identifier of the first update to be returned. Must be 
+          greater by one than the highest among the identifiers of 
+          previously received updates. By default, updates starting 
+          with the earliest unconfirmed update are returned. An update 
+          is considered confirmed as soon as getUpdates is called with 
+          an offset higher than its update_id. The negative offset can 
+          be specified to retrieve updates starting from -offset 
+          update from the end of the updates queue. All previous 
+          updates will forgotten. */
+          offset         : Option[Int]
+          /* Limits the number of updates to be retrieved. Values 
+          between 1-100 are accepted. Defaults to 100. */
+          limit          : Option[Int]
+          /* Timeout in seconds for long polling. Defaults to 0, i.e. 
+          usual short polling. Should be positive, short polling 
+          should be used for testing purposes only. */
+          timeout        : Option[Int]
+          /* A JSON-serialized list of the update types you want your 
+          bot to receive. For example, specify [“message”, 
+          “edited_channel_post”, “callback_query”] to only receive 
+          updates of these types. See Update for a complete list of 
+          available update types. Specify an empty list to receive all 
+          updates regardless of type (default). If not specified, the 
+          previous setting will be used. Please note that this 
+          parameter doesn't affect updates created before the call to 
+          the getUpdates, so unwanted updates may be received for a 
+          short period of time. */
+          allowedUpdates : List[String]
+        } => {
+          use Response
+          result: List[Update]
+        }
+                
+      
+        /* Use this method to get a sticker set. On success, a StickerSet object is 
+          returned.  */
+        def getStickerSet {
+          /* Name of the sticker set */
+          name : String
+        } => {
+          use Response
+          result: Option[StickerSet]
+        }
+                
+      
+        /* Use this method to specify a url and receive incoming updates via an outgoing 
+          webhook. Whenever there is an update for the bot, we will send an HTTPS POST 
+          request to the specified url, containing a JSON-serialized Update. In case of an 
+          unsuccessful request, we will give up after a reasonable amount of attempts. 
+          Returns True on success. If you'd like to make sure that the Webhook request 
+          comes from Telegram, we recommend using a secret path in the URL, e.g. 
+          https://www.example.com/<token>. Since nobody else knows your bot‘s token, you 
+          can be pretty sure it’s us.  */
+        def setWebhook {
+          /* HTTPS url to send updates to. Use an empty string to remove 
+          webhook integration */
+          url            : String
+          /* Upload your public key certificate so that the root 
+          certificate in use can be checked. See our self-signed guide 
+          for details. */
+          certificate    : (file) Option[IFile]
+          /* Maximum allowed number of simultaneous HTTPS connections to 
+          the webhook for update delivery, 1-100. Defaults to 40. Use 
+          lower values to limit the load on your bot‘s server, and 
+          higher values to increase your bot’s throughput. */
+          maxConnections : Option[Int]
+          /* A JSON-serialized list of the update types you want your 
+          bot to receive. For example, specify [“message”, 
+          “edited_channel_post”, “callback_query”] to only receive 
+          updates of these types. See Update for a complete list of 
+          available update types. Specify an empty list to receive all 
+          updates regardless of type (default). If not specified, the 
+          previous setting will be used. Please note that this 
+          parameter doesn't affect updates created before the call to 
+          the setWebhook, so unwanted updates may be received for a 
+          short period of time. */
+          allowedUpdates : List[String]
+        } => {
+          use Response
+          result: Option[Update]
+        }
+                
+      }
+    }
+  }
+}
+     

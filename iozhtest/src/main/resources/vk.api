@@ -1,0 +1,1777 @@
+namespace iozhik {
+
+  namespace vk(snake circe http4s) {
+
+    enum Event {
+      groupId : Int
+
+      EventMessageNew {
+        type   : "message_new:1"
+        object : Message
+      }
+
+      EventMessageReply {
+        type   : "message_reply:2"
+        object : Message
+      }
+
+      EventMessageEdit {
+        type   : "message_edit:3"
+        object : Message
+      }
+
+      EventMessageAllow {
+        type   : "message_allow:4"
+        object : (flatten) {
+          userId : Int
+          key    : String
+        }
+      }
+
+      EventMessageDeny {
+        type   : "message_deny:5"
+        object : (flatten) {
+          userId : Int
+        }
+      }
+
+      EventPhotoNew {
+        type   : "photo_new:6"
+        object : Photo
+      }
+
+      EventPhotoCommentNew {
+        type   : "photo_comment_new:7"
+        object : (flatten) {
+          use Comment
+          photoId      : Int
+          photoOwnerId : Int
+        }
+      }
+
+      EventPhotoCommentEdit {
+        type   : "photo_comment_edit:8"
+        object : (flatten) {
+          use Comment
+          photoId      : Int
+          photoOwnerId : Int
+        }
+      }
+
+      EventPhotoCommentRestore {
+        type   : "photo_comment_restore:9"
+        object : (flatten) {
+          use Comment
+          photoId      : Int
+          photoOwnerId : Int
+        }
+      }
+
+      EventPhotoCommentDelete {
+        type   : "photo_comment_delete:10"
+        object : (flatten) {
+          ownerId   : Int
+          id        : Int
+          userId    : Int
+          deleterId : Int
+          photoId   : Int
+        }
+      }
+
+      EventAudioNew {
+        type   : "audio_new:11"
+        object : Audio
+      }
+
+      EventVideoNew {
+        type   : "video_new:12"
+        object : Video
+      }
+
+      EventVideoCommentNew {
+        type   : "video_comment_new:13"
+        object : (flatten) {
+          use Comment
+          videoId : Int
+          videoOwnerId : Int
+        }
+      }
+
+      EventVideoCommentEdit {
+        type   : "video_comment_edit:14"
+        object : (flatten) {
+          use Comment
+          videoId : Int
+          videoOwnerId : Int
+        }
+      }
+
+      EventVideoCommentRestore {
+        type   : "video_comment_restore:15"
+        object : (flatten) {
+          use Comment
+          video_id : Int
+          videoOwnerId : Int
+        }
+      }
+
+      EventVideoCommentDelete {
+        type   : "video_comment_delete:16"
+        object : (flatten) {
+          ownerId   : Int
+          id        : Int
+          userId    : Int
+          deleterId : Int
+          videoId   : Int
+        }
+      }
+
+      EventWallPostNew {
+        type : "wall_post_new:17"
+        object : (flatten) {
+          use WallPost
+          postponedId : Int
+        }
+      }
+
+      EventWallRepost {
+        type : "wall_repost:18"
+        object : (flatten) {
+          use WallPost
+          postponedId : Int
+        }
+      }
+
+      EventWallReplyNew {
+        type : "wall_reply_new:19"
+        object : (flatten) {
+          use Comment
+          postId       : Int
+          postOwnderId : Int
+        }
+      }
+
+      EventWallReplyEdit {
+        type : "wall_reply_edit:20"
+        object : (flatten) {
+          use Comment
+          postId       : Int
+          postOwnderId : Int
+        }
+      }
+
+      EventWallReplyRestore {
+        type : "wall_reply_restore:21"
+        object : (flatten) {
+          use Comment
+          postId       : Int
+          postOwnderId : Int
+        }
+      }
+
+      EventWallReplyDelete {
+        type : "wall_reply_delete:22"
+        object : (flatten) {
+          ownerId   : Int
+          id        : Int
+          deleterId : Int
+          postId    : Int
+        }
+      }
+
+      EventBoardPostNew {
+        type : "board_post_new:23"
+        object : (flatten) {
+          use BoardComment
+          topicId      : Int
+          topicOwnerId : Int
+        }
+      }
+
+      EventBoardPostEdit {
+        type : "board_post_edit:24"
+        object : (flatten) {
+          use BoardComment
+          topicId      : Int
+          topicOwnerId : Int
+        }
+      }
+
+      EventBoardPostRestore {
+        type : "board_post_restore:25"
+        object : (flatten) {
+          use BoardComment
+          topicId      : Int
+          topicOwnerId : Int
+        }
+      }
+
+      EventBoardPostDelete {
+        type : "board_post_delete:26"
+        object : (flatten) {
+          topicId      : Int
+          topicOwnerId : Int
+          id           : Int
+        }
+      }
+
+      EventMarketCommentNew {
+        type : "market_comment_new:27"
+        object : (flatten) {
+          use Comment
+          marketOwnerId : Int
+          itemId        : Int
+        }
+      }
+
+      EventMarketCommentEdit {
+        type : "market_comment_edit:28"
+        object : (flatten) {
+          use Comment
+          marketOwnerId : Int
+          itemId        : Int
+        }
+      }
+
+      EventMarketCommentRestore {
+        type : "market_comment_restore:29"
+        object : (flatten) {
+          use Comment
+          marketOwnerId : Int
+          itemId        : Int
+        }
+      }
+
+      EventMarketCommentDelete {
+        type : "market_comment_delete:30"
+        object : (flatten) {
+          ownerId   : Int
+          id        : Int
+          userId    : Int
+          deleterId : Int
+          itemId    : Int
+        }
+      }
+
+      EventGroupLeave {
+        type : "group_leave:31"
+        object : (flatten) {
+          userId : Int
+          self   : Boolean
+        }
+      }
+
+      EventGroupJoin {
+        type : "group_join:32"
+        object : (flatten) {
+          userId : Int
+        }
+      }
+
+      EventUserBlock {
+        type : "user_block:33"
+        object : (flatten) {
+          adminId     : Int
+          userId      : Int
+          unblockDate : (useDateTime) Long
+          comment     : String
+        }
+      }
+
+      EventUserUnblock {
+        type : "user_unblock:34"
+        object : (flatten) {
+          adminId     : Int
+          userId      : Int
+          byEndDate   : Boolean
+        }
+      }
+
+      EventPollVoteNew {
+        type : "poll_vote_new:35"
+        object : (flatten) {
+          ownerId  : Int
+          pollId   : Int
+          optionId : Int
+          userId   : Int
+        }
+      }
+
+      EventGroupOfficersEdit {
+        type : "group_officers_edit:36"
+        object : (flatten) {
+          adminId  : Int
+          userId   : Int
+        }
+      }
+
+      EventGroupChangeSettings {
+        type : "group_change_settings:37"
+        object : (flatten) {
+          userId : Int
+        }
+      }
+
+      EventGroupChangePhoto {
+        type : "group_change_photo:38"
+        object : (flatten) {
+          userId : Int
+          photo  : Photo
+        }
+      }
+
+      EventVkPayTransaction {
+        type : "vkpay_transaction:39"
+        object : (flatten) {
+          fromId      : Int
+          amount      : Int
+          description : String
+          date        : (useDateTime) Long
+        }
+      }
+
+    }
+
+    Audio {
+      id       : Int
+      ownerId  : Int
+      artist   : String
+      title    : String
+      duration : Int
+      url      : String
+      lyricsId : Int
+      albumId  : Int
+      genreId  : Int
+      date     : Int
+      noSearch : Option[Int]
+      isHq     : Option[Int]
+    }
+
+    SizedPhoto {
+      src    : String
+      width  : Int
+      height : Int
+      type   : String
+    }
+
+    Photo {
+      id      : Int
+      albumId : Int
+      ownerId : Int
+      userId  : Int
+      text    : String
+      date    : (useDateTime) Long
+      sizes   : Vector[SizedPhoto]
+      width   : Option[Int]
+      height  : Option[Int]
+    }
+
+    Video {
+      id             : Int
+      ownerId        : Int
+      title          : String
+      description    : String
+      duration       : Int
+      photo130       : String
+      photo320       : String
+      photo640       : String
+      photo800       : String
+      photo1280      : String
+      firstFrame130  : String
+      firstFrame320  : String
+      firstFrame640  : String
+      firstFrame800  : String
+      firstFrame1280 : String
+      date           : (useDateTime) Long
+      addingDate     : (useDateTime) Long
+      views          : Int
+      comments       : Int
+      player         : String
+      platform       : String
+      canEdit        : Option[Int]
+      canAdd         : Int
+      isPrivate      : Option[Int]
+      accessKey      : Int
+      processing     : Option[Int]
+      live           : Option[Int]
+      upcoming       : Option[Int]
+      isFavorite     : Boolean
+    }
+
+    enum Attachment {
+      AttachmentPhoto {
+        type: "photo:1"
+        photo: Photo
+      }
+
+      AttachmentVideo {
+        type: "video:2"
+        video: Video
+      }
+    }
+
+    Place {
+      id        : Int
+      title     : String
+      latitude  : Double
+      longitude : Double
+      created   : Int
+      icon      : String
+      country   : String
+      city      : String
+
+      type      : Option[Int]
+      groupId   : Option[Int]
+      groupPhoto : Option[String]
+      checkins  : Option[Int]
+      updated   : Option[Int]
+      address   : Option[Int]
+    }
+
+    Coordinate {
+      latitude  : Double
+      longitude : Double
+    }
+
+    Geo {
+      type        : String
+      coordinates : Coordinate
+      place       : Place
+    }
+
+    CommentsThread {
+      count           : Int
+      items           : Vector[Comment]
+      canPost         : Boolean
+      showReplyButton : Boolean
+      groupsCanPost   : Boolean
+    }
+
+    Comment {
+      id             : Int
+      fromId         : Int
+      date           : (useDateTime) Long
+      text           : String
+      replyToUser    : Int
+      replyToComment : Int
+      attachments    : Vector[Attachment]
+      parentsStack   : Vector[Int]
+      thread         : CommentsThread
+    }
+
+    BoardComment {
+      id          : Int
+      fromId      : Int
+      date        : (useDateTime) Long
+      text        : String
+      attachments : Vector[Attachment]
+    }
+
+    Message {
+      id           : Int
+      date         : (useDateTime) Long
+      peerId       : Int
+      fromId       : Int
+      text         : String
+      randomId     : Int
+      ref          : String
+      refSource    : String
+      attachments  : Vector[Attachment]
+      important    : Boolean
+      geo          : Geo
+      payload      : String
+      fwdMessages  : Vector[Message]
+      replyMessage : Vector[Message]
+      action       : Action
+    }
+
+    Action {
+      type     : String
+      memberId : Int
+      text     : String
+      email    : String
+      photo    : ActionPhoto
+    }
+
+    ActionPhoto {
+      photo50  : String
+      photo100 : String
+      photo200 : String
+    }
+
+    WallPost {
+      id           : Int
+      ownerId      : Int
+      fromId       : Int
+      createdBy    : Int
+      date         : (useDateTime) Long
+      text         : String
+      replyOwnerId : Int
+      replyPostId  : Int
+      friendsOnly  : Option[Int]
+      comments     : WallPostCommentsAnon
+      likes        : WallPostLikesAnon
+      reposts      : WallPostReportsAnon
+      views        : WallPostViewsAnon
+      postType     : PostType
+      postSource   : PostSource
+      attachments  : Vector[Attachment]
+      geo          : Geo
+      signerId     : Int
+      copyHistory  : Vector[WallPost]
+      canPin       : Boolean
+      canDelete    : Boolean
+      canEdit      : Boolean
+      isPinned     : Boolean
+      markedAsAds  : Boolean
+      isFavorite   : Boolean
+    }
+
+    PostSource {
+      type     : PostSourceType
+      platform : PlatformType
+      data     : DataType
+      url      : String
+    }
+
+    /* This type is not defined in vk api (artificial) */
+    enum DataType {
+      ProfileActivity {
+        type : "profile_activity:1"
+      }
+      ProfilePhoto {
+        type : "profile_photo:2"
+      }
+      Comments {
+        type : "comments:3"
+      }
+      Like {
+        type : "like:4"
+      }
+      Poll {
+        type : "poll:5"
+      }
+    }
+
+    /* This type is not defined in vk api (artificial) */
+    enum PlatformType {
+      Android {
+        type : "android:1"
+      }
+      Iphone {
+        type : "iphone:2"
+      }
+      Wphone {
+        type : "wphone:3"
+      }
+    }
+
+    /* This type is not defined in vk api (artificial) */
+    enum PostSourceType {
+      Vk {
+        type : "vk:1"
+      }
+      Widget {
+        type : "widget:2"
+      }
+      Api {
+        type : "api:3"
+      }
+      Rss {
+        type : "rss:4"
+      }
+      Sms {
+        type : "sms:5"
+      }
+    }
+
+    /* This type is not defined in vk api (artificial) */
+    enum PostType {
+      Post {
+        type : "post:1"
+      }
+      Copy {
+        type : "copy:2"
+      }
+      Reply {
+        type : "reply:3"
+      }
+      Postpone {
+        type : "postpone:4"
+      }
+      Suggest {
+        type : "suggest:4"
+      }
+    }
+
+    /* This type is not defined in vk api (artificial) */
+    WallPostCommentsAnon {
+      count         : Int
+      canPost       : Boolean
+      groupsCanPost : Boolean
+      canClose      : Boolean
+      canOpen       : Boolean
+    }
+
+    /* This type is not defined in vk api (artificial) */
+    WallPostLikesAnon {
+      count      : Int
+      userLikes  : Boolean
+      canLike    : Boolean
+      canPublish : Boolean
+    }
+
+    /* This type is not defined in vk api (artificial) */
+    WallPostReportsAnon {
+      count        : Int
+      userReposted : Boolean
+    }
+
+    /* This type is not defined in vk api (artificial) */
+    WallPostViewsAnon {
+      count : Int
+    }
+
+    User {
+
+      /* идентификатор пользователя. */
+      id              : Int
+      /* имя */
+      firstName       : String
+      /* фамилия. */
+      lastName        : String
+      /* поле возвращается, если страница пользователя удалена или заблокирована, содержит значение deleted или banned. В этом случае опциональные поля не возвращаются. */
+      deactivated     : String
+      /* скрыт ли профиль пользователя настройками приватности. */
+      isClosed        : Boolean
+      /* может ли текущий пользователь видеть профиль при is_closed = 1 (например, он есть в друзьях). */
+      canAccessClosed : Boolean
+
+      /* содержимое поля «О себе» из профиля. */
+      about           : Option[String]
+      /* содержимое поля «Деятельность» из профиля. */
+      activities      : Option[String]
+      /* дата рождения. Возвращается в формате D.M.YYYY или D.M (если год рождения скрыт). Если дата рождения скрыта целиком, поле отсутствует в ответе. */
+      bdate           : Option[String]
+      /* [0,1]	информация о том, находится ли текущий пользователь в черном списке. Возможные значения: Option[*/
+      blacklisted     : Option[Boolean]
+      /* [0,1]	информация о том, находится ли пользователь в черном списке у текущего пользователя. Возможные значения: Option[*/
+      blacklistedByMe : Option[Boolean]
+      /* содержимое поля «Любимые книги» из профиля пользователя. */
+      books           : Option[String]
+      /* [0,1]	информация о том, может ли текущий пользователь оставлять записи на стене. */
+      canPost         : Option[Boolean]
+      /* [0,1]	информация о том, может ли текущий пользователь видеть чужие записи на стене. */
+      canSeeAllPosts  : Option[Boolean]
+      /* [0,1]	информация о том, может ли текущий пользователь видеть аудиозаписи. Возможные значения: Option[*/
+      canSeeAudio     : Option[Boolean]
+      /* [0,1]	информация о том, будет ли отправлено уведомление пользователю о заявке в друзья от текущего пользователя. Возможные значения: Option[*/
+      canSendFriendRequest : Option[Boolean]
+      /* [0,1]	информация о том, может ли текущий пользователь отправить личное сообщение. Возможные значения: Option[*/
+      can_write_private_message : Option[Boolean]
+      /* информация о карьере пользователя. Объект, содержащий следующие поля: */
+      career : Option[Career]
+      /* информация о городе, указанном на странице пользователя в разделе «Контакты». Возвращаются следующие поля: */
+      city   : Option[City]
+      /* количество общих друзей с текущим пользователем. */
+      commonCount : Option[Int]
+      /* возвращает данные об указанных в профиле сервисах пользователя, таких как: skype, facebook, twitter, livejournal, instagram. Для каждого сервиса возвращается отдельное поле с типом string, содержащее никнейм пользователя. Например, "instagram": "username". */
+      skype       : Option[String]
+      facebook    : Option[String]
+      twitter     : Option[String]
+      livejournal : Option[String]
+      instagram   : Option[String]
+      /* информация о телефонных номерах пользователя */
+      contacts    : Option[Contacts]
+      /* количество различных объектов у пользователя. Поле возвращается только в методе users.get при запросе информации об одном пользователе, с передачей пользовательского access_token. */
+      counters    : Option[Counters]
+      /* информация о стране, указанной на странице пользователя в разделе «Контакты». */
+      country     : Option[Country]
+      /* возвращает данные о точках, по которым вырезаны профильная и миниатюрная фотографии пользователя, при наличии. */
+      cropPhoto   : Option[CropPhoto]
+      /* короткий адрес страницы. Возвращается строка, содержащая короткий адрес страницы (например, andrew). Если он не назначен, возвращается "id"+user_id, например, id35828305. */
+      domain      : Option[String]
+      /* информация о высшем учебном заведении пользователя. */
+      education   : Option[Education]
+      /* имя в заданном падеже. */
+      firstNameNom : Option[String]
+      firstNameGen : Option[String]
+      firstNameDat : Option[String]
+      firstNameAcc : Option[String]
+      firstNameIns : Option[String]
+      firstNameAbl : Option[String]
+      /* количество подписчиков пользователя. */
+      followersCount : Option[Int]
+      /* статус дружбы с пользователем. Возможные значения:
+         0 — не является другом,
+         1 — отправлена заявка/подписка пользователю,
+         2 — имеется входящая заявка/подписка от пользователя,
+         3 — является другом. */
+      friendStatus : Option[Int]
+      /* содержимое поля «Любимые игры» из профиля. */
+      games : Option[String]
+      /* информация о том, известен ли номер мобильного телефона пользователя. Возвращаемые значения: 1 — известен, 0 — не известен. */
+      hasMobile        : Option[Boolean]
+      hasPhoto         : Option[Boolean]
+      homeTown         : Option[String]
+      interests        : Option[String]
+      isFavorite       : Option[Boolean]
+      isFriend         : Option[Boolean]
+      isHiddenFromFeed : Option[Boolean]
+      /* фамилия в заданном падеже. */
+      lastNameNom : Option[String]
+      lastNameGen : Option[String]
+      lastNameDat : Option[String]
+      lastNameAcc : Option[String]
+      lastNameIns : Option[String]
+      lastNameAbl : Option[String]
+      /* время последнего посещения. Объект, содержащий следующие поля: */
+      lastSeen    : Option[LastSeen]
+      /* разделенные запятой идентификаторы списков друзей, в которых состоит пользователь. Поле доступно только для метода friends.get. */
+      lists       : Option[String]
+      /* девичья фамилия */
+      maidenName  : Option[String]
+      /* информация о военной службе пользователя */
+      military    : Option[Military]
+      /* содержимое поля «Любимые фильмы» из профиля пользователя. */
+      movies      : Option[String]
+      /* содержимое поля «Любимая музыка» из профиля пользователя. */
+      music       : Option[String]
+      /* никнейм (отчество) пользователя. */
+      nickname    : Option[String]
+      /* информация о текущем роде занятия пользователя. */
+      occupation  : Option[Occupation]
+      /* информация о том, находится ли пользователь сейчас на сайте. Если пользователь использует мобильное приложение либо мобильную версию, возвращается дополнительное поле online_mobile, содержащее 1. При этом, если используется именно приложение, дополнительно возвращается поле online_app, содержащее его идентификатор. */
+      online      : Option[Boolean]
+      onlineMobile: Option[Boolean]
+      onlineApp   : Option[String]
+      /* информация о полях из раздела «Жизненная позиция». */
+      personal    : Option[Personal]
+      /* url квадратной фотографии пользователя, имеющей ширину 50 пикселей. В случае отсутствия у пользователя фотографии возвращается https://vk.com/images/camera_50.png. */
+      photo50      : Option[String]
+      photo100     : Option[String]
+      photo200orig : Option[String]
+      photo200     : Option[String]
+      photo400orig : Option[String]
+      /* строковый идентификатор главной фотографии профиля пользователя в формате {user_id}_{photo_id}, например, 6492_192164258. Обратите внимание, это поле может отсутствовать в ответе. */
+      photoId      : Option[String]
+      photoMax     : Option[String]
+      photoMaxOrig : Option[String]
+      /* любимые цитаты */
+      quotes       : Option[String]
+      /* список родственников. */
+      relatives    : Option[Relative]
+      /* семейное положение */
+      relation     : Option[Int]
+      /* список школ, в которых учился пользователь. */
+      schools      : Option[School]
+      /* короткое имя страницы. */
+      screenName   : Option[String]
+      /* пол */
+      sex      : Option[Int]
+      site     : Option[String]
+      status   : Option[String]
+      timezone : Option[Int]
+      /* информация о том, есть ли на странице пользователя «огонёк». */
+      trending : Option[Boolean]
+      /* любимые телешоу */
+      tv       : Option[String]
+      /* список вузов, в которых учился пользователь. */
+      universities : Vector[University]
+      /* возвращается 1, если страница пользователя верифицирована, 0 — если нет. */
+      verified : Option[Boolean]
+      /* режим стены по умолчанию. Возможные значения: owner, all. */
+      wallDefault : Option[String]
+    }
+
+    Career {
+      /* идентификатор сообщества (если доступно, иначе company); */
+      groupId   : Int
+      /* название компании (если доступно, иначе group_id); */
+      company   : String
+      /* идентификатор страны; */
+      countryId : Int
+      /* идентификатор города (если доступно, иначе city_name); */
+      cityId    : Int
+      /* название города (если доступно, иначе city_id); */
+      cityName  : String
+      /* год начала работы; */
+      from      : Int
+      /* год окончания работы; */
+      until     : Int
+      /* должность. */
+      position  : String
+    }
+
+    City {
+      /* идентификатор города, который можно использовать для получения его названия с помощью метода database.getCitiesById; */
+      id : Int
+      /* название города. */
+      title : String
+    }
+
+    Contacts {
+      /* номер мобильного телефона пользователя (только для Standalone-приложений); */
+      mobilePhone : String
+      /* дополнительный номер телефона пользователя. */
+      homePhone   : String
+    }
+
+    Counters {
+      /* количество фотоальбомов; */
+      albums         : Integer
+      /* количество видеозаписей; */
+      videos         : Integer
+      /* количество аудиозаписей; */
+      audios         : Integer
+      /* количество фотографий; */
+      photos         : Integer
+      /* количество заметок; */
+      notes          : Integer
+      /* количество друзей; */
+      friends        : Integer
+      /* количество сообществ; */
+      groups         : Integer
+      /* количество друзей онлайн; */
+      onlineFriends  : Integer
+      /* количество общих друзей; */
+      mutualFriends  : Integer
+      /* количество видеозаписей с пользователем; */
+      userVideos     : Integer
+      /* количество подписчиков; */
+      followers      : Integer
+      /* количество объектов в блоке «Интересные страницы». */
+      pages          : Integer
+    }
+
+    Country {
+      /* идентификатор страны, который можно использовать для получения ее названия с помощью метода database.getCountriesById; */
+      id : Int
+      /* название страны. */
+      title : String
+    }
+
+    CropPhoto {
+      /* объект photo фотографии пользователя, из которой вырезается главное фото профиля. */
+      photo : Photo
+      /* вырезанная фотография пользователя */
+      crop  : Crop
+      /* миниатюрная квадратная фотография, вырезанная из фотографии crop. Содержит набор полей, аналогичный объекту crop. */
+      rect  : Crop
+    }
+
+    Crop {
+      /* координата X левого верхнего угла в процентах; */
+      x  : Integer
+      /* координата Y левого верхнего угла в процентах; */
+      y  : Integer
+      /* координата X правого нижнего угла в процентах; */
+      x2 : Integer
+      /* координата Y правого нижнего угла в процентах. */
+      y2 : Integer
+    }
+
+    Education {
+      /* идентификатор университета; */
+      university      : Integer
+      /* название университета; */
+      universityName  : String
+      /* идентификатор факультета; */
+      faculty         : Integer
+      /* название факультета; */
+      facultyName     : String
+      /* год окончания. */
+      graduation      : Integer
+    }
+
+    LastSeen {
+      time     : Integer
+      platform : Integer
+    }
+
+    Military {
+      /* номер части; */
+      unit       : String
+      /* идентификатор части в базе данных; */
+      unitId     : Integer
+      /* идентификатор страны, в которой находится часть; */
+      countryId  : Integer
+      /* год начала службы; */
+      from       : Integer
+      /* год окончания службы. */
+      until      : Integer
+    }
+
+    Occupation {
+      type : String
+      id   : Int
+      name : String
+    }
+
+    Personal {
+      political  : Int
+      langs      : Vector[String]
+      religion   : String
+      inspiredBy : String
+      peopleMain : Int
+      lifeMain   : Int
+      smoking    : Int
+      alcohol    : Int
+    }
+
+    Relative {
+      id   : Int
+      name : String
+      type : String
+    }
+
+    School {
+      /* идентификатор школы; */
+      id             : Integer
+      /* идентификатор страны, в которой расположена школа; */
+      country        : Integer
+      /* идентификатор города, в котором расположена школа; */
+      city           : Integer
+      /* наименование школы */
+      name           : String
+      /* год начала обучения; */
+      yearFrom       : Integer
+      /* год окончания обучения; */
+      yearTo         : Integer
+      /* год выпуска; */
+      yearGraduated  : Integer
+      /* буква класса; */
+      class          : String
+      /* специализация; */
+      speciality     : String
+      /* идентификатор типа; */
+      type           : Integer
+      /* название типа. Возможные значения для пар type-typeStr: */
+      typeStr        : String
+    }
+
+    University {
+      /* идентификатор университета; */
+      id               : Integer
+      /* идентификатор страны, в которой расположен университет; */
+      country          : Integer
+      /* идентификатор города, в котором расположен университет; */
+      city             : Integer
+      /* наименование университета; */
+      name             : String
+      /* идентификатор факультета; */
+      faculty          : Integer
+      /* наименование факультета; */
+      facultyName      : String
+      /* идентификатор кафедры; */
+      chair            : Integer
+      /* наименование кафедры; */
+      chairName        : String
+      /* год окончания обучения; */
+      graduation       : Integer
+      /* форма обучения; */
+      educationForm    : String
+      /* статус (например, «Выпускник (специалист)»). */
+      educationStatus  : String
+	}
+
+    Conversation {
+      peer : Peer
+      inRead : Int
+      outRead : Int
+      unreadCount : Int
+      important : Boolean
+      unanswered : Boolean
+      pushSettings : PushSettings
+      canWrite : CanWrite
+      chatSettings : ChatSettings
+    }
+
+    Peer {
+      id : Int
+      type : String
+      localId : Int
+    }
+
+    PushSettings {
+     disabledUntil : Int
+     disabledForever : Boolean
+     noSound : Boolean
+     sound : Boolean
+    }
+
+    CanWrite {
+      allowed : Boolean
+      reason : Int
+    }
+
+    ChatSettings {
+      membersCount : Int
+      title : String
+      pinnedMessage : PinnedMessage
+      state : String
+      photo : ActionPhoto
+      activeIds : Vector[Int]
+      isGroupChannel : Boolean
+    }
+
+    PinnedMessage {
+      id : Int
+      date : Int
+      fromId : Int
+      text : String
+      attachments : String
+      geo : Geo
+      fwdMessages : Vector[Message]
+    }
+
+    Chat {
+      id : Int
+      type : String
+      title : String
+      adminId : Int
+      users : Vector[User]
+      pushSettings : PushSettings
+      photo50 : String
+      photo100 : String
+      photo200 : String
+      left : Boolean
+      kicked : Boolean
+    }
+
+    Note {
+      id : Int
+      ownerId : Int
+      title : String
+      text : String
+      date : Int
+      comments : Int
+      readComments : Int
+      viewUrl : String
+    }
+
+    WikiPage {
+      id : Int
+      groupId : Int
+      creatorId : Int
+      title : String
+      currentUserCanEdit : Boolean
+      currentUserCanEditAccess : Boolean
+      whoCanView : Int
+      whoCanEdit : Int
+      edited : Int
+      created : Int
+      editorId : Int
+      views : Int
+      parent : String
+      parent2 : String
+      source : String
+      html : String
+      viewUrl : String
+    }
+
+    Product {
+      id : Int
+      ownerId : Int
+      title : String
+      description : String
+      price : Price
+      category : Category
+      thumbPhoto : String
+      date : Int
+      availability : Int
+      isFavorite : Boolean
+      photos : Vector[Photo]
+      canComment : Boolean
+      canRepost : Boolean
+      likes : Likes
+      url : String
+      buttonTitle : String
+    }
+
+    Price {
+      amount : Int
+      currency : Currency
+      text : String
+    }
+
+    Currency {
+      id : Int
+      name : String
+    }
+
+    Category {
+      id : Int
+      name : String
+      section : Section
+    }
+
+    Section {
+      id : Int
+      name : String
+    }
+
+    Likes {
+      userLikes : Boolean
+      canLike : Boolean
+      count : Int
+    }
+
+    ProductCollection {
+      id : Int
+      ownerId : Int
+      title : String
+      photo : Photo
+      count : Int
+      updatedTime : Int
+    }
+
+    Discussion {
+      id : Int
+      title : String
+      created : Int
+      createdBy : Int
+      updated : Int
+      updateBy : Int
+      isClosed : Boolean
+      isFixed : Boolean
+      comments : Int
+      firstComment : String
+      lastComment : String
+    }
+
+    DiscussionComment {
+      id : Int
+      fromId : Int
+      date : Int
+      text : String
+      attachments : Vector[Attachment]
+      likes : Likes
+    }
+
+    Application {
+      id : Int
+      title : String
+      icon278 : String
+      icon139 : String
+      icon150 : String
+      icon75 : String
+      banner560 : String
+      banner1120 : String
+      type : String
+      section : String
+      authorUrl : String
+      authorId : Int
+      authorGroup : Int
+      membersCount : Int
+      publishedDate : Int
+      catalogPosition : Int
+      international : Boolean
+      leaderboardType : Integer
+      genreId : Int
+      genre : String
+      platformId : String
+      isInCatalog : Boolean
+      friends : Vector[Int]
+      installed : Boolean
+      isHtml5App : Option[Boolean]
+      screenOrientation : Int
+      mobileControlsType : Integer
+      mobileViewSupportType : Option[Boolean]
+
+      description : Option[String]
+      screenName : Option[String]
+      icon16 : Option[String]
+      screenshots : Vector[Photo]
+      pushEnabled : Boolean
+    }
+
+    Sticker {
+      productId : Int
+      stickerId : Int
+      images : Vector[StickerImage]
+      imagesWithBackground : Vector[StickerImage]
+    }
+
+    StickerImage {
+      url : String
+      width : Int
+      height : Int
+    }
+
+    Gift {
+      id : Int
+      thumb256 : String
+      thumb96 : String
+      thumb48 : String
+    }
+
+
+    /* Объект, описывающий опрос */
+    Poll {
+        /* идентификатор опроса для получения информации о нем через метод polls.getById. */
+        id : Int
+        /* идентификатор владельца опроса. */
+        ownerId : Int
+        /* дата создания в формате Unixtime. */
+        created : Int
+        /* текст вопроса. */
+        question : String
+        /* количество голосов. */
+        votes: Int
+        /* массив объектов, которые содержат информацию о вариантах ответа */
+        answers: Vector[Answer]
+        /* является ли опрос анонимным. */
+        anonymous : Boolean
+        /* допускает ли опрос выбор нескольких вариантов ответа. */
+        multiple : Boolean
+        /* идентификаторы вариантов ответа, выбранных текущим пользователем. */
+        answerIds : Vector[Int]
+        /* дата завершения опроса в Unixtime. 0, если опрос бессрочный. */
+        endDate : Integer
+        /* является ли опрос завершенным. */
+        closed : Boolean
+        /* прикреплён ли опрос к обсуждению. */
+        isBoard : Boolean
+        /* можно ли отредактировать опрос. */
+        canEdit : Boolean
+        /* можно ли проголосовать в опросе. */
+        canVote : Boolean
+        /* можно ли пожаловаться на опрос. */
+        canReport : Boolean
+        /* можно ли поделиться опросом. */
+        canShare : Boolean
+        /* идентификатор автора опроса. */
+        authorId : Integer
+        /* фотография — фон сниппета опроса. Объект фотографии. */
+        photo : Photo
+        /* фон сниппета опроса */
+        background : Background
+        /* идентификаторы 3 друзей, которые проголосовали в опросе. */
+        friends : Vector[Int]
+    }
+
+    Answer {
+        /* идентификатор ответа; */
+        id    : Integer
+        /* текст ответа; */
+        text  : String
+        /* число проголосовавших за этот ответ; */
+        votes : Integer
+        /* рейтинг ответа. */
+        rate  : Int
+    }
+
+    Background {
+        /* идентификатор фона. */
+        id     : Integer
+        /* тип фона. Возможные значения: gradient, tile. */
+        type   : String
+        /* (для type = gradient) угол градиента по оси X. */
+        angle  : Integer
+        /* HEX-код замещающего цвета (без #). */
+        color  : String
+        /* (для type = tile) ширина плитки паттерна. */
+        width  : Integer
+        /* (для type = tile) высота плитки паттерна. */
+        height : Integer
+        /* для type = tile) изображение плитки паттерна. Массив объектов изображений. */
+        images : Vector[Photo]
+        points : Vector[Point]
+    }
+
+    Point {
+        /* Положение точки */
+        position : Integer
+        /* HEX-код цвета точки */
+        color : String
+    }
+
+    PeriodFrom {
+        /* период начала отсчёта в формате YYYY-MM-DD. */
+        periodFrom : String
+        /* период окончания отсчёта в формате YYYY-MM-DD. */
+        periodTo : String
+        /* данные о посетителях и просмотрах */
+        visitors : Visitors
+        /* данные об охвате */
+        reach : Reach
+    }
+
+    Visitors {
+        /* Число просмотров */
+        views : Int
+        /* Чисто посетителей */
+        visitors : Int
+    }
+
+    Reach {
+        /* полный охват; */
+        reach : Integer
+        /* охват подписчиков; */
+        reachSubscribers : Int
+        /* охват с мобильных устройств; */
+        mobileReach : Int
+        /* статистика по полу. */
+        sex: Vector[SexStat]
+        /* статистика по возрасту */
+        age : Vector[AgeStat]
+        /* статистика по полу и возрасту. */
+        sexAge : Vector[SexAgeStat]
+        /* статистика по городам. */
+        cities : Vector[CitiesStat]
+        /* статистика по странам. */
+        countries : Vector[CountriesStat]
+    }
+
+    SexStat {
+        /* пол ("m" — мужской, "f" — женский); */
+        value : String
+        /* число посетителей. */
+        count : Int
+    }
+
+    AgeStat {
+        /* возрастной интервал (например, "12-18"). Возможные значения: 12-18, 18-21, 21-24, 24-27, 27-30, 30-35, 35-45, 45-100. */
+        value : String
+        /* число посетителей; */
+        count : Int
+    }
+
+    SexAgeStat {
+        /* пол и возрастной интервал (например, "f;12-18"); */
+        value : String
+        /* число посетителей. */
+        count : Integer
+    }
+
+    CitiesStat {
+        /* название города; */
+        name : String
+        /* идентификатор города или "other" для раздела «прочие города»; */
+        cityId : String
+        /* число посетителей. */
+        count : Int
+    }
+
+    CountriesStat {
+        /* название страны; */
+        name : String
+        /* двухбуквенный код страны (например, "RU"); */
+        code : String
+        /* идентификатор страны; */
+        countryId : Int
+        /* число посетителей.*/
+        count : Int
+    }
+
+    Address {
+        /* идентификатор адреса. */
+        id : Integer
+        /* идентификатор страны. */
+        countryId : Int
+        /* идентификатор города. */
+        cityId : Int
+        /* заголовок адреса. */
+        title : String
+        /* строка адреса. */
+        address : String
+        /* описание адреса. */
+        additionalAddress : String
+        /* географическая широта отметки, заданная в градусах (от -90 до 90). */
+        latitude : Double
+        /* географическая долгота отметки, заданная в градусах (от -180 до 180). */
+        longitude : Double
+        /* идентификатор станции метрополитена. */
+        metroStationId : Int
+        /* тип расписания
+         * noInformation — нет информации о расписании;
+         * temporarily_closed — временно закрыто;
+         * always_opened — открыто круглосуточно;
+         * forever_closed — закрыто навсегда;
+         * timetable — открыто в указанные часы работы. Для этого типа расписания необходимо передать параметр timetable;
+         */
+        workInfoStatus : String
+        /* для типа расписания timetable можно передать расписание в формате json. Время передается в минутах от 0 часов. Ключ по дню означает, что день рабочий. open_time, close_time — начало и конец рабочего дня. break_open_time, break_close_time - время перерыва. */
+        timetable : String
+    }
+
+    Document {
+        /* идентификатор документа. */
+        id : Integer
+        /* идентификатор пользователя, загрузившего документ. */
+        ownerId : Integer
+        /* название документа. */
+        title : String
+        /* размер документа в байтах. */
+        size : Integer
+        /* расширение документа. */
+        ext : String
+        /* адрес документа, по которому его можно загрузить. */
+        url : String
+        /* дата добавления в формате Unixtime. */
+        date : Integer
+        /*
+        * тип документа. Возможные значения:
+        * 1 — текстовые документы;
+        * 2 — архивы;
+        * 3 — gif;
+        * 4 — изображения;
+        * 5 — аудио;
+        * 6 — видео;
+        * 7 — электронные книги;
+        * 8 — неизвестно.
+        */
+        type : Int
+        /* информация для предварительного просмотра документа */
+        preview : Preview
+    }
+
+    Preview {
+        /* изображения для предпросмотра */
+        photo : PreviewPhoto
+        /* данные о граффити */
+        graffiti : Graffiti
+        /* данные об аудиосообщении */
+        audioMessage : AudioMessage
+    }
+
+    PreviewPhoto {
+        /* массив копий изображения в разных размерах. */
+        sizes : Vector[SizedPhoto]
+    }
+
+    Graffiti {
+        /* URL документа с граффити; */
+        src    : String
+        /* ширина изображения в px; */
+        width  : Integer
+        /* высота изображения в px. */
+        height : Integer
+    }
+
+    AudioMessage {
+        /* длительность аудиосообщения в секундах; */
+        duration : Integer
+        /* массив значений (integer) для визуального отображения звука; */
+        waveform : Vector[Int]
+        /* URL .ogg-файла; */
+        linkOgg : String
+        /* URL .mp3-файла. */
+        linkMp3 : String
+    }
+
+    History {
+        /* идентификатор истории. */
+        id : Integer
+        /* идентификатор владельца истории. */
+        ownerId : Integer
+        /* дата добавления в Unixtime. */
+        date : Integer
+        /* дата в Unixtime, когда история истечёт. */
+        expiresAt : Integer
+        /* true, если срок хранения истории истёк.
+         * В этом случае объект истории содержит только поля id, owner_id, date, expires_at, is_expired.
+         */
+        isExpired : Boolean
+        /* true, если история удалена или не существует.
+         * В этом случае объект истории содержит только поля id, owner_id, is_deleted.
+         */
+        isDeleted : Boolean
+        /* информация о том, может ли пользователь просмотреть историю (0 — нет, 1 — да).
+         * Если can_see = 0, объект истории содержит только поля id, owner_id, date, expires_at, can_see, type.
+         */
+        canSee : Boolean
+        /* [1]	1, если история просмотрена текущим пользователем. */
+        seen : Option[Integer]
+        /*
+         * тип истории. Возможные значения:
+         * photo — фотография;
+         * video — видеозапись.
+         */
+        type : String
+        /* (для type = photo). Фотография из истории. Поля объекта описаны на отдельной странице. */
+        photo : Option[Photo]
+        /* (для type = video). Видео из истории. Поля объекта описаны на отдельной странице. */
+        video : Option[HistoryVideo]
+        /* ссылка для перехода из истории. */
+        link : Link
+        /* идентификатор пользователя, загрузившего историю, ответом на которую является текущая. */
+        parentStoryOwnerId : Integer
+        /* идентификатор истории, ответом на которую является текущая. */
+        parentStoryId : Integer
+        /* объект родительской истории. */
+        parentStory : History
+        /* информация об ответах на текущую историю */
+        replies : HistoryReplies
+        /* информация о том, может ли пользователь ответить на историю (0 — нет, 1 — да). */
+        canReply : Boolean
+        /* информация о том, может ли пользователь расшарить историю (0 — нет, 1 — да). */
+        canShare : Boolean
+        /* информация о том, может ли пользователь комментировать историю (0 — нет, 1 — да). */
+        canComment : Boolean
+        /* число просмотров. */
+        views : Integer
+        /* ключ доступа для приватного объекта. */
+        accessKey : String
+    }
+
+    HistoryVideo {
+        use Video
+        /* (для type = video). Видео из истории. Поля объекта описаны на отдельной странице. Содержит дополнительные поля */
+        firstFrame800 : String
+        firstFrame320 : String
+        firstFrame160 : String
+        firstFrame130 : String
+        /* информация о том, приватная ли история */
+        isPrivate : Boolean
+    }
+
+    HistoryReplies {
+        /* число ответов; */
+        count : Integer
+        /*
+         * число новых ответов. Возвращается только для историй текущего пользователя.
+         * Получить истории-ответы можно методом stories.getReplies.
+         */
+        neww : Integer
+    }
+
+    Community {
+        /* Идентификатор сообщества */
+        id : Integer
+        /* Название сообщества */
+        name : String
+        /* короткий адрес, например, apiclub */
+        screenName : String
+        /* является ли сообщество закрытым 0 - открытое, 1 - закрытое, 2 - частное */
+        isClosed : Integer
+        /*
+         * возвращается в случае, если сообщество удалено или заблокировано. Возможные значения:
+         * deleted — сообщество удалено;
+         * banned — сообщество заблокировано;
+         */
+        deactivated : Option[String]
+        /* информация о том, является ли текущий пользователь руководителем. */
+        isAdmin : Boolean
+        /* уровень полномочий текущего пользователя (если is_admin = 1):
+         * 1 — модератор;
+         * 2 — редактор;
+         * 3 — администратор.
+         */
+        adminLevel : Integer
+        /* информация о том, является ли текущий пользователь участником. */
+        isMember : Boolean
+        /* информация о том, является ли текущий пользователь рекламодателем */
+        isAdvertiser : Boolean
+        /* идентификатор пользователя, который отправил приглашение в сообщество. */
+        invitedBy : Integer
+        /*
+         * тип сообщества:
+         * group — группа;
+         * page — публичная страница;
+         * event — мероприятие.
+         */
+        type : String
+        photo50 : String
+        photo100 : String
+        photo200 : String
+        /* строка тематики паблика. У групп возвращается строковое значение, открыта ли группа или нет, а у событий дата начала. */
+        activity : Option[String]
+        /* возрастное ограничение.
+         * 1 — нет;
+         * 2 — 16+;
+         * 3 — 18+. */
+        ageLimits : Int
+        /* информация о занесении в черный список сообщества (поле возвращается только при запросе информации об одном сообществе). */
+        banInfo : Option[BanInfo]
+        /* информация о том, может ли текущий пользователь создать новое обсуждение в группе */
+        canCreateTopic : Option[Boolean]
+        /* информация о том, может ли текущий пользователь написать сообщение сообществу. */
+        canMessage : Option[Boolean]
+        /* информация о том, может ли текущий пользователь оставлять записи на стене сообщества */
+        canPost : Option[Boolean]
+        /* информация о том, разрешено ли видеть чужие записи на стене группы. */
+        canSeeAllPosts : Option[Boolean]
+        /* информация о том, может ли текущий пользователь загружать документы в группу */
+        canUploadDoc : Option[Boolean]
+        /* информация о том, может ли текущий пользователь загружать видеозаписи в группу */
+        canUploadVideo : Option[Boolean]
+        /* город, указанный в информации о сообществе. */
+        city : Option[City]
+        /* информация из блока контактов публичной страницы. */
+        contacts : Option[CommunityContacts]
+        /*
+         * counters object	объект, содержащий счётчики сообщества, может включать любой набор из следующих полей: photos, albums, audios, videos, topics, docs.
+         * Поле возвращается только при запросе данных об одном сообществе
+         */
+         /* страна, указанная в информации о сообществе. */
+         country : Option[Country]
+         /* Обложка сообщества */
+         cover : Option[Cover]
+         /* возвращает данные о точках, по которым вырезаны профильная и миниатюрная фотографии сообщества. */
+         cropPhoto : Option[CropPhoto]
+         /* текст описания сообщества. */
+         description : Option[String]
+         /* идентификатор закрепленной записи. Получить дополнительные данные о записи можно методом wall.getById, передав в поле posts {group_id}_{post_id}. */
+         fixedPost : Option[Int]
+         /* информация о том, установлена ли у сообщества главная фотография. */
+         hasPhoto : Option[Boolean]
+         /* информация о том, находится ли сообщество в закладках у текущего пользователя */
+         isFavorite : Option[Boolean]
+         /* информация о том, скрыто ли сообщество из ленты новостей текущего пользователя */
+         isHiddenFromFeed : Option[Boolean]
+         /* информация о том, заблокированы ли сообщения от этого сообщества (для текущего пользователя) */
+         isMessagesBlocked : Option[Boolean]
+         /* информация из блока ссылок сообщества. */
+         links : Vector[CommunityLink]
+         /* идентификатор основного фотоальбота */
+         mainAlbumId : Option[Int]
+         /*
+          * информация о главной секции. Возможные значения:
+          *  0 — отсутствует;
+          *  1 — фотографии;
+          *  2 — обсуждения;
+          *  3 — аудиозаписи;
+          *  4 — видеозаписи;
+          *  5 — товары.
+          */
+         mainSection : Option[Int]
+         /* Информация о магазине */
+         market : Option[Market]
+         /* статус участника текущего пользователя. Возможные значения:
+          * 0 — не является участником;
+          * 1 — является участником;
+          * 2 — не уверен, что посетит мероприятие;
+          * 3 — отклонил приглашение;
+          * 4 — запрос на вступление отправлен;
+          * 5 — приглашен.
+          */
+         memberStatus : Option[Int]
+         /* Количество участников в сообществе */
+         membersCount : Option[Int]
+         /* место, указанное в информации о сообществе */
+         place : Option[Place]
+         /* возвращается для публичных страниц. Текст описания для поля start_date. */
+         publicDateLabel : Option[String]
+         /* адрес сайта из поля «веб-сайт» в описании сообщества. */
+         site : Option[String]
+         /* для встреч содержат время начала и окончания встречи в формате unixtime. Для публичных страниц содержит только start_date — дата основания в формате YYYYMMDD. */
+         startDate : Option[Int]
+         finishDate : Option[Int]
+         /* статус сообщества */
+         status : Option[String]
+         /* информация о том, есть ли у сообщества «огонёк». */
+         trending : Option[Boolean]
+         /* информация о том, верифицировано ли сообщество. */
+         verified : Option[Boolean]
+         /* стена. Возможные значения:
+          * 0 — выключена;
+          * 1 — открытая;
+          * 2 — ограниченная;
+          * 3 — закрытая.
+          */
+         wall : Option[Int]
+         /* название главной вики-страницы. */
+         wikiPage : Option[String]
+    }
+
+    CommunityContacts {
+        /* идентификатор пользователя */
+        userId : Int
+        /* должность */
+        desc : String
+        /* номер телефона */
+        phone : String
+        email : String
+    }
+
+    BanInfo {
+        /* срок окончания блокировки в формате unixtime; */
+        endDate : Integer
+        /* комментарий к блокировке. */
+        comment : String
+    }
+
+    Link {
+        /* текст ссылки; */
+        text : String
+        /* URL для перехода. */
+        url  : String
+    }
+
+    Cover {
+        enabled : Boolean
+        images : Vector[CommunityImages]
+    }
+
+    CommunityImages {
+        url : String
+        width : Int
+        height : Int
+    }
+
+    CommunityLink {
+        /* идентификатор ссылки; */
+        id       : Integer
+        /* URL; */
+        url      : String
+        /* название ссылки; */
+        name     : String
+        /* описание ссылки; */
+        desc     : String
+        /* URL изображения-превью шириной 50px; */
+        photo50  : String
+        /* URL изображения-превью шириной 100px. */
+        photo100 : String
+    }
+
+    Market {
+        /* информация о том, включен ли блок товаров в сообществе */
+        enabled : Boolean
+        /* минимальная цена товаров; */
+        priceMin : Int
+        /* максимальная цена товаров; */
+        priceMax : Int
+        /*  идентификатор главной подборки товаров; */
+        mainAlbumId : Int
+        /* идентификатор контактного лица для связи с продавцом. Возвращается отрицательное значение, если для связи с продавцом используются сообщения сообщества; */
+        contactId : Int
+        /* информация о валюте */
+        currency : Currency
+        /* строковое обозначение */
+        currencyText : String
+    }
+
+    namespace groups {
+
+      abstract Request {
+        accessToken : String
+        v           : String
+      }
+
+      Layer {
+        def get {
+          userId      : Int
+          use Request
+        } => {
+          key    : String
+          server : String
+          ts     : String
+        }
+
+        def getLongPollServer () {
+          groupId : Int
+          use Request
+        } => {
+          key    : String
+          server : String
+          ts     : String
+        }
+      }
+
+    }
+
+  }
+}
+

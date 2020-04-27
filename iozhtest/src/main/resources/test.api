@@ -1,0 +1,98 @@
+namespace iozhik(circe scodec upack) {
+
+  namespace fig {
+    Props {
+      area: Double
+      perimeter: Double
+    }
+
+    Point {
+      x: Int
+      y: Int
+    }
+
+    enum Figure {
+      sides: Int
+
+      Square {
+        type: "square:1"
+        width: Int
+        height: Int
+        use Props
+      }
+
+      Circle {
+        type: "circle:2"
+        radius: Int
+        use Props
+      }
+
+      Triangle {
+        type: "triangle:3"
+        vertices: List[Point]
+        use Props
+      }
+    }
+  }
+
+  namespace pet {
+    enum Pet {
+      name: String
+
+      Dog {
+        type: "dog:1"
+      }
+
+      Cat {
+        type: "cat:2"
+      }
+    }
+  }
+
+  namespace bio {
+    enum Mammal {
+      Elephant {
+        type: "elephant:1"
+      }
+      Dolphin {
+        type: "dolphin:2"
+      }
+    }
+  }
+
+  namespace mat {
+    PlasticProps {
+      plasticity: Double
+    }
+    MetalProps {
+      conductivity: Double
+    }
+    WoodProps {
+      colors: Vector[String]
+    }
+    enum Material {
+      density: Double
+      Plastic {
+        type: "plastic:1"
+        color: String
+        props: (flatten) {
+          use PlasticProps
+        }
+      }
+      Metal {
+        type: "metal:2"
+        valency: Int
+        props: (flatten) {
+         use MetalProps
+         strength: Double
+        }
+      }
+      Wood {
+        type: "wood:3"
+        props: (flatten) {
+          use WoodProps
+        }
+      }
+    }
+  }
+}
