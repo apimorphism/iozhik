@@ -802,7 +802,7 @@ class ScalaApiGeneratorV1 extends Generator {
              |        uri <- F.fromEither[Uri](Uri.fromString(s"$$baseUrl/$name"))
              |        ${ff.map(_._2).intercalate(delimiter)}
              |        body = Multipart[F](
-             |          Vector($otherFields).filter(!_._2.isNull).map{ case (n, v) => Part.formData(n, v.noSpaces) } ++
+             |          Vector($otherFields).filter(!_._2.isNull).map{ case (n, v) => Part.formData[F](n, v.noSpaces) } ++
              |          ${ff.map(_._1).intercalate(" ++ ")}
              |        )
              |        req = Request[F]()
@@ -906,10 +906,10 @@ class ScalaApiGeneratorV1 extends Generator {
       name = s"${name}Http4sImp",
       body =
         s"""
-          |class ${name}Http4sImp[F[_]: ConcurrentEffect: ContextShift](http: Client[F], baseUrl: String)
-          |                          (implicit F: MonadError[F, Throwable], ec: ExecutionContext) extends $name[F] {
+          |class ${name}Http4sImp[F[_]: ConcurrentEffect: ContextShift](http: Client[F], baseUrl: String, blocker: Blocker)
+          |                          (implicit F: MonadError[F, Throwable]) extends $name[F] {
           |
-          |  def makePart(field: String, file: java.io.File)(implicit ec: ExecutionContext): F[List[Part[F]]] = {
+          |  def makePart(field: String, file: java.io.File): F[List[Part[F]]] = {
           |    import org.http4s.headers._
           |    val ext = "\\\\.[A-Za-z0-9]+$$".r.findFirstIn(file.getName).getOrElse("").drop(1)
           |    val extOpt = MediaType.forExtension(ext).map(x => `Content-Type`(x))
@@ -917,7 +917,7 @@ class ScalaApiGeneratorV1 extends Generator {
           |    for {
           |      mediaType <- OptionT(F.pure(extOpt)).getOrElseF(F.raiseError(error))
           |    } yield {
-          |      List(Part.fileData(field, file, ec, mediaType))
+          |      List(Part.fileData(field, file, blocker, mediaType))
           |    }
           |  }
           |
@@ -937,7 +937,6 @@ class ScalaApiGeneratorV1 extends Generator {
         "import cats.syntax.functor._",
         "import cats.syntax.flatMap._",
         "import CirceImplicits._",
-        "import scala.concurrent.ExecutionContext",
       ) ++ defuns.flatMap(_.imports)
     ))
   }
