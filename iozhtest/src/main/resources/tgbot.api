@@ -2314,7 +2314,7 @@ namespace telegramium {
       
         } => {
           use Response
-          result: Option[WebhookInfo]
+          result: WebhookInfo
         }
                 
       
@@ -2327,7 +2327,7 @@ namespace telegramium {
           commands : List[BotCommand]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2342,7 +2342,7 @@ namespace telegramium {
           photo  : (file) IFile
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2394,7 +2394,7 @@ namespace telegramium {
           cacheTime       : Option[Int]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2423,7 +2423,7 @@ namespace telegramium {
           replyMarkup           : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -2440,7 +2440,7 @@ namespace telegramium {
           limit  : Option[Int]
         } => {
           use Response
-          result: Option[UserProfilePhotos]
+          result: UserProfilePhotos
         }
                 
       
@@ -2494,7 +2494,7 @@ namespace telegramium {
           replyMarkup           : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -2524,7 +2524,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -2565,7 +2565,7 @@ namespace telegramium {
           maskPosition  : Option[MaskPosition]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2581,7 +2581,7 @@ namespace telegramium {
           pngSticker : (file) IFile
         } => {
           use Response
-          result: Option[File]
+          result: File
         }
                 
       
@@ -2596,7 +2596,7 @@ namespace telegramium {
           permissions : ChatPermissions
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2624,7 +2624,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -2638,7 +2638,7 @@ namespace telegramium {
           chatId : ChatId
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2660,7 +2660,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Either[Boolean, Message]]
+          result: Either[Boolean, Message]
         }
                 
       
@@ -2674,7 +2674,7 @@ namespace telegramium {
           chatId : ChatId
         } => {
           use Response
-          result: Option[String]
+          result: String
         }
                 
       
@@ -2700,7 +2700,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -2712,7 +2712,7 @@ namespace telegramium {
       
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2746,7 +2746,7 @@ namespace telegramium {
           maskPosition : Option[MaskPosition]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2757,7 +2757,7 @@ namespace telegramium {
           sticker : String
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2773,7 +2773,7 @@ namespace telegramium {
           replyMarkup : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Poll]
+          result: Poll
         }
                 
       
@@ -2787,7 +2787,7 @@ namespace telegramium {
           chatId : ChatId
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2829,7 +2829,7 @@ namespace telegramium {
           replyMarkup         : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -2864,7 +2864,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -2880,7 +2880,7 @@ namespace telegramium {
           userId : Int
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2895,7 +2895,7 @@ namespace telegramium {
           description : Option[String]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -2924,7 +2924,7 @@ namespace telegramium {
           replyMarkup           : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Either[Boolean, Message]]
+          result: Either[Boolean, Message]
         }
                 
       
@@ -2951,7 +2951,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Either[Boolean, Message]]
+          result: Either[Boolean, Message]
         }
                 
       
@@ -2967,7 +2967,7 @@ namespace telegramium {
           fileId : String
         } => {
           use Response
-          result: Option[File]
+          result: File
         }
                 
       
@@ -2997,7 +2997,7 @@ namespace telegramium {
           inlineMessageId    : Option[String]
         } => {
           use Response
-          result: Option[Either[Boolean, Message]]
+          result: Either[Boolean, Message]
         }
                 
       
@@ -3010,7 +3010,7 @@ namespace telegramium {
           chatId : ChatId
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3025,7 +3025,7 @@ namespace telegramium {
           title  : String
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3068,7 +3068,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -3087,7 +3087,7 @@ namespace telegramium {
           errors : List[PassportElementError]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3100,7 +3100,7 @@ namespace telegramium {
           chatId : ChatId
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3172,7 +3172,7 @@ namespace telegramium {
           replyMarkup               : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -3217,7 +3217,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -3238,7 +3238,7 @@ namespace telegramium {
           messageId : Int
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3283,7 +3283,7 @@ namespace telegramium {
           switchPmParameter : Option[String]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3305,7 +3305,7 @@ namespace telegramium {
           untilDate : Option[Int]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3357,7 +3357,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -3380,7 +3380,7 @@ namespace telegramium {
           untilDate   : Option[Int]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3390,7 +3390,7 @@ namespace telegramium {
       
         } => {
           use Response
-          result: Option[User]
+          result: User
         }
                 
       
@@ -3411,7 +3411,7 @@ namespace telegramium {
           messageId           : Int
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -3426,7 +3426,7 @@ namespace telegramium {
           userId : Int
         } => {
           use Response
-          result: Option[ChatMember]
+          result: ChatMember
         }
                 
       
@@ -3489,7 +3489,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Audio]
+          result: Audio
         }
                 
       
@@ -3531,7 +3531,7 @@ namespace telegramium {
           canPromoteMembers  : Option[Boolean]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3558,7 +3558,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Either[Boolean, Message]]
+          result: Either[Boolean, Message]
         }
                 
       
@@ -3586,7 +3586,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Either[Boolean, Message]]
+          result: Either[Boolean, Message]
         }
                 
       
@@ -3606,7 +3606,7 @@ namespace telegramium {
           disableNotification : Option[Boolean]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3630,7 +3630,7 @@ namespace telegramium {
           thumb  : (file) Option[IFile]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3652,7 +3652,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Either[Boolean, Message]]
+          result: Either[Boolean, Message]
         }
                 
       
@@ -3706,7 +3706,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Document]
+          result: Document
         }
                 
       
@@ -3722,7 +3722,7 @@ namespace telegramium {
           stickerSetName : String
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3736,7 +3736,7 @@ namespace telegramium {
           chatId : ChatId
         } => {
           use Response
-          result: Option[Chat]
+          result: Chat
         }
                 
       
@@ -3746,7 +3746,7 @@ namespace telegramium {
       
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3759,7 +3759,7 @@ namespace telegramium {
           position : Int
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3776,7 +3776,7 @@ namespace telegramium {
           customTitle : String
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       
@@ -3828,7 +3828,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -3854,7 +3854,7 @@ namespace telegramium {
           errorMessage    : Option[String]
         } => {
           use Response
-          result: Option[Update]
+          result: Update
         }
                 
       
@@ -3879,7 +3879,7 @@ namespace telegramium {
           errorMessage       : Option[String]
         } => {
           use Response
-          result: Option[Update]
+          result: Update
         }
                 
       
@@ -3906,7 +3906,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -3918,7 +3918,7 @@ namespace telegramium {
           chatId : ChatId
         } => {
           use Response
-          result: Option[Int]
+          result: Int
         }
                 
       
@@ -3950,7 +3950,7 @@ namespace telegramium {
           replyMarkup         : Option[KeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Message
         }
                 
       
@@ -3998,7 +3998,7 @@ namespace telegramium {
           name : String
         } => {
           use Response
-          result: Option[StickerSet]
+          result: StickerSet
         }
                 
       
@@ -4036,7 +4036,7 @@ namespace telegramium {
           allowedUpdates : List[String]
         } => {
           use Response
-          result: Option[Boolean]
+          result: Boolean
         }
                 
       }

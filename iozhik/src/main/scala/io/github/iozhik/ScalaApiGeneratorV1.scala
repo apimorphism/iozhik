@@ -1041,14 +1041,6 @@ class ScalaApiGeneratorV1 extends Generator {
     "CirceImplicits" -> """
         | import io.circe.syntax._
         | import io.circe.{Encoder, Decoder, Json}
-        |
-        |implicit def eitherEncoder[A, B](implicit encoderA: Encoder[A], encoderB: Encoder[B]): Encoder[Either[A, B]] = {
-        |  o: Either[A, B] => o.fold(_.asJson, _.asJson)
-        |}
-        |
-        |implicit def eitherDecoder[A, B](implicit decoderA: Decoder[A], decoderB: Decoder[B]): Decoder[Either[A, B]] =
-        |  decoderA.either(decoderB)
-        |
       """.stripMargin,
     "ScodecImplicits" ->
       """

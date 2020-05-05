@@ -334,7 +334,7 @@ object TgBotApiScrapper extends IOApp {
                   desc = wrap(desc, 60),
                 )
               }.toList,
-              returns = if (returns.startsWith("List")) { mkType("", returns) } else { s"Option[${mkType("", returns)}]"}
+              returns = mkType("", returns)
             )
           case x: Item if x.name.text.head.isUpper =>
             val params = x.table >> elements("tbody > tr")
