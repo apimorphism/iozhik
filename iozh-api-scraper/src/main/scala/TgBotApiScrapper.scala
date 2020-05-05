@@ -301,15 +301,20 @@ object TgBotApiScrapper extends IOApp {
         .collect {
           case x: Item if x.name.text.head.isLower =>
             val params = x.table >> elements("tbody > tr")
-            val res = x.desc.flatMap(y => y >> elements("a"))
+            val resA = x.desc.flatMap(y => y >> elements("a"))
               .map(_.text)
               .find(_.head.isUpper)
-              .getOrElse(
-                x.desc.flatMap(y => y >> elements("em"))
-                  .map(_.text)
-                  .find(_.head.isUpper)
-                  .getOrElse("CANT_PARSE_RETURN_VALUE")
-              )
+            val resEm = x.desc.flatMap(y => y >> elements("em"))
+              .map(_.text)
+              .find(_.head.isUpper)
+            val useEither = x.desc.map(_.text).exists(_.contains("otherwise"))
+            val res = (resA, resEm) match {
+              case (Some(a), Some(em)) if useEither     => s"Either[$em, $a]"
+              case (Some(a), Some(em)) if em == "Array" => a
+              case (_, Some(em))                        => em
+              case (Some(a), None)                      => a
+              case _                                    => "CANT_PARSE_RETURN_VALUE"
+            }
             val returns = if (x.desc.map(_.text.toLowerCase).intercalate(" ").contains("array of")) {
               s"List[$res]"
             } else {

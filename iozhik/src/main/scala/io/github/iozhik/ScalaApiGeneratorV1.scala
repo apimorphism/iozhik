@@ -37,7 +37,7 @@ class ScalaApiGeneratorV1 extends Generator {
 
   private val predefined = Set(
     "Boolean", "Int", "Long", "Double", "Float",
-    "Vector", "List", "Option", "String",
+    "Vector", "List", "Option", "String", "Either"
   )
 
   def versionPostfix(min: Option[Version], max: Option[Version]): String = {
@@ -624,7 +624,7 @@ class ScalaApiGeneratorV1 extends Generator {
       ms = mixins.toNel.map(_.intercalate(" with ")).fold("")(" extends " + _)
     } yield {
       val imps = (usingf ++ x.fields)
-        .flatMap(_.kind.unresolvedIn(space.symbol))
+        .flatMap(_.kind.unresolvedIn(space.symbol).flatMap(_.unresolvedIn(space.symbol)))
         .filter(y => !predefined.contains(y.name))
         .flatMap(symt.resolve)
         .collect{
@@ -1041,6 +1041,14 @@ class ScalaApiGeneratorV1 extends Generator {
     "CirceImplicits" -> """
         | import io.circe.syntax._
         | import io.circe.{Encoder, Decoder, Json}
+        |
+        |implicit def eitherEncoder[A, B](implicit encoderA: Encoder[A], encoderB: Encoder[B]): Encoder[Either[A, B]] = {
+        |  o: Either[A, B] => o.fold(_.asJson, _.asJson)
+        |}
+        |
+        |implicit def eitherDecoder[A, B](implicit decoderA: Decoder[A], decoderB: Decoder[B]): Decoder[Either[A, B]] =
+        |  decoderA.either(decoderB)
+        |
       """.stripMargin,
     "ScodecImplicits" ->
       """

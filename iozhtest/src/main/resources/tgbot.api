@@ -2660,7 +2660,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Option[Either[Boolean, Message]]
         }
                 
       
@@ -2733,7 +2733,7 @@ namespace telegramium {
           pass an HTTP URL as a String for Telegram to get a file from 
           the Internet, or upload a new one using multipart/form-data. 
           More info on Sending Files » */
-          pngSticker   : (file) IFile
+          pngSticker   : (file) Option[IFile]
           /* TGS animation with the sticker, uploaded using 
           multipart/form-data. See 
           https://core.telegram.org/animated_stickers#technical-requirements 
@@ -2924,7 +2924,7 @@ namespace telegramium {
           replyMarkup           : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Option[Either[Boolean, Message]]
         }
                 
       
@@ -2951,7 +2951,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Option[Either[Boolean, Message]]
         }
                 
       
@@ -2997,7 +2997,7 @@ namespace telegramium {
           inlineMessageId    : Option[String]
         } => {
           use Response
-          result: Option[Message]
+          result: Option[Either[Boolean, Message]]
         }
                 
       
@@ -3558,7 +3558,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Option[Either[Boolean, Message]]
         }
                 
       
@@ -3586,7 +3586,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Option[Either[Boolean, Message]]
         }
                 
       
@@ -3652,7 +3652,7 @@ namespace telegramium {
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => {
           use Response
-          result: Option[Message]
+          result: Option[Either[Boolean, Message]]
         }
                 
       
@@ -4036,7 +4036,7 @@ namespace telegramium {
           allowedUpdates : List[String]
         } => {
           use Response
-          result: Option[Update]
+          result: Option[Boolean]
         }
                 
       }
