@@ -727,8 +727,10 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genHttp4sClientDefun(x: Defun, name: String, dom: String, cod: String)
+  def genHttp4sClientDefun(x: Defun, name: String, dom: String, rawCod: String)
                     (implicit symt: Symtable, space: Space): List[Code] = {
+    // TODO: we need generic mechanism for this (resolving name conflicts with library entities)
+    val cod = rawCod.replace("Message", "telegramium.bots.Message")
     val withEntity = if (dom.isEmpty) { "" } else { ".withEntity(x.asJson)" }
     val defaultBody = {
       s"""  for {
