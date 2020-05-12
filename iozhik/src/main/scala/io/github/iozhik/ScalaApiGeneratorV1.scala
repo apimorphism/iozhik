@@ -739,7 +739,7 @@ class ScalaApiGeneratorV1 extends Generator {
          |      .withMethod(GET)
          |      .withUri(uri)
          |      $withEntity
-         |    res <- http.expect(req)(jsonOf[F, $cod])
+         |    res <- decodeResponse[$cod](req)
          |  } yield {
          |    res
          |  }
@@ -831,7 +831,7 @@ class ScalaApiGeneratorV1 extends Generator {
              |          .withUri(uri)
              |          .withEntity(body)
              |          .withHeaders(body.headers)
-             |        res <- http.expect(req)(jsonOf[F, $cod])
+             |        res <- decodeResponse[$cod](req)
              |      } yield {
              |        res
              |      }
@@ -930,13 +930,39 @@ class ScalaApiGeneratorV1 extends Generator {
         s"""
           |class ${name}Http4sImp[F[_]: ConcurrentEffect: ContextShift](http: Client[F], baseUrl: String, blocker: Blocker)
           |                          (implicit F: MonadError[F, Throwable]) extends $name[F] {
+          |  import io.circe.Decoder
           |
-          |  implicit def _decodeEither[A, B](implicit
-          |                                   a: io.circe.Decoder[A],
-          |                                   b: io.circe.Decoder[B]): io.circe.Decoder[Either[A, B]] = {
-          |    val l: io.circe.Decoder[Either[A, B]] = a.map (Left.apply)
-          |    val r: io.circe.Decoder[Either[A, B]] = b.map (Right.apply)
-          |    l or r
+          |  implicit def decodeEither[A, B](implicit
+          |                                  decoderA: Decoder[A],
+          |                                  decoderB: Decoder[B]): Decoder[Either[A, B]] = decoderA.either(decoderB)
+          |
+          |  case class Response[A: Decoder](
+          |    ok: Boolean,
+          |    result: Option[A],
+          |    description: Option[String]
+          |  )
+          |
+          |  private implicit def responseDecoder[A: Decoder]: Decoder[Response[A]] =
+          |    Decoder.instance { h =>
+          |      for {
+          |        _ok          <- h.get[Boolean]("ok")
+          |        _result      <- h.get[Option[A]]("result")
+          |        _description <- h.get[Option[String]]("description")
+          |      } yield {
+          |        Response[A](ok = _ok, result = _result, description = _description)
+          |      }
+          |    }
+          |
+          |  private def decodeResponse[A: io.circe.Decoder](req: Request[F]): F[A] = {
+          |    for {
+          |      response <- http.expect(req)(jsonOf[F, Response[A]])
+          |      result <- F.fromOption[A](
+          |        response.result,
+          |        new RuntimeException(response.description.getOrElse("Unknown error occurred"))
+          |      )
+          |    } yield {
+          |      result
+          |    }
           |  }
           |
           |  def makePart(field: String, file: java.io.File): F[List[Part[F]]] = {
