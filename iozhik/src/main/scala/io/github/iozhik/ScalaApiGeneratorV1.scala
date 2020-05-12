@@ -931,6 +931,14 @@ class ScalaApiGeneratorV1 extends Generator {
           |class ${name}Http4sImp[F[_]: ConcurrentEffect: ContextShift](http: Client[F], baseUrl: String, blocker: Blocker)
           |                          (implicit F: MonadError[F, Throwable]) extends $name[F] {
           |
+          |  implicit def _decodeEither[A, B](implicit
+          |                                   a: io.circe.Decoder[A],
+          |                                   b: io.circe.Decoder[B]): io.circe.Decoder[Either[A, B]] = {
+          |    val l: io.circe.Decoder[Either[A, B]] = a.map (Left.apply)
+          |    val r: io.circe.Decoder[Either[A, B]] = b.map (Right.apply)
+          |    l or r
+          |  }
+          |
           |  def makePart(field: String, file: java.io.File): F[List[Part[F]]] = {
           |    import org.http4s.headers._
           |    val ext = "\\\\.[A-Za-z0-9]+$$".r.findFirstIn(file.getName).getOrElse("").drop(1)
