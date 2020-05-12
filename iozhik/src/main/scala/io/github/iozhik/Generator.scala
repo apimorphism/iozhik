@@ -6,7 +6,7 @@ import cats.implicits._
 object Generator {
   object Model {
     final case class Code(
-      body: String,
+      body: String = "",
       name: String = "",
       path: String = "",
       packageObject: String = "",

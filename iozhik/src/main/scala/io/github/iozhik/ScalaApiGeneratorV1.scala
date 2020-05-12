@@ -664,15 +664,31 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
+  def importKind(k: Kind)(implicit symt: Symtable): List[String] = {
+    val result = symt.resolve(k)
+      .collect {
+        case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
+      }
+      .map { case (path, name) => s"import $path.$name" }
+      .toList
+    result ++ k.params.flatMap(importKind)
+  }
+
   def genDefun(x: Defun)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     for {
       kind <- genKind(x.kind)
       dom <- x.dom.fold(
-        _ => Right(List.empty[Code]),
+        y => Right(List(Code(
+          imports = importKind(y),
+          packageObject = "__this_trait__",
+        ))),
         y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))))
       )
       cod <- x.cod.fold(
-        _ => Right(List.empty[Code]),
+        y => Right(List(Code(
+          imports = importKind(y),
+          packageObject = "__this_trait__",
+        ))),
         y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))))
       )
       domName <- x.dom.fold(
@@ -707,7 +723,6 @@ class ScalaApiGeneratorV1 extends Generator {
         body = s"${docs}def $kind($domain): F[$codomain]",
         name = x.kind.name,
         packageObject = "__this_trait__",
-        imports = http4sClientDefun.flatMap(_.imports) ++ http4sServerDefun.flatMap(_.imports)
       )) ++ http4sClientDefun ++ http4sServerDefun
     }
   }
@@ -896,6 +911,7 @@ class ScalaApiGeneratorV1 extends Generator {
       strucs ++ List(Code(
         body = s"trait $kind[F[_]]$d{$d$defuns$d}",
         name = x.kind.name,
+        imports = items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
       )) ++ (if (space.opts.contains("http4s") && x.opts.contains("client")) {
         genHttp4sClient(kind, items.filter(_.packageObject == "__this_impl__"))
       } else { List.empty[Code] }) ++ (if (space.opts.contains("http4s") && x.opts.contains("server")) {
