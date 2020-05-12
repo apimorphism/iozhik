@@ -107,10 +107,7 @@ object TgBotApiScrapper extends IOApp {
             |  /* ${m.desc} */
             |  def ${m.name} {
             |$fields
-            |  } => {
-            |    use Response
-            |    result: ${m.returns}
-            |  }
+            |  } => ${m.returns}
           """.stripMargin
         m.name -> body
       }.toMap

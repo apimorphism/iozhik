@@ -667,26 +667,30 @@ class ScalaApiGeneratorV1 extends Generator {
   def genDefun(x: Defun)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     for {
       kind <- genKind(x.kind)
-      rawDom <- x.dom.fold(
-          y => symt.find(y, Option(x.kind)),
-          y => Option(y : Sym)
-        )
-        .collect { case s: Struc => s }
-        .toRight(s"Can't find ${x.kind}")
-      rawCod <- x.cod.fold(
-          y => symt.find(y, Option(x.kind)),
-          y => Option(y : Sym)
-        )
-        .collect { case s: Struc => s }
-        .toRight(s"Can't find ${x.kind}")
-      dom <- genStruc(rawDom.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))))
-      cod <- genStruc(rawCod.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))))
-      domName <- rawDom.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$DomPostfix")))
-      codName <- rawCod.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$CodPostfix")))
+      dom <- x.dom.fold(
+        _ => Right(List.empty[Code]),
+        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))))
+      )
+      cod <- x.cod.fold(
+        _ => Right(List.empty[Code]),
+        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))))
+      )
+      domName <- x.dom.fold(
+        y => genKind(y),
+        y => y.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$DomPostfix")))
+      )
+      codName <- x.cod.fold(
+        y => genKind(y),
+        y => y.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$CodPostfix")))
+      )
       d = delimiter
     } yield {
-      val domain = if (rawDom.fields.isEmpty && rawDom.usings.isEmpty) "" else s"x: $domName"
-      val codomain = if (rawCod.fields.isEmpty && rawCod.usings.isEmpty) s"$codName.type" else codName
+      val domain = x.dom
+        .map(y => if (y.fields.isEmpty && y.usings.isEmpty) "" else s"x: $domName")
+        .fold(_ => domName, identity)
+      val codomain = x.cod
+        .map(y => if (y.fields.isEmpty && y.usings.isEmpty) s"$codName.type" else codName)
+        .fold(_ => codName, identity)
       val docsBody = x.doc.split("\n").toList.map(_.trim).intercalate("\n* ")
       val docs = if (docsBody.nonEmpty) { s"$d/** $docsBody*/$d" } else { "" }
       val http4sClientDefun = if (space.opts.contains("http4s")) {
