@@ -37,7 +37,7 @@ class ScalaApiGeneratorV1 extends Generator {
 
   private val predefined = Set(
     "Boolean", "Int", "Long", "Double", "Float",
-    "Vector", "List", "Option", "String",
+    "Vector", "List", "Option", "String", "Either"
   )
 
   def versionPostfix(min: Option[Version], max: Option[Version]): String = {
@@ -624,7 +624,7 @@ class ScalaApiGeneratorV1 extends Generator {
       ms = mixins.toNel.map(_.intercalate(" with ")).fold("")(" extends " + _)
     } yield {
       val imps = (usingf ++ x.fields)
-        .flatMap(_.kind.unresolvedIn(space.symbol))
+        .flatMap(_.kind.unresolvedIn(space.symbol).flatMap(_.unresolvedIn(space.symbol)))
         .filter(y => !predefined.contains(y.name))
         .flatMap(symt.resolve)
         .collect{
@@ -664,29 +664,49 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
+  def importKind(k: Kind)(implicit symt: Symtable): List[String] = {
+    val result = symt.resolve(k)
+      .collect {
+        case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
+      }
+      .map { case (path, name) => s"import $path.$name" }
+      .toList
+    result ++ k.params.flatMap(importKind)
+  }
+
   def genDefun(x: Defun)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     for {
       kind <- genKind(x.kind)
-      rawDom <- x.dom.fold(
-          y => symt.find(y, Option(x.kind)),
-          y => Option(y : Sym)
-        )
-        .collect { case s: Struc => s }
-        .toRight(s"Can't find ${x.kind}")
-      rawCod <- x.cod.fold(
-          y => symt.find(y, Option(x.kind)),
-          y => Option(y : Sym)
-        )
-        .collect { case s: Struc => s }
-        .toRight(s"Can't find ${x.kind}")
-      dom <- genStruc(rawDom.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))))
-      cod <- genStruc(rawCod.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))))
-      domName <- rawDom.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$DomPostfix")))
-      codName <- rawCod.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$CodPostfix")))
+      dom <- x.dom.fold(
+        y => Right(List(Code(
+          imports = importKind(y),
+          packageObject = "__this_trait__",
+        ))),
+        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))))
+      )
+      cod <- x.cod.fold(
+        y => Right(List(Code(
+          imports = importKind(y),
+          packageObject = "__this_trait__",
+        ))),
+        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))))
+      )
+      domName <- x.dom.fold(
+        y => genKind(y),
+        y => y.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$DomPostfix")))
+      )
+      codName <- x.cod.fold(
+        y => genKind(y),
+        y => y.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$CodPostfix")))
+      )
       d = delimiter
     } yield {
-      val domain = if (rawDom.fields.isEmpty && rawDom.usings.isEmpty) "" else s"x: $domName"
-      val codomain = if (rawCod.fields.isEmpty && rawCod.usings.isEmpty) s"$codName.type" else codName
+      val domain = x.dom
+        .map(y => if (y.fields.isEmpty && y.usings.isEmpty) "" else s"x: $domName")
+        .fold(_ => domName, identity)
+      val codomain = x.cod
+        .map(y => if (y.fields.isEmpty && y.usings.isEmpty) s"$codName.type" else codName)
+        .fold(_ => codName, identity)
       val docsBody = x.doc.split("\n").toList.map(_.trim).intercalate("\n* ")
       val docs = if (docsBody.nonEmpty) { s"$d/** $docsBody*/$d" } else { "" }
       val http4sClientDefun = if (space.opts.contains("http4s")) {
@@ -703,13 +723,14 @@ class ScalaApiGeneratorV1 extends Generator {
         body = s"${docs}def $kind($domain): F[$codomain]",
         name = x.kind.name,
         packageObject = "__this_trait__",
-        imports = http4sClientDefun.flatMap(_.imports) ++ http4sServerDefun.flatMap(_.imports)
       )) ++ http4sClientDefun ++ http4sServerDefun
     }
   }
 
-  def genHttp4sClientDefun(x: Defun, name: String, dom: String, cod: String)
+  def genHttp4sClientDefun(x: Defun, name: String, dom: String, rawCod: String)
                     (implicit symt: Symtable, space: Space): List[Code] = {
+    // TODO: we need generic mechanism for this (resolving name conflicts with library entities)
+    val cod = rawCod.replace("Message", "telegramium.bots.Message")
     val withEntity = if (dom.isEmpty) { "" } else { ".withEntity(x.asJson)" }
     val defaultBody = {
       s"""  for {
@@ -718,7 +739,7 @@ class ScalaApiGeneratorV1 extends Generator {
          |      .withMethod(GET)
          |      .withUri(uri)
          |      $withEntity
-         |    res <- http.expect(req)(jsonOf[F, $cod])
+         |    res <- decodeResponse[$cod](req)
          |  } yield {
          |    res
          |  }
@@ -810,7 +831,7 @@ class ScalaApiGeneratorV1 extends Generator {
              |          .withUri(uri)
              |          .withEntity(body)
              |          .withHeaders(body.headers)
-             |        res <- http.expect(req)(jsonOf[F, $cod])
+             |        res <- decodeResponse[$cod](req)
              |      } yield {
              |        res
              |      }
@@ -892,6 +913,7 @@ class ScalaApiGeneratorV1 extends Generator {
       strucs ++ List(Code(
         body = s"trait $kind[F[_]]$d{$d$defuns$d}",
         name = x.kind.name,
+        imports = items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
       )) ++ (if (space.opts.contains("http4s") && x.opts.contains("client")) {
         genHttp4sClient(kind, items.filter(_.packageObject == "__this_impl__"))
       } else { List.empty[Code] }) ++ (if (space.opts.contains("http4s") && x.opts.contains("server")) {
@@ -908,6 +930,40 @@ class ScalaApiGeneratorV1 extends Generator {
         s"""
           |class ${name}Http4sImp[F[_]: ConcurrentEffect: ContextShift](http: Client[F], baseUrl: String, blocker: Blocker)
           |                          (implicit F: MonadError[F, Throwable]) extends $name[F] {
+          |  import io.circe.Decoder
+          |
+          |  implicit def decodeEither[A, B](implicit
+          |                                  decoderA: Decoder[A],
+          |                                  decoderB: Decoder[B]): Decoder[Either[A, B]] = decoderA.either(decoderB)
+          |
+          |  case class Response[A: Decoder](
+          |    ok: Boolean,
+          |    result: Option[A],
+          |    description: Option[String]
+          |  )
+          |
+          |  private implicit def responseDecoder[A: Decoder]: Decoder[Response[A]] =
+          |    Decoder.instance { h =>
+          |      for {
+          |        _ok          <- h.get[Boolean]("ok")
+          |        _result      <- h.get[Option[A]]("result")
+          |        _description <- h.get[Option[String]]("description")
+          |      } yield {
+          |        Response[A](ok = _ok, result = _result, description = _description)
+          |      }
+          |    }
+          |
+          |  private def decodeResponse[A: io.circe.Decoder](req: Request[F]): F[A] = {
+          |    for {
+          |      response <- http.expect(req)(jsonOf[F, Response[A]])
+          |      result <- F.fromOption[A](
+          |        response.result,
+          |        new RuntimeException(response.description.getOrElse("Unknown error occurred"))
+          |      )
+          |    } yield {
+          |      result
+          |    }
+          |  }
           |
           |  def makePart(field: String, file: java.io.File): F[List[Part[F]]] = {
           |    import org.http4s.headers._
