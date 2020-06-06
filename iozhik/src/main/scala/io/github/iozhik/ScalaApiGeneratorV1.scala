@@ -600,7 +600,11 @@ class ScalaApiGeneratorV1 extends Generator {
     } yield {
       List(Code(
         name = parentKind.name,
-        body = s"final case object $name extends $parent",
+        body = s"""
+           final case object $name extends $parent {
+             override def toString() = "${x.target}"
+           }
+         """
       ))
     }
   }

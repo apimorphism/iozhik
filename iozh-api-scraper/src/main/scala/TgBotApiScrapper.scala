@@ -171,6 +171,12 @@ object TgBotApiScrapper extends IOApp {
        |namespace telegramium {
        |  namespace bots(snake circe http4s upack) {
        |
+       |    enum Emoji {
+       |      item EmojiDice       = "🎲"
+       |      item EmojiDarts      = "🎯"
+       |      item EmojiBasketball = "🏀"
+       |    }
+       |
        |    enum ParseMode {
        |      item Markdown  = "Markdown"
        |      item Markdown2 = "MarkdownV2"
@@ -251,9 +257,9 @@ object TgBotApiScrapper extends IOApp {
       case class Item(name: Element, desc: List[Element], table: Element)
       case class Sumt(name: Element, desc: Element, items: Element)
 
-      def mkType(desc: String, s: String): String = {
+      def mkType(name: String, desc: String, s: String): String = {
         val mustBeLong = desc.contains("greater than 32 bits")
-        s
+        val res = s
           .replace(" number", "") // Float number => Float
           .replace("True", "Boolean")
           .replace("False", "Boolean")
@@ -265,6 +271,19 @@ object TgBotApiScrapper extends IOApp {
           .replace("Messages", "Message")
           .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
           .replace("InputMediaPhoto and InputMediaVideo", "InputMedia")
+        if (name == "emoji") {
+          "Emoji";
+        } else {
+          res
+        }
+      }
+
+      def fixDesc(desc: String): String = {
+        desc
+          .replace("1-6 for “” and “”", "1-6 for EmojiDice and EmojiDarts")
+          .replace("1-5 for “”", "1-5 for EmojiBasketball")
+          .replace("Defauts to “”", "Defaults to EmojiDarts")
+          .replace("one of “”, “”, or “”", "one of EmojiDice, EmojiDarts, or EmojiBasketball")
       }
 
       def isH4(e: Element): Boolean = e.tagName.toLowerCase == "h4"
@@ -326,12 +345,12 @@ object TgBotApiScrapper extends IOApp {
                 val desc = y.children.toList(3).text
                 MethodParam(
                   name = name,
-                  kind = mkType(desc, k),
+                  kind = mkType(name, desc, k),
                   required = y.children.toList(2).text,
-                  desc = wrap(desc, 60),
+                  desc = wrap(fixDesc(desc), 60),
                 )
               }.toList,
-              returns = mkType("", returns)
+              returns = mkType("", "", returns)
             )
           case x: Item if x.name.text.head.isUpper =>
             val params = x.table >> elements("tbody > tr")
@@ -351,8 +370,8 @@ object TgBotApiScrapper extends IOApp {
                 } else {
                   EntityParam(
                     name = name,
-                    kind = mkType(desc, kind),
-                    desc = wrap(desc, 60),
+                    kind = mkType(name, desc, kind),
+                    desc = wrap(fixDesc(desc), 60),
                   )
                 }
               }.toList

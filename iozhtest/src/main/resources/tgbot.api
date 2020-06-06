@@ -2,6 +2,12 @@
 namespace telegramium {
   namespace bots(snake circe http4s upack) {
 
+    enum Emoji {
+      item EmojiDice       = "🎲"
+      item EmojiDarts      = "🎯"
+      item EmojiBasketball = "🏀"
+    }
+
     enum ParseMode {
       item Markdown  = "Markdown"
       item Markdown2 = "MarkdownV2"
@@ -28,12 +34,12 @@ namespace telegramium {
              
     
       /* Upon receiving a message with this object, Telegram clients will display a 
-        reply interface to the user (act as if the user has selected the bot‘s message 
-        and tapped ’Reply'). This can be extremely useful if you want to create 
+        reply interface to the user (act as if the user has selected the bot's message 
+        and tapped 'Reply'). This can be extremely useful if you want to create 
         user-friendly step-by-step interfaces without having to sacrifice privacy mode.  */
       ForceReply {
         /* Shows reply interface to the user, as if they manually 
-        selected the bot‘s message and tapped ’Reply' */
+        selected the bot's message and tapped 'Reply' */
         forceReply : Boolean
         /* Optional. Use this parameter if you want to force reply 
         from specific users only. Targets: 1) users that are 
@@ -91,9 +97,9 @@ namespace telegramium {
         @mentioned in the text of the Message object; 2) if the 
         bot's message is a reply (has reply_to_message_id), sender 
         of the original message. Example: A user requests to change 
-        the bot‘s language, bot replies to the request with a 
+        the bot's language, bot replies to the request with a 
         keyboard to select the new language. Other users in the 
-        group don’t see the keyboard. */
+        group don't see the keyboard. */
         selective       : Option[Boolean]
       }
              
@@ -124,9 +130,9 @@ namespace telegramium {
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
-        in size. A thumbnail‘s width and height should not exceed 
+        in size. A thumbnail's width and height should not exceed 
         320. Ignored if the file is not uploaded using 
-        multipart/form-data. Thumbnails can’t be reused and can be 
+        multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. More 
@@ -177,9 +183,9 @@ namespace telegramium {
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
-        in size. A thumbnail‘s width and height should not exceed 
+        in size. A thumbnail's width and height should not exceed 
         320. Ignored if the file is not uploaded using 
-        multipart/form-data. Thumbnails can’t be reused and can be 
+        multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. More 
@@ -215,9 +221,9 @@ namespace telegramium {
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
-        in size. A thumbnail‘s width and height should not exceed 
+        in size. A thumbnail's width and height should not exceed 
         320. Ignored if the file is not uploaded using 
-        multipart/form-data. Thumbnails can’t be reused and can be 
+        multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. More 
@@ -244,9 +250,9 @@ namespace telegramium {
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
-        in size. A thumbnail‘s width and height should not exceed 
+        in size. A thumbnail's width and height should not exceed 
         320. Ignored if the file is not uploaded using 
-        multipart/form-data. Thumbnails can’t be reused and can be 
+        multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. More 
@@ -286,8 +292,13 @@ namespace telegramium {
         gifHeight           : Option[Int]
         /* Optional. Duration of the GIF */
         gifDuration         : Option[Int]
-        /* URL of the static thumbnail for the result (jpeg or gif) */
+        /* URL of the static (JPEG or GIF) or animated (MPEG4) 
+        thumbnail for the result */
         thumbUrl            : String
+        /* Optional. MIME type of the thumbnail, must be one of 
+        “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to 
+        “image/jpeg” */
+        thumbMimeType       : Option[String]
         /* Optional. Title for the result */
         title               : Option[String]
         /* Optional. Caption of the GIF file to be sent, 0-1024 
@@ -528,8 +539,13 @@ namespace telegramium {
         mpeg4Height         : Option[Int]
         /* Optional. Video duration */
         mpeg4Duration       : Option[Int]
-        /* URL of the static thumbnail (jpeg or gif) for the result */
+        /* URL of the static (JPEG or GIF) or animated (MPEG4) 
+        thumbnail for the result */
         thumbUrl            : String
+        /* Optional. MIME type of the thumbnail, must be one of 
+        “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to 
+        “image/jpeg” */
+        thumbMimeType       : Option[String]
         /* Optional. Title for the result */
         title               : Option[String]
         /* Optional. Caption of the MPEG-4 file to be sent, 0-1024 
@@ -1233,9 +1249,9 @@ namespace telegramium {
     /* This object represents an incoming update. At most one of the optional 
       parameters can be present in any given update.  */
     Update {
-      /* The update‘s unique identifier. Update identifiers start 
+      /* The update's unique identifier. Update identifiers start 
       from a certain positive number and increase sequentially. 
-      This ID becomes especially handy if you’re using Webhooks, 
+      This ID becomes especially handy if you're using Webhooks, 
       since it allows you to ignore repeated updates or to restore 
       the correct update sequence, should they get out of order. 
       If there are no new updates for at least a week, then 
@@ -1511,13 +1527,12 @@ namespace telegramium {
       providerPaymentChargeId : String
     }
            
-    /* This object represents a dice with a random value from 1 to 6 for currently 
-      supported base emoji. (Yes, we're aware of the “proper” singular of die. But 
-      it's awkward, and we decided to help it change. One dice at a time!)  */
+    /* This object represents an animated emoji that displays a random value.  */
     Dice {
       /* Emoji on which the dice throw animation is based */
-      emoji : String
-      /* Value of the dice, 1-6 for currently supported base emoji */
+      emoji : Emoji
+      /* Value of the dice, 1-6 for EmojiDice and EmojiDarts base 
+      emoji, 1-5 for EmojiBasketball base emoji */
       value : Int
     }
            
@@ -1715,11 +1730,11 @@ namespace telegramium {
       id                      : Int
       /* True, if this user is a bot */
       isBot                   : Boolean
-      /* User‘s or bot’s first name */
+      /* User's or bot's first name */
       firstName               : String
-      /* Optional. User‘s or bot’s last name */
+      /* Optional. User's or bot's last name */
       lastName                : Option[String]
-      /* Optional. User‘s or bot’s username */
+      /* Optional. User's or bot's username */
       username                : Option[String]
       /* Optional. IETF language tag of the user's language */
       languageCode            : Option[String]
@@ -1811,7 +1826,7 @@ namespace telegramium {
       /* Optional. Sticker thumbnail in the .WEBP or .JPG format */
       thumb        : Option[PhotoSize]
       /* Optional. Emoji associated with the sticker */
-      emoji        : Option[String]
+      emoji        : Option[Emoji]
       /* Optional. Name of the sticker set to which the sticker 
       belongs */
       setName      : Option[String]
@@ -1855,6 +1870,8 @@ namespace telegramium {
       Message object in this field will not contain further 
       reply_to_message fields even if it itself is a reply. */
       replyToMessage        : Option[Message]
+      /* Optional. Bot through which the message was sent */
+      viaBot                : Option[User]
       /* Optional. Date the message was last edited in Unix time */
       editDate              : Option[Int]
       /* Optional. The unique identifier of a media message group 
@@ -1869,23 +1886,16 @@ namespace telegramium {
       /* Optional. For text messages, special entities like 
       usernames, URLs, bot commands, etc. that appear in the text */
       entities              : List[MessageEntity]
-      /* Optional. For messages with a caption, special entities 
-      like usernames, URLs, bot commands, etc. that appear in the 
-      caption */
-      captionEntities       : List[MessageEntity]
+      /* Optional. Message is an animation, information about the 
+      animation. For backward compatibility, when this field is 
+      set, the document field will also be set */
+      animation             : Option[Animation]
       /* Optional. Message is an audio file, information about the 
       file */
       audio                 : Option[Audio]
       /* Optional. Message is a general file, information about the 
       file */
       document              : Option[Document]
-      /* Optional. Message is an animation, information about the 
-      animation. For backward compatibility, when this field is 
-      set, the document field will also be set */
-      animation             : Option[Animation]
-      /* Optional. Message is a game, information about the game. 
-      More about games » */
-      game                  : Option[Game]
       /* Optional. Message is a photo, available sizes of the photo */
       photo                 : List[PhotoSize]
       /* Optional. Message is a sticker, information about the 
@@ -1893,28 +1903,37 @@ namespace telegramium {
       sticker               : Option[Sticker]
       /* Optional. Message is a video, information about the video */
       video                 : Option[Video]
-      /* Optional. Message is a voice message, information about the 
-      file */
-      voice                 : Option[Voice]
       /* Optional. Message is a video note, information about the 
       video message */
       videoNote             : Option[VideoNote]
+      /* Optional. Message is a voice message, information about the 
+      file */
+      voice                 : Option[Voice]
       /* Optional. Caption for the animation, audio, document, 
       photo, video or voice, 0-1024 characters */
       caption               : Option[String]
+      /* Optional. For messages with a caption, special entities 
+      like usernames, URLs, bot commands, etc. that appear in the 
+      caption */
+      captionEntities       : List[MessageEntity]
       /* Optional. Message is a shared contact, information about 
       the contact */
       contact               : Option[Contact]
-      /* Optional. Message is a shared location, information about 
-      the location */
-      location              : Option[Location]
-      /* Optional. Message is a venue, information about the venue */
-      venue                 : Option[Venue]
+      /* Optional. Message is a dice with random value from 1 to 6 */
+      dice                  : Option[Dice]
+      /* Optional. Message is a game, information about the game. 
+      More about games » */
+      game                  : Option[Game]
       /* Optional. Message is a native poll, information about the 
       poll */
       poll                  : Option[Poll]
-      /* Optional. Message is a dice with random value from 1 to 6 */
-      dice                  : Option[Dice]
+      /* Optional. Message is a venue, information about the venue. 
+      For backward compatibility, when this field is set, the 
+      location field will also be set */
+      venue                 : Option[Venue]
+      /* Optional. Message is a shared location, information about 
+      the location */
+      location              : Option[Location]
       /* Optional. New members that were added to the group or 
       supergroup and information about them (the bot itself may be 
       one of these members) */
@@ -1931,15 +1950,15 @@ namespace telegramium {
       /* Optional. Service message: the group has been created */
       groupChatCreated      : Option[Boolean]
       /* Optional. Service message: the supergroup has been created. 
-      This field can‘t be received in a message coming through 
-      updates, because bot can’t be a member of a supergroup when 
+      This field can't be received in a message coming through 
+      updates, because bot can't be a member of a supergroup when 
       it is created. It can only be found in reply_to_message if 
       someone replies to a very first message in a directly 
       created supergroup. */
       supergroupChatCreated : Option[Boolean]
       /* Optional. Service message: the channel has been created. 
-      This field can‘t be received in a message coming through 
-      updates, because bot can’t be a member of a channel when it 
+      This field can't be received in a message coming through 
+      updates, because bot can't be a member of a channel when it 
       is created. It can only be found in reply_to_message if 
       someone replies to a very first message in a channel. */
       channelChatCreated    : Option[Boolean]
@@ -2045,8 +2064,8 @@ namespace telegramium {
       callbackData                 : Option[String]
       /* Optional. If set, pressing the button will prompt the user 
       to select one of their chats, open that chat and insert the 
-      bot‘s username and the specified inline query in the input 
-      field. Can be empty, in which case just the bot’s username 
+      bot's username and the specified inline query in the input 
+      field. Can be empty, in which case just the bot's username 
       will be inserted. Note: This offers an easy way for users to 
       start using your bot in inline mode when they are currently 
       in a private chat with it. Especially useful when combined 
@@ -2054,9 +2073,9 @@ namespace telegramium {
       automatically returned to the chat they switched from, 
       skipping the chat selection screen. */
       switchInlineQuery            : Option[String]
-      /* Optional. If set, pressing the button will insert the bot‘s 
+      /* Optional. If set, pressing the button will insert the bot's 
       username and the specified inline query in the current 
-      chat’s input field. Can be empty, in which case only the 
+      chat's input field. Can be empty, in which case only the 
       bot's username will be inserted. This offers a quick way for 
       the user to open your bot in inline mode in the same chat – 
       good for selecting something from multiple options. */
@@ -2630,17 +2649,18 @@ namespace telegramium {
         } => String
                 
       
-        /* Use this method to send a dice, which will have a random value from 1 to 6. On 
-          success, the sent Message is returned. (Yes, we're aware of the “proper” 
-          singular of die. But it's awkward, and we decided to help it change. One dice at 
-          a time!)  */
+        /* Use this method to send an animated emoji that will display a random value. On 
+          success, the sent Message is returned.  */
         def sendDice {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format @channelusername) */
           chatId              : ChatId
           /* Emoji on which the dice throw animation is based. 
-          Currently, must be one of “” or “”. Defauts to “” */
-          emoji               : Option[String]
+          Currently, must be one of EmojiDice, EmojiDarts, or 
+          EmojiBasketball. Dice can have values 1-6 for EmojiDice and 
+          EmojiDarts, and values 1-5 for EmojiBasketball. Defaults to 
+          EmojiDarts */
+          emoji               : Option[Emoji]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification : Option[Boolean]
@@ -2716,7 +2736,7 @@ namespace telegramium {
       
         /* Use this method to unpin a message in a group, a supergroup, or a channel. The 
           bot must be an administrator in the chat for this to work and must have the 
-          ‘can_pin_messages’ admin right in the supergroup or ‘can_edit_messages’ admin 
+          'can_pin_messages' admin right in the supergroup or 'can_edit_messages' admin 
           right in the channel. Returns True on success.  */
         def unpinChatMessage {
           /* Unique identifier for the target chat or username of the 
@@ -2755,7 +2775,7 @@ namespace telegramium {
           /* If the message is a reply, ID of the original message */
           replyToMessageId    : Option[Int]
           /* A JSON-serialized object for an inline keyboard. If empty, 
-          one ‘Play game_title’ button will be shown. If not empty, 
+          one 'Play game_title' button will be shown. If not empty, 
           the first button must launch the game. */
           replyMarkup         : Option[InlineKeyboardMarkup]
         } => Message
@@ -2950,9 +2970,9 @@ namespace telegramium {
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
-          size. A thumbnail‘s width and height should not exceed 320. 
+          size. A thumbnail's width and height should not exceed 320. 
           Ignored if the file is not uploaded using 
-          multipart/form-data. Thumbnails can’t be reused and can be 
+          multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. More 
@@ -3081,9 +3101,9 @@ namespace telegramium {
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
-          size. A thumbnail‘s width and height should not exceed 320. 
+          size. A thumbnail's width and height should not exceed 320. 
           Ignored if the file is not uploaded using 
-          multipart/form-data. Thumbnails can’t be reused and can be 
+          multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. More 
@@ -3142,8 +3162,8 @@ namespace telegramium {
           isPersonal        : Option[Boolean]
           /* Pass the offset that a client should send in the next query 
           with the same text to receive more results. Pass an empty 
-          string if there are no more results or if you don‘t support 
-          pagination. Offset length can’t exceed 64 bytes. */
+          string if there are no more results or if you don't support 
+          pagination. Offset length can't exceed 64 bytes. */
           nextOffset        : Option[String]
           /* If passed, clients will display a button with specified 
           text that switches the user to a private chat with the bot 
@@ -3155,8 +3175,8 @@ namespace telegramium {
           only A-Z, a-z, 0-9, _ and - are allowed. Example: An inline 
           bot that sends YouTube videos can ask the user to connect 
           the bot to their YouTube account to adapt search results 
-          accordingly. To do this, it displays a ‘Connect your YouTube 
-          account’ button above the results, or even before showing 
+          accordingly. To do this, it displays a 'Connect your YouTube 
+          account' button above the results, or even before showing 
           any. The user presses the button, switches to a private chat 
           with the bot and, in doing so, passes a start parameter that 
           instructs the bot to return an oauth link. Once done, the 
@@ -3215,9 +3235,9 @@ namespace telegramium {
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
-          size. A thumbnail‘s width and height should not exceed 320. 
+          size. A thumbnail's width and height should not exceed 320. 
           Ignored if the file is not uploaded using 
-          multipart/form-data. Thumbnails can’t be reused and can be 
+          multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. More 
@@ -3436,7 +3456,7 @@ namespace telegramium {
       
         /* Use this method to pin a message in a group, a supergroup, or a channel. The 
           bot must be an administrator in the chat for this to work and must have the 
-          ‘can_pin_messages’ admin right in the supergroup or ‘can_edit_messages’ admin 
+          'can_pin_messages' admin right in the supergroup or 'can_edit_messages' admin 
           right in the channel. Returns True on success.  */
         def pinChatMessage {
           /* Unique identifier for the target chat or username of the 
@@ -3514,9 +3534,9 @@ namespace telegramium {
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
-          size. A thumbnail‘s width and height should not exceed 320. 
+          size. A thumbnail's width and height should not exceed 320. 
           Ignored if the file is not uploaded using 
-          multipart/form-data. Thumbnails can’t be reused and can be 
+          multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. More 
@@ -3619,9 +3639,9 @@ namespace telegramium {
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
-          size. A thumbnail‘s width and height should not exceed 320. 
+          size. A thumbnail's width and height should not exceed 320. 
           Ignored if the file is not uploaded using 
-          multipart/form-data. Thumbnails can’t be reused and can be 
+          multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. More 
@@ -3801,8 +3821,8 @@ namespace telegramium {
           unsuccessful request, we will give up after a reasonable amount of attempts. 
           Returns True on success. If you'd like to make sure that the Webhook request 
           comes from Telegram, we recommend using a secret path in the URL, e.g. 
-          https://www.example.com/<token>. Since nobody else knows your bot‘s token, you 
-          can be pretty sure it’s us.  */
+          https://www.example.com/<token>. Since nobody else knows your bot's token, you 
+          can be pretty sure it's us.  */
         def setWebhook {
           /* HTTPS url to send updates to. Use an empty string to remove 
           webhook integration */
@@ -3813,8 +3833,8 @@ namespace telegramium {
           certificate    : (file) Option[IFile]
           /* Maximum allowed number of simultaneous HTTPS connections to 
           the webhook for update delivery, 1-100. Defaults to 40. Use 
-          lower values to limit the load on your bot‘s server, and 
-          higher values to increase your bot’s throughput. */
+          lower values to limit the load on your bot's server, and 
+          higher values to increase your bot's throughput. */
           maxConnections : Option[Int]
           /* A JSON-serialized list of the update types you want your 
           bot to receive. For example, specify [“message”, 
