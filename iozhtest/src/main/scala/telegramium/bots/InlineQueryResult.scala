@@ -17,17 +17,21 @@ final case class InlineQueryResultGif(
                                       gifHeight: Option[Int] = Option.empty,
                                       /** Optional. Duration of the GIF*/
                                       gifDuration: Option[Int] = Option.empty,
-                                      /** URL of the static thumbnail for the result (jpeg or gif)*/
+                                      /** URL of the static (JPEG or GIF) or animated (MPEG4)
+                                        * thumbnail for the result*/
                                       thumbUrl: String,
+                                      /** Optional. MIME type of the thumbnail, must be one of
+                                        * “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to
+                                        * “image/jpeg”*/
+                                      thumbMimeType: Option[String] = Option.empty,
                                       /** Optional. Title for the result*/
                                       title: Option[String] = Option.empty,
                                       /** Optional. Caption of the GIF file to be sent, 0-1024
-                                        * characters*/
+                                        * characters after entities parsing*/
                                       caption: Option[String] = Option.empty,
-                                      /** Optional. Send Markdown or HTML, if you want Telegram apps
-                                        * to show bold, italic, fixed-width text or inline URLs in the
-                                        * media caption.*/
-                                      parseMode: Option[String] = Option.empty,
+                                      /** Optional. Mode for parsing entities in the caption. See
+                                        * formatting options for more details.*/
+                                      parseMode: Option[ParseMode] = Option.empty,
                                       /** Optional. Inline keyboard attached to the message*/
                                       replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
                                       /** Optional. Content of the message to be sent instead of the
@@ -119,12 +123,11 @@ final case class InlineQueryResultPhoto(
                                         /** Optional. Short description of the result*/
                                         description: Option[String] = Option.empty,
                                         /** Optional. Caption of the photo to be sent, 0-1024
-                                          * characters*/
+                                          * characters after entities parsing*/
                                         caption: Option[String] = Option.empty,
-                                        /** Optional. Send Markdown or HTML, if you want Telegram apps
-                                          * to show bold, italic, fixed-width text or inline URLs in the
-                                          * media caption.*/
-                                        parseMode: Option[String] = Option.empty,
+                                        /** Optional. Mode for parsing entities in the photo caption.
+                                          * See formatting options for more details.*/
+                                        parseMode: Option[ParseMode] = Option.empty,
                                         /** Optional. Inline keyboard attached to the message*/
                                         replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
                                         /** Optional. Content of the message to be sent instead of the
@@ -143,12 +146,11 @@ final case class InlineQueryResultDocument(
                                            /** Title for the result*/
                                            title: String,
                                            /** Optional. Caption of the document to be sent, 0-1024
-                                             * characters*/
+                                             * characters after entities parsing*/
                                            caption: Option[String] = Option.empty,
-                                           /** Optional. Send Markdown or HTML, if you want Telegram apps
-                                             * to show bold, italic, fixed-width text or inline URLs in the
-                                             * media caption.*/
-                                           parseMode: Option[String] = Option.empty,
+                                           /** Optional. Mode for parsing entities in the document
+                                             * caption. See formatting options for more details.*/
+                                           parseMode: Option[ParseMode] = Option.empty,
                                            /** A valid URL for the file*/
                                            documentUrl: String,
                                            /** Mime type of the content of the file, either
@@ -181,12 +183,11 @@ final case class InlineQueryResultCachedVoice(
     voiceFileId: String,
     /** Voice message title*/
     title: String,
-    /** Optional. Caption, 0-1024 characters*/
+    /** Optional. Caption, 0-1024 characters after entities parsing*/
     caption: Option[String] = Option.empty,
-    /** Optional. Send Markdown or HTML, if you want Telegram apps
-      * to show bold, italic, fixed-width text or inline URLs in the
-      * media caption.*/
-    parseMode: Option[String] = Option.empty,
+    /** Optional. Mode for parsing entities in the voice message
+      * caption. See formatting options for more details.*/
+    parseMode: Option[ParseMode] = Option.empty,
     /** Optional. Inline keyboard attached to the message*/
     replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
     /** Optional. Content of the message to be sent instead of the
@@ -219,7 +220,7 @@ final case class InlineQueryResultArticle(
                                           thumbHeight: Option[Int] = Option.empty)
     extends InlineQueryResult
 
-/** Represents a link to an mp3 audio file. By default, this audio file will be
+/** Represents a link to an MP3 audio file. By default, this audio file will be
   * sent by the user. Alternatively, you can use input_message_content to send a
   * message with the specified content instead of the audio.*/
 final case class InlineQueryResultAudio(
@@ -229,12 +230,11 @@ final case class InlineQueryResultAudio(
                                         audioUrl: String,
                                         /** Title*/
                                         title: String,
-                                        /** Optional. Caption, 0-1024 characters*/
+                                        /** Optional. Caption, 0-1024 characters after entities parsing*/
                                         caption: Option[String] = Option.empty,
-                                        /** Optional. Send Markdown or HTML, if you want Telegram apps
-                                          * to show bold, italic, fixed-width text or inline URLs in the
-                                          * media caption.*/
-                                        parseMode: Option[String] = Option.empty,
+                                        /** Optional. Mode for parsing entities in the audio caption.
+                                          * See formatting options for more details.*/
+                                        parseMode: Option[ParseMode] = Option.empty,
                                         /** Optional. Performer*/
                                         performer: Option[String] = Option.empty,
                                         /** Optional. Audio duration in seconds*/
@@ -262,17 +262,21 @@ final case class InlineQueryResultMpeg4Gif(
                                            mpeg4Height: Option[Int] = Option.empty,
                                            /** Optional. Video duration*/
                                            mpeg4Duration: Option[Int] = Option.empty,
-                                           /** URL of the static thumbnail (jpeg or gif) for the result*/
+                                           /** URL of the static (JPEG or GIF) or animated (MPEG4)
+                                             * thumbnail for the result*/
                                            thumbUrl: String,
+                                           /** Optional. MIME type of the thumbnail, must be one of
+                                             * “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to
+                                             * “image/jpeg”*/
+                                           thumbMimeType: Option[String] = Option.empty,
                                            /** Optional. Title for the result*/
                                            title: Option[String] = Option.empty,
                                            /** Optional. Caption of the MPEG-4 file to be sent, 0-1024
-                                             * characters*/
+                                             * characters after entities parsing*/
                                            caption: Option[String] = Option.empty,
-                                           /** Optional. Send Markdown or HTML, if you want Telegram apps
-                                             * to show bold, italic, fixed-width text or inline URLs in the
-                                             * media caption.*/
-                                           parseMode: Option[String] = Option.empty,
+                                           /** Optional. Mode for parsing entities in the caption. See
+                                             * formatting options for more details.*/
+                                           parseMode: Option[ParseMode] = Option.empty,
                                            /** Optional. Inline keyboard attached to the message*/
                                            replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
                                            /** Optional. Content of the message to be sent instead of the
@@ -294,12 +298,11 @@ final case class InlineQueryResultCachedMpeg4Gif(
     /** Optional. Title for the result*/
     title: Option[String] = Option.empty,
     /** Optional. Caption of the MPEG-4 file to be sent, 0-1024
-      * characters*/
+      * characters after entities parsing*/
     caption: Option[String] = Option.empty,
-    /** Optional. Send Markdown or HTML, if you want Telegram apps
-      * to show bold, italic, fixed-width text or inline URLs in the
-      * media caption.*/
-    parseMode: Option[String] = Option.empty,
+    /** Optional. Mode for parsing entities in the caption. See
+      * formatting options for more details.*/
+    parseMode: Option[ParseMode] = Option.empty,
     /** Optional. Inline keyboard attached to the message*/
     replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
     /** Optional. Content of the message to be sent instead of the
@@ -321,12 +324,11 @@ final case class InlineQueryResultCachedDocument(
     /** Optional. Short description of the result*/
     description: Option[String] = Option.empty,
     /** Optional. Caption of the document to be sent, 0-1024
-      * characters*/
+      * characters after entities parsing*/
     caption: Option[String] = Option.empty,
-    /** Optional. Send Markdown or HTML, if you want Telegram apps
-      * to show bold, italic, fixed-width text or inline URLs in the
-      * media caption.*/
-    parseMode: Option[String] = Option.empty,
+    /** Optional. Mode for parsing entities in the document
+      * caption. See formatting options for more details.*/
+    parseMode: Option[ParseMode] = Option.empty,
     /** Optional. Inline keyboard attached to the message*/
     replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
     /** Optional. Content of the message to be sent instead of the
@@ -348,12 +350,11 @@ final case class InlineQueryResultCachedVideo(
     /** Optional. Short description of the result*/
     description: Option[String] = Option.empty,
     /** Optional. Caption of the video to be sent, 0-1024
-      * characters*/
+      * characters after entities parsing*/
     caption: Option[String] = Option.empty,
-    /** Optional. Send Markdown or HTML, if you want Telegram apps
-      * to show bold, italic, fixed-width text or inline URLs in the
-      * media caption.*/
-    parseMode: Option[String] = Option.empty,
+    /** Optional. Mode for parsing entities in the video caption.
+      * See formatting options for more details.*/
+    parseMode: Option[ParseMode] = Option.empty,
     /** Optional. Inline keyboard attached to the message*/
     replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
     /** Optional. Content of the message to be sent instead of the
@@ -385,12 +386,11 @@ final case class InlineQueryResultCachedPhoto(
     /** Optional. Short description of the result*/
     description: Option[String] = Option.empty,
     /** Optional. Caption of the photo to be sent, 0-1024
-      * characters*/
+      * characters after entities parsing*/
     caption: Option[String] = Option.empty,
-    /** Optional. Send Markdown or HTML, if you want Telegram apps
-      * to show bold, italic, fixed-width text or inline URLs in the
-      * media caption.*/
-    parseMode: Option[String] = Option.empty,
+    /** Optional. Mode for parsing entities in the photo caption.
+      * See formatting options for more details.*/
+    parseMode: Option[ParseMode] = Option.empty,
     /** Optional. Inline keyboard attached to the message*/
     replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
     /** Optional. Content of the message to be sent instead of the
@@ -431,12 +431,11 @@ final case class InlineQueryResultVideo(
                                         /** Title for the result*/
                                         title: String,
                                         /** Optional. Caption of the video to be sent, 0-1024
-                                          * characters*/
+                                          * characters after entities parsing*/
                                         caption: Option[String] = Option.empty,
-                                        /** Optional. Send Markdown or HTML, if you want Telegram apps
-                                          * to show bold, italic, fixed-width text or inline URLs in the
-                                          * media caption.*/
-                                        parseMode: Option[String] = Option.empty,
+                                        /** Optional. Mode for parsing entities in the video caption.
+                                          * See formatting options for more details.*/
+                                        parseMode: Option[ParseMode] = Option.empty,
                                         /** Optional. Video width*/
                                         videoWidth: Option[Int] = Option.empty,
                                         /** Optional. Video height*/
@@ -455,7 +454,7 @@ final case class InlineQueryResultVideo(
                                           Option.empty)
     extends InlineQueryResult
 
-/** Represents a link to an mp3 audio file stored on the Telegram servers. By
+/** Represents a link to an MP3 audio file stored on the Telegram servers. By
   * default, this audio file will be sent by the user. Alternatively, you can use
   * input_message_content to send a message with the specified content instead of
   * the audio.*/
@@ -464,12 +463,11 @@ final case class InlineQueryResultCachedAudio(
     id: String,
     /** A valid file identifier for the audio file*/
     audioFileId: String,
-    /** Optional. Caption, 0-1024 characters*/
+    /** Optional. Caption, 0-1024 characters after entities parsing*/
     caption: Option[String] = Option.empty,
-    /** Optional. Send Markdown or HTML, if you want Telegram apps
-      * to show bold, italic, fixed-width text or inline URLs in the
-      * media caption.*/
-    parseMode: Option[String] = Option.empty,
+    /** Optional. Mode for parsing entities in the audio caption.
+      * See formatting options for more details.*/
+    parseMode: Option[ParseMode] = Option.empty,
     /** Optional. Inline keyboard attached to the message*/
     replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
     /** Optional. Content of the message to be sent instead of the
@@ -518,12 +516,11 @@ final case class InlineQueryResultCachedGif(
     /** Optional. Title for the result*/
     title: Option[String] = Option.empty,
     /** Optional. Caption of the GIF file to be sent, 0-1024
-      * characters*/
+      * characters after entities parsing*/
     caption: Option[String] = Option.empty,
-    /** Optional. Send Markdown or HTML, if you want Telegram apps
-      * to show bold, italic, fixed-width text or inline URLs in the
-      * media caption.*/
-    parseMode: Option[String] = Option.empty,
+    /** Optional. Mode for parsing entities in the caption. See
+      * formatting options for more details.*/
+    parseMode: Option[ParseMode] = Option.empty,
     /** Optional. Inline keyboard attached to the message*/
     replyMarkup: Option[InlineKeyboardMarkup] = Option.empty,
     /** Optional. Content of the message to be sent instead of the
@@ -531,7 +528,7 @@ final case class InlineQueryResultCachedGif(
     inputMessageContent: Option[InputMessageContent] = Option.empty)
     extends InlineQueryResult
 
-/** Represents a link to a voice recording in an .ogg container encoded with OPUS.
+/** Represents a link to a voice recording in an .OGG container encoded with OPUS.
   * By default, this voice recording will be sent by the user. Alternatively, you
   * can use input_message_content to send a message with the specified content
   * instead of the the voice message.*/
@@ -542,12 +539,11 @@ final case class InlineQueryResultVoice(
                                         voiceUrl: String,
                                         /** Recording title*/
                                         title: String,
-                                        /** Optional. Caption, 0-1024 characters*/
+                                        /** Optional. Caption, 0-1024 characters after entities parsing*/
                                         caption: Option[String] = Option.empty,
-                                        /** Optional. Send Markdown or HTML, if you want Telegram apps
-                                          * to show bold, italic, fixed-width text or inline URLs in the
-                                          * media caption.*/
-                                        parseMode: Option[String] = Option.empty,
+                                        /** Optional. Mode for parsing entities in the voice message
+                                          * caption. See formatting options for more details.*/
+                                        parseMode: Option[ParseMode] = Option.empty,
                                         /** Optional. Recording duration in seconds*/
                                         voiceDuration: Option[Int] = Option.empty,
                                         /** Optional. Inline keyboard attached to the message*/

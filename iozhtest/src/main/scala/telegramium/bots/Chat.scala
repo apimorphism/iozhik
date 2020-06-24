@@ -8,7 +8,7 @@ final case class Chat(
                         * smaller than 52 bits, so a signed 64 bit integer or
                         * double-precision float type are safe for storing this
                         * identifier.*/
-                      id: Int,
+                      id: Long,
                       /** Type of chat, can be either “private”, “group”,
                         * “supergroup” or “channel”*/
                       `type`: String,
@@ -21,22 +21,26 @@ final case class Chat(
                       firstName: Option[String] = Option.empty,
                       /** Optional. Last name of the other party in a private chat*/
                       lastName: Option[String] = Option.empty,
-                      /** Optional. True if a group has ‘All Members Are Admins’
-                        * enabled.*/
-                      allMembersAreAdministrators: Option[Boolean] = Option.empty,
                       /** Optional. Chat photo. Returned only in getChat.*/
                       photo: Option[ChatPhoto] = Option.empty,
-                      /** Optional. Description, for supergroups and channel chats.
-                        * Returned only in getChat.*/
+                      /** Optional. Description, for groups, supergroups and channel
+                        * chats. Returned only in getChat.*/
                       description: Option[String] = Option.empty,
-                      /** Optional. Chat invite link, for supergroups and channel
-                        * chats. Each administrator in a chat generates their own
-                        * invite links, so the bot must first generate the link using
-                        * exportChatInviteLink. Returned only in getChat.*/
+                      /** Optional. Chat invite link, for groups, supergroups and
+                        * channel chats. Each administrator in a chat generates their
+                        * own invite links, so the bot must first generate the link
+                        * using exportChatInviteLink. Returned only in getChat.*/
                       inviteLink: Option[String] = Option.empty,
                       /** Optional. Pinned message, for groups, supergroups and
                         * channels. Returned only in getChat.*/
                       pinnedMessage: Option[Message] = Option.empty,
+                      /** Optional. Default chat member permissions, for groups and
+                        * supergroups. Returned only in getChat.*/
+                      permissions: Option[ChatPermissions] = Option.empty,
+                      /** Optional. For supergroups, the minimum allowed delay
+                        * between consecutive messages sent by each unpriviledged
+                        * user. Returned only in getChat.*/
+                      slowModeDelay: Option[Int] = Option.empty,
                       /** Optional. For supergroups, name of group sticker set.
                         * Returned only in getChat.*/
                       stickerSetName: Option[String] = Option.empty,
