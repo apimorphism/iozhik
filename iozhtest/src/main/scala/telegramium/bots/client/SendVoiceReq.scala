@@ -2,6 +2,7 @@ package telegramium.bots.client
 
 import telegramium.bots.ChatId
 import telegramium.bots.IFile
+import telegramium.bots.ParseMode
 import telegramium.bots.KeyboardMarkup
 
 final case class SendVoiceReq(
@@ -14,12 +15,12 @@ final case class SendVoiceReq(
                                 * Internet, or upload a new one using multipart/form-data.
                                 * More info on Sending Files »*/
                               voice: IFile,
-                              /** Voice message caption, 0-1024 characters*/
+                              /** Voice message caption, 0-1024 characters after entities
+                                * parsing*/
                               caption: Option[String] = Option.empty,
-                              /** Send Markdown or HTML, if you want Telegram apps to show
-                                * bold, italic, fixed-width text or inline URLs in the media
-                                * caption.*/
-                              parseMode: Option[String] = Option.empty,
+                              /** Mode for parsing entities in the voice message caption. See
+                                * formatting options for more details.*/
+                              parseMode: Option[ParseMode] = Option.empty,
                               /** Duration of the voice message in seconds*/
                               duration: Option[Int] = Option.empty,
                               /** Sends the message silently. Users will receive a

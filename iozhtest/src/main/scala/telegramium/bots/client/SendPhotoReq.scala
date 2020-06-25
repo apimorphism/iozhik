@@ -2,6 +2,7 @@ package telegramium.bots.client
 
 import telegramium.bots.ChatId
 import telegramium.bots.IFile
+import telegramium.bots.ParseMode
 import telegramium.bots.KeyboardMarkup
 
 final case class SendPhotoReq(
@@ -15,12 +16,11 @@ final case class SendPhotoReq(
                                 * More info on Sending Files »*/
                               photo: IFile,
                               /** Photo caption (may also be used when resending photos by
-                                * file_id), 0-1024 characters*/
+                                * file_id), 0-1024 characters after entities parsing*/
                               caption: Option[String] = Option.empty,
-                              /** Send Markdown or HTML, if you want Telegram apps to show
-                                * bold, italic, fixed-width text or inline URLs in the media
-                                * caption.*/
-                              parseMode: Option[String] = Option.empty,
+                              /** Mode for parsing entities in the photo caption. See
+                                * formatting options for more details.*/
+                              parseMode: Option[ParseMode] = Option.empty,
                               /** Sends the message silently. Users will receive a
                                 * notification with no sound.*/
                               disableNotification: Option[Boolean] = Option.empty,

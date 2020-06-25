@@ -1,6 +1,7 @@
 package telegramium.bots.client
 
 import telegramium.bots.ChatId
+import telegramium.bots.ParseMode
 import telegramium.bots.InlineKeyboardMarkup
 
 final case class EditMessageTextReq(
@@ -14,12 +15,12 @@ final case class EditMessageTextReq(
                                     /** Required if chat_id and message_id are not specified.
                                       * Identifier of the inline message*/
                                     inlineMessageId: Option[String] = Option.empty,
-                                    /** New text of the message*/
+                                    /** New text of the message, 1-4096 characters after entities
+                                      * parsing*/
                                     text: String,
-                                    /** Send Markdown or HTML, if you want Telegram apps to show
-                                      * bold, italic, fixed-width text or inline URLs in your bot's
-                                      * message.*/
-                                    parseMode: Option[String] = Option.empty,
+                                    /** Mode for parsing entities in the message text. See
+                                      * formatting options for more details.*/
+                                    parseMode: Option[ParseMode] = Option.empty,
                                     /** Disables link previews for links in this message*/
                                     disableWebPagePreview: Option[Boolean] = Option.empty,
                                     /** A JSON-serialized object for an inline keyboard.*/

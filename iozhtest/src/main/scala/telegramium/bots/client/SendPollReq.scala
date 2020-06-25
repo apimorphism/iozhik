@@ -5,13 +5,41 @@ import telegramium.bots.KeyboardMarkup
 
 final case class SendPollReq(
                              /** Unique identifier for the target chat or username of the
-                               * target channel (in the format @channelusername). A native
-                               * poll can't be sent to a private chat.*/
+                               * target channel (in the format @channelusername)*/
                              chatId: ChatId,
                              /** Poll question, 1-255 characters*/
                              question: String,
-                             /** List of answer options, 2-10 strings 1-100 characters each*/
+                             /** A JSON-serialized list of answer options, 2-10 strings
+                               * 1-100 characters each*/
                              options: List[String] = List.empty,
+                             /** True, if the poll needs to be anonymous, defaults to True*/
+                             isAnonymous: Option[Boolean] = Option.empty,
+                             /** Poll type, “quiz” or “regular”, defaults to “regular”*/
+                             `type`: Option[String] = Option.empty,
+                             /** True, if the poll allows multiple answers, ignored for
+                               * polls in quiz mode, defaults to False*/
+                             allowsMultipleAnswers: Option[Boolean] = Option.empty,
+                             /** 0-based identifier of the correct answer option, required
+                               * for polls in quiz mode*/
+                             correctOptionId: Option[Int] = Option.empty,
+                             /** Text that is shown when a user chooses an incorrect answer
+                               * or taps on the lamp icon in a quiz-style poll, 0-200
+                               * characters with at most 2 line feeds after entities parsing*/
+                             explanation: Option[String] = Option.empty,
+                             /** Mode for parsing entities in the explanation. See
+                               * formatting options for more details.*/
+                             explanationParseMode: Option[String] = Option.empty,
+                             /** Amount of time in seconds the poll will be active after
+                               * creation, 5-600. Can't be used together with close_date.*/
+                             openPeriod: Option[Int] = Option.empty,
+                             /** Point in time (Unix timestamp) when the poll will be
+                               * automatically closed. Must be at least 5 and no more than
+                               * 600 seconds in the future. Can't be used together with
+                               * open_period.*/
+                             closeDate: Option[Int] = Option.empty,
+                             /** Pass True, if the poll needs to be immediately closed. This
+                               * can be useful for poll preview.*/
+                             isClosed: Option[Boolean] = Option.empty,
                              /** Sends the message silently. Users will receive a
                                * notification with no sound.*/
                              disableNotification: Option[Boolean] = Option.empty,
