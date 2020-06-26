@@ -282,7 +282,7 @@ object TgBotApiScrapper extends IOApp {
         desc
           .replace("1-6 for “” and “”", "1-6 for EmojiDice and EmojiDarts")
           .replace("1-5 for “”", "1-5 for EmojiBasketball")
-          .replace("Defauts to “”", "Defaults to EmojiDarts")
+          .replace("Defaults to “”", "Defaults to EmojiDice")
           .replace("one of “”, “”, or “”", "one of EmojiDice, EmojiDarts, or EmojiBasketball")
       }
 
