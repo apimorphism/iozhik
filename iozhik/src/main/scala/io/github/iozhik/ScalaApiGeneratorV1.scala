@@ -63,18 +63,32 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genField(x: Field)(implicit symt: Symtable, space: Space): Either[String, String] = {
+  def genField(x: Field, withDoc: Boolean = true)(implicit symt: Symtable, space: Space): Either[String, String] = {
     for {
       kind <- genKind(x.kind)
     } yield {
       val d = delimiter
-      val docsBody = x.doc.split("\n").toList.map(_.trim).intercalate("\n* ")
+      val docsBody = if (withDoc) x.doc.split("\n").toList.map(_.trim).intercalate("\n* ") else ""
       val docs = if (docsBody.nonEmpty) { s"$d/** $docsBody*/$d" } else { "" }
       defaults.find(x => kind.startsWith(x._1)).fold(
         docs + sanitize(x.name) + ": " + kind
       ){ case (_, default) => docs + sanitize(x.name) + ": " + kind + " = " + default }
     }
   }
+
+  private def createStrucImports(kinds: List[Kind])(implicit symt: Symtable, space: Space) =
+    kinds
+      .flatMap(_.unresolvedIn(space.symbol).flatMap(_.unresolvedIn(space.symbol)))
+      .filter(y => !predefined.contains(y.name))
+      .flatMap(symt.resolve)
+      .collect {
+        case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
+      }
+
+  private def genStrucImportsWithCodecs(kinds: List[Kind])(implicit symt: Symtable, space: Space) =
+    createStrucImports(kinds).flatMap {
+      case (path, _) => List(s"import $path._", s"import $path.CirceImplicits._")
+    }
 
   def genImpor(x: Impor)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     for {
@@ -138,16 +152,16 @@ class ScalaApiGeneratorV1 extends Generator {
     val d = delimiter
     val useSnake = space.opts.contains("snake")
     if (x.isEnum) {
-      if (x.typet.nonEmpty) {
+      if (x.typets.nonEmpty) {
         for {
           kind <- x.kind.map(_.name).toRight("No kind name")
-          typet <- x.typet.toRight(s"No type tag found for $kind")
+          typet <- x.typet().toRight(s"No type tag found for $kind")
           items <- x.leaves.traverse(genJsonCodecs).map(_.flatten)
           cases <- x.leaves.traverse{ y =>
             for {
               nn <- y.kind.map(_.name).toRight("No kind name")
               kn = y.kind.map(_.name).getOrElse("ANONYMOUS_STRUC")
-              tt <- y.typet.map(_.tag).toRight(s"Type tag not found for: $kn")
+              tt <- y.typet().map(_.tag).toRight(s"Type tag not found for: $kn")
             } yield {
               val postfix = if (y.fields.nonEmpty) "" else ".type"
               if (y.embeds.isEmpty) {
@@ -318,12 +332,12 @@ class ScalaApiGeneratorV1 extends Generator {
             s"${sanitize(fname)} = _$fname"
           }
           .intercalate(",")
-        val encoderFields = fields
+        val encoderFields = (fields
           .map{ case (fname, _) =>
             val n = if (useSnake) { camel2snake(fname) } else { fname }
             val fn = sanitize(fname)
             s""""$n" -> x.$fn.asJson"""
-          }
+          } ++ x.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
           .intercalate(",")
         val decoderBody = if (x.fields.nonEmpty || x.usings.nonEmpty) {
           s"""
@@ -368,17 +382,17 @@ class ScalaApiGeneratorV1 extends Generator {
   def genSCodecs(x: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     val d = delimiter
     if (x.isEnum) {
-      if (x.typet.isEmpty) {
+      if (x.typets.isEmpty) {
         Right(List.empty[Code])
       } else {
         for {
           kind  <- x.kind.map(_.name).toRight("No kind name")
-          _     <- x.typet.toRight(s"No type tag found for $kind")
+          _     <- x.typet().toRight(s"No type tag found for $kind")
           items <- x.leaves.traverse(genSCodecs).map(_.flatten)
           cases <- x.leaves.traverse{ y =>
             for {
               nn <- y.kind.map(_.name).toRight("No kind name")
-              tt <- y.typet.flatMap(_.id).toRight(s"No type id found for $nn")
+              tt <- y.typet().flatMap(_.id).toRight(s"No type id found for $nn")
             } yield {
               if (y.fields.nonEmpty) {
                 s".typecase($tt, ${nn.toLowerCase}Codec)"
@@ -472,8 +486,8 @@ class ScalaApiGeneratorV1 extends Generator {
           cases <- x.leavesForBins.traverse{ y =>
             for {
               nn <- y.kind.map(_.name).toRight("No kind name")
-              tt <- y.typet.map(_.tag).toRight(s"No type id found for $nn")
-              tn <- y.typet.map(_.name).toRight(s"No type id found for $nn")
+              tt <- y.typet().map(_.tag).toRight(s"No type id found for $nn")
+              tn <- y.typet().map(_.name).toRight(s"No type id found for $nn")
             } yield {
               if (y.fields.nonEmpty) {
                 (
@@ -610,25 +624,26 @@ class ScalaApiGeneratorV1 extends Generator {
   }
 
   def genStruc(x: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+    val kindOrDefault = x.kind.getOrElse(Kind("$$"))
     val usingf = x.usings
       .flatMap{ y => symt.find(y.kind, x.kind) }
       .collect{ case s: Struc => s}
       .flatMap(_.fields)
     for {
-      kind <- genKind(x.kind.getOrElse(Kind("$$")))
-      fields <- x.fields.traverse(genField)
+      kind <- genKind(kindOrDefault)
+      fields <- x.fields.traverse(genField(_))
       mixins <- x.mixins.traverse(genKind)
       leaves <- x.leaves.traverse(genStruc)
-      wrapps <- x.wrapps.traverse(genWrapp(x.kind.getOrElse(Kind("$$")), _))
-      enumstrs <- x.enumstrs.traverse(genEnumStr(x.kind.getOrElse(Kind("$$")), _))
-      usings <- usingf.traverse(genField)
+      wrapps <- x.wrapps.traverse(genWrapp(kindOrDefault, _))
+      enumstrs <- x.enumstrs.traverse(genEnumStr(kindOrDefault, _))
+      usings <- usingf.traverse(genField(_))
       upickles <- if (space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
       jsonCodecs <- if (space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
       scodecs <- if (space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
       ms = mixins.toNel.map(_.intercalate(" with ")).fold("")(" extends " + _)
     } yield {
-      val imps = (usingf ++ x.fields)
-        .flatMap(_.kind.unresolvedIn(space.symbol).flatMap(_.unresolvedIn(space.symbol)))
+      val imps = ((usingf ++ x.fields).map(_.kind) ++ x.mixins)
+        .flatMap(_.unresolvedIn(space.symbol).flatMap(_.unresolvedIn(space.symbol)))
         .filter(y => !predefined.contains(y.name))
         .flatMap(symt.resolve)
         .collect{
@@ -636,6 +651,7 @@ class ScalaApiGeneratorV1 extends Generator {
         }
         .map{ case (path, name) => s"import $path.$name" }
       val name = kind + versionPostfix(x.minVersion, x.maxVersion)
+      val filename = sanitize(kindOrDefault.name) + versionPostfix(x.minVersion, x.maxVersion)
       val fs = if (x.isAbstract || x.isEnum) {
         (usings ++ fields).toNel.map(_.map("def " + _).intercalate(delimiter)).getOrElse("")
       } else {
@@ -647,13 +663,13 @@ class ScalaApiGeneratorV1 extends Generator {
         List(
           Code(
             body = (body :: children.filter(_.name.nonEmpty).map(_.body)).intercalate(delimiter + delimiter),
-            name = name,
+            name = filename,
             imports = imps,
           ),
         ) ++ jsonCodecs ++ scodecs ++ upickles
       } else if (x.isAbstract) {
         val body = s"trait $name$ms { $fs }"
-        Code(body = body, name = name, imports = imps) :: children
+        Code(body = body, name = filename, imports = imps) :: children
       } else {
         val d = delimiter
         val docsBody = x.doc.split("\n").toList.map(_.trim).intercalate("\n* ")
@@ -678,6 +694,38 @@ class ScalaApiGeneratorV1 extends Generator {
     result ++ k.params.flatMap(importKind)
   }
 
+  private def genDefunCod(x: Defun)(implicit symt: Symtable, space: Space) =
+    x.cod.fold(
+      kind => Right(List(Code(
+        imports = importKind(kind),
+        packageObject = "__this_trait__",
+      ))),
+      struc => genStruc(struc.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))))
+    )
+
+  private def genDefunCodName(x: Defun)(implicit symt: Symtable, space: Space) =
+    x.cod.fold(
+      kind => genKind(kind),
+      struc => struc.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$CodPostfix")))
+    )
+
+  private def genDefunCodomain(x: Defun, codName: String) =
+    x.cod.map(y => if (y.fields.isEmpty && y.usings.isEmpty) s"$codName.type" else codName)
+    .fold(_ => codName, identity)
+
+  private def genDefunDocs(x: Defun) = {
+    val d = delimiter
+    val paramDocs = x.dom.fold(
+      _ => "",
+      struc => struc.fields.flatMap { field =>
+        (s"@param ${field.name}" + field.doc).split(d).toList.map(_.trim)
+      }
+        .intercalate(s"$d* ")
+    )
+    val docsBody = x.doc.split(d).toList.map(_.trim).intercalate(s"$d* ")
+    if (docsBody.nonEmpty) s"$d/** $docsBody$d$d* $paramDocs*/$d" else ""
+  }
+
   def genDefun(x: Defun)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     for {
       kind <- genKind(x.kind)
@@ -688,31 +736,18 @@ class ScalaApiGeneratorV1 extends Generator {
         ))),
         y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))))
       )
-      cod <- x.cod.fold(
-        y => Right(List(Code(
-          imports = importKind(y),
-          packageObject = "__this_trait__",
-        ))),
-        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))))
-      )
+      cod <- genDefunCod(x)
       domName <- x.dom.fold(
         y => genKind(y),
         y => y.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$DomPostfix")))
       )
-      codName <- x.cod.fold(
-        y => genKind(y),
-        y => y.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$CodPostfix")))
-      )
-      d = delimiter
+      codName <- genDefunCodName(x)
     } yield {
       val domain = x.dom
         .map(y => if (y.fields.isEmpty && y.usings.isEmpty) "" else s"x: $domName")
         .fold(_ => domName, identity)
-      val codomain = x.cod
-        .map(y => if (y.fields.isEmpty && y.usings.isEmpty) s"$codName.type" else codName)
-        .fold(_ => codName, identity)
-      val docsBody = x.doc.split("\n").toList.map(_.trim).intercalate("\n* ")
-      val docs = if (docsBody.nonEmpty) { s"$d/** $docsBody*/$d" } else { "" }
+      val codomain = genDefunCodomain(x, codName)
+      val docs = genDefunDocs(x)
       val http4sClientDefun = if (space.opts.contains("http4s")) {
         genHttp4sClientDefun(x, kind, domain, codomain)
       } else {
@@ -730,6 +765,72 @@ class ScalaApiGeneratorV1 extends Generator {
       )) ++ http4sClientDefun ++ http4sServerDefun
     }
   }
+
+  private def genMethodsFabricDefun(x: Defun)(implicit symt: Symtable, space: Space) =
+    for {
+      kind <- genKind(x.kind)
+      params <- x.dom.fold(
+        _ => Right(List.empty),
+        struc => struc.fields.traverse(genField(_, withDoc = false))
+      )
+      reqName = x.kind.name.capitalize + DomPostfix
+      dom <- x.dom.fold(
+        kind => Right(List(Code(
+          imports = importKind(kind),
+          packageObject = "__this_trait__",
+        ))),
+        struc => genStruc(struc.copy(
+          kind = Option(Kind(reqName)),
+          typets = Typet("", "method", List.empty, x.kind.name, None) :: struc.typets
+        ))
+      )
+      cod <- genDefunCod(x)
+      codName <- genDefunCodName(x)
+    } yield {
+      val reqFields = x.dom.fold(_ => List.empty, struc => struc.fields)
+      val domImports = x.dom.fold(_ => List.empty[String], struc => genStrucImportsWithCodecs(struc.fields.map(_.kind)))
+      val codImports = x.cod.fold(
+        kind => genStrucImportsWithCodecs(kind.params),
+        struc => genStrucImportsWithCodecs(struc.fields.map(_.kind))
+      )
+      val docs = genDefunDocs(x)
+      val reqParams = params.intercalate(", ")
+      val fieldNames = reqFields.map(f => sanitize(f.name))
+      val reqArgs = if (fieldNames.isEmpty) "" else fieldNames.mkString("(", ",", ")")
+      val returnTypeParams = x.cod.fold(
+        kind => kind.params.map(genKind).sequence.map(_.mkString("[", ", ", "]")),
+        _ => Right("")
+      ).merge
+      val fileFields = x.dom.fold(
+        _ => List.empty,
+        struc => struc.fields.filter(_.opts.contains("file"))
+      )
+        .map { f =>
+          val fieldName = if (space.opts.contains("snake")) camel2snake(f.name) else f.name
+          val domFieldName = if (f.kind.name == "Option") f.name else s"Option(${f.name})"
+          s""""$fieldName" -> $domFieldName"""
+        }
+      val attachments = if (fileFields.isEmpty) "" else fileFields.mkString(", Map(", ", ", ").mapFilter(identity)")
+      val codomain = genDefunCodomain(x, codName)
+      val defunBody =
+        s"""val req = $reqName$reqArgs
+           |MethodReq$returnTypeParams("${x.kind.name}", req.asJson$attachments)""".stripMargin
+      val code =
+        s"""${docs}def $kind($reqParams): $codomain = {
+           |  $defunBody
+           |}
+       """.stripMargin
+      val catsImports = List(
+        "import cats.instances.map._",
+        "import cats.syntax.functorFilter._"
+      )
+      dom ++ cod :+ Code(
+        body = code,
+        name = x.kind.name,
+        packageObject = "__this_trait__",
+        imports = codImports ++ domImports ++ catsImports
+      )
+    }
 
   def genHttp4sClientDefun(x: Defun, name: String, dom: String, rawCod: String)
                     (implicit symt: Symtable, space: Space): List[Code] = {
@@ -904,7 +1005,7 @@ class ScalaApiGeneratorV1 extends Generator {
     for {
       kind <- genKind(x.kind)
       defs = x.items.collect{ case a: Defun => a }
-      itemsRaw <- defs.traverse(genDefun)
+      itemsRaw <- defs.traverse(d => if (x.opts.contains("methodsFabric")) genMethodsFabricDefun(d) else genDefun(d))
       items = itemsRaw.flatten
       d = delimiter
     } yield {
@@ -914,17 +1015,77 @@ class ScalaApiGeneratorV1 extends Generator {
         y.packageObject != "__this_server_defs__"
       }
       val defuns = items.filter(_.packageObject == "__this_trait__").map(_.body).intercalate(d)
-      strucs ++ List(Code(
-        body = s"trait $kind[F[_]]$d{$d$defuns$d}",
-        name = x.kind.name,
-        imports = items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
-      )) ++ (if (space.opts.contains("http4s") && x.opts.contains("client")) {
-        genHttp4sClient(kind, items.filter(_.packageObject == "__this_impl__"))
-      } else { List.empty[Code] }) ++ (if (space.opts.contains("http4s") && x.opts.contains("server")) {
-        genHttp4sServer(kind, items.filter(_.packageObject == "__this_server_defs__"))
-      } else { List.empty[Code] })
+      val code = if (x.opts.contains("methodsFabric")) genMethodsFabric(x, defuns, kind, items)
+      else genServcDefault(x, defuns, kind, items)
+      strucs ++ code
     }
   }
+
+  private def genServcDefault(x: Servc, defuns: String, kind: String, items: List[Code])(
+    implicit space: Space
+  ): List[Code] = {
+    val d = delimiter
+    List(Code(
+      body = s"trait $kind[F[_]]$d{$d$defuns$d}",
+      name = x.kind.name,
+      imports = items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
+    )) ++ (if (space.opts.contains("http4s") && x.opts.contains("client")) {
+      genHttp4sClient(kind, items.filter(_.packageObject == "__this_impl__"))
+    } else { List.empty[Code] }) ++ (if (space.opts.contains("http4s") && x.opts.contains("server")) {
+      genHttp4sServer(kind, items.filter(_.packageObject == "__this_server_defs__"))
+    } else { List.empty[Code] })
+  }
+
+  private def genMethodsFabric(x: Servc, defuns: String, kind: String, items: List[Code])(
+    implicit symt: Symtable
+  ): List[Code] = {
+    val methodReq =
+      """
+        |case class MethodReq[Res](
+        |  name: String,
+        |  decoder: Decoder[Res],
+        |  json: Json,
+        |  files: Map[String, IFile]
+        |) extends Method[Res]
+        |
+        |object MethodReq {
+        |
+        |  def apply[Res](
+        |    name: String,
+        |    json: Json,
+        |    files: Map[String, IFile] = Map.empty
+        |  )(implicit decoder: Decoder[Res]): MethodReq[Res] =
+        |    new MethodReq(name, decoder, json, files)
+        |
+        |}
+        """.stripMargin
+    val methodReqCode = Code(
+      body = methodReq,
+      name = "MethodReq",
+      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path))
+    )
+    val body =
+      s"""
+         |trait $kind {
+         |
+         |  import io.circe.Decoder
+         |  private implicit def decodeEither[A, B](
+         |    implicit decoderA: Decoder[A], decoderB: Decoder[B]
+         |  ): Decoder[Either[A, B]] = decoderA.either(decoderB)
+         |$defuns
+         |}
+         """.stripMargin
+    List(
+      Code(
+        body = body,
+        name = x.kind.name,
+        imports = "import io.circe.syntax._" :: "import CirceImplicits._" ::
+          items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
+      ),
+      methodReqCode
+    )
+  }
+
 
   def genHttp4sClient(name: String, defuns: List[Code]): List[Code] = {
     val defs = defuns.map(_.body).intercalate(delimiter)

@@ -39,7 +39,7 @@ object Generator {
           doc = doc,
           kind = Some(name),
           path = parent.path,
-          typet = Some(
+          typets = List(
             Typet(
               doc = "",
               name = "_type_",
@@ -65,7 +65,7 @@ object Generator {
               kind = target,
             )
           ),
-          typet = Some(
+          typets = List(
             Typet(
               doc = "",
               name = "_type_",
@@ -90,7 +90,7 @@ object Generator {
       isEnum: Boolean = false,
       minVersion: Option[Version] = Option.empty[Version],
       maxVersion: Option[Version] = Option.empty[Version],
-      typet: Option[Typet] = Option.empty[Typet],
+      typets: List[Typet] = List.empty[Typet],
       opts: List[String] = List.empty[String],
       fields: List[Field] = List.empty[Field],
       mixins: List[Kind] = List.empty[Kind],
@@ -100,8 +100,10 @@ object Generator {
       wrapps: List[Wrapp] = List.empty[Wrapp],
       enumstrs: List[EnumStr] = List.empty[EnumStr],
     ) extends SpaceItem with StrucItem with Sym {
+      def typet(): Option[Typet] = typets.find(t => t.name == "_type_" || t.name == "type")
+
       def typetForBins: Option[Typet] = {
-        typet.orElse{
+        typet().orElse {
           Some(Typet(
             doc = "",
             name = "_type_",
@@ -113,10 +115,10 @@ object Generator {
       }
       def leavesForBins: List[Struc] = {
         leaves.map{ s =>
-          if (s.typet.isEmpty) {
+          if (s.typets.isEmpty) {
             val tag = s.kind.map(_.name).getOrElse("$$")
             s.copy(
-              typet = Some(
+              typets = List(
                 Typet(
                   doc = "",
                   name = "_type_",
@@ -357,7 +359,7 @@ object Generator {
             isEnum = x.isEnum,
             minVersion = x.minVersion.map(trVersion),
             maxVersion = x.maxVersion.map(trVersion),
-            typet = if (x.isEnum) leaves.flatMap(_.typet).headOption else typets.headOption,
+            typets = if (x.isEnum) leaves.flatMap(_.typets) else typets,
             opts = x.opts,
             fields = fields ++ flattens.flatMap(_.fields),
             mixins = mixins,

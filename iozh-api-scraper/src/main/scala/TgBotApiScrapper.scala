@@ -107,7 +107,7 @@ object TgBotApiScrapper extends IOApp {
             |  /* ${m.desc} */
             |  def ${m.name} {
             |$fields
-            |  } => ${m.returns}
+            |  } => Method[${m.returns}]
           """.stripMargin
         m.name -> body
       }.toMap
@@ -205,21 +205,17 @@ object TgBotApiScrapper extends IOApp {
        |
        |    $entities
        |
-       |    WebhookService (server) {
-       |      def handleUpdate {
-       |        use Update
-       |      } => {
-       |        result: String
-       |      }
-       |    }
-       |
        |    namespace client {
        |      Response {
        |        ok          : Boolean
        |        description : Option[String]
        |      }
        |
-       |      Api (client) {
+       |      abstract Method[Res] {
+       |        name: String
+       |      }
+       |
+       |      Methods (methodsFabric) {
        |        $methods
        |      }
        |    }

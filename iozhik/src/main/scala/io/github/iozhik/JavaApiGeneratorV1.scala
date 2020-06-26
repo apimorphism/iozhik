@@ -215,7 +215,7 @@ class JavaApiGeneratorV1 extends Generator {
         | public class $strucName $implementCode {
         |   ${genFields(struc).mkString("\n")}
         |   ${genWhatImpl(interfaceName, strucName)}
-        |   ${struc.typet.map(tt => s"""public String getDiscriminator() { return "${tt.tag}"; }""").getOrElse("")}
+        |   ${struc.typet().map(tt => s"""public String getDiscriminator() { return "${tt.tag}"; }""").getOrElse("")}
         |   ${genNoArgConstructor(strucName)}
         |   ${genAllArgConstructor(struc)}
         |   ${genGSetter(struc).mkString("\n")}
@@ -359,7 +359,7 @@ class JavaApiGeneratorV1 extends Generator {
           }
         }).mkString(",")
 
-    val strucsGrouped = strucs.groupBy(_.typet.map(_.tag).getOrElse("none"))
+    val strucsGrouped = strucs.groupBy(_.typet().map(_.tag).getOrElse("none"))
 
     strucsGrouped.map { case (discriminator, strucss) =>
       val discrs = List.fill(strucss.length)(discriminator)
@@ -469,7 +469,7 @@ class JavaApiGeneratorV1 extends Generator {
     } yield {
       val fieldType = scalaToJavaType(field.kind)
       s"""
-         | ${struc.typet.map(_ => "String getDiscriminator();").getOrElse("")}
+         | ${struc.typet().map(_ => "String getDiscriminator();").getOrElse("")}
          | $fieldType get${field.name.capitalize}();
          | $strucName set${field.name.capitalize}($fieldType v);
        """.stripMargin
