@@ -715,15 +715,16 @@ class ScalaApiGeneratorV1 extends Generator {
 
   private def genDefunDocs(x: Defun) = {
     val d = delimiter
-    val paramDocs = x.dom.fold(
+    val params = x.dom.fold(
       _ => "",
       struc => struc.fields.flatMap { field =>
         (s"@param ${field.name}" + field.doc).split(d).toList.map(_.trim)
       }
         .intercalate(s"$d* ")
     )
+    val paramDocs = if (params.isEmpty) params else s"$d$d* $params"
     val docsBody = x.doc.split(d).toList.map(_.trim).intercalate(s"$d* ")
-    if (docsBody.nonEmpty) s"$d/** $docsBody$d$d* $paramDocs*/$d" else ""
+    if (docsBody.nonEmpty) s"$d/** $docsBody$paramDocs*/$d" else ""
   }
 
   def genDefun(x: Defun)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {

@@ -32,9 +32,7 @@ trait Methods {
 
   /** Use this method to get current webhook status. Requires no parameters. On
     * success, returns a WebhookInfo object. If the bot is using getUpdates, will
-    * return an object with the url field empty.
-
-    * */
+    * return an object with the url field empty.*/
   def getWebhookInfo(): Method[WebhookInfo] = {
     val req = GetWebhookInfoReq
     MethodReq[WebhookInfo]("getWebhookInfo", req.asJson)
@@ -446,9 +444,7 @@ trait Methods {
   /** Use this method when you need to tell the user that something is happening on
     * the bot's side. The status is set for 5 seconds or less (when a message arrives
     * from your bot, Telegram clients clear its typing status). Returns True on
-    * success.
-
-    * */
+    * success.*/
   def sendChatAction(): Method[Boolean] = {
     val req = SendChatActionReq
     MethodReq[Boolean]("sendChatAction", req.asJson)
@@ -1157,9 +1153,7 @@ trait Methods {
   }
 
   /** A simple method for testing your bot's auth token. Requires no parameters.
-    * Returns basic information about the bot in form of a User object.
-
-    * */
+    * Returns basic information about the bot in form of a User object.*/
   def getMe(): Method[User] = {
     val req = GetMeReq
     MethodReq[User]("getMe", req.asJson)
@@ -1197,9 +1191,7 @@ trait Methods {
   }
 
   /** Use this method to get the current list of the bot's commands. Requires no
-    * parameters. Returns Array of BotCommand on success.
-
-    * */
+    * parameters. Returns Array of BotCommand on success.*/
   def getMyCommands(): Method[List[BotCommand]] = {
     val req = GetMyCommandsReq
     MethodReq[List[BotCommand]]("getMyCommands", req.asJson)
@@ -1516,9 +1508,7 @@ trait Methods {
   }
 
   /** Use this method to remove webhook integration if you decide to switch back to
-    * getUpdates. Returns True on success. Requires no parameters.
-
-    * */
+    * getUpdates. Returns True on success. Requires no parameters.*/
   def deleteWebhook(): Method[Boolean] = {
     val req = DeleteWebhookReq
     MethodReq[Boolean]("deleteWebhook", req.asJson)
