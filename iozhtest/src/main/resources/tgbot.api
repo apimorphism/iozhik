@@ -3034,8 +3034,8 @@ namespace telegramium {
           product price, tax, discount, delivery cost, delivery tax, 
           bonus, etc.) */
           prices                    : List[LabeledPrice]
-          /* JSON-encoded data about the invoice, which will be shared 
-          with the payment provider. A detailed description of 
+          /* A JSON-serialized data about the invoice, which will be 
+          shared with the payment provider. A detailed description of 
           required fields should be provided by the payment provider. */
           providerData              : Option[String]
           /* URL of the product photo for the invoice. Can be a photo of 
@@ -3261,7 +3261,7 @@ namespace telegramium {
           chatId      : ChatId
           /* Unique identifier of the target user */
           userId      : Int
-          /* New user permissions */
+          /* A JSON-serialized object for new user permissions */
           permissions : ChatPermissions
           /* Date when restrictions will be lifted for the user, unix 
           time. If user is restricted for more than 366 days or less 
@@ -3849,3 +3849,4 @@ namespace telegramium {
     }
   }
 }
+     

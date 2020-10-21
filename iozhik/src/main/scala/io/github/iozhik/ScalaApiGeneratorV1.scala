@@ -811,7 +811,7 @@ class ScalaApiGeneratorV1 extends Generator {
           val domFieldName = if (f.kind.name == "Option") f.name else s"Option(${f.name})"
           s""""$fieldName" -> $domFieldName"""
         }
-      val attachments = if (fileFields.isEmpty) "" else fileFields.mkString(", Map(", ", ", ").mapFilter(identity)")
+      val attachments = if (fileFields.isEmpty) "" else fileFields.mkString(", Map(", ", ", ").collect { case (k, Some(v)) => k -> v }")
       val codomain = genDefunCodomain(x, codName)
       val defunBody =
         s"""val req = $reqName$reqArgs
@@ -821,15 +821,11 @@ class ScalaApiGeneratorV1 extends Generator {
            |  $defunBody
            |}
        """.stripMargin
-      val catsImports = List(
-        "import cats.instances.map._",
-        "import cats.syntax.functorFilter._"
-      )
       dom ++ cod :+ Code(
         body = code,
         name = x.kind.name,
         packageObject = "__this_trait__",
-        imports = codImports ++ domImports ++ catsImports
+        imports = codImports ++ domImports
       )
     }
 
