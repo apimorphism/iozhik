@@ -24,8 +24,8 @@ final case class SendInvoiceReq(
                                   * product price, tax, discount, delivery cost, delivery tax,
                                   * bonus, etc.)*/
                                 prices: List[LabeledPrice] = List.empty,
-                                /** JSON-encoded data about the invoice, which will be shared
-                                  * with the payment provider. A detailed description of
+                                /** A JSON-serialized data about the invoice, which will be
+                                  * shared with the payment provider. A detailed description of
                                   * required fields should be provided by the payment provider.*/
                                 providerData: Option[String] = Option.empty,
                                 /** URL of the product photo for the invoice. Can be a photo of
@@ -64,6 +64,9 @@ final case class SendInvoiceReq(
                                 disableNotification: Option[Boolean] = Option.empty,
                                 /** If the message is a reply, ID of the original message*/
                                 replyToMessageId: Option[Int] = Option.empty,
+                                /** Pass True, if the message should be sent even if the
+                                  * specified replied-to message is not found*/
+                                allowSendingWithoutReply: Option[Boolean] = Option.empty,
                                 /** A JSON-serialized object for an inline keyboard. If empty,
                                   * one 'Pay total price' button will be shown. If not empty,
                                   * the first button must be a Pay button.*/

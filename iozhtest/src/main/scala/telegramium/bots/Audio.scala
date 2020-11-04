@@ -18,6 +18,8 @@ final case class Audio(
                        /** Optional. Title of the audio as defined by sender or by
                          * audio tags*/
                        title: Option[String] = Option.empty,
+                       /** Optional. Original filename as defined by sender*/
+                       fileName: Option[String] = Option.empty,
                        /** Optional. MIME type of the file as defined by sender*/
                        mimeType: Option[String] = Option.empty,
                        /** Optional. File size*/

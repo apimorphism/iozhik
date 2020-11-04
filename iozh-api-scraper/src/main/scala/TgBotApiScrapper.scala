@@ -172,9 +172,11 @@ object TgBotApiScrapper extends IOApp {
        |  namespace bots(snake circe http4s upack) {
        |
        |    enum Emoji {
-       |      item EmojiDice       = "🎲"
-       |      item EmojiDarts      = "🎯"
-       |      item EmojiBasketball = "🏀"
+       |      item EmojiDice        = "🎲"
+       |      item EmojiDarts       = "🎯"
+       |      item EmojiBasketball  = "🏀"
+       |      item EmojiFootball    = "⚽"
+       |      item EmojiSlotMachine = "🎰"
        |    }
        |
        |    enum ParseMode {
@@ -266,7 +268,7 @@ object TgBotApiScrapper extends IOApp {
           .replace("CallbackGame", "String")
           .replace("Messages", "Message")
           .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
-          .replace("InputMediaPhoto and InputMediaVideo", "InputMedia")
+          .replace("InputMediaAudio, InputMediaDocument, InputMediaPhoto and InputMediaVideo", "InputMedia")
         if (name == "emoji") {
           "Emoji";
         } else {
@@ -277,9 +279,10 @@ object TgBotApiScrapper extends IOApp {
       def fixDesc(desc: String): String = {
         desc
           .replace("1-6 for “” and “”", "1-6 for EmojiDice and EmojiDarts")
-          .replace("1-5 for “”", "1-5 for EmojiBasketball")
+          .replace("1-5 for “” and “”", "1-5 for EmojiBasketball and EmojiFootball")
+          .replace("1-64 for “”", "1-64 for EmojiSlotMachine")
           .replace("Defaults to “”", "Defaults to EmojiDice")
-          .replace("one of “”, “”, or “”", "one of EmojiDice, EmojiDarts, or EmojiBasketball")
+          .replace("one of “”, “”, “”, “”, or “”", "one of EmojiDice, EmojiDarts, EmojiBasketball, EmojiFootball, or EmojiSlotMachine")
       }
 
       def isH4(e: Element): Boolean = e.tagName.toLowerCase == "h4"
