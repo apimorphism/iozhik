@@ -37,7 +37,7 @@ class ScalaApiGeneratorV1 extends Generator {
 
   private val predefined = Set(
     "Boolean", "Int", "Long", "Double", "Float",
-    "Vector", "List", "Option", "String", "Either"
+    "Vector", "List", "Option", "String", "Either", "Map"
   )
 
   def versionPostfix(min: Option[Version], max: Option[Version]): String = {
@@ -1038,12 +1038,21 @@ class ScalaApiGeneratorV1 extends Generator {
   ): List[Code] = {
     val methodReq =
       """
-        |case class MethodReq[Res](
-        |  name: String,
-        |  decoder: Decoder[Res],
-        |  json: Json,
-        |  files: Map[String, IFile]
+        |trait Method[Res] {
+        |  def payload: MethodPayload
+        |  def decoder: Decoder[Res]
+        |}
+        |
+        |final case class MethodReq[Res](
+        |  payload: MethodPayload,
+        |  decoder: Decoder[Res]
         |) extends Method[Res]
+        |
+        |final case class MethodPayload(
+        |  name: String,
+        |  json: io.circe.Json,
+        |  files: Map[String, IFile]
+        |)
         |
         |object MethodReq {
         |
@@ -1052,13 +1061,13 @@ class ScalaApiGeneratorV1 extends Generator {
         |    json: Json,
         |    files: Map[String, IFile] = Map.empty
         |  )(implicit decoder: Decoder[Res]): MethodReq[Res] =
-        |    new MethodReq(name, decoder, json, files)
+        |    new MethodReq(MethodPayload(name, json, files), decoder)
         |
         |}
         """.stripMargin
     val methodReqCode = Code(
       body = methodReq,
-      name = "MethodReq",
+      name = "Method",
       imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path))
     )
     val body =

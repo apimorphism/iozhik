@@ -1526,7 +1526,7 @@ namespace telegramium {
     Poll {
       /* Unique poll identifier */
       id                    : String
-      /* Poll question, 1-255 characters */
+      /* Poll question, 1-300 characters */
       question              : String
       /* List of poll options */
       options               : List[PollOption]
@@ -2085,7 +2085,7 @@ namespace telegramium {
       /* Optional. Message is a shared contact, information about 
       the contact */
       contact                 : Option[Contact]
-      /* Optional. Message is a dice with random value from 1 to 6 */
+      /* Optional. Message is a dice with random value */
       dice                    : Option[Dice]
       /* Optional. Message is a game, information about the game. 
       More about games » */
@@ -2494,10 +2494,6 @@ namespace telegramium {
       Response {
         ok          : Boolean
         description : Option[String]
-      }
-
-      abstract Method[Res] {
-        name: String
       }
 
       Methods (methodsFabric) {
@@ -2970,8 +2966,8 @@ namespace telegramium {
                 
       
         /* Use this method to send a group of photos, videos, documents or audios as an 
-          album. Documents and audio files can be only group in an album with messages of 
-          the same type. On success, an array of Messages that were sent is returned.  */
+          album. Documents and audio files can be only grouped in an album with messages 
+          of the same type. On success, an array of Messages that were sent is returned.  */
         def sendMediaGroup {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format @channelusername) */
@@ -3498,7 +3494,7 @@ namespace telegramium {
       
         /* Use this method to kick a user from a group, a supergroup or a channel. In the 
           case of supergroups and channels, the user will not be able to return to the 
-          group on their own using invite links, etc., unless unbanned first. The bot must 
+          chat on their own using invite links, etc., unless unbanned first. The bot must 
           be an administrator in the chat for this to work and must have the appropriate 
           admin rights. Returns True on success.  */
         def kickChatMember {
@@ -3510,7 +3506,8 @@ namespace telegramium {
           userId    : Int
           /* Date when the user will be unbanned, unix time. If user is 
           banned for more than 366 days or less than 30 seconds from 
-          the current time they are considered to be banned forever */
+          the current time they are considered to be banned forever. 
+          Applied for supergroups and channels only. */
           untilDate : Option[Int]
         } => Method[Boolean]
                 
@@ -3690,8 +3687,9 @@ namespace telegramium {
         /* Use this method to log out from the cloud Bot API server before launching the 
           bot locally. You must log out the bot before running it locally, otherwise there 
           is no guarantee that the bot will receive updates. After a successful call, you 
-          will not be able to log in again using the same token for 10 minutes. Returns 
-          True on success. Requires no parameters.  */
+          can immediately log in on a local server, but will not be able to log in back to 
+          the cloud Bot API server for 10 minutes. Returns True on success. Requires no 
+          parameters.  */
         def logOut {
       
         } => Method[Boolean]
@@ -4118,7 +4116,9 @@ namespace telegramium {
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a photo from the 
           Internet, or upload a new photo using multipart/form-data. 
-          More info on Sending Files » */
+          The photo must be at most 10 MB in size. The photo's width 
+          and height must not exceed 10000 in total. Width and height 
+          ratio must be at most 20. More info on Sending Files » */
           photo                    : (file) IFile
           /* Photo caption (may also be used when resending photos by 
           file_id), 0-1024 characters after entities parsing */

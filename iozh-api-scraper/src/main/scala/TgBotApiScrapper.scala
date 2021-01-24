@@ -213,10 +213,6 @@ object TgBotApiScrapper extends IOApp {
        |        description : Option[String]
        |      }
        |
-       |      abstract Method[Res] {
-       |        name: String
-       |      }
-       |
        |      Methods (methodsFabric) {
        |        $methods
        |      }
