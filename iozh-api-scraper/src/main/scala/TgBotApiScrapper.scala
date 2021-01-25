@@ -279,6 +279,7 @@ object TgBotApiScrapper extends IOApp {
           .replace("1-64 for “”", "1-64 for EmojiSlotMachine")
           .replace("Defaults to “”", "Defaults to EmojiDice")
           .replace("one of “”, “”, “”, “”, or “”", "one of EmojiDice, EmojiDarts, EmojiBasketball, EmojiFootball, or EmojiSlotMachine")
+          .replace("@", "&#064;")
       }
 
       def isH4(e: Element): Boolean = e.tagName.toLowerCase == "h4"

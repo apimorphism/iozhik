@@ -45,7 +45,7 @@ namespace telegramium {
         forceReply : Boolean
         /* Optional. Use this parameter if you want to force reply 
         from specific users only. Targets: 1) users that are 
-        @mentioned in the text of the Message object; 2) if the 
+        &#064;mentioned in the text of the Message object; 2) if the 
         bot's message is a reply (has reply_to_message_id), sender 
         of the original message. */
         selective  : Option[Boolean]
@@ -65,7 +65,7 @@ namespace telegramium {
         removeKeyboard : Boolean
         /* Optional. Use this parameter if you want to remove the 
         keyboard for specific users only. Targets: 1) users that are 
-        @mentioned in the text of the Message object; 2) if the 
+        &#064;mentioned in the text of the Message object; 2) if the 
         bot's message is a reply (has reply_to_message_id), sender 
         of the original message. Example: A user votes in a poll, 
         bot returns confirmation message in reply to the vote and 
@@ -96,7 +96,7 @@ namespace telegramium {
         oneTimeKeyboard : Option[Boolean]
         /* Optional. Use this parameter if you want to show the 
         keyboard to specific users only. Targets: 1) users that are 
-        @mentioned in the text of the Message object; 2) if the 
+        &#064;mentioned in the text of the Message object; 2) if the 
         bot's message is a reply (has reply_to_message_id), sender 
         of the original message. Example: A user requests to change 
         the bot's language, bot replies to the request with a 
@@ -2420,10 +2420,10 @@ namespace telegramium {
     /* This object represents one special entity in a text message. For example, 
       hashtags, usernames, URLs, etc.  */
     MessageEntity {
-      /* Type of the entity. Can be “mention” (@username), “hashtag” 
-      (#hashtag), “cashtag” ($USD), “bot_command” 
-      (/start@jobs_bot), “url” (https://telegram.org), “email” 
-      (do-not-reply@telegram.org), “phone_number” 
+      /* Type of the entity. Can be “mention” (&#064;username), 
+      “hashtag” (#hashtag), “cashtag” ($USD), “bot_command” 
+      (/start&#064;jobs_bot), “url” (https://telegram.org), 
+      “email” (do-not-reply&#064;telegram.org), “phone_number” 
       (+1-212-555-0123), “bold” (bold text), “italic” (italic 
       text), “underline” (underlined text), “strikethrough” 
       (strikethrough text), “code” (monowidth string), “pre” 
@@ -2521,7 +2521,7 @@ namespace telegramium {
           to work and must have the appropriate admin rights. Returns True on success.  */
         def setChatPhoto {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId : ChatId
           /* New chat photo, uploaded using multipart/form-data */
           photo  : (file) IFile
@@ -2552,7 +2552,7 @@ namespace telegramium {
           'can_edit_messages' admin right in a channel. Returns True on success.  */
         def unpinAllChatMessages {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId : ChatId
         } => Method[Boolean]
                 
@@ -2571,11 +2571,12 @@ namespace telegramium {
           false. */
           showAlert       : Option[Boolean]
           /* URL that will be opened by the user's client. If you have 
-          created a Game and accepted the conditions via @Botfather, 
-          specify the URL that opens your game — note that this will 
-          only work if the query comes from a callback_game button. 
-          Otherwise, you may use links like t.me/your_bot?start=XXXX 
-          that open your bot with a parameter. */
+          created a Game and accepted the conditions via 
+          &#064;Botfather, specify the URL that opens your game — note 
+          that this will only work if the query comes from a 
+          callback_game button. Otherwise, you may use links like 
+          t.me/your_bot?start=XXXX that open your bot with a 
+          parameter. */
           url             : Option[String]
           /* The maximum amount of time in seconds that the result of 
           the callback query may be cached client-side. Telegram apps 
@@ -2589,7 +2590,7 @@ namespace telegramium {
           returned.  */
         def sendMessage {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Text of the message to be sent, 1-4096 characters after 
           entities parsing */
@@ -2635,7 +2636,7 @@ namespace telegramium {
           returned.  */
         def sendPoll {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Poll question, 1-300 characters */
           question                 : String
@@ -2692,7 +2693,7 @@ namespace telegramium {
           returned.  */
         def sendContact {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Contact's phone number */
           phoneNumber              : String
@@ -2774,7 +2775,7 @@ namespace telegramium {
           the can_restrict_members admin rights. Returns True on success.  */
         def setChatPermissions {
           /* Unique identifier for the target chat or username of the 
-          target supergroup (in the format @supergroupusername) */
+          target supergroup (in the format &#064;supergroupusername) */
           chatId      : ChatId
           /* New default chat permissions */
           permissions : ChatPermissions
@@ -2785,7 +2786,7 @@ namespace telegramium {
           returned.  */
         def sendLocation {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Latitude of the location */
           latitude                 : Float
@@ -2825,7 +2826,7 @@ namespace telegramium {
           requests to check if the bot can use this method. Returns True on success.  */
         def deleteChatStickerSet {
           /* Unique identifier for the target chat or username of the 
-          target supergroup (in the format @supergroupusername) */
+          target supergroup (in the format &#064;supergroupusername) */
           chatId : ChatId
         } => Method[Boolean]
                 
@@ -2836,7 +2837,7 @@ namespace telegramium {
         def stopMessageLiveLocation {
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
-          channel (in the format @channelusername) */
+          channel (in the format &#064;channelusername) */
           chatId          : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message with live location to stop */
@@ -2855,7 +2856,7 @@ namespace telegramium {
           as String on success.  */
         def exportChatInviteLink {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId : ChatId
         } => Method[String]
                 
@@ -2864,7 +2865,7 @@ namespace telegramium {
           success, the sent Message is returned.  */
         def sendDice {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Emoji on which the dice throw animation is based. 
           Currently, must be one of EmojiDice, EmojiDarts, 
@@ -2940,7 +2941,7 @@ namespace telegramium {
           stopped Poll with the final results is returned.  */
         def stopPoll {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId      : ChatId
           /* Identifier of the original message with the poll */
           messageId   : Int
@@ -2956,7 +2957,7 @@ namespace telegramium {
           success.  */
         def unpinChatMessage {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId    : ChatId
           /* Identifier of a message to unpin. If not specified, the 
           most recent pinned message (by sending date) will be 
@@ -2970,7 +2971,7 @@ namespace telegramium {
           of the same type. On success, an array of Messages that were sent is returned.  */
         def sendMediaGroup {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* A JSON-serialized array describing messages to be sent, 
           must include 2-10 items */
@@ -3012,7 +3013,7 @@ namespace telegramium {
           is returned.  */
         def sendVenue {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Latitude of the venue */
           latitude                 : Float
@@ -3056,7 +3057,7 @@ namespace telegramium {
           parameter only_if_banned. Returns True on success.  */
         def unbanChatMember {
           /* Unique identifier for the target group or username of the 
-          target supergroup or channel (in the format @username) */
+          target supergroup or channel (in the format &#064;username) */
           chatId       : ChatId
           /* Unique identifier of the target user */
           userId       : Int
@@ -3070,7 +3071,7 @@ namespace telegramium {
           have the appropriate admin rights. Returns True on success.  */
         def setChatDescription {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId      : ChatId
           /* New chat description, 0-255 characters */
           description : Option[String]
@@ -3083,7 +3084,7 @@ namespace telegramium {
         def editMessageText {
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
-          channel (in the format @channelusername) */
+          channel (in the format &#064;channelusername) */
           chatId                : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
@@ -3114,7 +3115,7 @@ namespace telegramium {
         def editMessageLiveLocation {
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
-          channel (in the format @channelusername) */
+          channel (in the format &#064;channelusername) */
           chatId               : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
@@ -3186,7 +3187,7 @@ namespace telegramium {
         def leaveChat {
           /* Unique identifier for the target chat or username of the 
           target supergroup or channel (in the format 
-          @channelusername) */
+          &#064;channelusername) */
           chatId : ChatId
         } => Method[Boolean]
                 
@@ -3196,7 +3197,7 @@ namespace telegramium {
           must have the appropriate admin rights. Returns True on success.  */
         def setChatTitle {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId : ChatId
           /* New chat title, 1-255 characters */
           title  : String
@@ -3208,11 +3209,11 @@ namespace telegramium {
           original message. Returns the MessageId of the sent message on success.  */
         def copyMessage {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Unique identifier for the chat where the original message 
           was sent (or channel username in the format 
-          @channelusername) */
+          &#064;channelusername) */
           fromChatId               : ChatId
           /* Message identifier in the chat specified in from_chat_id */
           messageId                : Int
@@ -3245,7 +3246,7 @@ namespace telegramium {
           Message is returned.  */
         def sendVideoNote {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Video note to send. Pass a file_id as String to send a 
           video note that exists on the Telegram servers (recommended) 
@@ -3304,7 +3305,7 @@ namespace telegramium {
           have the appropriate admin rights. Returns True on success.  */
         def deleteChatPhoto {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId : ChatId
         } => Method[Boolean]
                 
@@ -3386,7 +3387,7 @@ namespace telegramium {
           limit may be changed in the future.  */
         def sendDocument {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                      : ChatId
           /* File to send. Pass a file_id as String to send a file that 
           exists on the Telegram servers (recommended), pass an HTTP 
@@ -3443,7 +3444,7 @@ namespace telegramium {
           or a channel, it can delete any message there. Returns True on success.  */
         def deleteMessage {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId    : ChatId
           /* Identifier of the message to delete */
           messageId : Int
@@ -3500,7 +3501,7 @@ namespace telegramium {
         def kickChatMember {
           /* Unique identifier for the target group or username of the 
           target supergroup or channel (in the format 
-          @channelusername) */
+          &#064;channelusername) */
           chatId    : ChatId
           /* Unique identifier of the target user */
           userId    : Int
@@ -3519,7 +3520,7 @@ namespace telegramium {
           messages, use the sendVoice method instead.  */
         def sendAudio {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Audio file to send. Pass a file_id as String to send an 
           audio file that exists on the Telegram servers 
@@ -3573,7 +3574,7 @@ namespace telegramium {
           Returns True on success.  */
         def restrictChatMember {
           /* Unique identifier for the target chat or username of the 
-          target supergroup (in the format @supergroupusername) */
+          target supergroup (in the format &#064;supergroupusername) */
           chatId      : ChatId
           /* Unique identifier of the target user */
           userId      : Int
@@ -3598,11 +3599,11 @@ namespace telegramium {
           is returned.  */
         def forwardMessage {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId              : ChatId
           /* Unique identifier for the chat where the original message 
           was sent (or channel username in the format 
-          @channelusername) */
+          &#064;channelusername) */
           fromChatId          : ChatId
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -3617,7 +3618,7 @@ namespace telegramium {
         def getChatMember {
           /* Unique identifier for the target chat or username of the 
           target supergroup or channel (in the format 
-          @channelusername) */
+          &#064;channelusername) */
           chatId : ChatId
           /* Unique identifier of the target user */
           userId : Int
@@ -3638,7 +3639,7 @@ namespace telegramium {
         def getChatAdministrators {
           /* Unique identifier for the target chat or username of the 
           target supergroup or channel (in the format 
-          @channelusername) */
+          &#064;channelusername) */
           chatId : ChatId
         } => Method[List[ChatMember]]
                 
@@ -3650,7 +3651,7 @@ namespace telegramium {
           up to 50 MB in size, this limit may be changed in the future.  */
         def sendVoice {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Audio file to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
@@ -3701,7 +3702,7 @@ namespace telegramium {
           user. Returns True on success.  */
         def promoteChatMember {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId             : ChatId
           /* Unique identifier of the target user */
           userId             : Int
@@ -3743,7 +3744,7 @@ namespace telegramium {
         def editMessageCaption {
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
-          channel (in the format @channelusername) */
+          channel (in the format &#064;channelusername) */
           chatId          : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
@@ -3775,7 +3776,7 @@ namespace telegramium {
         def editMessageMedia {
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
-          channel (in the format @channelusername) */
+          channel (in the format &#064;channelusername) */
           chatId          : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
@@ -3797,7 +3798,7 @@ namespace telegramium {
           'can_edit_messages' admin right in a channel. Returns True on success.  */
         def pinChatMessage {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId              : ChatId
           /* Identifier of a message to pin */
           messageId           : Int
@@ -3835,7 +3836,7 @@ namespace telegramium {
         def editMessageReplyMarkup {
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
-          channel (in the format @channelusername) */
+          channel (in the format &#064;channelusername) */
           chatId          : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
@@ -3854,7 +3855,7 @@ namespace telegramium {
           in the future.  */
         def sendVideo {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Video to send. Pass a file_id as String to send a video 
           that exists on the Telegram servers (recommended), pass an 
@@ -3911,7 +3912,7 @@ namespace telegramium {
           requests to check if the bot can use this method. Returns True on success.  */
         def setChatStickerSet {
           /* Unique identifier for the target chat or username of the 
-          target supergroup (in the format @supergroupusername) */
+          target supergroup (in the format &#064;supergroupusername) */
           chatId         : ChatId
           /* Name of the sticker set to be set as the group sticker set */
           stickerSetName : String
@@ -3924,7 +3925,7 @@ namespace telegramium {
         def getChat {
           /* Unique identifier for the target chat or username of the 
           target supergroup or channel (in the format 
-          @channelusername) */
+          &#064;channelusername) */
           chatId : ChatId
         } => Method[Chat]
                 
@@ -3961,7 +3962,7 @@ namespace telegramium {
           promoted by the bot. Returns True on success.  */
         def setChatAdministratorCustomTitle {
           /* Unique identifier for the target chat or username of the 
-          target supergroup (in the format @supergroupusername) */
+          target supergroup (in the format &#064;supergroupusername) */
           chatId      : ChatId
           /* Unique identifier of the target user */
           userId      : Int
@@ -3976,7 +3977,7 @@ namespace telegramium {
           animation files of up to 50 MB in size, this limit may be changed in the future.  */
         def sendAnimation {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Animation to send. Pass a file_id as String to send an 
           animation that exists on the Telegram servers (recommended), 
@@ -4075,7 +4076,7 @@ namespace telegramium {
           sent Message is returned.  */
         def sendSticker {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Sticker to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
@@ -4102,7 +4103,7 @@ namespace telegramium {
         def getChatMembersCount {
           /* Unique identifier for the target chat or username of the 
           target supergroup or channel (in the format 
-          @channelusername) */
+          &#064;channelusername) */
           chatId : ChatId
         } => Method[Int]
                 
@@ -4110,7 +4111,7 @@ namespace telegramium {
         /* Use this method to send photos. On success, the sent Message is returned.  */
         def sendPhoto {
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format @channelusername) */
+          target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
           /* Photo to send. Pass a file_id as String to send a photo 
           that exists on the Telegram servers (recommended), pass an 
