@@ -294,24 +294,6 @@ object CirceImplicits {
 
   implicit lazy val materialEncoder: Encoder[Material] = {
 
-    case plastic: Plastic => {
-      import io.circe.JsonObject
-      val lvl0: List[String]                 = List("density", "color")
-      val lvl1: List[(String, List[String])] = List(("props", List("plasticity")))
-      plastic.asJson.mapObject { o =>
-        val map = o.toMap
-        Json
-          .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
-            } ++ o.toList.filter(x => lvl0.contains(x._1))
-          )
-          .mapObject(_.add("type", Json.fromString("plastic")))
-          .asObject
-          .getOrElse(JsonObject.empty)
-      }
-    }
-
     case metal: Metal => {
       import io.circe.JsonObject
       val lvl0: List[String]                 = List("density", "valency")
@@ -348,18 +330,28 @@ object CirceImplicits {
       }
     }
 
+    case plastic: Plastic => {
+      import io.circe.JsonObject
+      val lvl0: List[String]                 = List("density", "color")
+      val lvl1: List[(String, List[String])] = List(("props", List("plasticity")))
+      plastic.asJson.mapObject { o =>
+        val map = o.toMap
+        Json
+          .fromFields(
+            lvl1.map {
+              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            } ++ o.toList.filter(x => lvl0.contains(x._1))
+          )
+          .mapObject(_.add("type", Json.fromString("plastic")))
+          .asObject
+          .getOrElse(JsonObject.empty)
+      }
+    }
+
   }
   implicit lazy val materialDecoder: Decoder[Material] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
-      case "plastic" =>
-        for {
-          density    <- Decoder[Double].prepare(_.downField("density"))
-          color      <- Decoder[String].prepare(_.downField("color"))
-          plasticity <- Decoder[Double].prepare(_.downField("props").downField("plasticity"))
-        } yield {
-          Plastic(density = density, color = color, plasticity = plasticity)
-        }
       case "metal" =>
         for {
           density      <- Decoder[Double].prepare(_.downField("density"))
@@ -378,6 +370,14 @@ object CirceImplicits {
           colors  <- Decoder[Vector[String]].prepare(_.downField("props").downField("colors"))
         } yield {
           Wood(density = density, colors = colors)
+        }
+      case "plastic" =>
+        for {
+          density    <- Decoder[Double].prepare(_.downField("density"))
+          color      <- Decoder[String].prepare(_.downField("color"))
+          plasticity <- Decoder[Double].prepare(_.downField("props").downField("plasticity"))
+        } yield {
+          Plastic(density = density, color = color, plasticity = plasticity)
         }
     }
   } yield value

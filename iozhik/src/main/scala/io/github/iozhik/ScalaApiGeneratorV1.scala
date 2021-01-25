@@ -1,9 +1,13 @@
 package io.github.iozhik
 
-import java.io.File
-
-import io.github.iozhik.Generator.Model._
 import cats.implicits._
+import io.github.iozhik.Generator.Model._
+import io.github.iozhik.UpickleUtils._
+import io.github.iozhik.CirceUtils._
+import io.github.iozhik.GeneratorUtils._
+import io.github.iozhik.ScalaApiGeneratorUtils._
+
+import java.io.File
 
 class ScalaApiGeneratorV1 extends Generator {
 
@@ -31,37 +35,13 @@ class ScalaApiGeneratorV1 extends Generator {
     "List" -> "List.empty",
     "Option" -> "Option.empty"
   )
-  private val keywords: Set[String] = Set(
-    "case", "class", "type", "object", "def"
-  )
 
   private val predefined = Set(
     "Boolean", "Int", "Long", "Double", "Float",
     "Vector", "List", "Option", "String", "Either", "Map"
   )
 
-  def versionPostfix(min: Option[Version], max: Option[Version]): String = {
-    val mins = min.map(_.version).getOrElse("").replace(".", "")
-    val maxs = max.map(_.version).map("_" + _).getOrElse("").replace(".", "")
-    mins + maxs
-  }
-
-  def sanitize(name: String): String = {
-    if (keywords.contains(name)) {
-      s"`$name`"
-    } else {
-      name
-    }
-  }
-
-  def genKind(x: Kind)(implicit symt: Symtable, space: Space): Either[String, String] = {
-    for {
-      items <- x.params.map(genKind).sequence
-      body = "[" + items.mkString(", ") + "]"
-    } yield {
-      sanitize(x.name) + (if (x.params.nonEmpty) body else "")
-    }
-  }
+  def sanitize(name: String): String = GeneratorUtils.sanitize(name, keywords)
 
   def genField(x: Field, withDoc: Boolean = true)(implicit symt: Symtable, space: Space): Either[String, String] = {
     for {
@@ -139,7 +119,7 @@ class ScalaApiGeneratorV1 extends Generator {
       name <- genKind(x.name)
     } yield {
       val codecName = x.name.name.toLowerCase
-      val encoderBody = s"""(x: $name.type) => "${x.target}".asJson"""
+      val encoderBody = s"""(_: $name.type) => "${x.target}".asJson"""
       val decoderBody = s"Decoder[String].map(_ => $name)"
       val decoder = s"implicit lazy val ${codecName}Decoder: Decoder[$name.type] = $decoderBody"
       val encoder = s"implicit lazy val ${codecName}Encoder: Encoder[$name.type] = $encoderBody"
@@ -148,97 +128,29 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genJsonCodecs(x: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genJsonCodecs(struc: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     val d = delimiter
     val useSnake = space.opts.contains("snake")
-    if (x.isEnum) {
-      if (x.typets.nonEmpty) {
+    if (struc.isEnum) {
+      if (struc.typets.nonEmpty) {
         for {
-          kind <- x.kind.map(_.name).toRight("No kind name")
-          typet <- x.typet().toRight(s"No type tag found for $kind")
-          items <- x.leaves.traverse(genJsonCodecs).map(_.flatten)
-          cases <- x.leaves.traverse{ y =>
-            for {
-              nn <- y.kind.map(_.name).toRight("No kind name")
-              kn = y.kind.map(_.name).getOrElse("ANONYMOUS_STRUC")
-              tt <- y.typet().map(_.tag).toRight(s"Type tag not found for: $kn")
-            } yield {
-              val postfix = if (y.fields.nonEmpty) "" else ".type"
-              if (y.embeds.isEmpty) {
-                (
-                  s"case $tt: $nn$postfix => $tt.asJson.mapObject(_.add(" +
-                    "\"" + typet.name + "\", Json.fromString(\"" + tt + "\")))",
-                  "case \"" + tt + "\"" + s" => Decoder[$nn$postfix]"
-                )
-              } else {
-                val ownFields = for {
-                  (name, f) <- y.embeds.flatMap { e =>
-                    val usingf: Seq[Field] = e.struc.usings
-                      .flatMap(y => symt.find(y.kind, x.kind))
-                      .collect{ case s: Struc => s}
-                      .flatMap(_.fields)
-                    (e.struc.fields ++ usingf).map(e.name -> _)
-                  }
-                  ename = "\"" + name + "\""
-                  fname = "\"" + f.name + "\""
-                  kk = genKind(f.kind).toOption.getOrElse("Wrong kind") // TODO: Better diagnosis, throw error
-                } yield {
-                  (
-                    s"${f.name} <- Decoder[$kk].prepare(_.downField($ename).downField($fname))",
-                    s"${f.name} = ${f.name}",
-                    ename -> fname
-                  )
-                }
-                val embedFields: Seq[String] = y.embeds.flatMap(_.struc.fields.map(_.name))
-                val inheritedFields = y.fields.filter(z => !embedFields.contains(z.name)).map { f =>
-                  val fname = "\"" + f.name + "\""
-                  (
-                    s"${f.name} <- Decoder[${f.kind.name}].prepare(_.downField($fname))",
-                    s"${f.name} = ${f.name}",
-                    "" -> fname
-                  )
-                }
-                val fields = inheritedFields ++ ownFields
-                val decoders = fields.map(_._1).intercalate(d)
-                val assigns = fields.map(_._2).intercalate(",")
-                val jsonItems = (fields.map(_._3) ++ inheritedFields.map(_._3))
-                  .groupBy(_._1)
-                  .map { case (k, v) => k -> v.map(_._2) }
-                  .toList
-                val lvl0: List[String] = jsonItems.filter(_._1.isEmpty).flatMap(_._2).distinct
-                val lvl1: List[(String, List[String])] = jsonItems.filter(_._1.nonEmpty)
-                val lvl0Code = s"val lvl0: List[String] = $lvl0"
-                val lvl1Code = s"val lvl1: List[(String, List[String])] = $lvl1"
-                val ttName = "\"" + typet.name + "\""
-                val ttTag = "\"" + tt + "\""
-                val cc = s"case $tt: $nn$postfix"
-                (
-                  s"""
-                     | $cc => {
-                     | import io.circe.JsonObject
-                     | $lvl0Code
-                     | $lvl1Code
-                     | $tt.asJson.mapObject{ o =>
-                     |     val map = o.toMap
-                     |     Json.fromFields(
-                     |       lvl1.map {
-                     |         case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
-                     |       } ++ o.toList.filter(x => lvl0.contains(x._1))
-                     |     )
-                     |     .mapObject(_.add($ttName, Json.fromString($ttTag)))
-                     |     .asObject
-                     |     .getOrElse(JsonObject.empty)
-                     |   }
-                     | }
-                """.stripMargin,
-                  "case \"" + tt + "\"" + s" => for {$d$decoders$d}${d}yield$d{$d$nn($assigns)$d}"
-                )
-              }
-            }
+          kind <- struc.kind.map(_.name).toRight("No kind name")
+          typet <- struc.typet().toRight(s"No type tag found for $kind")
+          items <- struc.leaves.traverse(genJsonCodecs).map(_.flatten)
+          cases <- struc.leaves.groupBy { leaf =>
+            val kn = leaf.kind.map(_.name).getOrElse("ANONYMOUS_STRUC")
+            leaf.typet().map(_.tag).getOrElse(s"Type tag not found for: $kn")
           }
+            .toList
+            .traverse { case (typeTag, leaves) =>
+              if (leaves.size == 1)
+                genCirceCodecCases(struc, typeTag, typet, leaves.head)
+              else
+                genMergedCirceCodecs(struc, kind, typeTag, typet, leaves)
+            }
         } yield {
           val tag = "\"" + typet.name + "\""
-          val name = kind + versionPostfix(x.minVersion, x.maxVersion)
+          val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
           val body = s"""
                         | implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
                         |   ${cases.map(_._1).intercalate(d)}
@@ -254,14 +166,14 @@ class ScalaApiGeneratorV1 extends Generator {
         }
       } else {
         for {
-          kind <- x.kind.map(_.name).toRight("No kind name")
-          wrapps <- x.wrapps.flatTraverse(genJsonCodecs)
-          enumstrs <- x.enumstrs.flatTraverse(genJsonCodecs)
-          leaves <- x.leaves.flatTraverse(genJsonCodecs)
+          kind <- struc.kind.map(_.name).toRight("No kind name")
+          wrapps <- struc.wrapps.flatTraverse(genJsonCodecs)
+          enumstrs <- struc.enumstrs.flatTraverse(genJsonCodecs)
+          leaves <- struc.leaves.flatTraverse(genJsonCodecs)
           cases <- (
-              x.wrapps.map(_.name -> false) ++
-                x.enumstrs.map(_.name -> true) ++
-                x.leaves.flatMap(_.kind).map(_ -> false)
+              struc.wrapps.map(_.name -> false) ++
+                struc.enumstrs.map(_.name -> true) ++
+                struc.leaves.flatMap(_.kind).map(_ -> false)
             ).traverse{ case (k, isSingle) =>
               for {
                 name <- genKind(k)
@@ -274,7 +186,7 @@ class ScalaApiGeneratorV1 extends Generator {
               }
             }
         } yield {
-          val name = kind + versionPostfix(x.minVersion, x.maxVersion)
+          val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
           val body =
             s"""
               | implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
@@ -294,11 +206,11 @@ class ScalaApiGeneratorV1 extends Generator {
         }
       }
     } else {
-      val usingf = x.usings
-        .flatMap{ y => symt.find(y.kind, x.kind) }
+      val usingf = struc.usings
+        .flatMap{ y => symt.find(y.kind, struc.kind) }
         .collect{ case s: Struc => s}
         .flatMap(_.fields)
-      val impPacks = (usingf ++ x.fields)
+      val impPacks = (usingf ++ struc.fields)
         .flatMap(_.kind.unresolvedIn(space.symbol))
         .filter(y => !predefined.contains(y.name))
         .flatMap(symt.resolve)
@@ -311,12 +223,12 @@ class ScalaApiGeneratorV1 extends Generator {
           .distinct
           .map(path => s"import $path.CirceImplicits._")
       for {
-        kind <- x.kind.map(_.name).toRight("No kind name")
-        fieldKinds <- (usingf ++ x.fields).traverse(y => genKind(y.kind))
-        fields = (usingf ++ x.fields).map(y => y.name).zip(fieldKinds)
+        kind <- struc.kind.map(_.name).toRight("No kind name")
+        fieldKinds <- (usingf ++ struc.fields).traverse(y => genKind(y.kind))
+        fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
       } yield {
-        val postfix = if (x.fields.nonEmpty || x.usings.nonEmpty) "" else ".type"
-        val name = kind + versionPostfix(x.minVersion, x.maxVersion)
+        val postfix = if (struc.fields.nonEmpty || struc.usings.nonEmpty) "" else ".type"
+        val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
         val decoderForBody = fields
           .map{ case (fname, k) =>
             val n = if (useSnake) { camel2snake(fname) } else { fname }
@@ -337,9 +249,9 @@ class ScalaApiGeneratorV1 extends Generator {
             val n = if (useSnake) { camel2snake(fname) } else { fname }
             val fn = sanitize(fname)
             s""""$n" -> x.$fn.asJson"""
-          } ++ x.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
+          } ++ struc.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
           .intercalate(",")
-        val decoderBody = if (x.fields.nonEmpty || x.usings.nonEmpty) {
+        val decoderBody = if (struc.fields.nonEmpty || struc.usings.nonEmpty) {
           s"""
              |Decoder.instance { h =>
              |  for {
@@ -352,7 +264,7 @@ class ScalaApiGeneratorV1 extends Generator {
         } else {
           s"(_: HCursor) => Right($name)"
         }
-        val encoderBody = if (x.fields.nonEmpty || x.usings.nonEmpty) {
+        val encoderBody = if (struc.fields.nonEmpty || struc.usings.nonEmpty) {
           s"""
              | (x: $name) => {
              |   Json.fromFields(
@@ -371,7 +283,7 @@ class ScalaApiGeneratorV1 extends Generator {
         List(Code(
           body = body,
           packageObject = "CirceImplicits",
-          imports = imps ++ (if (x.fields.isEmpty && x.usings.isEmpty) {
+          imports = imps ++ (if (struc.fields.isEmpty && struc.usings.isEmpty) {
             List("import io.circe.HCursor")
           } else { List.empty[String] })
         ))
@@ -473,53 +385,26 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genuPickle(x: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genuPickle(struc: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     val d = delimiter
-    if (x.isEnum) {
-      if (x.typetForBins.isEmpty) {
+    if (struc.isEnum) {
+      if (struc.typetForBins.isEmpty) {
         Right(List.empty[Code])
       } else {
         for {
-          kind  <- x.kind.map(_.name).toRight("No kind name")
-          _     <- x.typetForBins.toRight(s"No type tag found for $kind")
-          items <- x.leavesForBins.traverse(genuPickle).map(_.flatten)
-          cases <- x.leavesForBins.traverse{ y =>
-            for {
-              nn <- y.kind.map(_.name).toRight("No kind name")
-              tt <- y.typet().map(_.tag).toRight(s"No type id found for $nn")
-              tn <- y.typet().map(_.name).toRight(s"No type id found for $nn")
-            } yield {
-              if (y.fields.nonEmpty) {
-                (
-                  s"""case x: $nn => upack.Obj(writeMsg(x).obj += upack.Str("$tn") -> writeMsg("$tt"))""",
-                  s"""case upack.Str("$tt") => readBinary[$nn](msg)"""
-                )
-              } else {
-                (
-                  s"""case $nn => upack.Obj(upack.Obj().obj += upack.Str("$tn") -> writeMsg("$tt"))""",
-                  s"""case upack.Str("$tt") => $nn"""
-                )
-              }
-            }
+          kind  <- struc.kind.map(_.name).toRight("No kind name")
+          _     <- struc.typetForBins.toRight(s"No type tag found for $kind")
+          items <- struc.leavesForBins.traverse(genuPickle).map(_.flatten)
+          hasDuplicateLeavesTypets = struc.leavesForBins.groupBy { leaf =>
+            val kn = leaf.kind.map(_.name).toRight("No kind name")
+            leaf.typet().map(_.tag).getOrElse(s"Type tag not found for: $kn")
           }
+            .exists {
+              case (_, leaves) => leaves.size >= 2
+            }
+          name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
+          body <- if (hasDuplicateLeavesTypets) genMergedUpickleCodecs(struc, name) else genUpickleCodecCases(struc, name)
         } yield {
-          val name = kind + versionPostfix(x.minVersion, x.maxVersion)
-          val body =
-            s"""
-              | implicit lazy val ${name.toLowerCase}Codec: ReadWriter[$name] = {
-              |   readwriter[upack.Msg].bimap(
-              |     {
-              |       ${cases.map(_._1).intercalate(d)}
-              |     },
-              |     msg => {
-              |       val m = msg.obj
-              |       m.get(upack.Str("type")).collect {
-              |         ${cases.map(_._2).intercalate(d)}
-              |       }.get
-              |     }
-              |   )
-              | }
-            """.stripMargin
           List(Code(
             body = body,
             packageObject = "uPickleImplicits",
@@ -527,11 +412,11 @@ class ScalaApiGeneratorV1 extends Generator {
         }
       }
     } else {
-      val usingf = x.usings
-        .flatMap{ y => symt.find(y.kind, x.kind) }
+      val usingf = struc.usings
+        .flatMap{ y => symt.find(y.kind, struc.kind) }
         .collect{ case s: Struc => s}
         .flatMap(_.fields)
-      val impPacks = (usingf ++ x.fields)
+      val impPacks = (usingf ++ struc.fields)
         .flatMap(_.kind.unresolvedIn(space.symbol))
         .filter(y => !predefined.contains(y.name))
         .flatMap(symt.resolve)
@@ -544,18 +429,18 @@ class ScalaApiGeneratorV1 extends Generator {
         .distinct
         .map(path => s"import $path.uPickleImplicits._")
       for {
-        kind <- x.kind.map(_.name).toRight("No kind name")
-        fieldKinds <- (usingf ++ x.fields).traverse(y => genKind(y.kind))
-        fields = (usingf ++ x.fields).map(y => y.name).zip(fieldKinds)
+        kind <- struc.kind.map(_.name).toRight("No kind name")
+        fieldKinds <- (usingf ++ struc.fields).traverse(y => genKind(y.kind))
+        fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
       } yield {
-        val name = kind + versionPostfix(x.minVersion, x.maxVersion)
+        val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
         val keys = fields.map{ case (n, _) => s"""val ${n}Key = upack.Str("$n")""" }.intercalate(d)
         val wf = fields.map{ case (n, _) => s"""${n}Key -> writeMsg(x.${sanitize(n)})""" }.intercalate(",")
         val rf = fields.map{ case (n, k) =>
           s"""${sanitize(n)} <- m.get(${n}Key).map(x => readBinary[$k](x))"""
         }.intercalate(d)
         val assign = fields.map{ case (n, _) => s"${sanitize(n)} = ${sanitize(n)}" }.intercalate(",")
-        val codec = if (x.fields.nonEmpty || x.usings.nonEmpty) {
+        val codec = if (struc.fields.nonEmpty || struc.usings.nonEmpty) {
           s"""
              | implicit lazy val ${name.toLowerCase}Codec: ReadWriter[$kind] = {
              |   $keys
@@ -1050,7 +935,7 @@ class ScalaApiGeneratorV1 extends Generator {
         |
         |final case class MethodPayload(
         |  name: String,
-        |  json: io.circe.Json,
+        |  json: Json,
         |  files: Map[String, IFile]
         |)
         |
