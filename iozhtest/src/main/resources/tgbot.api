@@ -126,8 +126,7 @@ namespace telegramium {
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
-        multipart/form-data under <file_attach_name> name. More info 
-        on Sending Files » */
+        multipart/form-data under <file_attach_name> name. */
         media           : String
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
@@ -137,8 +136,7 @@ namespace telegramium {
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
-        using multipart/form-data under <file_attach_name>. More 
-        info on Sending Files » */
+        using multipart/form-data under <file_attach_name>. */
         thumb           : Option[IFile]
         /* Optional. Caption of the animation to be sent, 0-1024 
         characters after entities parsing */
@@ -164,8 +162,7 @@ namespace telegramium {
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
-        multipart/form-data under <file_attach_name> name. More info 
-        on Sending Files » */
+        multipart/form-data under <file_attach_name> name. */
         media           : String
         /* Optional. Caption of the photo to be sent, 0-1024 
         characters after entities parsing */
@@ -185,8 +182,7 @@ namespace telegramium {
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
-        multipart/form-data under <file_attach_name> name. More info 
-        on Sending Files » */
+        multipart/form-data under <file_attach_name> name. */
         media             : String
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
@@ -196,8 +192,7 @@ namespace telegramium {
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
-        using multipart/form-data under <file_attach_name>. More 
-        info on Sending Files » */
+        using multipart/form-data under <file_attach_name>. */
         thumb             : Option[IFile]
         /* Optional. Caption of the video to be sent, 0-1024 
         characters after entities parsing */
@@ -226,8 +221,7 @@ namespace telegramium {
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
-        multipart/form-data under <file_attach_name> name. More info 
-        on Sending Files » */
+        multipart/form-data under <file_attach_name> name. */
         media                       : String
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
@@ -237,8 +231,7 @@ namespace telegramium {
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
-        using multipart/form-data under <file_attach_name>. More 
-        info on Sending Files » */
+        using multipart/form-data under <file_attach_name>. */
         thumb                       : Option[IFile]
         /* Optional. Caption of the document to be sent, 0-1024 
         characters after entities parsing */
@@ -262,8 +255,7 @@ namespace telegramium {
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
-        multipart/form-data under <file_attach_name> name. More info 
-        on Sending Files » */
+        multipart/form-data under <file_attach_name> name. */
         media           : String
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
@@ -273,8 +265,7 @@ namespace telegramium {
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
-        using multipart/form-data under <file_attach_name>. More 
-        info on Sending Files » */
+        using multipart/form-data under <file_attach_name>. */
         thumb           : Option[IFile]
         /* Optional. Caption of the audio to be sent, 0-1024 
         characters after entities parsing */
@@ -2087,8 +2078,7 @@ namespace telegramium {
       contact                 : Option[Contact]
       /* Optional. Message is a dice with random value */
       dice                    : Option[Dice]
-      /* Optional. Message is a game, information about the game. 
-      More about games » */
+      /* Optional. Message is a game, information about the game. */
       game                    : Option[Game]
       /* Optional. Message is a native poll, information about the 
       poll */
@@ -2149,14 +2139,13 @@ namespace telegramium {
       reply_to_message fields even if it is itself a reply. */
       pinnedMessage           : Option[Message]
       /* Optional. Message is an invoice for a payment, information 
-      about the invoice. More about payments » */
+      about the invoice. */
       invoice                 : Option[Invoice]
       /* Optional. Message is a service message about a successful 
-      payment, information about the payment. More about payments 
-      » */
+      payment, information about the payment. */
       successfulPayment       : Option[SuccessfulPayment]
       /* Optional. The domain name of the website on which the user 
-      has logged in. More about Telegram Login » */
+      has logged in. */
       connectedWebsite        : Option[String]
       /* Optional. Telegram Passport data */
       passportData            : Option[PassportData]

@@ -282,6 +282,16 @@ object TgBotApiScrapper extends IOApp {
           .replace("@", "&#064;")
       }
 
+      def removeMoreLinks(desc: Element) = {
+        val moreLinks =
+          (desc >> elements("a"))
+            .map(_.text)
+            .filter(_.contains("»"))
+        moreLinks.foldLeft(desc.text) { (txt, link) =>
+          txt.replaceAll(s"$link\\.?", "")
+        }
+      }
+
       def isH4(e: Element): Boolean = e.tagName.toLowerCase == "h4"
       def isP(e: Element): Boolean = e.tagName.toLowerCase == "p"
       def isTable(e: Element): Boolean = e.tagName.toLowerCase == "table"
@@ -336,21 +346,14 @@ object TgBotApiScrapper extends IOApp {
               name = x.name.text,
               desc = wrap(x.desc.map(_.text).intercalate("\n"), 80),
               table = params.map { y =>
-                val desc = y.children.toList(3)
-                val moreLinks =
-                  (desc >> elements("a"))
-                    .map(_.text)
-                    .filter(_.contains("»"))
                 val k = y.children.toList(1).text
                 val name = y.children.toList.head.text
-                val descText = moreLinks.foldLeft(desc.text) { (txt, link) =>
-                  txt.replaceAll(s"$link\\.?", "")
-                }
+                val desc = removeMoreLinks(y.children.toList(3))
                 MethodParam(
                   name = name,
-                  kind = mkType(name, descText, k),
+                  kind = mkType(name, desc, k),
                   required = y.children.toList(2).text,
-                  desc = wrap(fixDesc(descText), 60),
+                  desc = wrap(fixDesc(desc), 60),
                 )
               }.toList,
               returns = mkType("", "", returns)
@@ -363,7 +366,7 @@ object TgBotApiScrapper extends IOApp {
               table = params.map { y =>
                 val name = y.children.toList.head.text
                 val kind = y.children.toList(1).text
-                val desc = y.children.toList(2).text
+                val desc = removeMoreLinks(y.children.toList(2))
                 if ((name == "type" || name == "source") && desc.contains(", must be ")) {
                   EntityParam(
                     name = name,
