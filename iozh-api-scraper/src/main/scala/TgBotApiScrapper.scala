@@ -266,7 +266,7 @@ object TgBotApiScrapper extends IOApp {
           .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
           .replace("InputMediaAudio, InputMediaDocument, InputMediaPhoto and InputMediaVideo", "InputMedia")
         if (name == "emoji") {
-          "Emoji";
+          "Emoji"
         } else {
           res
         }
@@ -336,14 +336,21 @@ object TgBotApiScrapper extends IOApp {
               name = x.name.text,
               desc = wrap(x.desc.map(_.text).intercalate("\n"), 80),
               table = params.map { y =>
+                val desc = y.children.toList(3)
+                val moreLinks =
+                  (desc >> elements("a"))
+                    .map(_.text)
+                    .filter(_.contains("»"))
                 val k = y.children.toList(1).text
-                val name = y.children.toList(0).text
-                val desc = y.children.toList(3).text
+                val name = y.children.toList.head.text
+                val descText = moreLinks.foldLeft(desc.text) { (txt, link) =>
+                  txt.replaceAll(s"$link\\.?", "")
+                }
                 MethodParam(
                   name = name,
-                  kind = mkType(name, desc, k),
+                  kind = mkType(name, descText, k),
                   required = y.children.toList(2).text,
-                  desc = wrap(fixDesc(desc), 60),
+                  desc = wrap(fixDesc(descText), 60),
                 )
               }.toList,
               returns = mkType("", "", returns)
@@ -354,7 +361,7 @@ object TgBotApiScrapper extends IOApp {
               name = x.name.text,
               desc = wrap(x.desc.map(_.text).intercalate("\n"), 80),
               table = params.map { y =>
-                val name = y.children.toList(0).text
+                val name = y.children.toList.head.text
                 val kind = y.children.toList(1).text
                 val desc = y.children.toList(2).text
                 if ((name == "type" || name == "source") && desc.contains(", must be ")) {

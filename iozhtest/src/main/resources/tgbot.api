@@ -2739,8 +2739,7 @@ namespace telegramium {
           height must be exactly 512px. Pass a file_id as a String to 
           send a file that already exists on the Telegram servers, 
           pass an HTTP URL as a String for Telegram to get a file from 
-          the Internet, or upload a new one using multipart/form-data. 
-          More info on Sending Files » */
+          the Internet, or upload a new one using multipart/form-data. */
           pngSticker    : (file) Option[IFile]
           /* TGS animation with the sticker, uploaded using 
           multipart/form-data. See 
@@ -2765,7 +2764,7 @@ namespace telegramium {
           userId     : Int
           /* PNG image with the sticker, must be up to 512 kilobytes in 
           size, dimensions must not exceed 512px, and either width or 
-          height must be exactly 512px. More info on Sending Files » */
+          height must be exactly 512px. */
           pngSticker : (file) IFile
         } => Method[File]
                 
@@ -2913,8 +2912,7 @@ namespace telegramium {
           height must be exactly 512px. Pass a file_id as a String to 
           send a file that already exists on the Telegram servers, 
           pass an HTTP URL as a String for Telegram to get a file from 
-          the Internet, or upload a new one using multipart/form-data. 
-          More info on Sending Files » */
+          the Internet, or upload a new one using multipart/form-data. */
           pngSticker   : (file) Option[IFile]
           /* TGS animation with the sticker, uploaded using 
           multipart/form-data. See 
@@ -3250,9 +3248,8 @@ namespace telegramium {
           chatId                   : ChatId
           /* Video note to send. Pass a file_id as String to send a 
           video note that exists on the Telegram servers (recommended) 
-          or upload a new video using multipart/form-data. More info 
-          on Sending Files ». Sending video notes by a URL is 
-          currently unsupported */
+          or upload a new video using multipart/form-data. Sending 
+          video notes by a URL is currently unsupported */
           videoNote                : (file) IFile
           /* Duration of sent video in seconds */
           duration                 : Option[Int]
@@ -3266,8 +3263,7 @@ namespace telegramium {
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
-          using multipart/form-data under <file_attach_name>. More 
-          info on Sending Files » */
+          using multipart/form-data under <file_attach_name>. */
           thumb                    : (file) Option[IFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -3392,8 +3388,7 @@ namespace telegramium {
           /* File to send. Pass a file_id as String to send a file that 
           exists on the Telegram servers (recommended), pass an HTTP 
           URL as a String for Telegram to get a file from the 
-          Internet, or upload a new one using multipart/form-data. 
-          More info on Sending Files » */
+          Internet, or upload a new one using multipart/form-data. */
           document                    : (file) IFile
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
@@ -3403,8 +3398,7 @@ namespace telegramium {
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
-          using multipart/form-data under <file_attach_name>. More 
-          info on Sending Files » */
+          using multipart/form-data under <file_attach_name>. */
           thumb                       : (file) Option[IFile]
           /* Document caption (may also be used when resending documents 
           by file_id), 0-1024 characters after entities parsing */
@@ -3526,7 +3520,7 @@ namespace telegramium {
           audio file that exists on the Telegram servers 
           (recommended), pass an HTTP URL as a String for Telegram to 
           get an audio file from the Internet, or upload a new one 
-          using multipart/form-data. More info on Sending Files » */
+          using multipart/form-data. */
           audio                    : (file) IFile
           /* Audio caption, 0-1024 characters after entities parsing */
           caption                  : Option[String]
@@ -3550,8 +3544,7 @@ namespace telegramium {
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
-          using multipart/form-data under <file_attach_name>. More 
-          info on Sending Files » */
+          using multipart/form-data under <file_attach_name>. */
           thumb                    : (file) Option[IFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -3656,8 +3649,7 @@ namespace telegramium {
           /* Audio file to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a file from the 
-          Internet, or upload a new one using multipart/form-data. 
-          More info on Sending Files » */
+          Internet, or upload a new one using multipart/form-data. */
           voice                    : (file) IFile
           /* Voice message caption, 0-1024 characters after entities 
           parsing */
@@ -3824,8 +3816,8 @@ namespace telegramium {
           as a String to send a file that already exists on the 
           Telegram servers, pass an HTTP URL as a String for Telegram 
           to get a file from the Internet, or upload a new one using 
-          multipart/form-data. More info on Sending Files ». Animated 
-          sticker set thumbnail can't be uploaded via HTTP URL. */
+          multipart/form-data. Animated sticker set thumbnail can't be 
+          uploaded via HTTP URL. */
           thumb  : (file) Option[IFile]
         } => Method[Boolean]
                 
@@ -3860,8 +3852,7 @@ namespace telegramium {
           /* Video to send. Pass a file_id as String to send a video 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a video from the 
-          Internet, or upload a new video using multipart/form-data. 
-          More info on Sending Files » */
+          Internet, or upload a new video using multipart/form-data. */
           video                    : (file) IFile
           /* Duration of sent video in seconds */
           duration                 : Option[Int]
@@ -3877,8 +3868,7 @@ namespace telegramium {
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
-          using multipart/form-data under <file_attach_name>. More 
-          info on Sending Files » */
+          using multipart/form-data under <file_attach_name>. */
           thumb                    : (file) Option[IFile]
           /* Video caption (may also be used when resending videos by 
           file_id), 0-1024 characters after entities parsing */
@@ -3983,7 +3973,7 @@ namespace telegramium {
           animation that exists on the Telegram servers (recommended), 
           pass an HTTP URL as a String for Telegram to get an 
           animation from the Internet, or upload a new animation using 
-          multipart/form-data. More info on Sending Files » */
+          multipart/form-data. */
           animation                : (file) IFile
           /* Duration of sent animation in seconds */
           duration                 : Option[Int]
@@ -3999,8 +3989,7 @@ namespace telegramium {
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
-          using multipart/form-data under <file_attach_name>. More 
-          info on Sending Files » */
+          using multipart/form-data under <file_attach_name>. */
           thumb                    : (file) Option[IFile]
           /* Animation caption (may also be used when resending 
           animation by file_id), 0-1024 characters after entities 
@@ -4081,8 +4070,7 @@ namespace telegramium {
           /* Sticker to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a .WEBP file from 
-          the Internet, or upload a new one using multipart/form-data. 
-          More info on Sending Files » */
+          the Internet, or upload a new one using multipart/form-data. */
           sticker                  : (file) IFile
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -4119,7 +4107,7 @@ namespace telegramium {
           Internet, or upload a new photo using multipart/form-data. 
           The photo must be at most 10 MB in size. The photo's width 
           and height must not exceed 10000 in total. Width and height 
-          ratio must be at most 20. More info on Sending Files » */
+          ratio must be at most 20. */
           photo                    : (file) IFile
           /* Photo caption (may also be used when resending photos by 
           file_id), 0-1024 characters after entities parsing */
