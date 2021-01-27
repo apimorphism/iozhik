@@ -43,16 +43,17 @@ class ScalaApiGeneratorV1 extends Generator {
 
   def sanitize(name: String): String = GeneratorUtils.sanitize(name, keywords)
 
-  def genField(x: Field, withDoc: Boolean = true)(implicit symt: Symtable, space: Space): Either[String, String] = {
+  def genField(x: Field, withDoc: Boolean = true, isDef: Boolean = false)(implicit symt: Symtable, space: Space): Either[String, String] = {
     for {
       kind <- genKind(x.kind)
     } yield {
       val d = delimiter
       val docsBody = if (withDoc) x.doc.split("\n").toList.map(_.trim).intercalate("\n* ") else ""
+      val keyword = if (isDef) "def " else ""
       val docs = if (docsBody.nonEmpty) { s"$d/** $docsBody*/$d" } else { "" }
       defaults.find(x => kind.startsWith(x._1)).fold(
-        docs + sanitize(x.name) + ": " + kind
-      ){ case (_, default) => docs + sanitize(x.name) + ": " + kind + " = " + default }
+        docs + keyword + sanitize(x.name) + ": " + kind
+      ){ case (_, default) => docs + keyword + sanitize(x.name) + ": " + kind + " = " + default }
     }
   }
 
@@ -516,12 +517,12 @@ class ScalaApiGeneratorV1 extends Generator {
       .flatMap(_.fields)
     for {
       kind <- genKind(kindOrDefault)
-      fields <- x.fields.traverse(genField(_))
+      fields <- x.fields.traverse(genField(_, isDef = x.isAbstract || x.isEnum))
       mixins <- x.mixins.traverse(genKind)
       leaves <- x.leaves.traverse(genStruc)
       wrapps <- x.wrapps.traverse(genWrapp(kindOrDefault, _))
       enumstrs <- x.enumstrs.traverse(genEnumStr(kindOrDefault, _))
-      usings <- usingf.traverse(genField(_))
+      usings <- usingf.traverse(genField(_, isDef = x.isAbstract || x.isEnum))
       upickles <- if (space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
       jsonCodecs <- if (space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
       scodecs <- if (space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
@@ -538,7 +539,7 @@ class ScalaApiGeneratorV1 extends Generator {
       val name = kind + versionPostfix(x.minVersion, x.maxVersion)
       val filename = sanitize(kindOrDefault.name) + versionPostfix(x.minVersion, x.maxVersion)
       val fs = if (x.isAbstract || x.isEnum) {
-        (usings ++ fields).toNel.map(_.map("def " + _).intercalate(delimiter)).getOrElse("")
+        (usings ++ fields).toNel.map(_.intercalate(delimiter)).getOrElse("")
       } else {
         (usings ++ fields).toNel.map(_.intercalate(", ")).getOrElse("")
       }
@@ -652,7 +653,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  private def genMethodsFabricDefun(x: Defun)(implicit symt: Symtable, space: Space) =
+  private def genMethodsFactoryDefun(x: Defun)(implicit symt: Symtable, space: Space) =
     for {
       kind <- genKind(x.kind)
       params <- x.dom.fold(
@@ -887,7 +888,7 @@ class ScalaApiGeneratorV1 extends Generator {
     for {
       kind <- genKind(x.kind)
       defs = x.items.collect{ case a: Defun => a }
-      itemsRaw <- defs.traverse(d => if (x.opts.contains("methodsFabric")) genMethodsFabricDefun(d) else genDefun(d))
+      itemsRaw <- defs.traverse(d => if (x.opts.contains("methodsFactory")) genMethodsFactoryDefun(d) else genDefun(d))
       items = itemsRaw.flatten
       d = delimiter
     } yield {
@@ -897,7 +898,7 @@ class ScalaApiGeneratorV1 extends Generator {
         y.packageObject != "__this_server_defs__"
       }
       val defuns = items.filter(_.packageObject == "__this_trait__").map(_.body).intercalate(d)
-      val code = if (x.opts.contains("methodsFabric")) genMethodsFabric(x, defuns, kind, items)
+      val code = if (x.opts.contains("methodsFactory")) genMethodsFactory(x, defuns, kind, items)
       else genServcDefault(x, defuns, kind, items)
       strucs ++ code
     }
@@ -918,7 +919,7 @@ class ScalaApiGeneratorV1 extends Generator {
     } else { List.empty[Code] })
   }
 
-  private def genMethodsFabric(x: Servc, defuns: String, kind: String, items: List[Code])(
+  private def genMethodsFactory(x: Servc, defuns: String, kind: String, items: List[Code])(
     implicit symt: Symtable
   ): List[Code] = {
     val methodReq =

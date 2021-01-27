@@ -26,7 +26,7 @@ object TgBotApiScrapper extends IOApp {
   sealed trait ApiItem
   case class Entity(name: String, desc: String, table: List[EntityParam]) extends ApiItem
   case class Method(name: String, desc: String, table: List[MethodParam], returns: String) extends ApiItem
-  case class Sumtyp(name: String, desc: String, items: List[String]) extends ApiItem
+  case class Sumtyp(name: String, desc: String, items: List[String], table: List[EntityParam] = List.empty) extends ApiItem
 
   def wrap(text: String, LineWidth: Int): String = {
     val buf = StringBuilder.newBuilder
@@ -60,6 +60,10 @@ object TgBotApiScrapper extends IOApp {
     loop(name.toList).mkString
   }
 
+  private val quotedPattern = "(?<=“).*?(?=”)".r
+  private val forXOnlyPattern = "(?<=For “).*?(?=” only)".r
+  private val messageEntityDescPattern = "Optional. For “.*” only, ".r
+
   def gen(items: List[ApiItem]): String = {
     def trarr(s: String): String = {
       if (s.startsWith("Array of ")) {
@@ -69,6 +73,29 @@ object TgBotApiScrapper extends IOApp {
         s
       }
     }
+
+    def genFields(params: List[EntityParam]) = {
+      val maxLen = params.map(p => camelify(p.name).length).maximumOption.getOrElse(0)
+      params
+        .map { f =>
+          val kind = if (f.kind.startsWith("Array of"))
+            trarr(f.kind)
+          else if (f.name == "parse_mode")
+            "Option[ParseMode]"
+          else {
+            if (f.desc.contains("Optional"))
+              s"Option[${f.kind}]"
+            else
+              f.kind
+          }
+          if (f.kind == "__type_tag__")
+            "    type : \"" + f.desc + ":__type_id_placeholder__\""
+          else
+            s"    /* ${wrap(f.desc, 60)}*/\n    ${camelify(f.name).padTo(maxLen, ' ')} : $kind"
+        }
+        .intercalate("\n")
+    }
+
     val mmap = items.collect{
         case m: Method => m
       }
@@ -98,46 +125,59 @@ object TgBotApiScrapper extends IOApp {
             if (f.kind == "__type_tag__") {
               "    type : \"" + f.desc + ":__type_id_placeholder__\""
             } else {
-              s"    /* ${f.desc}*/\n    ${camelify(f.name).padTo(maxLen, ' ')} : $kind"
+              s"    /* ${wrap(f.desc, 60)}*/\n    ${camelify(f.name).padTo(maxLen, ' ')} : $kind"
             }
           }
           .intercalate("\n")
         val body =
           s"""
-            |  /* ${m.desc} */
+            |  /* ${wrap(m.desc, 80)} */
             |  def ${m.name} {
             |$fields
             |  } => Method[${m.returns}]
           """.stripMargin
         m.name -> body
       }.toMap
-    val emap = items.collect{
+    val messageEntityItem = items.collect {
+      case e: Entity => e
+    }
+      .find(_.name == "MessageEntity")
+    val messageEntities = messageEntityItem
+      .flatMap { e =>
+        e.table
+          .find(_.name == "type")
+          .map { t =>
+            quotedPattern.findAllIn(t.desc)
+              .toList
+              .map { child =>
+                Entity(
+                  name = camelify(child).capitalize + "MessageEntity",
+                  child,
+                  table = t.copy(desc = child) :: e.table
+                    .filter(f => f.desc.contains("Optional") && forXOnlyPattern.findFirstIn(f.desc).contains(child))
+                    .map(f => f.copy(desc = messageEntityDescPattern.replaceFirstIn(f.desc, "")))
+                )
+              }
+          }
+      }
+      .getOrElse(List.empty)
+    val messageEntityParent = messageEntityItem.map { e =>
+      Sumtyp(
+        "MessageEntity",
+        e.desc,
+        messageEntities.map(_.name),
+        e.table.filterNot(f => f.desc.contains("Optional") || f.name == "type")
+      )
+    }
+      .toList
+    val emap = (items.collect{
         case e: Entity => e
       }
+      .filterNot(messageEntityItem.contains) ++ messageEntities)
       .map { e =>
-        val maxLen = e.table.map(x => camelify(x.name).length).maximumOption.getOrElse(0)
-        val fields = e.table
-          .map { f =>
-            val kind = if (f.kind.startsWith("Array of")) {
-              trarr(f.kind)
-            } else if (f.name == "parse_mode") {
-              "Option[ParseMode]"
-            } else {
-              if (f.desc.contains("Optional")) {
-                s"Option[${f.kind}]"
-              } else {
-                f.kind
-              }
-            }
-            if (f.kind == "__type_tag__") {
-              "    type : \"" + f.desc + ":__type_id_placeholder__\""
-            } else {
-              s"    /* ${f.desc}*/\n    ${camelify(f.name).padTo(maxLen, ' ')} : $kind"
-            }
-          }
-          .intercalate("\n")
+        val fields = genFields(e.table)
         val body = s"""
-           |  /* ${e.desc} */
+           |  /* ${wrap(e.desc, 80)} */
            |  ${e.name} {
            |$fields
            |  }
@@ -145,9 +185,10 @@ object TgBotApiScrapper extends IOApp {
         e.name -> body
       }.toMap
     val inlines = Set("InlineKeyboardMarkup", "ReplyKeyboardMarkup", "ReplyKeyboardRemove", "ForceReply")
-    val leaves = items.collect{ case e: Sumtyp => e.items }.flatten.toSet ++ inlines
-    val sumTypes = items.collect{ case e: Sumtyp => e }
-      .map{ e =>
+    val leaves = (items.collect{ case e: Sumtyp => e.items } ++ messageEntityParent.map(_.items)).flatten.toSet ++ inlines
+    val sumTypes = (items.collect{ case e: Sumtyp => e } ++ messageEntityParent)
+      .map { e =>
+        val fields = genFields(e.table)
         val children = emap.filterKeys{ k =>
             e.items.contains(k)
           }
@@ -156,9 +197,10 @@ object TgBotApiScrapper extends IOApp {
           .zipWithIndex
           .map { case (b, idx) => b.replace("__type_id_placeholder__", idx.toString) }
           .intercalate("")
+        val fieldsText = if (fields.isEmpty) fields else fields + "\n"
         s"""
           |  enum ${e.name} {
-          |${children.split("\n").map(x => "  " + x).toList.intercalate("\n")}
+          |$fieldsText${children.split("\n").map(x => "  " + x).toList.intercalate("\n")}
           |  }
         """.stripMargin
       }
@@ -213,7 +255,7 @@ object TgBotApiScrapper extends IOApp {
        |        description : Option[String]
        |      }
        |
-       |      Methods (methodsFabric) {
+       |      Methods (methodsFactory) {
        |        $methods
        |      }
        |    }
@@ -344,7 +386,7 @@ object TgBotApiScrapper extends IOApp {
             }
             Method(
               name = x.name.text,
-              desc = wrap(x.desc.map(_.text).intercalate("\n"), 80),
+              desc = x.desc.map(_.text).intercalate("\n"),
               table = params.map { y =>
                 val k = y.children.toList(1).text
                 val name = y.children.toList.head.text
@@ -353,21 +395,22 @@ object TgBotApiScrapper extends IOApp {
                   name = name,
                   kind = mkType(name, desc, k),
                   required = y.children.toList(2).text,
-                  desc = wrap(fixDesc(desc), 60),
+                  desc = fixDesc(desc),
                 )
               }.toList,
               returns = mkType("", "", returns)
             )
           case x: Item if x.name.text.head.isUpper =>
             val params = x.table >> elements("tbody > tr")
+            val itemName = x.name.text
             Entity(
-              name = x.name.text,
-              desc = wrap(x.desc.map(_.text).intercalate("\n"), 80),
+              name = itemName,
+              desc = x.desc.map(_.text).intercalate("\n"),
               table = params.map { y =>
                 val name = y.children.toList.head.text
                 val kind = y.children.toList(1).text
                 val desc = removeMoreLinks(y.children.toList(2))
-                if ((name == "type" || name == "source") && desc.contains(", must be ")) {
+                if ((name == "type" || name == "source") && (desc.contains(", must be ") || itemName == "MessageEntity")) {
                   EntityParam(
                     name = name,
                     kind = "__type_tag__",
@@ -377,7 +420,7 @@ object TgBotApiScrapper extends IOApp {
                   EntityParam(
                     name = name,
                     kind = mkType(name, desc, kind),
-                    desc = wrap(fixDesc(desc), 60),
+                    desc = fixDesc(desc),
                   )
                 }
               }.toList

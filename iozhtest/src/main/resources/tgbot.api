@@ -1130,6 +1130,95 @@ namespace telegramium {
              
     }
           
+    enum MessageEntity {
+      /* Offset in UTF-16 code units to the start of the entity */
+      offset : Int
+      /* Length of the entity in UTF-16 code units */
+      length : Int
+    
+      /* mention  */
+      MentionMessageEntity {
+        type : "mention:0"
+      }
+             
+      /* cashtag  */
+      CashtagMessageEntity {
+        type : "cashtag:1"
+      }
+             
+      /* code  */
+      CodeMessageEntity {
+        type : "code:2"
+      }
+             
+      /* bot_command  */
+      BotCommandMessageEntity {
+        type : "bot_command:3"
+      }
+             
+      /* email  */
+      EmailMessageEntity {
+        type : "email:4"
+      }
+             
+      /* bold  */
+      BoldMessageEntity {
+        type : "bold:5"
+      }
+             
+      /* pre  */
+      PreMessageEntity {
+        type : "pre:6"
+        /* the programming language of the entity text */
+        language : String
+      }
+             
+      /* italic  */
+      ItalicMessageEntity {
+        type : "italic:7"
+      }
+             
+      /* strikethrough  */
+      StrikethroughMessageEntity {
+        type : "strikethrough:8"
+      }
+             
+      /* underline  */
+      UnderlineMessageEntity {
+        type : "underline:9"
+      }
+             
+      /* hashtag  */
+      HashtagMessageEntity {
+        type : "hashtag:10"
+      }
+             
+      /* text_mention  */
+      TextMentionMessageEntity {
+        type : "text_mention:11"
+        /* the mentioned user */
+        user : User
+      }
+             
+      /* text_link  */
+      TextLinkMessageEntity {
+        type : "text_link:12"
+        /* url that will be opened after user taps on the text */
+        url  : String
+      }
+             
+      /* url  */
+      UrlMessageEntity {
+        type : "url:13"
+      }
+             
+      /* phone_number  */
+      PhoneNumberMessageEntity {
+        type : "phone_number:14"
+      }
+             
+    }
+          
     /* Contains information about why a request was unsuccessful.  */
     ResponseParameters {
       /* Optional. The group has been migrated to a supergroup with 
@@ -2406,33 +2495,6 @@ namespace telegramium {
       untilDate             : Option[Int]
     }
            
-    /* This object represents one special entity in a text message. For example, 
-      hashtags, usernames, URLs, etc.  */
-    MessageEntity {
-      /* Type of the entity. Can be “mention” (&#064;username), 
-      “hashtag” (#hashtag), “cashtag” ($USD), “bot_command” 
-      (/start&#064;jobs_bot), “url” (https://telegram.org), 
-      “email” (do-not-reply&#064;telegram.org), “phone_number” 
-      (+1-212-555-0123), “bold” (bold text), “italic” (italic 
-      text), “underline” (underlined text), “strikethrough” 
-      (strikethrough text), “code” (monowidth string), “pre” 
-      (monowidth block), “text_link” (for clickable text URLs), 
-      “text_mention” (for users without usernames) */
-      type     : String
-      /* Offset in UTF-16 code units to the start of the entity */
-      offset   : Int
-      /* Length of the entity in UTF-16 code units */
-      length   : Int
-      /* Optional. For “text_link” only, url that will be opened 
-      after user taps on the text */
-      url      : Option[String]
-      /* Optional. For “text_mention” only, the mentioned user */
-      user     : Option[User]
-      /* Optional. For “pre” only, the programming language of the 
-      entity text */
-      language : Option[String]
-    }
-           
     /* This object represents a video file.  */
     Video {
       /* Identifier for this file, which can be used to download or 
@@ -2485,7 +2547,7 @@ namespace telegramium {
         description : Option[String]
       }
 
-      Methods (methodsFabric) {
+      Methods (methodsFactory) {
               
         /* Use this method to get current webhook status. Requires no parameters. On 
           success, returns a WebhookInfo object. If the bot is using getUpdates, will 
