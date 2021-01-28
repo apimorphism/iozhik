@@ -1,27 +1,26 @@
 package iozhik.vk
 
-final case class Counters(
-                          /** количество фотоальбомов;*/
-                          albums: Integer,
-                          /** количество видеозаписей;*/
+/** @param albums количество фотоальбомов;
+  * @param videos количество видеозаписей;
+  * @param audios количество аудиозаписей;
+  * @param photos количество фотографий;
+  * @param notes количество заметок;
+  * @param friends количество друзей;
+  * @param groups количество сообществ;
+  * @param onlineFriends количество друзей онлайн;
+  * @param mutualFriends количество общих друзей;
+  * @param userVideos количество видеозаписей с пользователем;
+  * @param followers количество подписчиков;
+  * @param pages количество объектов в блоке «Интересные страницы». */
+final case class Counters(albums: Integer,
                           videos: Integer,
-                          /** количество аудиозаписей;*/
                           audios: Integer,
-                          /** количество фотографий;*/
                           photos: Integer,
-                          /** количество заметок;*/
                           notes: Integer,
-                          /** количество друзей;*/
                           friends: Integer,
-                          /** количество сообществ;*/
                           groups: Integer,
-                          /** количество друзей онлайн;*/
                           onlineFriends: Integer,
-                          /** количество общих друзей;*/
                           mutualFriends: Integer,
-                          /** количество видеозаписей с пользователем;*/
                           userVideos: Integer,
-                          /** количество подписчиков;*/
                           followers: Integer,
-                          /** количество объектов в блоке «Интересные страницы».*/
                           pages: Integer)

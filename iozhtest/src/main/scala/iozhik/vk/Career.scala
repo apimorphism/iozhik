@@ -1,19 +1,18 @@
 package iozhik.vk
 
-final case class Career(
-                        /** идентификатор сообщества (если доступно, иначе company);*/
-                        groupId: Int,
-                        /** название компании (если доступно, иначе group_id);*/
+/** @param groupId идентификатор сообщества (если доступно, иначе company);
+  * @param company название компании (если доступно, иначе group_id);
+  * @param countryId идентификатор страны;
+  * @param cityId идентификатор города (если доступно, иначе city_name);
+  * @param cityName название города (если доступно, иначе city_id);
+  * @param from год начала работы;
+  * @param until год окончания работы;
+  * @param position должность. */
+final case class Career(groupId: Int,
                         company: String,
-                        /** идентификатор страны;*/
                         countryId: Int,
-                        /** идентификатор города (если доступно, иначе city_name);*/
                         cityId: Int,
-                        /** название города (если доступно, иначе city_id);*/
                         cityName: String,
-                        /** год начала работы;*/
                         from: Int,
-                        /** год окончания работы;*/
                         until: Int,
-                        /** должность.*/
                         position: String)

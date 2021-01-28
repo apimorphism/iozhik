@@ -1,7 +1,5 @@
 package iozhik.vk
 
-final case class Link(
-                      /** текст ссылки;*/
-                      text: String,
-                      /** URL для перехода.*/
-                      url: String)
+/** @param text текст ссылки;
+  * @param url URL для перехода. */
+final case class Link(text: String, url: String)

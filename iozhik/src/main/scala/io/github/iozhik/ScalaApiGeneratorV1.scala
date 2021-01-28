@@ -50,7 +50,7 @@ class ScalaApiGeneratorV1 extends Generator {
       val d = delimiter
       val docsBody = if (withDoc) x.doc.split("\n").toList.map(_.trim).intercalate("\n* ") else ""
       val keyword = if (isDef) "def " else ""
-      val docs = if (docsBody.nonEmpty) { s"$d/** $docsBody*/$d" } else { "" }
+      val docs = if (docsBody.nonEmpty) { s"$d/** $docsBody */$d" } else { "" }
       defaults.find(x => kind.startsWith(x._1)).fold(
         docs + keyword + sanitize(x.name) + ": " + kind
       ){ case (_, default) => docs + keyword + sanitize(x.name) + ": " + kind + " = " + default }
@@ -509,20 +509,39 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
+  private def genStrucDocs(struc: Struc) = {
+    val docsBody = (if (struc.doc.nonEmpty) struc.doc.split("\n").toList.map(_.trim) else List.empty)
+      .intercalate(s"$delimiter* ")
+    val params = struc.fields.flatMap { field =>
+      if (field.doc.nonEmpty) Some((s"@param ${field.name}" + field.doc).split(delimiter).toList.map(_.trim))
+      else None
+    }
+      .flatten
+      .intercalate(s"$delimiter* ")
+    val docsText = (docsBody, params) match {
+      case ("", "") => ""
+      case (_, "") => docsBody
+      case ("", _) => params
+      case _ => s"$docsBody$delimiter$delimiter* $params"
+    }
+    if (docsText.nonEmpty) s"$delimiter/** $docsText */$delimiter" else ""
+  }
+
   def genStruc(x: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
+    val abstractOrEnum = x.isAbstract || x.isEnum
     val usingf = x.usings
       .flatMap{ y => symt.find(y.kind, x.kind) }
       .collect{ case s: Struc => s}
       .flatMap(_.fields)
     for {
       kind <- genKind(kindOrDefault)
-      fields <- x.fields.traverse(genField(_, isDef = x.isAbstract || x.isEnum))
+      fields <- x.fields.traverse(genField(_, withDoc = abstractOrEnum, isDef = abstractOrEnum))
       mixins <- x.mixins.traverse(genKind)
       leaves <- x.leaves.traverse(genStruc)
       wrapps <- x.wrapps.traverse(genWrapp(kindOrDefault, _))
       enumstrs <- x.enumstrs.traverse(genEnumStr(kindOrDefault, _))
-      usings <- usingf.traverse(genField(_, isDef = x.isAbstract || x.isEnum))
+      usings <- usingf.traverse(genField(_, isDef = abstractOrEnum))
       upickles <- if (space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
       jsonCodecs <- if (space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
       scodecs <- if (space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
@@ -557,9 +576,7 @@ class ScalaApiGeneratorV1 extends Generator {
         val body = s"trait $name$ms { $fs }"
         Code(body = body, name = filename, imports = imps) :: children
       } else {
-        val d = delimiter
-        val docsBody = x.doc.split("\n").toList.map(_.trim).intercalate("\n* ")
-        val docs = if (docsBody.nonEmpty) { s"$d/** $docsBody*/$d" } else { "" }
+        val docs = genStrucDocs(x)
         val body = if (fs.nonEmpty) {
           s"${docs}final case class $name($fs)$ms"
         } else {
@@ -610,7 +627,7 @@ class ScalaApiGeneratorV1 extends Generator {
     )
     val paramDocs = if (params.isEmpty) params else s"$d$d* $params"
     val docsBody = x.doc.split(d).toList.map(_.trim).intercalate(s"$d* ")
-    if (docsBody.nonEmpty) s"$d/** $docsBody$paramDocs*/$d" else ""
+    if (docsBody.nonEmpty) s"$d/** $docsBody$paramDocs */$d" else ""
   }
 
   def genDefun(x: Defun)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {

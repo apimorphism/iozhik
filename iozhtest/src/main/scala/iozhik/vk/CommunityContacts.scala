@@ -1,10 +1,6 @@
 package iozhik.vk
 
-final case class CommunityContacts(
-                                   /** идентификатор пользователя*/
-                                   userId: Int,
-                                   /** должность*/
-                                   desc: String,
-                                   /** номер телефона*/
-                                   phone: String,
-                                   email: String)
+/** @param userId идентификатор пользователя
+  * @param desc должность
+  * @param phone номер телефона */
+final case class CommunityContacts(userId: Int, desc: String, phone: String, email: String)

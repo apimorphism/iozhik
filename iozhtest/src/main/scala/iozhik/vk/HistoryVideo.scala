@@ -1,5 +1,7 @@
 package iozhik.vk
 
+/** @param firstFrame800 (для type = video). Видео из истории. Поля объекта описаны на отдельной странице. Содержит дополнительные поля
+  * @param isPrivate информация о том, приватная ли история */
 final case class HistoryVideo(id: Int,
                               ownerId: Int,
                               title: String,
@@ -29,10 +31,8 @@ final case class HistoryVideo(id: Int,
                               live: Option[Int] = Option.empty,
                               upcoming: Option[Int] = Option.empty,
                               isFavorite: Boolean,
-                              /** (для type = video). Видео из истории. Поля объекта описаны на отдельной странице. Содержит дополнительные поля*/
                               firstFrame800: String,
                               firstFrame320: String,
                               firstFrame160: String,
                               firstFrame130: String,
-                              /** информация о том, приватная ли история*/
                               isPrivate: Boolean)

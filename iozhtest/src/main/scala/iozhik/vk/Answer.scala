@@ -1,11 +1,7 @@
 package iozhik.vk
 
-final case class Answer(
-                        /** идентификатор ответа;*/
-                        id: Integer,
-                        /** текст ответа;*/
-                        text: String,
-                        /** число проголосовавших за этот ответ;*/
-                        votes: Integer,
-                        /** рейтинг ответа.*/
-                        rate: Int)
+/** @param id идентификатор ответа;
+  * @param text текст ответа;
+  * @param votes число проголосовавших за этот ответ;
+  * @param rate рейтинг ответа. */
+final case class Answer(id: Integer, text: String, votes: Integer, rate: Int)

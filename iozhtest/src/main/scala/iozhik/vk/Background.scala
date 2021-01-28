@@ -1,18 +1,17 @@
 package iozhik.vk
 
-final case class Background(
-                            /** идентификатор фона.*/
-                            id: Integer,
-                            /** тип фона. Возможные значения: gradient, tile.*/
+/** @param id идентификатор фона.
+  * @param type тип фона. Возможные значения: gradient, tile.
+  * @param angle (для type = gradient) угол градиента по оси X.
+  * @param color HEX-код замещающего цвета (без #).
+  * @param width (для type = tile) ширина плитки паттерна.
+  * @param height (для type = tile) высота плитки паттерна.
+  * @param images для type = tile) изображение плитки паттерна. Массив объектов изображений. */
+final case class Background(id: Integer,
                             `type`: String,
-                            /** (для type = gradient) угол градиента по оси X.*/
                             angle: Integer,
-                            /** HEX-код замещающего цвета (без #).*/
                             color: String,
-                            /** (для type = tile) ширина плитки паттерна.*/
                             width: Integer,
-                            /** (для type = tile) высота плитки паттерна.*/
                             height: Integer,
-                            /** для type = tile) изображение плитки паттерна. Массив объектов изображений.*/
                             images: Vector[Photo],
                             points: Vector[Point])

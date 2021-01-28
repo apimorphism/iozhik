@@ -1,19 +1,18 @@
 package iozhik.vk
 
-final case class Reach(
-                       /** полный охват;*/
-                       reach: Integer,
-                       /** охват подписчиков;*/
+/** @param reach полный охват;
+  * @param reachSubscribers охват подписчиков;
+  * @param mobileReach охват с мобильных устройств;
+  * @param sex статистика по полу.
+  * @param age статистика по возрасту
+  * @param sexAge статистика по полу и возрасту.
+  * @param cities статистика по городам.
+  * @param countries статистика по странам. */
+final case class Reach(reach: Integer,
                        reachSubscribers: Int,
-                       /** охват с мобильных устройств;*/
                        mobileReach: Int,
-                       /** статистика по полу.*/
                        sex: Vector[SexStat],
-                       /** статистика по возрасту*/
                        age: Vector[AgeStat],
-                       /** статистика по полу и возрасту.*/
                        sexAge: Vector[SexAgeStat],
-                       /** статистика по городам.*/
                        cities: Vector[CitiesStat],
-                       /** статистика по странам.*/
                        countries: Vector[CountriesStat])

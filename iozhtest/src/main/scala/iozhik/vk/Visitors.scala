@@ -1,7 +1,5 @@
 package iozhik.vk
 
-final case class Visitors(
-                          /** Число просмотров*/
-                          views: Int,
-                          /** Чисто посетителей*/
-                          visitors: Int)
+/** @param views Число просмотров
+  * @param visitors Чисто посетителей */
+final case class Visitors(views: Int, visitors: Int)

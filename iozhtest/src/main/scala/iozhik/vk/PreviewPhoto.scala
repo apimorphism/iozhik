@@ -1,5 +1,4 @@
 package iozhik.vk
 
-final case class PreviewPhoto(
-    /** массив копий изображения в разных размерах.*/
-    sizes: Vector[SizedPhoto])
+/** @param sizes массив копий изображения в разных размерах. */
+final case class PreviewPhoto(sizes: Vector[SizedPhoto])

@@ -1,7 +1,5 @@
 package iozhik.vk
 
-final case class Point(
-                       /** Положение точки*/
-                       position: Integer,
-                       /** HEX-код цвета точки*/
-                       color: String)
+/** @param position Положение точки
+  * @param color HEX-код цвета точки */
+final case class Point(position: Integer, color: String)

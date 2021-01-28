@@ -1,15 +1,14 @@
 package iozhik.vk
 
-final case class CommunityLink(
-                               /** идентификатор ссылки;*/
-                               id: Integer,
-                               /** URL;*/
+/** @param id идентификатор ссылки;
+  * @param url URL;
+  * @param name название ссылки;
+  * @param desc описание ссылки;
+  * @param photo50 URL изображения-превью шириной 50px;
+  * @param photo100 URL изображения-превью шириной 100px. */
+final case class CommunityLink(id: Integer,
                                url: String,
-                               /** название ссылки;*/
                                name: String,
-                               /** описание ссылки;*/
                                desc: String,
-                               /** URL изображения-превью шириной 50px;*/
                                photo50: String,
-                               /** URL изображения-превью шириной 100px.*/
                                photo100: String)

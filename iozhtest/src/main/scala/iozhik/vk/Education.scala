@@ -1,13 +1,12 @@
 package iozhik.vk
 
-final case class Education(
-                           /** идентификатор университета;*/
-                           university: Integer,
-                           /** название университета;*/
+/** @param university идентификатор университета;
+  * @param universityName название университета;
+  * @param faculty идентификатор факультета;
+  * @param facultyName название факультета;
+  * @param graduation год окончания. */
+final case class Education(university: Integer,
                            universityName: String,
-                           /** идентификатор факультета;*/
                            faculty: Integer,
-                           /** название факультета;*/
                            facultyName: String,
-                           /** год окончания.*/
                            graduation: Integer)

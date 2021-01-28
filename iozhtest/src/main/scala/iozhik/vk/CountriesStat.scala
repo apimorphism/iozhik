@@ -1,11 +1,7 @@
 package iozhik.vk
 
-final case class CountriesStat(
-                               /** название страны;*/
-                               name: String,
-                               /** двухбуквенный код страны (например, "RU");*/
-                               code: String,
-                               /** идентификатор страны;*/
-                               countryId: Int,
-                               /** число посетителей.*/
-                               count: Int)
+/** @param name название страны;
+  * @param code двухбуквенный код страны (например, "RU");
+  * @param countryId идентификатор страны;
+  * @param count число посетителей. */
+final case class CountriesStat(name: String, code: String, countryId: Int, count: Int)

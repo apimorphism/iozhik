@@ -1,11 +1,7 @@
 package iozhik.vk
 
-final case class PeriodFrom(
-                            /** период начала отсчёта в формате YYYY-MM-DD.*/
-                            periodFrom: String,
-                            /** период окончания отсчёта в формате YYYY-MM-DD.*/
-                            periodTo: String,
-                            /** данные о посетителях и просмотрах*/
-                            visitors: Visitors,
-                            /** данные об охвате*/
-                            reach: Reach)
+/** @param periodFrom период начала отсчёта в формате YYYY-MM-DD.
+  * @param periodTo период окончания отсчёта в формате YYYY-MM-DD.
+  * @param visitors данные о посетителях и просмотрах
+  * @param reach данные об охвате */
+final case class PeriodFrom(periodFrom: String, periodTo: String, visitors: Visitors, reach: Reach)

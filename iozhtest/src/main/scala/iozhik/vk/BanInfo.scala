@@ -1,7 +1,5 @@
 package iozhik.vk
 
-final case class BanInfo(
-                         /** срок окончания блокировки в формате unixtime;*/
-                         endDate: Integer,
-                         /** комментарий к блокировке.*/
-                         comment: String)
+/** @param endDate срок окончания блокировки в формате unixtime;
+  * @param comment комментарий к блокировке. */
+final case class BanInfo(endDate: Integer, comment: String)

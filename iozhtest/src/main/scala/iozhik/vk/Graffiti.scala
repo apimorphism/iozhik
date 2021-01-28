@@ -1,9 +1,6 @@
 package iozhik.vk
 
-final case class Graffiti(
-                          /** URL документа с граффити;*/
-                          src: String,
-                          /** ширина изображения в px;*/
-                          width: Integer,
-                          /** высота изображения в px.*/
-                          height: Integer)
+/** @param src URL документа с граффити;
+  * @param width ширина изображения в px;
+  * @param height высота изображения в px. */
+final case class Graffiti(src: String, width: Integer, height: Integer)

@@ -1,9 +1,6 @@
 package iozhik.vk
 
-final case class Preview(
-                         /** изображения для предпросмотра*/
-                         photo: PreviewPhoto,
-                         /** данные о граффити*/
-                         graffiti: Graffiti,
-                         /** данные об аудиосообщении*/
-                         audioMessage: AudioMessage)
+/** @param photo изображения для предпросмотра
+  * @param graffiti данные о граффити
+  * @param audioMessage данные об аудиосообщении */
+final case class Preview(photo: PreviewPhoto, graffiti: Graffiti, audioMessage: AudioMessage)
