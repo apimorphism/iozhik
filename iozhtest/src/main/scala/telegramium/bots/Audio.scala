@@ -2,7 +2,7 @@ package telegramium.bots
 
 /** This object represents an audio file to be treated as music by the Telegram
   * clients.
-
+  *
   * @param fileId Identifier for this file, which can be used to download or
   * reuse the file
   * @param fileUniqueId Unique identifier for this file, which is supposed to be

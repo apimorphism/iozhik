@@ -2,7 +2,7 @@ package telegramium.bots
 
 /** This object describes the position on faces where a mask should be placed by
   * default.
-
+  *
   * @param point The part of the face relative to which the mask should be
   * placed. One of “forehead”, “eyes”, “mouth”, or “chin”.
   * @param xShift Shift by X-axis measured in widths of the mask scaled to

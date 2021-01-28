@@ -2,7 +2,7 @@ package telegramium.bots
 
 /** This object represents an animation file (GIF or H.264/MPEG-4 AVC video without
   * sound).
-
+  *
   * @param fileId Identifier for this file, which can be used to download or
   * reuse the file
   * @param fileUniqueId Unique identifier for this file, which is supposed to be

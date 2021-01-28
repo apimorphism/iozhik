@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object represents information about an order.
-
+  *
   * @param name Optional. User name
   * @param phoneNumber Optional. User's phone number
   * @param email Optional. User email

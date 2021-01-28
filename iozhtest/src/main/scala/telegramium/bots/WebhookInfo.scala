@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** Contains information about the current status of a webhook.
-
+  *
   * @param url Webhook URL, may be empty if webhook is not set up
   * @param hasCustomCertificate True, if a custom certificate was provided for webhook
   * certificate checks

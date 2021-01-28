@@ -2,7 +2,7 @@ package telegramium.bots
 
 /** Contains information about documents or other Telegram Passport elements shared
   * with the bot by the user.
-
+  *
   * @param type Element type. One of “personal_details”, “passport”,
   * “driver_license”, “identity_card”, “internal_passport”,
   * “address”, “utility_bill”, “bank_statement”,

@@ -6,7 +6,7 @@ sealed trait InlineQueryResult {}
   * will be sent by the user with optional caption. Alternatively, you can use
   * input_message_content to send a message with the specified content instead of
   * the animation.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param gifUrl A valid URL for the GIF file. File size must not exceed 1MB
   * @param gifWidth Optional. Width of the GIF
@@ -46,7 +46,7 @@ final case class InlineQueryResultGif(id: String,
 /** Represents a venue. By default, the venue will be sent by the user.
   * Alternatively, you can use input_message_content to send a message with the
   * specified content instead of the venue.
-
+  *
   * @param id Unique identifier for this result, 1-64 Bytes
   * @param latitude Latitude of the venue location in degrees
   * @param longitude Longitude of the venue location in degrees
@@ -85,7 +85,7 @@ final case class InlineQueryResultVenue(id: String,
 /** Represents a contact with a phone number. By default, this contact will be sent
   * by the user. Alternatively, you can use input_message_content to send a message
   * with the specified content instead of the contact.
-
+  *
   * @param id Unique identifier for this result, 1-64 Bytes
   * @param phoneNumber Contact's phone number
   * @param firstName Contact's first name
@@ -114,7 +114,7 @@ final case class InlineQueryResultContact(id: String,
 /** Represents a link to a photo. By default, this photo will be sent by the user
   * with optional caption. Alternatively, you can use input_message_content to send
   * a message with the specified content instead of the photo.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param photoUrl A valid URL of the photo. Photo must be in jpeg format.
   * Photo size must not exceed 5MB
@@ -151,7 +151,7 @@ final case class InlineQueryResultPhoto(id: String,
   * with an optional caption. Alternatively, you can use input_message_content to
   * send a message with the specified content instead of the file. Currently, only
   * .PDF and .ZIP files can be sent using this method.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param title Title for the result
   * @param caption Optional. Caption of the document to be sent, 0-1024
@@ -190,7 +190,7 @@ final case class InlineQueryResultDocument(id: String,
   * default, this voice message will be sent by the user. Alternatively, you can use
   * input_message_content to send a message with the specified content instead of
   * the voice message.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param voiceFileId A valid file identifier for the voice message
   * @param title Voice message title
@@ -214,7 +214,7 @@ final case class InlineQueryResultCachedVoice(
     extends InlineQueryResult
 
 /** Represents a link to an article or web page.
-
+  *
   * @param id Unique identifier for this result, 1-64 Bytes
   * @param title Title of the result
   * @param inputMessageContent Content of the message to be sent
@@ -241,7 +241,7 @@ final case class InlineQueryResultArticle(id: String,
 /** Represents a link to an MP3 audio file. By default, this audio file will be
   * sent by the user. Alternatively, you can use input_message_content to send a
   * message with the specified content instead of the audio.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param audioUrl A valid URL for the audio file
   * @param title Title
@@ -272,7 +272,7 @@ final case class InlineQueryResultAudio(id: String,
   * By default, this animated MPEG-4 file will be sent by the user with optional
   * caption. Alternatively, you can use input_message_content to send a message with
   * the specified content instead of the animation.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param mpeg4Url A valid URL for the MP4 file. File size must not exceed 1MB
   * @param mpeg4Width Optional. Video width
@@ -314,7 +314,7 @@ final case class InlineQueryResultMpeg4Gif(id: String,
   * sent by the user with an optional caption. Alternatively, you can use
   * input_message_content to send a message with the specified content instead of
   * the animation.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param mpeg4FileId A valid file identifier for the MP4 file
   * @param title Optional. Title for the result
@@ -342,7 +342,7 @@ final case class InlineQueryResultCachedMpeg4Gif(
   * file will be sent by the user with an optional caption. Alternatively, you can
   * use input_message_content to send a message with the specified content instead
   * of the file.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param title Title for the result
   * @param documentFileId A valid file identifier for the file
@@ -372,7 +372,7 @@ final case class InlineQueryResultCachedDocument(
   * this video file will be sent by the user with an optional caption.
   * Alternatively, you can use input_message_content to send a message with the
   * specified content instead of the video.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param videoFileId A valid file identifier for the video file
   * @param title Title for the result
@@ -399,7 +399,7 @@ final case class InlineQueryResultCachedVideo(
     extends InlineQueryResult
 
 /** Represents a Game.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param gameShortName Short name of the game
   * @param replyMarkup Optional. Inline keyboard attached to the message */
@@ -412,7 +412,7 @@ final case class InlineQueryResultGame(id: String,
   * photo will be sent by the user with an optional caption. Alternatively, you can
   * use input_message_content to send a message with the specified content instead
   * of the photo.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param photoFileId A valid file identifier of the photo
   * @param title Optional. Title for the result
@@ -442,7 +442,7 @@ final case class InlineQueryResultCachedPhoto(
   * sticker will be sent by the user. Alternatively, you can use
   * input_message_content to send a message with the specified content instead of
   * the sticker.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param stickerFileId A valid file identifier of the sticker
   * @param replyMarkup Optional. Inline keyboard attached to the message
@@ -459,7 +459,7 @@ final case class InlineQueryResultCachedSticker(
   * file. By default, this video file will be sent by the user with an optional
   * caption. Alternatively, you can use input_message_content to send a message with
   * the specified content instead of the video.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param videoUrl A valid URL for the embedded video player or video file
   * @param mimeType Mime type of the content of video url, “text/html” or
@@ -502,7 +502,7 @@ final case class InlineQueryResultVideo(id: String,
   * default, this audio file will be sent by the user. Alternatively, you can use
   * input_message_content to send a message with the specified content instead of
   * the audio.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param audioFileId A valid file identifier for the audio file
   * @param caption Optional. Caption, 0-1024 characters after entities parsing
@@ -526,7 +526,7 @@ final case class InlineQueryResultCachedAudio(
 /** Represents a location on a map. By default, the location will be sent by the
   * user. Alternatively, you can use input_message_content to send a message with
   * the specified content instead of the location.
-
+  *
   * @param id Unique identifier for this result, 1-64 Bytes
   * @param latitude Location latitude in degrees
   * @param longitude Location longitude in degrees
@@ -567,7 +567,7 @@ final case class InlineQueryResultLocation(id: String,
   * default, this animated GIF file will be sent by the user with an optional
   * caption. Alternatively, you can use input_message_content to send a message with
   * specified content instead of the animation.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param gifFileId A valid file identifier for the GIF file
   * @param title Optional. Title for the result
@@ -595,7 +595,7 @@ final case class InlineQueryResultCachedGif(
   * By default, this voice recording will be sent by the user. Alternatively, you
   * can use input_message_content to send a message with the specified content
   * instead of the the voice message.
-
+  *
   * @param id Unique identifier for this result, 1-64 bytes
   * @param voiceUrl A valid URL for the voice recording
   * @param title Recording title

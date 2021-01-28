@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object contains information about a poll.
-
+  *
   * @param id Unique poll identifier
   * @param question Poll question, 1-300 characters
   * @param options List of poll options

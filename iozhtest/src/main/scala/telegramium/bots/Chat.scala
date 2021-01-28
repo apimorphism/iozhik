@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object represents a chat.
-
+  *
   * @param id Unique identifier for this chat. This number may be greater
   * than 32 bits and some programming languages may have
   * difficulty/silent defects in interpreting it. But it is

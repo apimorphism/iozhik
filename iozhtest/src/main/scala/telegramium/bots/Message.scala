@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object represents a message.
-
+  *
   * @param messageId Unique message identifier inside this chat
   * @param from Optional. Sender, empty for messages sent to channels
   * @param senderChat Optional. Sender of the message, sent on behalf of a chat.

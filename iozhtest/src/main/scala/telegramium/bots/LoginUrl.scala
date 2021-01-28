@@ -4,7 +4,7 @@ package telegramium.bots
   * automatically authorize a user. Serves as a great replacement for the Telegram
   * Login Widget when the user is coming from Telegram. All the user needs to do is
   * tap/click a button and confirm that they want to log in:
-
+  *
   * @param url An HTTP URL to be opened with user authorization data added
   * to the query string when the button is pressed. If the user
   * refuses to provide authorization data, the original URL

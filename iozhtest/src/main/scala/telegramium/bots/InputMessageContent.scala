@@ -4,7 +4,7 @@ sealed trait InputMessageContent {}
 
 /** Represents the content of a venue message to be sent as the result of an inline
   * query.
-
+  *
   * @param latitude Latitude of the venue in degrees
   * @param longitude Longitude of the venue in degrees
   * @param title Name of the venue
@@ -28,7 +28,7 @@ final case class InputVenueMessageContent(latitude: Float,
 
 /** Represents the content of a contact message to be sent as the result of an
   * inline query.
-
+  *
   * @param phoneNumber Contact's phone number
   * @param firstName Contact's first name
   * @param lastName Optional. Contact's last name
@@ -42,7 +42,7 @@ final case class InputContactMessageContent(phoneNumber: String,
 
 /** Represents the content of a location message to be sent as the result of an
   * inline query.
-
+  *
   * @param latitude Latitude of the location in degrees
   * @param longitude Longitude of the location in degrees
   * @param horizontalAccuracy Optional. The radius of uncertainty for the location,
@@ -65,7 +65,7 @@ final case class InputLocationMessageContent(latitude: Float,
 
 /** Represents the content of a text message to be sent as the result of an inline
   * query.
-
+  *
   * @param messageText Text of the message to be sent, 1-4096 characters
   * @param parseMode Optional. Mode for parsing entities in the message text.
   * See formatting options for more details.

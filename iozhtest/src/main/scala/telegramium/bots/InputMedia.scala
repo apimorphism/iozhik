@@ -4,7 +4,7 @@ sealed trait InputMedia {}
 
 /** Represents an animation file (GIF or H.264/MPEG-4 AVC video without sound) to
   * be sent.
-
+  *
   * @param media File to send. Pass a file_id to send a file that exists on
   * the Telegram servers (recommended), pass an HTTP URL for
   * Telegram to get a file from the Internet, or pass
@@ -39,7 +39,7 @@ final case class InputMediaAnimation(media: String,
     extends InputMedia
 
 /** Represents a photo to be sent.
-
+  *
   * @param media File to send. Pass a file_id to send a file that exists on
   * the Telegram servers (recommended), pass an HTTP URL for
   * Telegram to get a file from the Internet, or pass
@@ -58,7 +58,7 @@ final case class InputMediaPhoto(media: String,
     extends InputMedia
 
 /** Represents a video to be sent.
-
+  *
   * @param media File to send. Pass a file_id to send a file that exists on
   * the Telegram servers (recommended), pass an HTTP URL for
   * Telegram to get a file from the Internet, or pass
@@ -96,7 +96,7 @@ final case class InputMediaVideo(media: String,
     extends InputMedia
 
 /** Represents a general file to be sent.
-
+  *
   * @param media File to send. Pass a file_id to send a file that exists on
   * the Telegram servers (recommended), pass an HTTP URL for
   * Telegram to get a file from the Internet, or pass
@@ -129,7 +129,7 @@ final case class InputMediaDocument(media: String,
     extends InputMedia
 
 /** Represents an audio file to be treated as music to be sent.
-
+  *
   * @param media File to send. Pass a file_id to send a file that exists on
   * the Telegram servers (recommended), pass an HTTP URL for
   * Telegram to get a file from the Internet, or pass

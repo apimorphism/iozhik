@@ -2,7 +2,7 @@ package telegramium.bots
 
 /** This object represents an incoming inline query. When the user sends an empty
   * query, your bot could return some default or trending results.
-
+  *
   * @param id Unique identifier for this query
   * @param from Sender
   * @param location Optional. Sender location, only for bots that request user

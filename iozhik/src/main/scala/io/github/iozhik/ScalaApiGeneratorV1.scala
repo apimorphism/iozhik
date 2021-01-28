@@ -522,7 +522,7 @@ class ScalaApiGeneratorV1 extends Generator {
       case ("", "") => ""
       case (_, "") => docsBody
       case ("", _) => params
-      case _ => s"$docsBody$delimiter$delimiter* $params"
+      case _ => s"$docsBody$delimiter*$delimiter* $params"
     }
     if (docsText.nonEmpty) s"$delimiter/** $docsText */$delimiter" else ""
   }
@@ -625,7 +625,7 @@ class ScalaApiGeneratorV1 extends Generator {
       }
         .intercalate(s"$d* ")
     )
-    val paramDocs = if (params.isEmpty) params else s"$d$d* $params"
+    val paramDocs = if (params.isEmpty) params else s"$d*$d* $params"
     val docsBody = x.doc.split(d).toList.map(_.trim).intercalate(s"$d* ")
     if (docsBody.nonEmpty) s"$d/** $docsBody$paramDocs */$d" else ""
   }

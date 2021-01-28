@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object contains information about an incoming shipping query.
-
+  *
   * @param id Unique query identifier
   * @param from User who sent the query
   * @param invoicePayload Bot specified invoice payload

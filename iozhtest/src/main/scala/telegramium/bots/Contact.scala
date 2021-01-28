@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object represents a phone contact.
-
+  *
   * @param phoneNumber Contact's phone number
   * @param firstName Contact's first name
   * @param lastName Optional. Contact's last name

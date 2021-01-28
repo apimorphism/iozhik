@@ -4,7 +4,7 @@ package telegramium.bots
   * downloaded via the link https://api.telegram.org/file/bot<token>/<file_path>. It
   * is guaranteed that the link will be valid for at least 1 hour. When the link
   * expires, a new one can be requested by calling getFile.
-
+  *
   * @param fileId Identifier for this file, which can be used to download or
   * reuse the file
   * @param fileUniqueId Unique identifier for this file, which is supposed to be

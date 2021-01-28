@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** Describes actions that a non-administrator user is allowed to take in a chat.
-
+  *
   * @param canSendMessages Optional. True, if the user is allowed to send text
   * messages, contacts, locations and venues
   * @param canSendMediaMessages Optional. True, if the user is allowed to send audios,

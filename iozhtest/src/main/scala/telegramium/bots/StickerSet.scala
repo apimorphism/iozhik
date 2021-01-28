@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object represents a sticker set.
-
+  *
   * @param name Sticker set name
   * @param title Sticker set title
   * @param isAnimated True, if the sticker set contains animated stickers

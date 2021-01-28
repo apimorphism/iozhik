@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object contains basic information about a successful payment.
-
+  *
   * @param currency Three-letter ISO 4217 currency code
   * @param totalAmount Total price in the smallest units of the currency (integer,
   * not float/double). For example, for a price of US$ 1.45 pass

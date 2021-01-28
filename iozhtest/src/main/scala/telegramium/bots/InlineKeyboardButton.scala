@@ -2,7 +2,7 @@ package telegramium.bots
 
 /** This object represents one button of an inline keyboard. You must use exactly
   * one of the optional fields.
-
+  *
   * @param text Label text on the button
   * @param url Optional. HTTP or tg:// url to be opened when button is
   * pressed

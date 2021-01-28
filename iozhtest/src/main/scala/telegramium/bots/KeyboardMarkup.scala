@@ -4,7 +4,7 @@ sealed trait KeyboardMarkup {}
 
 /** This object represents an inline keyboard that appears right next to the
   * message it belongs to.
-
+  *
   * @param inlineKeyboard Array of button rows, each represented by an Array of
   * InlineKeyboardButton objects */
 final case class InlineKeyboardMarkup(inlineKeyboard: List[List[InlineKeyboardButton]] = List.empty)
@@ -14,7 +14,7 @@ final case class InlineKeyboardMarkup(inlineKeyboard: List[List[InlineKeyboardBu
   * reply interface to the user (act as if the user has selected the bot's message
   * and tapped 'Reply'). This can be extremely useful if you want to create
   * user-friendly step-by-step interfaces without having to sacrifice privacy mode.
-
+  *
   * @param forceReply Shows reply interface to the user, as if they manually
   * selected the bot's message and tapped 'Reply'
   * @param selective Optional. Use this parameter if you want to force reply
@@ -30,7 +30,7 @@ final case class ForceReply(forceReply: Boolean, selective: Option[Boolean] = Op
   * custom keyboards are displayed until a new keyboard is sent by a bot. An
   * exception is made for one-time keyboards that are hidden immediately after the
   * user presses a button (see ReplyKeyboardMarkup).
-
+  *
   * @param removeKeyboard Requests clients to remove the custom keyboard (user will
   * not be able to summon this keyboard; if you want to hide the
   * keyboard from sight but keep it accessible, use
@@ -49,7 +49,7 @@ final case class ReplyKeyboardRemove(removeKeyboard: Boolean,
 
 /** This object represents a custom keyboard with reply options (see Introduction
   * to bots for details and examples).
-
+  *
   * @param keyboard Array of button rows, each represented by an Array of
   * KeyboardButton objects
   * @param resizeKeyboard Optional. Requests clients to resize the keyboard

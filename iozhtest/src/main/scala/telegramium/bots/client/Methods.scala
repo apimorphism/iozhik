@@ -38,7 +38,7 @@ trait Methods {
 
   /** Use this method to change the list of the bot's commands. Returns True on
     * success.
-
+    *
     * @param commands A JSON-serialized list of bot commands to be set as the
     * list of the bot's commands. At most 100 commands can be
     * specified. */
@@ -50,7 +50,7 @@ trait Methods {
   /** Use this method to set a new profile photo for the chat. Photos can't be
     * changed for private chats. The bot must be an administrator in the chat for this
     * to work and must have the appropriate admin rights. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param photo New chat photo, uploaded using multipart/form-data */
@@ -64,7 +64,7 @@ trait Methods {
   /** Use this method to get data for high score tables. Will return the score of the
     * specified user and several of their neighbors in a game. On success, returns an
     * Array of GameHighScore objects.
-
+    *
     * @param userId Target user id
     * @param chatId Required if inline_message_id is not specified. Unique
     * identifier for the target chat
@@ -85,7 +85,7 @@ trait Methods {
     * not a private chat, the bot must be an administrator in the chat for this to
     * work and must have the 'can_pin_messages' admin right in a supergroup or
     * 'can_edit_messages' admin right in a channel. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername) */
   def unpinAllChatMessages(chatId: ChatId): Method[Boolean] = {
@@ -96,7 +96,7 @@ trait Methods {
   /** Use this method to send answers to callback queries sent from inline keyboards.
     * The answer will be displayed to the user as a notification at the top of the
     * chat screen or as an alert. On success, True is returned.
-
+    *
     * @param callbackQueryId Unique identifier for the query to be answered
     * @param text Text of the notification. If not specified, nothing will be
     * shown to the user, 0-200 characters
@@ -125,7 +125,7 @@ trait Methods {
 
   /** Use this method to send text messages. On success, the sent Message is
     * returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param text Text of the message to be sent, 1-4096 characters after
@@ -166,7 +166,7 @@ trait Methods {
 
   /** Use this method to get a list of profile pictures for a user. Returns a
     * UserProfilePhotos object.
-
+    *
     * @param userId Unique identifier of the target user
     * @param offset Sequential number of the first photo to be returned. By
     * default, all photos are returned.
@@ -181,7 +181,7 @@ trait Methods {
 
   /** Use this method to send a native poll. On success, the sent Message is
     * returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param question Poll question, 1-300 characters
@@ -257,7 +257,7 @@ trait Methods {
 
   /** Use this method to send phone contacts. On success, the sent Message is
     * returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param phoneNumber Contact's phone number
@@ -297,7 +297,7 @@ trait Methods {
   /** Use this method to create a new sticker set owned by a user. The bot will be
     * able to edit the sticker set thus created. You must use exactly one of the
     * fields png_sticker or tgs_sticker. Returns True on success.
-
+    *
     * @param userId User identifier of created sticker set owner
     * @param name Short name of sticker set, to be used in t.me/addstickers/
     * URLs (e.g., animals). Can contain only english letters,
@@ -346,7 +346,7 @@ trait Methods {
   /** Use this method to upload a .PNG file with a sticker for later use in
     * createNewStickerSet and addStickerToSet methods (can be used multiple times).
     * Returns the uploaded File on success.
-
+    *
     * @param userId User identifier of sticker file owner
     * @param pngSticker PNG image with the sticker, must be up to 512 kilobytes in
     * size, dimensions must not exceed 512px, and either width or
@@ -362,7 +362,7 @@ trait Methods {
   /** Use this method to set default chat permissions for all members. The bot must
     * be an administrator in the group or a supergroup for this to work and must have
     * the can_restrict_members admin rights. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup (in the format &#064;supergroupusername)
     * @param permissions New default chat permissions */
@@ -373,7 +373,7 @@ trait Methods {
 
   /** Use this method to send point on the map. On success, the sent Message is
     * returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param latitude Latitude of the location
@@ -426,7 +426,7 @@ trait Methods {
     * be an administrator in the chat for this to work and must have the appropriate
     * admin rights. Use the field can_set_sticker_set optionally returned in getChat
     * requests to check if the bot can use this method. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup (in the format &#064;supergroupusername) */
   def deleteChatStickerSet(chatId: ChatId): Method[Boolean] = {
@@ -437,7 +437,7 @@ trait Methods {
   /** Use this method to stop updating a live location message before live_period
     * expires. On success, if the message was sent by the bot, the sent Message is
     * returned, otherwise True is returned.
-
+    *
     * @param chatId Required if inline_message_id is not specified. Unique
     * identifier for the target chat or username of the target
     * channel (in the format &#064;channelusername)
@@ -459,7 +459,7 @@ trait Methods {
     * generated link is revoked. The bot must be an administrator in the chat for this
     * to work and must have the appropriate admin rights. Returns the new invite link
     * as String on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername) */
   def exportChatInviteLink(chatId: ChatId): Method[String] = {
@@ -469,7 +469,7 @@ trait Methods {
 
   /** Use this method to send an animated emoji that will display a random value. On
     * success, the sent Message is returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param emoji Emoji on which the dice throw animation is based.
@@ -515,7 +515,7 @@ trait Methods {
     * added to animated sticker sets and only to them. Animated sticker sets can have
     * up to 50 stickers. Static sticker sets can have up to 120 stickers. Returns True
     * on success.
-
+    *
     * @param userId User identifier of sticker set owner
     * @param name Sticker set name
     * @param pngSticker PNG image with the sticker, must be up to 512 kilobytes in
@@ -547,7 +547,7 @@ trait Methods {
 
   /** Use this method to delete a sticker from a set created by the bot. Returns True
     * on success.
-
+    *
     * @param sticker File identifier of the sticker */
   def deleteStickerFromSet(sticker: String): Method[Boolean] = {
     val req = DeleteStickerFromSetReq(sticker)
@@ -556,7 +556,7 @@ trait Methods {
 
   /** Use this method to stop a poll which was sent by the bot. On success, the
     * stopped Poll with the final results is returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param messageId Identifier of the original message with the poll
@@ -573,7 +573,7 @@ trait Methods {
     * for this to work and must have the 'can_pin_messages' admin right in a
     * supergroup or 'can_edit_messages' admin right in a channel. Returns True on
     * success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param messageId Identifier of a message to unpin. If not specified, the
@@ -587,7 +587,7 @@ trait Methods {
   /** Use this method to send a group of photos, videos, documents or audios as an
     * album. Documents and audio files can be only grouped in an album with messages
     * of the same type. On success, an array of Messages that were sent is returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param media A JSON-serialized array describing messages to be sent,
@@ -612,7 +612,7 @@ trait Methods {
   }
 
   /** Use this method to send a game. On success, the sent Message is returned.
-
+    *
     * @param chatId Unique identifier for the target chat
     * @param gameShortName Short name of the game, serves as the unique identifier for
     * the game. Set up your games via Botfather.
@@ -641,7 +641,7 @@ trait Methods {
 
   /** Use this method to send information about a venue. On success, the sent Message
     * is returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param latitude Latitude of the venue
@@ -700,7 +700,7 @@ trait Methods {
     * the chat, but will be able to join it. So if the user is a member of the chat
     * they will also be removed from the chat. If you don't want this, use the
     * parameter only_if_banned. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target group or username of the
     * target supergroup or channel (in the format &#064;username)
     * @param userId Unique identifier of the target user
@@ -715,7 +715,7 @@ trait Methods {
   /** Use this method to change the description of a group, a supergroup or a
     * channel. The bot must be an administrator in the chat for this to work and must
     * have the appropriate admin rights. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param description New chat description, 0-255 characters */
@@ -728,7 +728,7 @@ trait Methods {
   /** Use this method to edit text and game messages. On success, if the edited
     * message is not an inline message, the edited Message is returned, otherwise True
     * is returned.
-
+    *
     * @param chatId Required if inline_message_id is not specified. Unique
     * identifier for the target chat or username of the target
     * channel (in the format &#064;channelusername)
@@ -768,7 +768,7 @@ trait Methods {
     * its live_period expires or editing is explicitly disabled by a call to
     * stopMessageLiveLocation. On success, if the edited message is not an inline
     * message, the edited Message is returned, otherwise True is returned.
-
+    *
     * @param chatId Required if inline_message_id is not specified. Unique
     * identifier for the target chat or username of the target
     * channel (in the format &#064;channelusername)
@@ -815,7 +815,7 @@ trait Methods {
     * from the response. It is guaranteed that the link will be valid for at least 1
     * hour. When the link expires, a new one can be requested by calling getFile
     * again.
-
+    *
     * @param fileId File identifier to get info about */
   def getFile(fileId: String): Method[File] = {
     val req = GetFileReq(fileId)
@@ -826,7 +826,7 @@ trait Methods {
     * if the message was sent by the bot, returns the edited Message, otherwise
     * returns True. Returns an error, if the new score is not greater than the user's
     * current score in the chat and force is False.
-
+    *
     * @param userId User identifier
     * @param score New score, must be non-negative
     * @param force Pass True, if the high score is allowed to decrease. This
@@ -854,7 +854,7 @@ trait Methods {
 
   /** Use this method for your bot to leave a group, supergroup or channel. Returns
     * True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup or channel (in the format
     * &#064;channelusername) */
@@ -866,7 +866,7 @@ trait Methods {
   /** Use this method to change the title of a chat. Titles can't be changed for
     * private chats. The bot must be an administrator in the chat for this to work and
     * must have the appropriate admin rights. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param title New chat title, 1-255 characters */
@@ -878,7 +878,7 @@ trait Methods {
   /** Use this method to copy messages of any kind. The method is analogous to the
     * method forwardMessages, but the copied message doesn't have a link to the
     * original message. Returns the MessageId of the sent message on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param fromChatId Unique identifier for the chat where the original message
@@ -925,7 +925,7 @@ trait Methods {
   /** As of v.4.0, Telegram clients support rounded square mp4 videos of up to 1
     * minute long. Use this method to send video messages. On success, the sent
     * Message is returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param videoNote Video note to send. Pass a file_id as String to send a
@@ -984,7 +984,7 @@ trait Methods {
     * example, if a birthday date seems invalid, a submitted document is blurry, a
     * scan shows evidence of tampering, etc. Supply some details in the error message
     * to make sure the user knows how to correct the issues.
-
+    *
     * @param userId User identifier
     * @param errors A JSON-serialized array describing the errors */
   def setPassportDataErrors(userId: Int,
@@ -996,7 +996,7 @@ trait Methods {
   /** Use this method to delete a chat photo. Photos can't be changed for private
     * chats. The bot must be an administrator in the chat for this to work and must
     * have the appropriate admin rights. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername) */
   def deleteChatPhoto(chatId: ChatId): Method[Boolean] = {
@@ -1005,7 +1005,7 @@ trait Methods {
   }
 
   /** Use this method to send invoices. On success, the sent Message is returned.
-
+    *
     * @param chatId Unique identifier for the target private chat
     * @param title Product name, 1-32 characters
     * @param description Product description, 1-255 characters
@@ -1105,7 +1105,7 @@ trait Methods {
   /** Use this method to send general files. On success, the sent Message is
     * returned. Bots can currently send files of any type of up to 50 MB in size, this
     * limit may be changed in the future.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param document File to send. Pass a file_id as String to send a file that
@@ -1177,7 +1177,7 @@ trait Methods {
     * in channels. - If the bot is an administrator of a group, it can delete any
     * message there. - If the bot has can_delete_messages permission in a supergroup
     * or a channel, it can delete any message there. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param messageId Identifier of the message to delete */
@@ -1188,7 +1188,7 @@ trait Methods {
 
   /** Use this method to send answers to an inline query. On success, True is
     * returned. No more than 50 results per query are allowed.
-
+    *
     * @param inlineQueryId Unique identifier for the answered query
     * @param results A JSON-serialized array of results for the inline query
     * @param cacheTime The maximum amount of time in seconds that the result of
@@ -1240,7 +1240,7 @@ trait Methods {
     * chat on their own using invite links, etc., unless unbanned first. The bot must
     * be an administrator in the chat for this to work and must have the appropriate
     * admin rights. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target group or username of the
     * target supergroup or channel (in the format
     * &#064;channelusername)
@@ -1261,7 +1261,7 @@ trait Methods {
     * success, the sent Message is returned. Bots can currently send audio files of up
     * to 50 MB in size, this limit may be changed in the future. For sending voice
     * messages, use the sendVoice method instead.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param audio Audio file to send. Pass a file_id as String to send an
@@ -1333,7 +1333,7 @@ trait Methods {
     * administrator in the supergroup for this to work and must have the appropriate
     * admin rights. Pass True for all permissions to lift restrictions from a user.
     * Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup (in the format &#064;supergroupusername)
     * @param userId Unique identifier of the target user
@@ -1359,7 +1359,7 @@ trait Methods {
 
   /** Use this method to forward messages of any kind. On success, the sent Message
     * is returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param fromChatId Unique identifier for the chat where the original message
@@ -1378,7 +1378,7 @@ trait Methods {
 
   /** Use this method to get information about a member of a chat. Returns a
     * ChatMember object on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup or channel (in the format
     * &#064;channelusername)
@@ -1399,7 +1399,7 @@ trait Methods {
     * an Array of ChatMember objects that contains information about all chat
     * administrators except other bots. If the chat is a group or a supergroup and no
     * administrators were appointed, only the creator will be returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup or channel (in the format
     * &#064;channelusername) */
@@ -1413,7 +1413,7 @@ trait Methods {
     * .OGG file encoded with OPUS (other formats may be sent as Audio or Document). On
     * success, the sent Message is returned. Bots can currently send voice messages of
     * up to 50 MB in size, this limit may be changed in the future.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param voice Audio file to send. Pass a file_id as String to send a file
@@ -1475,7 +1475,7 @@ trait Methods {
     * bot must be an administrator in the chat for this to work and must have the
     * appropriate admin rights. Pass False for all boolean parameters to demote a
     * user. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param userId Unique identifier of the target user
@@ -1529,7 +1529,7 @@ trait Methods {
   /** Use this method to edit captions of messages. On success, if the edited message
     * is not an inline message, the edited Message is returned, otherwise True is
     * returned.
-
+    *
     * @param chatId Required if inline_message_id is not specified. Unique
     * identifier for the target chat or username of the target
     * channel (in the format &#064;channelusername)
@@ -1569,7 +1569,7 @@ trait Methods {
     * Use a previously uploaded file via its file_id or specify a URL. On success, if
     * the edited message was sent by the bot, the edited Message is returned,
     * otherwise True is returned.
-
+    *
     * @param chatId Required if inline_message_id is not specified. Unique
     * identifier for the target chat or username of the target
     * channel (in the format &#064;channelusername)
@@ -1594,7 +1594,7 @@ trait Methods {
     * the chat is not a private chat, the bot must be an administrator in the chat for
     * this to work and must have the 'can_pin_messages' admin right in a supergroup or
     * 'can_edit_messages' admin right in a channel. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param messageId Identifier of a message to pin
@@ -1610,7 +1610,7 @@ trait Methods {
 
   /** Use this method to set the thumbnail of a sticker set. Animated thumbnails can
     * be set for animated sticker sets only. Returns True on success.
-
+    *
     * @param name Sticker set name
     * @param userId User identifier of the sticker set owner
     * @param thumb A PNG image with the thumbnail, must be up to 128 kilobytes
@@ -1635,7 +1635,7 @@ trait Methods {
   /** Use this method to edit only the reply markup of messages. On success, if the
     * edited message is not an inline message, the edited Message is returned,
     * otherwise True is returned.
-
+    *
     * @param chatId Required if inline_message_id is not specified. Unique
     * identifier for the target chat or username of the target
     * channel (in the format &#064;channelusername)
@@ -1657,7 +1657,7 @@ trait Methods {
     * formats may be sent as Document). On success, the sent Message is returned. Bots
     * can currently send video files of up to 50 MB in size, this limit may be changed
     * in the future.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param video Video to send. Pass a file_id as String to send a video
@@ -1732,7 +1732,7 @@ trait Methods {
     * be an administrator in the chat for this to work and must have the appropriate
     * admin rights. Use the field can_set_sticker_set optionally returned in getChat
     * requests to check if the bot can use this method. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup (in the format &#064;supergroupusername)
     * @param stickerSetName Name of the sticker set to be set as the group sticker set */
@@ -1744,7 +1744,7 @@ trait Methods {
   /** Use this method to get up to date information about the chat (current name of
     * the user for one-on-one conversations, current username of a user, group or
     * channel, etc.). Returns a Chat object on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup or channel (in the format
     * &#064;channelusername) */
@@ -1755,7 +1755,7 @@ trait Methods {
 
   /** Use this method to remove webhook integration if you decide to switch back to
     * getUpdates. Returns True on success.
-
+    *
     * @param dropPendingUpdates Pass True to drop all pending updates */
   def deleteWebhook(dropPendingUpdates: Option[Boolean] = Option.empty): Method[Boolean] = {
     val req = DeleteWebhookReq(dropPendingUpdates)
@@ -1774,7 +1774,7 @@ trait Methods {
 
   /** Use this method to move a sticker in a set created by the bot to a specific
     * position. Returns True on success.
-
+    *
     * @param sticker File identifier of the sticker
     * @param position New sticker position in the set, zero-based */
   def setStickerPositionInSet(sticker: String, position: Int): Method[Boolean] = {
@@ -1784,7 +1784,7 @@ trait Methods {
 
   /** Use this method to set a custom title for an administrator in a supergroup
     * promoted by the bot. Returns True on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup (in the format &#064;supergroupusername)
     * @param userId Unique identifier of the target user
@@ -1800,7 +1800,7 @@ trait Methods {
   /** Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without
     * sound). On success, the sent Message is returned. Bots can currently send
     * animation files of up to 50 MB in size, this limit may be changed in the future.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param animation Animation to send. Pass a file_id as String to send an
@@ -1874,7 +1874,7 @@ trait Methods {
     * is_flexible was specified, the Bot API will send an Update with a shipping_query
     * field to the bot. Use this method to reply to shipping queries. On success, True
     * is returned.
-
+    *
     * @param shippingQueryId Unique identifier for the query to be answered
     * @param ok Specify True if delivery to the specified address is
     * possible and False if there are any problems (for example,
@@ -1899,7 +1899,7 @@ trait Methods {
     * pre_checkout_query. Use this method to respond to such pre-checkout queries. On
     * success, True is returned. Note: The Bot API must receive an answer within 10
     * seconds after the pre-checkout query was sent.
-
+    *
     * @param preCheckoutQueryId Unique identifier for the query to be answered
     * @param ok Specify True if everything is alright (goods are available,
     * etc.) and the bot is ready to proceed with the order. Use
@@ -1919,7 +1919,7 @@ trait Methods {
 
   /** Use this method to send static .WEBP or animated .TGS stickers. On success, the
     * sent Message is returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param sticker Sticker to send. Pass a file_id as String to send a file
@@ -1952,7 +1952,7 @@ trait Methods {
   }
 
   /** Use this method to get the number of members in a chat. Returns Int on success.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target supergroup or channel (in the format
     * &#064;channelusername) */
@@ -1962,7 +1962,7 @@ trait Methods {
   }
 
   /** Use this method to send photos. On success, the sent Message is returned.
-
+    *
     * @param chatId Unique identifier for the target chat or username of the
     * target channel (in the format &#064;channelusername)
     * @param photo Photo to send. Pass a file_id as String to send a photo
@@ -2011,7 +2011,7 @@ trait Methods {
 
   /** Use this method to receive incoming updates using long polling (wiki). An Array
     * of Update objects is returned.
-
+    *
     * @param offset Identifier of the first update to be returned. Must be
     * greater by one than the highest among the identifiers of
     * previously received updates. By default, updates starting
@@ -2046,7 +2046,7 @@ trait Methods {
 
   /** Use this method to get a sticker set. On success, a StickerSet object is
     * returned.
-
+    *
     * @param name Name of the sticker set */
   def getStickerSet(name: String): Method[StickerSet] = {
     val req = GetStickerSetReq(name)
@@ -2061,7 +2061,7 @@ trait Methods {
     * comes from Telegram, we recommend using a secret path in the URL, e.g.
     * https://www.example.com/<token>. Since nobody else knows your bot's token, you
     * can be pretty sure it's us.
-
+    *
     * @param url HTTPS url to send updates to. Use an empty string to remove
     * webhook integration
     * @param certificate Upload your public key certificate so that the root

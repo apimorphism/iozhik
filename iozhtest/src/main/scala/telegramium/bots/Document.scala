@@ -2,7 +2,7 @@ package telegramium.bots
 
 /** This object represents a general file (as opposed to photos, voice messages and
   * audio files).
-
+  *
   * @param fileId Identifier for this file, which can be used to download or
   * reuse the file
   * @param fileUniqueId Unique identifier for this file, which is supposed to be

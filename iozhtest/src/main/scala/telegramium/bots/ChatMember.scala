@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object contains information about one member of a chat.
-
+  *
   * @param user Information about the user
   * @param status The member's status in the chat. Can be “creator”,
   * “administrator”, “member”, “restricted”, “left” or “kicked”

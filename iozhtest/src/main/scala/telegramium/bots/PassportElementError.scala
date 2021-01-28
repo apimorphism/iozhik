@@ -4,7 +4,7 @@ sealed trait PassportElementError {}
 
 /** Represents an issue with a list of scans. The error is considered resolved when
   * the list of files containing the scans changes.
-
+  *
   * @param type The section of the user's Telegram Passport which has the
   * issue, one of “utility_bill”, “bank_statement”,
   * “rental_agreement”, “passport_registration”,
@@ -18,7 +18,7 @@ final case class PassportElementErrorFiles(`type`: String,
 
 /** Represents an issue in one of the data fields that was provided by the user.
   * The error is considered resolved when the field's value changes.
-
+  *
   * @param type The section of the user's Telegram Passport which has the
   * error, one of “personal_details”, “passport”,
   * “driver_license”, “identity_card”, “internal_passport”,
@@ -34,7 +34,7 @@ final case class PassportElementErrorDataField(`type`: String,
 
 /** Represents an issue with the reverse side of a document. The error is
   * considered resolved when the file with reverse side of the document changes.
-
+  *
   * @param type The section of the user's Telegram Passport which has the
   * issue, one of “driver_license”, “identity_card”
   * @param fileHash Base64-encoded hash of the file with the reverse side of
@@ -45,7 +45,7 @@ final case class PassportElementErrorReverseSide(`type`: String, fileHash: Strin
 
 /** Represents an issue with the selfie with a document. The error is considered
   * resolved when the file with the selfie changes.
-
+  *
   * @param type The section of the user's Telegram Passport which has the
   * issue, one of “passport”, “driver_license”, “identity_card”,
   * “internal_passport”
@@ -56,7 +56,7 @@ final case class PassportElementErrorSelfie(`type`: String, fileHash: String, me
 
 /** Represents an issue with the front side of a document. The error is considered
   * resolved when the file with the front side of the document changes.
-
+  *
   * @param type The section of the user's Telegram Passport which has the
   * issue, one of “passport”, “driver_license”, “identity_card”,
   * “internal_passport”
@@ -68,7 +68,7 @@ final case class PassportElementErrorFrontSide(`type`: String, fileHash: String,
 
 /** Represents an issue with a document scan. The error is considered resolved when
   * the file with the document scan changes.
-
+  *
   * @param type The section of the user's Telegram Passport which has the
   * issue, one of “utility_bill”, “bank_statement”,
   * “rental_agreement”, “passport_registration”,
@@ -80,7 +80,7 @@ final case class PassportElementErrorFile(`type`: String, fileHash: String, mess
 
 /** Represents an issue in an unspecified place. The error is considered resolved
   * when new data is added.
-
+  *
   * @param type Type of element of the user's Telegram Passport which has
   * the issue
   * @param elementHash Base64-encoded element hash
@@ -92,7 +92,7 @@ final case class PassportElementErrorUnspecified(`type`: String,
 
 /** Represents an issue with one of the files that constitute the translation of a
   * document. The error is considered resolved when the file changes.
-
+  *
   * @param type Type of element of the user's Telegram Passport which has
   * the issue, one of “passport”, “driver_license”,
   * “identity_card”, “internal_passport”, “utility_bill”,
@@ -107,7 +107,7 @@ final case class PassportElementErrorTranslationFile(`type`: String,
 
 /** Represents an issue with the translated version of a document. The error is
   * considered resolved when a file with the document translation change.
-
+  *
   * @param type Type of element of the user's Telegram Passport which has
   * the issue, one of “passport”, “driver_license”,
   * “identity_card”, “internal_passport”, “utility_bill”,

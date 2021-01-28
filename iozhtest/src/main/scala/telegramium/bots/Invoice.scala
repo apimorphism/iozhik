@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object contains basic information about an invoice.
-
+  *
   * @param title Product name
   * @param description Product description
   * @param startParameter Unique bot deep-linking parameter that can be used to

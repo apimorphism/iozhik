@@ -6,7 +6,7 @@ package telegramium.bots
   * attached to a message sent via the bot (in inline mode), the field
   * inline_message_id will be present. Exactly one of the fields data or
   * game_short_name will be present.
-
+  *
   * @param id Unique identifier for this query
   * @param from Sender
   * @param message Optional. Message with the callback button that originated

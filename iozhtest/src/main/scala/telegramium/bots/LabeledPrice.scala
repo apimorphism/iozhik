@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object represents a portion of the price for goods or services.
-
+  *
   * @param label Portion label
   * @param amount Price of the product in the smallest units of the currency
   * (integer, not float/double). For example, for a price of US$

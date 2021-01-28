@@ -1,7 +1,7 @@
 package telegramium.bots
 
 /** This object contains information about an incoming pre-checkout query.
-
+  *
   * @param id Unique query identifier
   * @param from User who sent the query
   * @param currency Three-letter ISO 4217 currency code

@@ -2,7 +2,7 @@ package telegramium.bots
 
 /** This object represents a game. Use BotFather to create and edit games, their
   * short names will act as unique identifiers.
-
+  *
   * @param title Title of the game
   * @param description Description of the game
   * @param photo Photo that will be displayed in the game message in chats.
