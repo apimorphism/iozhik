@@ -45,7 +45,7 @@ class ScalaApiGeneratorV1 extends Generator {
 
   def genField(x: Field, withDoc: Boolean = true, isDef: Boolean = false)(implicit symt: Symtable, space: Space): Either[String, String] = {
     for {
-      kind <- genKind(x.kind)
+      kind <- genFieldType(x.kind)
     } yield {
       val d = delimiter
       val docsBody = if (withDoc) x.doc.split("\n").toList.map(_.trim).intercalate("\n* ") else ""
@@ -225,7 +225,7 @@ class ScalaApiGeneratorV1 extends Generator {
           .map(path => s"import $path.CirceImplicits._")
       for {
         kind <- struc.kind.map(_.name).toRight("No kind name")
-        fieldKinds <- (usingf ++ struc.fields).traverse(y => genKind(y.kind))
+        fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind))
         fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
       } yield {
         val postfix = if (struc.fields.nonEmpty || struc.usings.nonEmpty) "" else ".type"
@@ -431,7 +431,7 @@ class ScalaApiGeneratorV1 extends Generator {
         .map(path => s"import $path.uPickleImplicits._")
       for {
         kind <- struc.kind.map(_.name).toRight("No kind name")
-        fieldKinds <- (usingf ++ struc.fields).traverse(y => genKind(y.kind))
+        fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind))
         fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
       } yield {
         val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)

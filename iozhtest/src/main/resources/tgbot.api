@@ -8,6 +8,7 @@ namespace telegramium {
       item EmojiBasketball  = "🏀"
       item EmojiFootball    = "⚽"
       item EmojiSlotMachine = "🎰"
+      item EmojiBowling     = "🎳"
     }
 
     enum ParseMode {
@@ -1222,10 +1223,10 @@ namespace telegramium {
     /* Contains information about why a request was unsuccessful.  */
     ResponseParameters {
       /* Optional. The group has been migrated to a supergroup with 
-      the specified identifier. This number may be greater than 32 
-      bits and some programming languages may have 
-      difficulty/silent defects in interpreting it. But it is 
-      smaller than 52 bits, so a signed 64 bit integer or 
+      the specified identifier. This number may have more than 32 
+      significant bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
       double-precision float type are safe for storing this 
       identifier. */
       migrateToChatId : Option[Long]
@@ -1262,54 +1263,56 @@ namespace telegramium {
            
     /* This object represents a chat.  */
     Chat {
-      /* Unique identifier for this chat. This number may be greater 
-      than 32 bits and some programming languages may have 
-      difficulty/silent defects in interpreting it. But it is 
-      smaller than 52 bits, so a signed 64 bit integer or 
-      double-precision float type are safe for storing this 
+      /* Unique identifier for this chat. This number may have more 
+      than 32 significant bits and some programming languages may 
+      have difficulty/silent defects in interpreting it. But it 
+      has at most 52 significant bits, so a signed 64-bit integer 
+      or double-precision float type are safe for storing this 
       identifier. */
-      id               : Long
+      id                    : Long
       /* Type of chat, can be either “private”, “group”, 
       “supergroup” or “channel” */
-      type             : String
+      type                  : String
       /* Optional. Title, for supergroups, channels and group chats */
-      title            : Option[String]
+      title                 : Option[String]
       /* Optional. Username, for private chats, supergroups and 
       channels if available */
-      username         : Option[String]
+      username              : Option[String]
       /* Optional. First name of the other party in a private chat */
-      firstName        : Option[String]
+      firstName             : Option[String]
       /* Optional. Last name of the other party in a private chat */
-      lastName         : Option[String]
+      lastName              : Option[String]
       /* Optional. Chat photo. Returned only in getChat. */
-      photo            : Option[ChatPhoto]
+      photo                 : Option[ChatPhoto]
       /* Optional. Bio of the other party in a private chat. 
       Returned only in getChat. */
-      bio              : Option[String]
+      bio                   : Option[String]
       /* Optional. Description, for groups, supergroups and channel 
       chats. Returned only in getChat. */
-      description      : Option[String]
-      /* Optional. Chat invite link, for groups, supergroups and 
-      channel chats. Each administrator in a chat generates their 
-      own invite links, so the bot must first generate the link 
-      using exportChatInviteLink. Returned only in getChat. */
-      inviteLink       : Option[String]
+      description           : Option[String]
+      /* Optional. Primary invite link, for groups, supergroups and 
+      channel chats. Returned only in getChat. */
+      inviteLink            : Option[String]
       /* Optional. The most recent pinned message (by sending date). 
       Returned only in getChat. */
-      pinnedMessage    : Option[Message]
+      pinnedMessage         : Option[Message]
       /* Optional. Default chat member permissions, for groups and 
       supergroups. Returned only in getChat. */
-      permissions      : Option[ChatPermissions]
+      permissions           : Option[ChatPermissions]
       /* Optional. For supergroups, the minimum allowed delay 
       between consecutive messages sent by each unpriviledged 
       user. Returned only in getChat. */
-      slowModeDelay    : Option[Int]
+      slowModeDelay         : Option[Int]
+      /* Optional. The time after which all messages sent to the 
+      chat will be automatically deleted; in seconds. Returned 
+      only in getChat. */
+      messageAutoDeleteTime : Option[Int]
       /* Optional. For supergroups, name of group sticker set. 
       Returned only in getChat. */
-      stickerSetName   : Option[String]
+      stickerSetName        : Option[String]
       /* Optional. True, if the bot can change the group sticker 
       set. Returned only in getChat. */
-      canSetStickerSet : Option[Boolean]
+      canSetStickerSet      : Option[Boolean]
       /* Optional. Unique identifier for the linked chat, i.e. the 
       discussion group identifier for a channel and vice versa; 
       for supergroups and channel chats. This identifier may be 
@@ -1318,10 +1321,10 @@ namespace telegramium {
       smaller than 52 bits, so a signed 64 bit integer or 
       double-precision float type are safe for storing this 
       identifier. Returned only in getChat. */
-      linkedChatId     : Option[Long]
+      linkedChatId          : Option[Long]
       /* Optional. For supergroups, the location to which the 
       supergroup is connected. Returned only in getChat. */
-      location         : Option[ChatLocation]
+      location              : Option[ChatLocation]
     }
            
     /* This object represents a video message (available in Telegram apps as of 
@@ -1377,6 +1380,12 @@ namespace telegramium {
       invoicePayload  : String
       /* User specified shipping address */
       shippingAddress : ShippingAddress
+    }
+           
+    /* This object represents a service message about a voice chat ended in the chat.  */
+    VoiceChatEnded {
+      /* Voice chat duration; in seconds */
+      duration : Int
     }
            
     /* Describes actions that a non-administrator user is allowed to take in a chat.  */
@@ -1509,6 +1518,15 @@ namespace telegramium {
       poll. Bots receive new votes only in polls that were sent by 
       the bot itself. */
       pollAnswer         : Option[PollAnswer]
+      /* Optional. The bot's chat member status was updated in a 
+      chat. For private chats, this update is received only when 
+      the bot is blocked or unblocked by the user. */
+      myChatMember       : Option[ChatMemberUpdated]
+      /* Optional. A chat member's status was updated in a chat. The 
+      bot must be an administrator in the chat and must explicitly 
+      specify “chat_member” in the list of allowed_updates to 
+      receive these updates. */
+      chatMember         : Option[ChatMemberUpdated]
     }
            
     /* This object describes the position on faces where a mask should be placed by 
@@ -1675,8 +1693,13 @@ namespace telegramium {
       firstName   : String
       /* Optional. Contact's last name */
       lastName    : Option[String]
-      /* Optional. Contact's user identifier in Telegram */
-      userId      : Option[Int]
+      /* Optional. Contact's user identifier in Telegram. This 
+      number may have more than 32 significant bits and some 
+      programming languages may have difficulty/silent defects in 
+      interpreting it. But it has at most 52 significant bits, so 
+      a 64-bit integer or double-precision float type are safe for 
+      storing this identifier. */
+      userId      : Option[Long]
       /* Optional. Additional data about the contact in the form of 
       a vCard */
       vcard       : Option[String]
@@ -1690,6 +1713,13 @@ namespace telegramium {
       user     : User
       /* Score */
       score    : Int
+    }
+           
+    /* This object represents a service message about a change in auto-delete timer 
+      settings.  */
+    MessageAutoDeleteTimerChanged {
+      /* New auto-delete time for messages in the chat */
+      messageAutoDeleteTime : Int
     }
            
     /* This object represents a portion of the price for goods or services.  */
@@ -1749,14 +1779,53 @@ namespace telegramium {
       providerPaymentChargeId : String
     }
            
+    /* Represents an invite link for a chat.  */
+    ChatInviteLink {
+      /* The invite link. If the link was created by another chat 
+      administrator, then the second part of the link will be 
+      replaced with “…”. */
+      inviteLink  : String
+      /* Creator of the link */
+      creator     : User
+      /* True, if the link is primary */
+      isPrimary   : Boolean
+      /* True, if the link is revoked */
+      isRevoked   : Boolean
+      /* Optional. Point in time (Unix timestamp) when the link will 
+      expire or has been expired */
+      expireDate  : Option[Int]
+      /* Optional. Maximum number of users that can be members of 
+      the chat simultaneously after joining the chat via this 
+      invite link; 1-99999 */
+      memberLimit : Option[Int]
+    }
+           
     /* This object represents an animated emoji that displays a random value.  */
     Dice {
       /* Emoji on which the dice throw animation is based */
       emoji : Emoji
-      /* Value of the dice, 1-6 for EmojiDice and EmojiDarts base 
-      emoji, 1-5 for EmojiBasketball and EmojiFootball base emoji, 
-      1-64 for EmojiSlotMachine base emoji */
+      /* Value of the dice, 1-6 for EmojiDice, EmojiDarts and 
+      EmojiBowling base emoji, 1-5 for EmojiBasketball and 
+      EmojiFootball base emoji, 1-64 for EmojiSlotMachine base 
+      emoji */
       value : Int
+    }
+           
+    /* This object represents changes in the status of a chat member.  */
+    ChatMemberUpdated {
+      /* Chat the user belongs to */
+      chat          : Chat
+      /* Performer of the action, which resulted in the change */
+      from          : User
+      /* Date the change was done in Unix time */
+      date          : Int
+      /* Previous information about the chat member */
+      oldChatMember : ChatMember
+      /* New information about the chat member */
+      newChatMember : ChatMember
+      /* Optional. Chat invite link, which was used by the user to 
+      join the chat; for joining by invite link events only. */
+      inviteLink    : Option[ChatInviteLink]
     }
            
     /* Contains information about Telegram Passport data shared with the bot by the 
@@ -1891,7 +1960,7 @@ namespace telegramium {
       connections to the webhook for update delivery */
       maxConnections       : Option[Int]
       /* Optional. A list of update types the bot is subscribed to. 
-      Defaults to all update types */
+      Defaults to all update types except chat_member */
       allowedUpdates       : List[String]
     }
            
@@ -1964,8 +2033,13 @@ namespace telegramium {
            
     /* This object represents a Telegram user or bot.  */
     User {
-      /* Unique identifier for this user or bot */
-      id                      : Int
+      /* Unique identifier for this user or bot. This number may 
+      have more than 32 significant bits and some programming 
+      languages may have difficulty/silent defects in interpreting 
+      it. But it has at most 52 significant bits, so a 64-bit 
+      integer or double-precision float type are safe for storing 
+      this identifier. */
+      id                      : Long
       /* True, if this user is a bot */
       isBot                   : Boolean
       /* User's or bot's first name */
@@ -2078,172 +2152,182 @@ namespace telegramium {
     /* This object represents a message.  */
     Message {
       /* Unique message identifier inside this chat */
-      messageId               : Int
+      messageId                     : Int
       /* Optional. Sender, empty for messages sent to channels */
-      from                    : Option[User]
+      from                          : Option[User]
       /* Optional. Sender of the message, sent on behalf of a chat. 
       The channel itself for channel messages. The supergroup 
       itself for messages from anonymous group administrators. The 
       linked channel for messages automatically forwarded to the 
       discussion group */
-      senderChat              : Option[Chat]
+      senderChat                    : Option[Chat]
       /* Date the message was sent in Unix time */
-      date                    : Int
+      date                          : Int
       /* Conversation the message belongs to */
-      chat                    : Chat
+      chat                          : Chat
       /* Optional. For forwarded messages, sender of the original 
       message */
-      forwardFrom             : Option[User]
+      forwardFrom                   : Option[User]
       /* Optional. For messages forwarded from channels or from 
       anonymous administrators, information about the original 
       sender chat */
-      forwardFromChat         : Option[Chat]
+      forwardFromChat               : Option[Chat]
       /* Optional. For messages forwarded from channels, identifier 
       of the original message in the channel */
-      forwardFromMessageId    : Option[Int]
+      forwardFromMessageId          : Option[Int]
       /* Optional. For messages forwarded from channels, signature 
       of the post author if present */
-      forwardSignature        : Option[String]
+      forwardSignature              : Option[String]
       /* Optional. Sender's name for messages forwarded from users 
       who disallow adding a link to their account in forwarded 
       messages */
-      forwardSenderName       : Option[String]
+      forwardSenderName             : Option[String]
       /* Optional. For forwarded messages, date the original message 
       was sent in Unix time */
-      forwardDate             : Option[Int]
+      forwardDate                   : Option[Int]
       /* Optional. For replies, the original message. Note that the 
       Message object in this field will not contain further 
       reply_to_message fields even if it itself is a reply. */
-      replyToMessage          : Option[Message]
+      replyToMessage                : Option[Message]
       /* Optional. Bot through which the message was sent */
-      viaBot                  : Option[User]
+      viaBot                        : Option[User]
       /* Optional. Date the message was last edited in Unix time */
-      editDate                : Option[Int]
+      editDate                      : Option[Int]
       /* Optional. The unique identifier of a media message group 
       this message belongs to */
-      mediaGroupId            : Option[String]
+      mediaGroupId                  : Option[String]
       /* Optional. Signature of the post author for messages in 
       channels, or the custom title of an anonymous group 
       administrator */
-      authorSignature         : Option[String]
+      authorSignature               : Option[String]
       /* Optional. For text messages, the actual UTF-8 text of the 
       message, 0-4096 characters */
-      text                    : Option[String]
+      text                          : Option[String]
       /* Optional. For text messages, special entities like 
       usernames, URLs, bot commands, etc. that appear in the text */
-      entities                : List[MessageEntity]
+      entities                      : List[MessageEntity]
       /* Optional. Message is an animation, information about the 
       animation. For backward compatibility, when this field is 
       set, the document field will also be set */
-      animation               : Option[Animation]
+      animation                     : Option[Animation]
       /* Optional. Message is an audio file, information about the 
       file */
-      audio                   : Option[Audio]
+      audio                         : Option[Audio]
       /* Optional. Message is a general file, information about the 
       file */
-      document                : Option[Document]
+      document                      : Option[Document]
       /* Optional. Message is a photo, available sizes of the photo */
-      photo                   : List[PhotoSize]
+      photo                         : List[PhotoSize]
       /* Optional. Message is a sticker, information about the 
       sticker */
-      sticker                 : Option[Sticker]
+      sticker                       : Option[Sticker]
       /* Optional. Message is a video, information about the video */
-      video                   : Option[Video]
+      video                         : Option[Video]
       /* Optional. Message is a video note, information about the 
       video message */
-      videoNote               : Option[VideoNote]
+      videoNote                     : Option[VideoNote]
       /* Optional. Message is a voice message, information about the 
       file */
-      voice                   : Option[Voice]
+      voice                         : Option[Voice]
       /* Optional. Caption for the animation, audio, document, 
       photo, video or voice, 0-1024 characters */
-      caption                 : Option[String]
+      caption                       : Option[String]
       /* Optional. For messages with a caption, special entities 
       like usernames, URLs, bot commands, etc. that appear in the 
       caption */
-      captionEntities         : List[MessageEntity]
+      captionEntities               : List[MessageEntity]
       /* Optional. Message is a shared contact, information about 
       the contact */
-      contact                 : Option[Contact]
+      contact                       : Option[Contact]
       /* Optional. Message is a dice with random value */
-      dice                    : Option[Dice]
+      dice                          : Option[Dice]
       /* Optional. Message is a game, information about the game. */
-      game                    : Option[Game]
+      game                          : Option[Game]
       /* Optional. Message is a native poll, information about the 
       poll */
-      poll                    : Option[Poll]
+      poll                          : Option[Poll]
       /* Optional. Message is a venue, information about the venue. 
       For backward compatibility, when this field is set, the 
       location field will also be set */
-      venue                   : Option[Venue]
+      venue                         : Option[Venue]
       /* Optional. Message is a shared location, information about 
       the location */
-      location                : Option[Location]
+      location                      : Option[Location]
       /* Optional. New members that were added to the group or 
       supergroup and information about them (the bot itself may be 
       one of these members) */
-      newChatMembers          : List[User]
+      newChatMembers                : List[User]
       /* Optional. A member was removed from the group, information 
       about them (this member may be the bot itself) */
-      leftChatMember          : Option[User]
+      leftChatMember                : Option[User]
       /* Optional. A chat title was changed to this value */
-      newChatTitle            : Option[String]
+      newChatTitle                  : Option[String]
       /* Optional. A chat photo was change to this value */
-      newChatPhoto            : List[PhotoSize]
+      newChatPhoto                  : List[PhotoSize]
       /* Optional. Service message: the chat photo was deleted */
-      deleteChatPhoto         : Option[Boolean]
+      deleteChatPhoto               : Option[Boolean]
       /* Optional. Service message: the group has been created */
-      groupChatCreated        : Option[Boolean]
+      groupChatCreated              : Option[Boolean]
       /* Optional. Service message: the supergroup has been created. 
       This field can't be received in a message coming through 
       updates, because bot can't be a member of a supergroup when 
       it is created. It can only be found in reply_to_message if 
       someone replies to a very first message in a directly 
       created supergroup. */
-      supergroupChatCreated   : Option[Boolean]
+      supergroupChatCreated         : Option[Boolean]
       /* Optional. Service message: the channel has been created. 
       This field can't be received in a message coming through 
       updates, because bot can't be a member of a channel when it 
       is created. It can only be found in reply_to_message if 
       someone replies to a very first message in a channel. */
-      channelChatCreated      : Option[Boolean]
+      channelChatCreated            : Option[Boolean]
+      /* Optional. Service message: auto-delete timer settings 
+      changed in the chat */
+      messageAutoDeleteTimerChanged : Option[MessageAutoDeleteTimerChanged]
       /* Optional. The group has been migrated to a supergroup with 
-      the specified identifier. This number may be greater than 32 
-      bits and some programming languages may have 
-      difficulty/silent defects in interpreting it. But it is 
-      smaller than 52 bits, so a signed 64 bit integer or 
+      the specified identifier. This number may have more than 32 
+      significant bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
       double-precision float type are safe for storing this 
       identifier. */
-      migrateToChatId         : Option[Long]
+      migrateToChatId               : Option[Long]
       /* Optional. The supergroup has been migrated from a group 
-      with the specified identifier. This number may be greater 
-      than 32 bits and some programming languages may have 
-      difficulty/silent defects in interpreting it. But it is 
-      smaller than 52 bits, so a signed 64 bit integer or 
-      double-precision float type are safe for storing this 
+      with the specified identifier. This number may have more 
+      than 32 significant bits and some programming languages may 
+      have difficulty/silent defects in interpreting it. But it 
+      has at most 52 significant bits, so a signed 64-bit integer 
+      or double-precision float type are safe for storing this 
       identifier. */
-      migrateFromChatId       : Option[Long]
+      migrateFromChatId             : Option[Long]
       /* Optional. Specified message was pinned. Note that the 
       Message object in this field will not contain further 
       reply_to_message fields even if it is itself a reply. */
-      pinnedMessage           : Option[Message]
+      pinnedMessage                 : Option[Message]
       /* Optional. Message is an invoice for a payment, information 
       about the invoice. */
-      invoice                 : Option[Invoice]
+      invoice                       : Option[Invoice]
       /* Optional. Message is a service message about a successful 
       payment, information about the payment. */
-      successfulPayment       : Option[SuccessfulPayment]
+      successfulPayment             : Option[SuccessfulPayment]
       /* Optional. The domain name of the website on which the user 
       has logged in. */
-      connectedWebsite        : Option[String]
+      connectedWebsite              : Option[String]
       /* Optional. Telegram Passport data */
-      passportData            : Option[PassportData]
+      passportData                  : Option[PassportData]
       /* Optional. Service message. A user in the chat triggered 
       another user's proximity alert while sharing Live Location. */
-      proximityAlertTriggered : Option[ProximityAlertTriggered]
+      proximityAlertTriggered       : Option[ProximityAlertTriggered]
+      /* Optional. Service message: voice chat started */
+      voiceChatStarted              : Option[VoiceChatStarted]
+      /* Optional. Service message: voice chat ended */
+      voiceChatEnded                : Option[VoiceChatEnded]
+      /* Optional. Service message: new participants invited to a 
+      voice chat */
+      voiceChatParticipantsInvited  : Option[VoiceChatParticipantsInvited]
       /* Optional. Inline keyboard attached to the message. 
       login_url buttons are represented as ordinary url buttons. */
-      replyMarkup             : Option[InlineKeyboardMarkup]
+      replyMarkup                   : Option[InlineKeyboardMarkup]
     }
            
     /* This object represents one shipping option.  */
@@ -2277,6 +2361,12 @@ namespace telegramium {
       shippingOptionId : Option[String]
       /* Optional. Order info provided by the user */
       orderInfo        : Option[OrderInfo]
+    }
+           
+    /* This object represents a service message about a voice chat started in the 
+      chat. Currently holds no information.  */
+    VoiceChatStarted {
+  
     }
            
     /* Contains data required for decrypting and authenticating 
@@ -2381,6 +2471,13 @@ namespace telegramium {
       fileSize     : Option[Int]
     }
            
+    /* This object represents a service message about new members invited to a voice 
+      chat.  */
+    VoiceChatParticipantsInvited {
+      /* Optional. New members that were invited to the voice chat */
+      users : List[User]
+    }
+           
     /* This object represent a user's profile pictures.  */
     UserProfilePhotos {
       /* Total number of profile pictures the target user has */
@@ -2443,6 +2540,12 @@ namespace telegramium {
       to edit administrator privileges of that user */
       canBeEdited           : Option[Boolean]
       /* Optional. Administrators only. True, if the administrator 
+      can access the chat event log, chat statistics, message 
+      statistics in channels, see channel members, see anonymous 
+      administrators in supergroups and ignore slow mode. Implied 
+      by any other administrator privilege */
+      canManageChat         : Option[Boolean]
+      /* Optional. Administrators only. True, if the administrator 
       can post in the channel; channels only */
       canPostMessages       : Option[Boolean]
       /* Optional. Administrators only. True, if the administrator 
@@ -2452,6 +2555,9 @@ namespace telegramium {
       /* Optional. Administrators only. True, if the administrator 
       can delete messages of other users */
       canDeleteMessages     : Option[Boolean]
+      /* Optional. Administrators only. True, if the administrator 
+      can manage voice chats */
+      canManageVoiceChats   : Option[Boolean]
       /* Optional. Administrators only. True, if the administrator 
       can restrict, ban or unban chat members */
       canRestrictMembers    : Option[Boolean]
@@ -2900,10 +3006,10 @@ namespace telegramium {
         } => Method[Either[Boolean, Message]]
                 
       
-        /* Use this method to generate a new invite link for a chat; any previously 
-          generated link is revoked. The bot must be an administrator in the chat for this 
-          to work and must have the appropriate admin rights. Returns the new invite link 
-          as String on success.  */
+        /* Use this method to generate a new primary invite link for a chat; any 
+          previously generated primary link is revoked. The bot must be an administrator 
+          in the chat for this to work and must have the appropriate admin rights. Returns 
+          the new invite link as String on success.  */
         def exportChatInviteLink {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -2919,10 +3025,11 @@ namespace telegramium {
           chatId                   : ChatId
           /* Emoji on which the dice throw animation is based. 
           Currently, must be one of EmojiDice, EmojiDarts, 
-          EmojiBasketball, EmojiFootball, or EmojiSlotMachine. Dice 
-          can have values 1-6 for EmojiDice and EmojiDarts, values 1-5 
-          for EmojiBasketball and EmojiFootball, and values 1-64 for 
-          EmojiSlotMachine. Defaults to EmojiDice */
+          EmojiBasketball, EmojiFootball, EmojiBowling or 
+          EmojiSlotMachine. Dice can have values 1-6 for EmojiDice, 
+          EmojiDarts and EmojiBowling, values 1-5 for EmojiBasketball 
+          and EmojiFootball, and values 1-64 for EmojiSlotMachine. 
+          Defaults to EmojiDice */
           emoji                    : Option[Emoji]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -3254,7 +3361,7 @@ namespace telegramium {
                 
       
         /* Use this method to copy messages of any kind. The method is analogous to the 
-          method forwardMessages, but the copied message doesn't have a link to the 
+          method forwardMessage, but the copied message doesn't have a link to the 
           original message. Returns the MessageId of the sent message on success.  */
         def copyMessage {
           /* Unique identifier for the target chat or username of the 
@@ -3355,6 +3462,25 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId : ChatId
         } => Method[Boolean]
+                
+      
+        /* Use this method to edit a non-primary invite link created by the bot. The bot 
+          must be an administrator in the chat for this to work and must have the 
+          appropriate admin rights. Returns the edited invite link as a ChatInviteLink 
+          object.  */
+        def editChatInviteLink {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId      : ChatId
+          /* The invite link to edit */
+          inviteLink  : String
+          /* Point in time (Unix timestamp) when the link will expire */
+          expireDate  : Option[Int]
+          /* Maximum number of users that can be members of the chat 
+          simultaneously after joining the chat via this invite link; 
+          1-99999 */
+          memberLimit : Option[Int]
+        } => Method[ChatInviteLink]
                 
       
         /* Use this method to send invoices. On success, the sent Message is returned.  */
@@ -3547,14 +3673,19 @@ namespace telegramium {
           /* Unique identifier for the target group or username of the 
           target supergroup or channel (in the format 
           &#064;channelusername) */
-          chatId    : ChatId
+          chatId         : ChatId
           /* Unique identifier of the target user */
-          userId    : Int
+          userId         : Int
           /* Date when the user will be unbanned, unix time. If user is 
           banned for more than 366 days or less than 30 seconds from 
           the current time they are considered to be banned forever. 
           Applied for supergroups and channels only. */
-          untilDate : Option[Int]
+          untilDate      : Option[Int]
+          /* Pass True to delete all messages from the chat for the user 
+          that is being removed. If False, the user will be able to 
+          see messages in the group that were sent before the user was 
+          removed. Always True for supergroups and channels. */
+          revokeMessages : Option[Boolean]
         } => Method[Boolean]
                 
       
@@ -3746,38 +3877,47 @@ namespace telegramium {
         def promoteChatMember {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId             : ChatId
+          chatId              : ChatId
           /* Unique identifier of the target user */
-          userId             : Int
+          userId              : Int
           /* Pass True, if the administrator's presence in the chat is 
           hidden */
-          isAnonymous        : Option[Boolean]
-          /* Pass True, if the administrator can change chat title, 
-          photo and other settings */
-          canChangeInfo      : Option[Boolean]
+          isAnonymous         : Option[Boolean]
+          /* Pass True, if the administrator can access the chat event 
+          log, chat statistics, message statistics in channels, see 
+          channel members, see anonymous administrators in supergroups 
+          and ignore slow mode. Implied by any other administrator 
+          privilege */
+          canManageChat       : Option[Boolean]
           /* Pass True, if the administrator can create channel posts, 
           channels only */
-          canPostMessages    : Option[Boolean]
+          canPostMessages     : Option[Boolean]
           /* Pass True, if the administrator can edit messages of other 
           users and can pin messages, channels only */
-          canEditMessages    : Option[Boolean]
+          canEditMessages     : Option[Boolean]
           /* Pass True, if the administrator can delete messages of 
           other users */
-          canDeleteMessages  : Option[Boolean]
-          /* Pass True, if the administrator can invite new users to the 
-          chat */
-          canInviteUsers     : Option[Boolean]
+          canDeleteMessages   : Option[Boolean]
+          /* Pass True, if the administrator can manage voice chats, 
+          supergroups only */
+          canManageVoiceChats : Option[Boolean]
           /* Pass True, if the administrator can restrict, ban or unban 
           chat members */
-          canRestrictMembers : Option[Boolean]
-          /* Pass True, if the administrator can pin messages, 
-          supergroups only */
-          canPinMessages     : Option[Boolean]
+          canRestrictMembers  : Option[Boolean]
           /* Pass True, if the administrator can add new administrators 
           with a subset of their own privileges or demote 
           administrators that he has promoted, directly or indirectly 
           (promoted by administrators that were appointed by him) */
-          canPromoteMembers  : Option[Boolean]
+          canPromoteMembers   : Option[Boolean]
+          /* Pass True, if the administrator can change chat title, 
+          photo and other settings */
+          canChangeInfo       : Option[Boolean]
+          /* Pass True, if the administrator can invite new users to the 
+          chat */
+          canInviteUsers      : Option[Boolean]
+          /* Pass True, if the administrator can pin messages, 
+          supergroups only */
+          canPinMessages      : Option[Boolean]
         } => Method[Boolean]
                 
       
@@ -3892,6 +4032,23 @@ namespace telegramium {
         } => Method[Either[Boolean, Message]]
                 
       
+        /* Use this method to create an additional invite link for a chat. The bot must be 
+          an administrator in the chat for this to work and must have the appropriate 
+          admin rights. The link can be revoked using the method revokeChatInviteLink. 
+          Returns the new invite link as ChatInviteLink object.  */
+        def createChatInviteLink {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId      : ChatId
+          /* Point in time (Unix timestamp) when the link will expire */
+          expireDate  : Option[Int]
+          /* Maximum number of users that can be members of the chat 
+          simultaneously after joining the chat via this invite link; 
+          1-99999 */
+          memberLimit : Option[Int]
+        } => Method[ChatInviteLink]
+                
+      
         /* Use this method to send video files, Telegram clients support mp4 videos (other 
           formats may be sent as Document). On success, the sent Message is returned. Bots 
           can currently send video files of up to 50 MB in size, this limit may be changed 
@@ -3977,6 +4134,19 @@ namespace telegramium {
           /* Pass True to drop all pending updates */
           dropPendingUpdates : Option[Boolean]
         } => Method[Boolean]
+                
+      
+        /* Use this method to revoke an invite link created by the bot. If the primary 
+          link is revoked, a new link is automatically generated. The bot must be an 
+          administrator in the chat for this to work and must have the appropriate admin 
+          rights. Returns the revoked invite link as ChatInviteLink object.  */
+        def revokeChatInviteLink {
+          /* Unique identifier of the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId     : ChatId
+          /* The invite link to revoke */
+          inviteLink : String
+        } => Method[ChatInviteLink]
                 
       
         /* Use this method to close the bot instance before moving it from one local 
@@ -4209,8 +4379,8 @@ namespace telegramium {
           “edited_channel_post”, “callback_query”] to only receive 
           updates of these types. See Update for a complete list of 
           available update types. Specify an empty list to receive all 
-          updates regardless of type (default). If not specified, the 
-          previous setting will be used. Please note that this 
+          update types except chat_member (default). If not specified, 
+          the previous setting will be used. Please note that this 
           parameter doesn't affect updates created before the call to 
           the getUpdates, so unwanted updates may be received for a 
           short period of time. */
@@ -4255,8 +4425,8 @@ namespace telegramium {
           “edited_channel_post”, “callback_query”] to only receive 
           updates of these types. See Update for a complete list of 
           available update types. Specify an empty list to receive all 
-          updates regardless of type (default). If not specified, the 
-          previous setting will be used. Please note that this 
+          update types except chat_member (default). If not specified, 
+          the previous setting will be used. Please note that this 
           parameter doesn't affect updates created before the call to 
           the setWebhook, so unwanted updates may be received for a 
           short period of time. */

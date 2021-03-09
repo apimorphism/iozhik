@@ -219,6 +219,7 @@ object TgBotApiScrapper extends IOApp {
        |      item EmojiBasketball  = "🏀"
        |      item EmojiFootball    = "⚽"
        |      item EmojiSlotMachine = "🎰"
+       |      item EmojiBowling     = "🎳"
        |    }
        |
        |    enum ParseMode {
@@ -294,7 +295,7 @@ object TgBotApiScrapper extends IOApp {
       case class Sumt(name: Element, desc: Element, items: Element)
 
       def mkType(name: String, desc: String, s: String): String = {
-        val mustBeLong = desc.contains("greater than 32 bits")
+        val mustBeLong = desc.contains("greater than 32 bits") || desc.contains("more than 32 significant bits")
         val res = s
           .replace(" number", "") // Float number => Float
           .replace("True", "Boolean")
@@ -316,11 +317,14 @@ object TgBotApiScrapper extends IOApp {
 
       def fixDesc(desc: String): String = {
         desc
-          .replace("1-6 for “” and “”", "1-6 for EmojiDice and EmojiDarts")
+          .replace("1-6 for “”, “” and “”", "1-6 for EmojiDice, EmojiDarts and EmojiBowling")
           .replace("1-5 for “” and “”", "1-5 for EmojiBasketball and EmojiFootball")
           .replace("1-64 for “”", "1-64 for EmojiSlotMachine")
           .replace("Defaults to “”", "Defaults to EmojiDice")
-          .replace("one of “”, “”, “”, “”, or “”", "one of EmojiDice, EmojiDarts, EmojiBasketball, EmojiFootball, or EmojiSlotMachine")
+          .replace(
+            "one of “”, “”, “”, “”, “”, or “”",
+            "one of EmojiDice, EmojiDarts, EmojiBasketball, EmojiFootball, EmojiBowling or EmojiSlotMachine"
+          )
           .replace("@", "&#064;")
       }
 

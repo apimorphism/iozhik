@@ -1,6 +1,6 @@
 package io.github.iozhik
 
-import io.github.iozhik.Generator.Model.{Kind, Space, Symtable}
+import io.github.iozhik.Generator.Model.{Kind, Space, Struc, Symtable}
 import cats.implicits._
 import io.github.iozhik.GeneratorUtils.sanitize
 
@@ -14,4 +14,16 @@ object ScalaApiGeneratorUtils {
       items <- x.params.map(genKind).sequence
       body = "[" + items.mkString(", ") + "]"
     } yield sanitize(x.name, keywords) + (if (x.params.nonEmpty) body else "")
+
+  def genFieldType(x: Kind)(implicit symt: Symtable, space: Space): Either[String, String] =
+    for {
+      items <- x.params.map(genFieldType).sequence
+      modifier = symt.resolve(x).collect {
+        case s: Struc
+          if s.fields.isEmpty && s.usings.isEmpty && s.leaves.isEmpty && s.wrapps.isEmpty && s.leavesForBins.isEmpty =>
+          ".type"
+      }
+        .getOrElse("")
+      body = "[" + items.mkString(", ") + "]"
+    } yield sanitize(x.name, keywords) + modifier + (if (x.params.nonEmpty) body else "")
 }
