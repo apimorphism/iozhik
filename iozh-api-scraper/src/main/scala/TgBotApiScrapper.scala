@@ -357,6 +357,8 @@ object TgBotApiScrapper extends IOApp {
             Item(name = x1, desc = List(x2, x3, x4), table = x5)
           case x1 :: x2 :: x3 :: x4 :: _ if isH4(x1) && isP(x2) && isP(x3) && isTable(x4) =>
             Item(name = x1, desc = List(x2, x3), table = x4)
+          case x1 :: x2 :: x3 :: x4 :: x5 :: _ if isH4(x1) && isP(x2) && isBQ(x3) && isP(x4) && isTable(x5) =>
+            Item(name = x1, desc = List(x2, x4), table = x5)
           case x1 :: x2 :: x3 :: x4 :: _ if isH4(x1) && isP(x2) && isBQ(x3) && isTable(x4) =>
             Item(name = x1, desc = List(x2), table = x4)
           case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && isTable(x3) =>
