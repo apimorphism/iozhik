@@ -937,6 +937,78 @@ namespace telegramium {
         googlePlaceType : Option[String]
       }
              
+      /* Represents the content of an invoice message to be sent as the result of an 
+        inline query.  */
+      InputInvoiceMessageContent {
+        /* Product name, 1-32 characters */
+        title                     : String
+        /* Product description, 1-255 characters */
+        description               : String
+        /* Bot-defined invoice payload, 1-128 bytes. This will not be 
+        displayed to the user, use for your internal processes. */
+        payload                   : String
+        /* Payment provider token, obtained via Botfather */
+        providerToken             : String
+        /* Three-letter ISO 4217 currency code, see more on currencies */
+        currency                  : String
+        /* Price breakdown, a JSON-serialized list of components (e.g. 
+        product price, tax, discount, delivery cost, delivery tax, 
+        bonus, etc.) */
+        prices                    : List[LabeledPrice]
+        /* Optional. The maximum accepted amount for tips in the 
+        smallest units of the currency (integer, not float/double). 
+        For example, for a maximum tip of US$ 1.45 pass 
+        max_tip_amount = 145. See the exp parameter in 
+        currencies.json, it shows the number of digits past the 
+        decimal point for each currency (2 for the majority of 
+        currencies). Defaults to 0 */
+        maxTipAmount              : Option[Int]
+        /* Optional. A JSON-serialized array of suggested amounts of 
+        tip in the smallest units of the currency (integer, not 
+        float/double). At most 4 suggested tip amounts can be 
+        specified. The suggested tip amounts must be positive, 
+        passed in a strictly increased order and must not exceed 
+        max_tip_amount. */
+        suggestedTipAmounts       : List[Int]
+        /* Optional. A JSON-serialized object for data about the 
+        invoice, which will be shared with the payment provider. A 
+        detailed description of the required fields should be 
+        provided by the payment provider. */
+        providerData              : Option[String]
+        /* Optional. URL of the product photo for the invoice. Can be 
+        a photo of the goods or a marketing image for a service. 
+        People like it better when they see what they are paying 
+        for. */
+        photoUrl                  : Option[String]
+        /* Optional. Photo size */
+        photoSize                 : Option[Int]
+        /* Optional. Photo width */
+        photoWidth                : Option[Int]
+        /* Optional. Photo height */
+        photoHeight               : Option[Int]
+        /* Optional. Pass True, if you require the user's full name to 
+        complete the order */
+        needName                  : Option[Boolean]
+        /* Optional. Pass True, if you require the user's phone number 
+        to complete the order */
+        needPhoneNumber           : Option[Boolean]
+        /* Optional. Pass True, if you require the user's email 
+        address to complete the order */
+        needEmail                 : Option[Boolean]
+        /* Optional. Pass True, if you require the user's shipping 
+        address to complete the order */
+        needShippingAddress       : Option[Boolean]
+        /* Optional. Pass True, if user's phone number should be sent 
+        to provider */
+        sendPhoneNumberToProvider : Option[Boolean]
+        /* Optional. Pass True, if user's email address should be sent 
+        to provider */
+        sendEmailToProvider       : Option[Boolean]
+        /* Optional. Pass True, if the final price depends on the 
+        shipping method */
+        isFlexible                : Option[Boolean]
+      }
+             
       /* Represents the content of a contact message to be sent as the result of an 
         inline query.  */
       InputContactMessageContent {
@@ -1975,6 +2047,14 @@ namespace telegramium {
       distance : Int
     }
            
+    /* This object represents a service message about a voice chat scheduled in the 
+      chat.  */
+    VoiceChatScheduled {
+      /* Point in time (Unix timestamp) when the voice chat is 
+      supposed to be started by a chat administrator */
+      startDate : Int
+    }
+           
     /* This object contains basic information about an invoice.  */
     Invoice {
       /* Product name */
@@ -2021,14 +2101,21 @@ namespace telegramium {
       id       : String
       /* Sender */
       from     : User
-      /* Optional. Sender location, only for bots that request user 
-      location */
-      location : Option[Location]
       /* Text of the query (up to 256 characters) */
       query    : String
       /* Offset of the results to be returned, can be controlled by 
       the bot */
       offset   : String
+      /* Optional. Type of the chat, from which the inline query was 
+      sent. Can be either “sender” for a private chat with the 
+      inline query sender, “private”, “group”, “supergroup”, or 
+      “channel”. The chat type should be always known for requests 
+      sent from official clients and most third-party clients, 
+      unless the request was sent from a secret chat */
+      chatType : Option[String]
+      /* Optional. Sender location, only for bots that request user 
+      location */
+      location : Option[Location]
     }
            
     /* This object represents a Telegram user or bot.  */
@@ -2318,6 +2405,8 @@ namespace telegramium {
       /* Optional. Service message. A user in the chat triggered 
       another user's proximity alert while sharing Live Location. */
       proximityAlertTriggered       : Option[ProximityAlertTriggered]
+      /* Optional. Service message: voice chat scheduled */
+      voiceChatScheduled            : Option[VoiceChatScheduled]
       /* Optional. Service message: voice chat started */
       voiceChatStarted              : Option[VoiceChatStarted]
       /* Optional. Service message: voice chat ended */
@@ -3371,9 +3460,10 @@ namespace telegramium {
         } => Method[Boolean]
                 
       
-        /* Use this method to copy messages of any kind. The method is analogous to the 
-          method forwardMessage, but the copied message doesn't have a link to the 
-          original message. Returns the MessageId of the sent message on success.  */
+        /* Use this method to copy messages of any kind. Service messages and invoice 
+          messages can't be copied. The method is analogous to the method forwardMessage, 
+          but the copied message doesn't have a link to the original message. Returns the 
+          MessageId of the sent message on success.  */
         def copyMessage {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -3496,8 +3586,9 @@ namespace telegramium {
       
         /* Use this method to send invoices. On success, the sent Message is returned.  */
         def sendInvoice {
-          /* Unique identifier for the target private chat */
-          chatId                    : Int
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId                    : ChatId
           /* Product name, 1-32 characters */
           title                     : String
           /* Product description, 1-255 characters */
@@ -3507,15 +3598,33 @@ namespace telegramium {
           payload                   : String
           /* Payments provider token, obtained via Botfather */
           providerToken             : String
-          /* Unique deep-linking parameter that can be used to generate 
-          this invoice when used as a start parameter */
-          startParameter            : String
           /* Three-letter ISO 4217 currency code, see more on currencies */
           currency                  : String
           /* Price breakdown, a JSON-serialized list of components (e.g. 
           product price, tax, discount, delivery cost, delivery tax, 
           bonus, etc.) */
           prices                    : List[LabeledPrice]
+          /* The maximum accepted amount for tips in the smallest units 
+          of the currency (integer, not float/double). For example, 
+          for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See 
+          the exp parameter in currencies.json, it shows the number of 
+          digits past the decimal point for each currency (2 for the 
+          majority of currencies). Defaults to 0 */
+          maxTipAmount              : Option[Int]
+          /* A JSON-serialized array of suggested amounts of tips in the 
+          smallest units of the currency (integer, not float/double). 
+          At most 4 suggested tip amounts can be specified. The 
+          suggested tip amounts must be positive, passed in a strictly 
+          increased order and must not exceed max_tip_amount. */
+          suggestedTipAmounts       : List[Int]
+          /* Unique deep-linking parameter. If left empty, forwarded 
+          copies of the sent message will have a Pay button, allowing 
+          multiple users to pay directly from the forwarded message, 
+          using the same invoice. If non-empty, forwarded copies of 
+          the sent message will have a URL button with a deep link to 
+          the bot (instead of a Pay button), with the value used as 
+          the start parameter */
+          startParameter            : Option[String]
           /* A JSON-serialized data about the invoice, which will be 
           shared with the payment provider. A detailed description of 
           required fields should be provided by the payment provider. */
@@ -3781,8 +3890,8 @@ namespace telegramium {
         } => Method[User]
                 
       
-        /* Use this method to forward messages of any kind. On success, the sent Message 
-          is returned.  */
+        /* Use this method to forward messages of any kind. Service messages can't be 
+          forwarded. On success, the sent Message is returned.  */
         def forwardMessage {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -3909,8 +4018,7 @@ namespace telegramium {
           /* Pass True, if the administrator can delete messages of 
           other users */
           canDeleteMessages   : Option[Boolean]
-          /* Pass True, if the administrator can manage voice chats, 
-          supergroups only */
+          /* Pass True, if the administrator can manage voice chats */
           canManageVoiceChats : Option[Boolean]
           /* Pass True, if the administrator can restrict, ban or unban 
           chat members */
