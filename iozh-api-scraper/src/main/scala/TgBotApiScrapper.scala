@@ -371,9 +371,10 @@ object TgBotApiScrapper extends IOApp {
         .collect {
           case x: Item if x.name.text.head.isLower =>
             val params = x.table >> elements("tbody > tr")
-            val resA = x.desc.flatMap(y => y >> elements("a"))
+            val types = x.desc.flatMap(y => y >> elements("a"))
               .map(_.text)
-              .find(_.head.isUpper)
+              .filter(_.head.isUpper)
+            val resA = types.find(_ == "Message").orElse(types.headOption)
             val resEm = x.desc.flatMap(y => y >> elements("em"))
               .map(_.text)
               .find(_.head.isUpper)

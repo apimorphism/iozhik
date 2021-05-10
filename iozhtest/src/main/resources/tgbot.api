@@ -3976,7 +3976,7 @@ namespace telegramium {
           an inline keyboard, custom reply keyboard, instructions to 
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
-        } => Method[Audio]
+        } => Method[Message]
                 
       
         /* Use this method to log out from the cloud Bot API server before launching the 
@@ -4220,7 +4220,7 @@ namespace telegramium {
           an inline keyboard, custom reply keyboard, instructions to 
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
-        } => Method[Document]
+        } => Method[Message]
                 
       
         /* Use this method to set a new group sticker set for a supergroup. The bot must 
