@@ -1242,8 +1242,8 @@ namespace telegramium {
       /* pre  */
       PreMessageEntity {
         type : "pre:6"
-        /* the programming language of the entity text */
-        language : String
+        /* Optional, the programming language of the entity text */
+        language : Option[String]
       }
              
       /* italic  */

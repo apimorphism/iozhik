@@ -155,7 +155,10 @@ object TgBotApiScrapper extends IOApp {
                   child,
                   table = t.copy(desc = child) :: e.table
                     .filter(f => f.desc.contains("Optional") && forXOnlyPattern.findFirstIn(f.desc).contains(child))
-                    .map(f => f.copy(desc = messageEntityDescPattern.replaceFirstIn(f.desc, "")))
+                    .map { f =>
+                      val optional = if (f.name == "language") "Optional, " else ""
+                      f.copy(desc = optional + messageEntityDescPattern.replaceFirstIn(f.desc, ""))
+                    }
                 )
               }
           }
