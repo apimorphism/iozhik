@@ -287,6 +287,7 @@ object CirceImplicits {
     case circle: Circle     => circle.asJson.mapObject(_.add("type", Json.fromString("circle")))
     case triangle: Triangle => triangle.asJson.mapObject(_.add("type", Json.fromString("triangle")))
   }
+
   implicit lazy val figureDecoder: Decoder[Figure] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
@@ -318,11 +319,7 @@ object CirceImplicits {
         _width     <- h.get[Int]("width")
         _height    <- h.get[Int]("height")
       } yield {
-        Square(area = _area,
-               perimeter = _perimeter,
-               sides = _sides,
-               width = _width,
-               height = _height)
+        Square(area = _area, perimeter = _perimeter, sides = _sides, width = _width, height = _height)
       }
     }
 

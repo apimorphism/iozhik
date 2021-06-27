@@ -302,8 +302,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("metal")))
@@ -320,8 +320,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("wood")))
@@ -338,8 +338,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("plastic")))
@@ -349,6 +349,7 @@ object CirceImplicits {
     }
 
   }
+
   implicit lazy val materialDecoder: Decoder[Material] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
@@ -359,10 +360,7 @@ object CirceImplicits {
           strength     <- Decoder[Double].prepare(_.downField("props").downField("strength"))
           conductivity <- Decoder[Double].prepare(_.downField("props").downField("conductivity"))
         } yield {
-          Metal(density = density,
-                valency = valency,
-                strength = strength,
-                conductivity = conductivity)
+          Metal(density = density, valency = valency, strength = strength, conductivity = conductivity)
         }
       case "wood" =>
         for {
@@ -424,10 +422,7 @@ object CirceImplicits {
         _valency      <- h.get[Int]("valency")
         _strength     <- h.get[Double]("strength")
       } yield {
-        Metal(conductivity = _conductivity,
-              density = _density,
-              valency = _valency,
-              strength = _strength)
+        Metal(conductivity = _conductivity, density = _density, valency = _valency, strength = _strength)
       }
     }
 

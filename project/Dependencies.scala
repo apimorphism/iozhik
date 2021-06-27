@@ -14,7 +14,7 @@ object Dependencies {
     val scalaTest  = "3.0.5"
     val fs2Core    = "1.0.0"
     val fs2IO      = "1.0.0"
-    val scalaFmt   = "2.0.0-RC4"
+    val scalaFmt   = "3.0.0-RC5"
     val scodecCore = "1.10.3"
     val scodecBits = "1.1.6"
     val http4s     = "0.20.0"

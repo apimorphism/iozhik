@@ -12,24 +12,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("photoId",
-              "photoOwnerId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "photoId",
+            "photoOwnerId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       photo_comment_new.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("photo_comment_new")))
@@ -40,15 +45,14 @@ object CirceImplicits {
 
     case board_post_delete: EventBoardPostDelete => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("topicId", "topicOwnerId", "id")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("topicId", "topicOwnerId", "id")))
       board_post_delete.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("board_post_delete")))
@@ -61,24 +65,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("videoId",
-              "videoOwnerId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "videoId",
+            "videoOwnerId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       video_comment_new.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("video_comment_new")))
@@ -91,24 +100,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("marketOwnerId",
-              "itemId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "marketOwnerId",
+            "itemId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       market_comment_restore.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("market_comment_restore")))
@@ -119,15 +133,14 @@ object CirceImplicits {
 
     case video_comment_delete: EventVideoCommentDelete => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("ownerId", "id", "userId", "deleterId", "videoId")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("ownerId", "id", "userId", "deleterId", "videoId")))
       video_comment_delete.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("video_comment_delete")))
@@ -140,41 +153,44 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List(
-           "postponedId",
-           "id",
-           "ownerId",
-           "fromId",
-           "createdBy",
-           "date",
-           "text",
-           "replyOwnerId",
-           "replyPostId",
-           "friendsOnly",
-           "comments",
-           "likes",
-           "reposts",
-           "views",
-           "postType",
-           "postSource",
-           "attachments",
-           "geo",
-           "signerId",
-           "copyHistory",
-           "canPin",
-           "canDelete",
-           "canEdit",
-           "isPinned",
-           "markedAsAds",
-           "isFavorite"
-         )))
+        (
+          "object",
+          List(
+            "postponedId",
+            "id",
+            "ownerId",
+            "fromId",
+            "createdBy",
+            "date",
+            "text",
+            "replyOwnerId",
+            "replyPostId",
+            "friendsOnly",
+            "comments",
+            "likes",
+            "reposts",
+            "views",
+            "postType",
+            "postSource",
+            "attachments",
+            "geo",
+            "signerId",
+            "copyHistory",
+            "canPin",
+            "canDelete",
+            "canEdit",
+            "isPinned",
+            "markedAsAds",
+            "isFavorite"
+          )
+        )
+      )
       wall_repost.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("wall_repost")))
@@ -187,24 +203,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("postId",
-              "postOwnderId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "postId",
+            "postOwnderId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       wall_reply_new.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("wall_reply_new")))
@@ -217,24 +238,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("marketOwnerId",
-              "itemId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "marketOwnerId",
+            "itemId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       market_comment_edit.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("market_comment_edit")))
@@ -247,24 +273,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("videoId",
-              "videoOwnerId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "videoId",
+            "videoOwnerId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       video_comment_edit.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("video_comment_edit")))
@@ -277,13 +308,14 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object", List("topicId", "topicOwnerId", "id", "fromId", "date", "text", "attachments")))
+        ("object", List("topicId", "topicOwnerId", "id", "fromId", "date", "text", "attachments"))
+      )
       board_post_restore.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("board_post_restore")))
@@ -294,15 +326,14 @@ object CirceImplicits {
 
     case poll_vote_new: EventPollVoteNew => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("ownerId", "pollId", "optionId", "userId")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("ownerId", "pollId", "optionId", "userId")))
       poll_vote_new.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("poll_vote_new")))
@@ -315,24 +346,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("photoId",
-              "photoOwnerId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "photoId",
+            "photoOwnerId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       photo_comment_restore.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("photo_comment_restore")))
@@ -341,8 +377,7 @@ object CirceImplicits {
       }
     }
 
-    case video_new: EventVideoNew =>
-      video_new.asJson.mapObject(_.add("type", Json.fromString("video_new")))
+    case video_new: EventVideoNew => video_new.asJson.mapObject(_.add("type", Json.fromString("video_new")))
 
     case group_change_photo: EventGroupChangePhoto => {
       import io.circe.JsonObject
@@ -352,8 +387,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("group_change_photo")))
@@ -370,8 +405,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("message_allow")))
@@ -384,41 +419,44 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List(
-           "postponedId",
-           "id",
-           "ownerId",
-           "fromId",
-           "createdBy",
-           "date",
-           "text",
-           "replyOwnerId",
-           "replyPostId",
-           "friendsOnly",
-           "comments",
-           "likes",
-           "reposts",
-           "views",
-           "postType",
-           "postSource",
-           "attachments",
-           "geo",
-           "signerId",
-           "copyHistory",
-           "canPin",
-           "canDelete",
-           "canEdit",
-           "isPinned",
-           "markedAsAds",
-           "isFavorite"
-         )))
+        (
+          "object",
+          List(
+            "postponedId",
+            "id",
+            "ownerId",
+            "fromId",
+            "createdBy",
+            "date",
+            "text",
+            "replyOwnerId",
+            "replyPostId",
+            "friendsOnly",
+            "comments",
+            "likes",
+            "reposts",
+            "views",
+            "postType",
+            "postSource",
+            "attachments",
+            "geo",
+            "signerId",
+            "copyHistory",
+            "canPin",
+            "canDelete",
+            "canEdit",
+            "isPinned",
+            "markedAsAds",
+            "isFavorite"
+          )
+        )
+      )
       wall_post_new.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("wall_post_new")))
@@ -429,15 +467,14 @@ object CirceImplicits {
 
     case vkpay_transaction: EventVkPayTransaction => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("fromId", "amount", "description", "date")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("fromId", "amount", "description", "date")))
       vkpay_transaction.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("vkpay_transaction")))
@@ -450,24 +487,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("postId",
-              "postOwnderId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "postId",
+            "postOwnderId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       wall_reply_edit.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("wall_reply_edit")))
@@ -480,24 +522,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("photoId",
-              "photoOwnerId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "photoId",
+            "photoOwnerId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       photo_comment_edit.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("photo_comment_edit")))
@@ -506,8 +553,7 @@ object CirceImplicits {
       }
     }
 
-    case message_new: EventMessageNew =>
-      message_new.asJson.mapObject(_.add("type", Json.fromString("message_new")))
+    case message_new: EventMessageNew => message_new.asJson.mapObject(_.add("type", Json.fromString("message_new")))
 
     case group_leave: EventGroupLeave => {
       import io.circe.JsonObject
@@ -517,8 +563,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("group_leave")))
@@ -529,15 +575,14 @@ object CirceImplicits {
 
     case wall_reply_delete: EventWallReplyDelete => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("ownerId", "id", "deleterId", "postId")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("ownerId", "id", "deleterId", "postId")))
       wall_reply_delete.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("wall_reply_delete")))
@@ -554,8 +599,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("group_change_settings")))
@@ -566,15 +611,14 @@ object CirceImplicits {
 
     case user_unblock: EventUserUnblock => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("adminId", "userId", "byEndDate")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("adminId", "userId", "byEndDate")))
       user_unblock.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("user_unblock")))
@@ -591,8 +635,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("group_officers_edit")))
@@ -603,15 +647,14 @@ object CirceImplicits {
 
     case user_block: EventUserBlock => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("adminId", "userId", "unblockDate", "comment")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("adminId", "userId", "unblockDate", "comment")))
       user_block.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("user_block")))
@@ -624,24 +667,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("marketOwnerId",
-              "itemId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "marketOwnerId",
+            "itemId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       market_comment_new.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("market_comment_new")))
@@ -650,20 +698,18 @@ object CirceImplicits {
       }
     }
 
-    case audio_new: EventAudioNew =>
-      audio_new.asJson.mapObject(_.add("type", Json.fromString("audio_new")))
+    case audio_new: EventAudioNew => audio_new.asJson.mapObject(_.add("type", Json.fromString("audio_new")))
 
     case photo_comment_delete: EventPhotoCommentDelete => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("ownerId", "id", "userId", "deleterId", "photoId")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("ownerId", "id", "userId", "deleterId", "photoId")))
       photo_comment_delete.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("photo_comment_delete")))
@@ -676,13 +722,14 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object", List("topicId", "topicOwnerId", "id", "fromId", "date", "text", "attachments")))
+        ("object", List("topicId", "topicOwnerId", "id", "fromId", "date", "text", "attachments"))
+      )
       board_post_edit.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("board_post_edit")))
@@ -699,8 +746,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("group_join")))
@@ -717,8 +764,8 @@ object CirceImplicits {
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("message_deny")))
@@ -727,20 +774,18 @@ object CirceImplicits {
       }
     }
 
-    case message_edit: EventMessageEdit =>
-      message_edit.asJson.mapObject(_.add("type", Json.fromString("message_edit")))
+    case message_edit: EventMessageEdit => message_edit.asJson.mapObject(_.add("type", Json.fromString("message_edit")))
 
     case market_comment_delete: EventMarketCommentDelete => {
       import io.circe.JsonObject
-      val lvl0: List[String] = List("groupId")
-      val lvl1: List[(String, List[String])] = List(
-        ("object", List("ownerId", "id", "userId", "deleterId", "itemId")))
+      val lvl0: List[String]                 = List("groupId")
+      val lvl1: List[(String, List[String])] = List(("object", List("ownerId", "id", "userId", "deleterId", "itemId")))
       market_comment_delete.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("market_comment_delete")))
@@ -749,31 +794,35 @@ object CirceImplicits {
       }
     }
 
-    case photo_new: EventPhotoNew =>
-      photo_new.asJson.mapObject(_.add("type", Json.fromString("photo_new")))
+    case photo_new: EventPhotoNew => photo_new.asJson.mapObject(_.add("type", Json.fromString("photo_new")))
 
     case video_comment_restore: EventVideoCommentRestore => {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("video_id",
-              "videoOwnerId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "video_id",
+            "videoOwnerId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       video_comment_restore.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("video_comment_restore")))
@@ -786,24 +835,29 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object",
-         List("postId",
-              "postOwnderId",
-              "id",
-              "fromId",
-              "date",
-              "text",
-              "replyToUser",
-              "replyToComment",
-              "attachments",
-              "parentsStack",
-              "thread")))
+        (
+          "object",
+          List(
+            "postId",
+            "postOwnderId",
+            "id",
+            "fromId",
+            "date",
+            "text",
+            "replyToUser",
+            "replyToComment",
+            "attachments",
+            "parentsStack",
+            "thread"
+          )
+        )
+      )
       wall_reply_restore.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("wall_reply_restore")))
@@ -819,13 +873,14 @@ object CirceImplicits {
       import io.circe.JsonObject
       val lvl0: List[String] = List("groupId")
       val lvl1: List[(String, List[String])] = List(
-        ("object", List("topicId", "topicOwnerId", "id", "fromId", "date", "text", "attachments")))
+        ("object", List("topicId", "topicOwnerId", "id", "fromId", "date", "text", "attachments"))
+      )
       board_post_new.asJson.mapObject { o =>
         val map = o.toMap
         Json
           .fromFields(
-            lvl1.map {
-              case (k, items) => k -> Json.fromFields(items.zip(items.flatMap(map.get)))
+            lvl1.map { case (k, items) =>
+              k -> Json.fromFields(items.zip(items.flatMap(map.get)))
             } ++ o.toList.filter(x => lvl0.contains(x._1))
           )
           .mapObject(_.add("type", Json.fromString("board_post_new")))
@@ -835,6 +890,7 @@ object CirceImplicits {
     }
 
   }
+
   implicit lazy val eventDecoder: Decoder[Event] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
@@ -849,11 +905,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventPhotoCommentNew(
             groupId = groupId,
@@ -877,10 +931,7 @@ object CirceImplicits {
           topicOwnerId <- Decoder[Int].prepare(_.downField("object").downField("topicOwnerId"))
           id           <- Decoder[Int].prepare(_.downField("object").downField("id"))
         } yield {
-          EventBoardPostDelete(groupId = groupId,
-                               topicId = topicId,
-                               topicOwnerId = topicOwnerId,
-                               id = id)
+          EventBoardPostDelete(groupId = groupId, topicId = topicId, topicOwnerId = topicOwnerId, id = id)
         }
       case "video_comment_new" =>
         for {
@@ -893,11 +944,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventVideoCommentNew(
             groupId = groupId,
@@ -925,11 +974,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventMarketCommentRestore(
             groupId = groupId,
@@ -955,12 +1002,14 @@ object CirceImplicits {
           deleterId <- Decoder[Int].prepare(_.downField("object").downField("deleterId"))
           videoId   <- Decoder[Int].prepare(_.downField("object").downField("videoId"))
         } yield {
-          EventVideoCommentDelete(groupId = groupId,
-                                  ownerId = ownerId,
-                                  id = id,
-                                  userId = userId,
-                                  deleterId = deleterId,
-                                  videoId = videoId)
+          EventVideoCommentDelete(
+            groupId = groupId,
+            ownerId = ownerId,
+            id = id,
+            userId = userId,
+            deleterId = deleterId,
+            videoId = videoId
+          )
         }
       case "wall_repost" =>
         for {
@@ -974,28 +1023,23 @@ object CirceImplicits {
           text         <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyOwnerId <- Decoder[Int].prepare(_.downField("object").downField("replyOwnerId"))
           replyPostId  <- Decoder[Int].prepare(_.downField("object").downField("replyPostId"))
-          friendsOnly <- Decoder[Option[Int]]
-            .prepare(_.downField("object").downField("friendsOnly"))
-          comments <- Decoder[WallPostCommentsAnon].prepare(
-            _.downField("object").downField("comments"))
-          likes <- Decoder[WallPostLikesAnon].prepare(_.downField("object").downField("likes"))
-          reposts <- Decoder[WallPostReportsAnon].prepare(
-            _.downField("object").downField("reposts"))
-          views      <- Decoder[WallPostViewsAnon].prepare(_.downField("object").downField("views"))
-          postType   <- Decoder[PostType].prepare(_.downField("object").downField("postType"))
-          postSource <- Decoder[PostSource].prepare(_.downField("object").downField("postSource"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          geo      <- Decoder[Geo].prepare(_.downField("object").downField("geo"))
-          signerId <- Decoder[Int].prepare(_.downField("object").downField("signerId"))
-          copyHistory <- Decoder[Vector[WallPost]]
-            .prepare(_.downField("object").downField("copyHistory"))
-          canPin      <- Decoder[Boolean].prepare(_.downField("object").downField("canPin"))
-          canDelete   <- Decoder[Boolean].prepare(_.downField("object").downField("canDelete"))
-          canEdit     <- Decoder[Boolean].prepare(_.downField("object").downField("canEdit"))
-          isPinned    <- Decoder[Boolean].prepare(_.downField("object").downField("isPinned"))
-          markedAsAds <- Decoder[Boolean].prepare(_.downField("object").downField("markedAsAds"))
-          isFavorite  <- Decoder[Boolean].prepare(_.downField("object").downField("isFavorite"))
+          friendsOnly  <- Decoder[Option[Int]].prepare(_.downField("object").downField("friendsOnly"))
+          comments     <- Decoder[WallPostCommentsAnon].prepare(_.downField("object").downField("comments"))
+          likes        <- Decoder[WallPostLikesAnon].prepare(_.downField("object").downField("likes"))
+          reposts      <- Decoder[WallPostReportsAnon].prepare(_.downField("object").downField("reposts"))
+          views        <- Decoder[WallPostViewsAnon].prepare(_.downField("object").downField("views"))
+          postType     <- Decoder[PostType].prepare(_.downField("object").downField("postType"))
+          postSource   <- Decoder[PostSource].prepare(_.downField("object").downField("postSource"))
+          attachments  <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          geo          <- Decoder[Geo].prepare(_.downField("object").downField("geo"))
+          signerId     <- Decoder[Int].prepare(_.downField("object").downField("signerId"))
+          copyHistory  <- Decoder[Vector[WallPost]].prepare(_.downField("object").downField("copyHistory"))
+          canPin       <- Decoder[Boolean].prepare(_.downField("object").downField("canPin"))
+          canDelete    <- Decoder[Boolean].prepare(_.downField("object").downField("canDelete"))
+          canEdit      <- Decoder[Boolean].prepare(_.downField("object").downField("canEdit"))
+          isPinned     <- Decoder[Boolean].prepare(_.downField("object").downField("isPinned"))
+          markedAsAds  <- Decoder[Boolean].prepare(_.downField("object").downField("markedAsAds"))
+          isFavorite   <- Decoder[Boolean].prepare(_.downField("object").downField("isFavorite"))
         } yield {
           EventWallRepost(
             groupId = groupId,
@@ -1038,11 +1082,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventWallReplyNew(
             groupId = groupId,
@@ -1070,11 +1112,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventMarketCommentEdit(
             groupId = groupId,
@@ -1102,11 +1142,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventVideoCommentEdit(
             groupId = groupId,
@@ -1132,17 +1170,18 @@ object CirceImplicits {
           fromId       <- Decoder[Int].prepare(_.downField("object").downField("fromId"))
           date         <- Decoder[Long].prepare(_.downField("object").downField("date"))
           text         <- Decoder[String].prepare(_.downField("object").downField("text"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
+          attachments  <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
         } yield {
-          EventBoardPostRestore(groupId = groupId,
-                                topicId = topicId,
-                                topicOwnerId = topicOwnerId,
-                                id = id,
-                                fromId = fromId,
-                                date = date,
-                                text = text,
-                                attachments = attachments)
+          EventBoardPostRestore(
+            groupId = groupId,
+            topicId = topicId,
+            topicOwnerId = topicOwnerId,
+            id = id,
+            fromId = fromId,
+            date = date,
+            text = text,
+            attachments = attachments
+          )
         }
       case "poll_vote_new" =>
         for {
@@ -1152,11 +1191,7 @@ object CirceImplicits {
           optionId <- Decoder[Int].prepare(_.downField("object").downField("optionId"))
           userId   <- Decoder[Int].prepare(_.downField("object").downField("userId"))
         } yield {
-          EventPollVoteNew(groupId = groupId,
-                           ownerId = ownerId,
-                           pollId = pollId,
-                           optionId = optionId,
-                           userId = userId)
+          EventPollVoteNew(groupId = groupId, ownerId = ownerId, pollId = pollId, optionId = optionId, userId = userId)
         }
       case "photo_comment_restore" =>
         for {
@@ -1169,11 +1204,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventPhotoCommentRestore(
             groupId = groupId,
@@ -1219,28 +1252,23 @@ object CirceImplicits {
           text         <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyOwnerId <- Decoder[Int].prepare(_.downField("object").downField("replyOwnerId"))
           replyPostId  <- Decoder[Int].prepare(_.downField("object").downField("replyPostId"))
-          friendsOnly <- Decoder[Option[Int]]
-            .prepare(_.downField("object").downField("friendsOnly"))
-          comments <- Decoder[WallPostCommentsAnon].prepare(
-            _.downField("object").downField("comments"))
-          likes <- Decoder[WallPostLikesAnon].prepare(_.downField("object").downField("likes"))
-          reposts <- Decoder[WallPostReportsAnon].prepare(
-            _.downField("object").downField("reposts"))
-          views      <- Decoder[WallPostViewsAnon].prepare(_.downField("object").downField("views"))
-          postType   <- Decoder[PostType].prepare(_.downField("object").downField("postType"))
-          postSource <- Decoder[PostSource].prepare(_.downField("object").downField("postSource"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          geo      <- Decoder[Geo].prepare(_.downField("object").downField("geo"))
-          signerId <- Decoder[Int].prepare(_.downField("object").downField("signerId"))
-          copyHistory <- Decoder[Vector[WallPost]]
-            .prepare(_.downField("object").downField("copyHistory"))
-          canPin      <- Decoder[Boolean].prepare(_.downField("object").downField("canPin"))
-          canDelete   <- Decoder[Boolean].prepare(_.downField("object").downField("canDelete"))
-          canEdit     <- Decoder[Boolean].prepare(_.downField("object").downField("canEdit"))
-          isPinned    <- Decoder[Boolean].prepare(_.downField("object").downField("isPinned"))
-          markedAsAds <- Decoder[Boolean].prepare(_.downField("object").downField("markedAsAds"))
-          isFavorite  <- Decoder[Boolean].prepare(_.downField("object").downField("isFavorite"))
+          friendsOnly  <- Decoder[Option[Int]].prepare(_.downField("object").downField("friendsOnly"))
+          comments     <- Decoder[WallPostCommentsAnon].prepare(_.downField("object").downField("comments"))
+          likes        <- Decoder[WallPostLikesAnon].prepare(_.downField("object").downField("likes"))
+          reposts      <- Decoder[WallPostReportsAnon].prepare(_.downField("object").downField("reposts"))
+          views        <- Decoder[WallPostViewsAnon].prepare(_.downField("object").downField("views"))
+          postType     <- Decoder[PostType].prepare(_.downField("object").downField("postType"))
+          postSource   <- Decoder[PostSource].prepare(_.downField("object").downField("postSource"))
+          attachments  <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          geo          <- Decoder[Geo].prepare(_.downField("object").downField("geo"))
+          signerId     <- Decoder[Int].prepare(_.downField("object").downField("signerId"))
+          copyHistory  <- Decoder[Vector[WallPost]].prepare(_.downField("object").downField("copyHistory"))
+          canPin       <- Decoder[Boolean].prepare(_.downField("object").downField("canPin"))
+          canDelete    <- Decoder[Boolean].prepare(_.downField("object").downField("canDelete"))
+          canEdit      <- Decoder[Boolean].prepare(_.downField("object").downField("canEdit"))
+          isPinned     <- Decoder[Boolean].prepare(_.downField("object").downField("isPinned"))
+          markedAsAds  <- Decoder[Boolean].prepare(_.downField("object").downField("markedAsAds"))
+          isFavorite   <- Decoder[Boolean].prepare(_.downField("object").downField("isFavorite"))
         } yield {
           EventWallPostNew(
             groupId = groupId,
@@ -1280,11 +1308,13 @@ object CirceImplicits {
           description <- Decoder[String].prepare(_.downField("object").downField("description"))
           date        <- Decoder[Long].prepare(_.downField("object").downField("date"))
         } yield {
-          EventVkPayTransaction(groupId = groupId,
-                                fromId = fromId,
-                                amount = amount,
-                                description = description,
-                                date = date)
+          EventVkPayTransaction(
+            groupId = groupId,
+            fromId = fromId,
+            amount = amount,
+            description = description,
+            date = date
+          )
         }
       case "wall_reply_edit" =>
         for {
@@ -1297,11 +1327,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventWallReplyEdit(
             groupId = groupId,
@@ -1329,11 +1357,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventPhotoCommentEdit(
             groupId = groupId,
@@ -1367,11 +1393,7 @@ object CirceImplicits {
           deleterId <- Decoder[Int].prepare(_.downField("object").downField("deleterId"))
           postId    <- Decoder[Int].prepare(_.downField("object").downField("postId"))
         } yield {
-          EventWallReplyDelete(groupId = groupId,
-                               ownerId = ownerId,
-                               id = id,
-                               deleterId = deleterId,
-                               postId = postId)
+          EventWallReplyDelete(groupId = groupId, ownerId = ownerId, id = id, deleterId = deleterId, postId = postId)
         }
       case "group_change_settings" =>
         for {
@@ -1387,10 +1409,7 @@ object CirceImplicits {
           userId    <- Decoder[Int].prepare(_.downField("object").downField("userId"))
           byEndDate <- Decoder[Boolean].prepare(_.downField("object").downField("byEndDate"))
         } yield {
-          EventUserUnblock(groupId = groupId,
-                           adminId = adminId,
-                           userId = userId,
-                           byEndDate = byEndDate)
+          EventUserUnblock(groupId = groupId, adminId = adminId, userId = userId, byEndDate = byEndDate)
         }
       case "group_officers_edit" =>
         for {
@@ -1408,11 +1427,13 @@ object CirceImplicits {
           unblockDate <- Decoder[Long].prepare(_.downField("object").downField("unblockDate"))
           comment     <- Decoder[String].prepare(_.downField("object").downField("comment"))
         } yield {
-          EventUserBlock(groupId = groupId,
-                         adminId = adminId,
-                         userId = userId,
-                         unblockDate = unblockDate,
-                         comment = comment)
+          EventUserBlock(
+            groupId = groupId,
+            adminId = adminId,
+            userId = userId,
+            unblockDate = unblockDate,
+            comment = comment
+          )
         }
       case "market_comment_new" =>
         for {
@@ -1425,11 +1446,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventMarketCommentNew(
             groupId = groupId,
@@ -1456,12 +1475,14 @@ object CirceImplicits {
           deleterId <- Decoder[Int].prepare(_.downField("object").downField("deleterId"))
           photoId   <- Decoder[Int].prepare(_.downField("object").downField("photoId"))
         } yield {
-          EventPhotoCommentDelete(groupId = groupId,
-                                  ownerId = ownerId,
-                                  id = id,
-                                  userId = userId,
-                                  deleterId = deleterId,
-                                  photoId = photoId)
+          EventPhotoCommentDelete(
+            groupId = groupId,
+            ownerId = ownerId,
+            id = id,
+            userId = userId,
+            deleterId = deleterId,
+            photoId = photoId
+          )
         }
       case "board_post_edit" =>
         for {
@@ -1472,17 +1493,18 @@ object CirceImplicits {
           fromId       <- Decoder[Int].prepare(_.downField("object").downField("fromId"))
           date         <- Decoder[Long].prepare(_.downField("object").downField("date"))
           text         <- Decoder[String].prepare(_.downField("object").downField("text"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
+          attachments  <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
         } yield {
-          EventBoardPostEdit(groupId = groupId,
-                             topicId = topicId,
-                             topicOwnerId = topicOwnerId,
-                             id = id,
-                             fromId = fromId,
-                             date = date,
-                             text = text,
-                             attachments = attachments)
+          EventBoardPostEdit(
+            groupId = groupId,
+            topicId = topicId,
+            topicOwnerId = topicOwnerId,
+            id = id,
+            fromId = fromId,
+            date = date,
+            text = text,
+            attachments = attachments
+          )
         }
       case "group_join" =>
         for {
@@ -1508,12 +1530,14 @@ object CirceImplicits {
           deleterId <- Decoder[Int].prepare(_.downField("object").downField("deleterId"))
           itemId    <- Decoder[Int].prepare(_.downField("object").downField("itemId"))
         } yield {
-          EventMarketCommentDelete(groupId = groupId,
-                                   ownerId = ownerId,
-                                   id = id,
-                                   userId = userId,
-                                   deleterId = deleterId,
-                                   itemId = itemId)
+          EventMarketCommentDelete(
+            groupId = groupId,
+            ownerId = ownerId,
+            id = id,
+            userId = userId,
+            deleterId = deleterId,
+            itemId = itemId
+          )
         }
       case "photo_new" => Decoder[EventPhotoNew]
       case "video_comment_restore" =>
@@ -1527,11 +1551,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventVideoCommentRestore(
             groupId = groupId,
@@ -1559,11 +1581,9 @@ object CirceImplicits {
           text           <- Decoder[String].prepare(_.downField("object").downField("text"))
           replyToUser    <- Decoder[Int].prepare(_.downField("object").downField("replyToUser"))
           replyToComment <- Decoder[Int].prepare(_.downField("object").downField("replyToComment"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
-          parentsStack <- Decoder[Vector[Int]]
-            .prepare(_.downField("object").downField("parentsStack"))
-          thread <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
+          attachments    <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
+          parentsStack   <- Decoder[Vector[Int]].prepare(_.downField("object").downField("parentsStack"))
+          thread         <- Decoder[CommentsThread].prepare(_.downField("object").downField("thread"))
         } yield {
           EventWallReplyRestore(
             groupId = groupId,
@@ -1590,17 +1610,18 @@ object CirceImplicits {
           fromId       <- Decoder[Int].prepare(_.downField("object").downField("fromId"))
           date         <- Decoder[Long].prepare(_.downField("object").downField("date"))
           text         <- Decoder[String].prepare(_.downField("object").downField("text"))
-          attachments <- Decoder[Vector[Attachment]]
-            .prepare(_.downField("object").downField("attachments"))
+          attachments  <- Decoder[Vector[Attachment]].prepare(_.downField("object").downField("attachments"))
         } yield {
-          EventBoardPostNew(groupId = groupId,
-                            topicId = topicId,
-                            topicOwnerId = topicOwnerId,
-                            id = id,
-                            fromId = fromId,
-                            date = date,
-                            text = text,
-                            attachments = attachments)
+          EventBoardPostNew(
+            groupId = groupId,
+            topicId = topicId,
+            topicOwnerId = topicOwnerId,
+            id = id,
+            fromId = fromId,
+            date = date,
+            text = text,
+            attachments = attachments
+          )
         }
     }
   } yield value
@@ -1910,12 +1931,14 @@ object CirceImplicits {
         _deleterId <- h.get[Int]("deleter_id")
         _photoId   <- h.get[Int]("photo_id")
       } yield {
-        EventPhotoCommentDelete(groupId = _groupId,
-                                ownerId = _ownerId,
-                                id = _id,
-                                userId = _userId,
-                                deleterId = _deleterId,
-                                photoId = _photoId)
+        EventPhotoCommentDelete(
+          groupId = _groupId,
+          ownerId = _ownerId,
+          id = _id,
+          userId = _userId,
+          deleterId = _deleterId,
+          photoId = _photoId
+        )
       }
     }
 
@@ -2142,12 +2165,14 @@ object CirceImplicits {
         _deleterId <- h.get[Int]("deleter_id")
         _videoId   <- h.get[Int]("video_id")
       } yield {
-        EventVideoCommentDelete(groupId = _groupId,
-                                ownerId = _ownerId,
-                                id = _id,
-                                userId = _userId,
-                                deleterId = _deleterId,
-                                videoId = _videoId)
+        EventVideoCommentDelete(
+          groupId = _groupId,
+          ownerId = _ownerId,
+          id = _id,
+          userId = _userId,
+          deleterId = _deleterId,
+          videoId = _videoId
+        )
       }
     }
 
@@ -2528,11 +2553,7 @@ object CirceImplicits {
         _deleterId <- h.get[Int]("deleter_id")
         _postId    <- h.get[Int]("post_id")
       } yield {
-        EventWallReplyDelete(groupId = _groupId,
-                             ownerId = _ownerId,
-                             id = _id,
-                             deleterId = _deleterId,
-                             postId = _postId)
+        EventWallReplyDelete(groupId = _groupId, ownerId = _ownerId, id = _id, deleterId = _deleterId, postId = _postId)
       }
     }
 
@@ -2564,14 +2585,16 @@ object CirceImplicits {
         _topicId      <- h.get[Int]("topic_id")
         _topicOwnerId <- h.get[Int]("topic_owner_id")
       } yield {
-        EventBoardPostNew(id = _id,
-                          fromId = _fromId,
-                          date = _date,
-                          text = _text,
-                          attachments = _attachments,
-                          groupId = _groupId,
-                          topicId = _topicId,
-                          topicOwnerId = _topicOwnerId)
+        EventBoardPostNew(
+          id = _id,
+          fromId = _fromId,
+          date = _date,
+          text = _text,
+          attachments = _attachments,
+          groupId = _groupId,
+          topicId = _topicId,
+          topicOwnerId = _topicOwnerId
+        )
       }
     }
 
@@ -2603,14 +2626,16 @@ object CirceImplicits {
         _topicId      <- h.get[Int]("topic_id")
         _topicOwnerId <- h.get[Int]("topic_owner_id")
       } yield {
-        EventBoardPostEdit(id = _id,
-                           fromId = _fromId,
-                           date = _date,
-                           text = _text,
-                           attachments = _attachments,
-                           groupId = _groupId,
-                           topicId = _topicId,
-                           topicOwnerId = _topicOwnerId)
+        EventBoardPostEdit(
+          id = _id,
+          fromId = _fromId,
+          date = _date,
+          text = _text,
+          attachments = _attachments,
+          groupId = _groupId,
+          topicId = _topicId,
+          topicOwnerId = _topicOwnerId
+        )
       }
     }
 
@@ -2642,14 +2667,16 @@ object CirceImplicits {
         _topicId      <- h.get[Int]("topic_id")
         _topicOwnerId <- h.get[Int]("topic_owner_id")
       } yield {
-        EventBoardPostRestore(id = _id,
-                              fromId = _fromId,
-                              date = _date,
-                              text = _text,
-                              attachments = _attachments,
-                              groupId = _groupId,
-                              topicId = _topicId,
-                              topicOwnerId = _topicOwnerId)
+        EventBoardPostRestore(
+          id = _id,
+          fromId = _fromId,
+          date = _date,
+          text = _text,
+          attachments = _attachments,
+          groupId = _groupId,
+          topicId = _topicId,
+          topicOwnerId = _topicOwnerId
+        )
       }
     }
 
@@ -2673,10 +2700,7 @@ object CirceImplicits {
         _topicOwnerId <- h.get[Int]("topic_owner_id")
         _id           <- h.get[Int]("id")
       } yield {
-        EventBoardPostDelete(groupId = _groupId,
-                             topicId = _topicId,
-                             topicOwnerId = _topicOwnerId,
-                             id = _id)
+        EventBoardPostDelete(groupId = _groupId, topicId = _topicId, topicOwnerId = _topicOwnerId, id = _id)
       }
     }
 
@@ -2863,12 +2887,14 @@ object CirceImplicits {
         _deleterId <- h.get[Int]("deleter_id")
         _itemId    <- h.get[Int]("item_id")
       } yield {
-        EventMarketCommentDelete(groupId = _groupId,
-                                 ownerId = _ownerId,
-                                 id = _id,
-                                 userId = _userId,
-                                 deleterId = _deleterId,
-                                 itemId = _itemId)
+        EventMarketCommentDelete(
+          groupId = _groupId,
+          ownerId = _ownerId,
+          id = _id,
+          userId = _userId,
+          deleterId = _deleterId,
+          itemId = _itemId
+        )
       }
     }
 
@@ -2936,11 +2962,13 @@ object CirceImplicits {
         _unblockDate <- h.get[Long]("unblock_date")
         _comment     <- h.get[String]("comment")
       } yield {
-        EventUserBlock(groupId = _groupId,
-                       adminId = _adminId,
-                       userId = _userId,
-                       unblockDate = _unblockDate,
-                       comment = _comment)
+        EventUserBlock(
+          groupId = _groupId,
+          adminId = _adminId,
+          userId = _userId,
+          unblockDate = _unblockDate,
+          comment = _comment
+        )
       }
     }
 
@@ -2964,10 +2992,7 @@ object CirceImplicits {
         _userId    <- h.get[Int]("user_id")
         _byEndDate <- h.get[Boolean]("by_end_date")
       } yield {
-        EventUserUnblock(groupId = _groupId,
-                         adminId = _adminId,
-                         userId = _userId,
-                         byEndDate = _byEndDate)
+        EventUserUnblock(groupId = _groupId, adminId = _adminId, userId = _userId, byEndDate = _byEndDate)
       }
     }
 
@@ -2993,11 +3018,13 @@ object CirceImplicits {
         _optionId <- h.get[Int]("option_id")
         _userId   <- h.get[Int]("user_id")
       } yield {
-        EventPollVoteNew(groupId = _groupId,
-                         ownerId = _ownerId,
-                         pollId = _pollId,
-                         optionId = _optionId,
-                         userId = _userId)
+        EventPollVoteNew(
+          groupId = _groupId,
+          ownerId = _ownerId,
+          pollId = _pollId,
+          optionId = _optionId,
+          userId = _userId
+        )
       }
     }
 
@@ -3087,11 +3114,13 @@ object CirceImplicits {
         _description <- h.get[String]("description")
         _date        <- h.get[Long]("date")
       } yield {
-        EventVkPayTransaction(groupId = _groupId,
-                              fromId = _fromId,
-                              amount = _amount,
-                              description = _description,
-                              date = _date)
+        EventVkPayTransaction(
+          groupId = _groupId,
+          fromId = _fromId,
+          amount = _amount,
+          description = _description,
+          date = _date
+        )
       }
     }
 
@@ -3202,15 +3231,17 @@ object CirceImplicits {
         _width   <- h.get[Option[Int]]("width")
         _height  <- h.get[Option[Int]]("height")
       } yield {
-        Photo(id = _id,
-              albumId = _albumId,
-              ownerId = _ownerId,
-              userId = _userId,
-              text = _text,
-              date = _date,
-              sizes = _sizes,
-              width = _width,
-              height = _height)
+        Photo(
+          id = _id,
+          albumId = _albumId,
+          ownerId = _ownerId,
+          userId = _userId,
+          text = _text,
+          date = _date,
+          sizes = _sizes,
+          width = _width,
+          height = _height
+        )
       }
     }
 
@@ -3322,6 +3353,7 @@ object CirceImplicits {
     case photo: AttachmentPhoto => photo.asJson.mapObject(_.add("type", Json.fromString("photo")))
     case video: AttachmentVideo => video.asJson.mapObject(_.add("type", Json.fromString("video")))
   }
+
   implicit lazy val attachmentDecoder: Decoder[Attachment] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
@@ -3489,11 +3521,13 @@ object CirceImplicits {
         _showReplyButton <- h.get[Boolean]("show_reply_button")
         _groupsCanPost   <- h.get[Boolean]("groups_can_post")
       } yield {
-        CommentsThread(count = _count,
-                       items = _items,
-                       canPost = _canPost,
-                       showReplyButton = _showReplyButton,
-                       groupsCanPost = _groupsCanPost)
+        CommentsThread(
+          count = _count,
+          items = _items,
+          canPost = _canPost,
+          showReplyButton = _showReplyButton,
+          groupsCanPost = _groupsCanPost
+        )
       }
     }
 
@@ -3563,11 +3597,7 @@ object CirceImplicits {
         _text        <- h.get[String]("text")
         _attachments <- h.get[Vector[Attachment]]("attachments")
       } yield {
-        BoardComment(id = _id,
-                     fromId = _fromId,
-                     date = _date,
-                     text = _text,
-                     attachments = _attachments)
+        BoardComment(id = _id, fromId = _fromId, date = _date, text = _text, attachments = _attachments)
       }
     }
 
@@ -3803,10 +3833,10 @@ object CirceImplicits {
       profile_photo.asJson.mapObject(_.add("type", Json.fromString("profile_photo")))
     case profile_activity: ProfileActivity.type =>
       profile_activity.asJson.mapObject(_.add("type", Json.fromString("profile_activity")))
-    case like: Like.type => like.asJson.mapObject(_.add("type", Json.fromString("like")))
-    case comments: Comments.type =>
-      comments.asJson.mapObject(_.add("type", Json.fromString("comments")))
+    case like: Like.type         => like.asJson.mapObject(_.add("type", Json.fromString("like")))
+    case comments: Comments.type => comments.asJson.mapObject(_.add("type", Json.fromString("comments")))
   }
+
   implicit lazy val datatypeDecoder: Decoder[DataType] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
@@ -3818,27 +3848,23 @@ object CirceImplicits {
     }
   } yield value
 
-  implicit lazy val profileactivityEncoder: Encoder[ProfileActivity.type] =
-    (_: ProfileActivity.type) => ().asJson
-  implicit lazy val profileactivityDecoder: Decoder[ProfileActivity.type] = (_: HCursor) =>
-    Right(ProfileActivity)
-  implicit lazy val profilephotoEncoder: Encoder[ProfilePhoto.type] = (_: ProfilePhoto.type) =>
-    ().asJson
-  implicit lazy val profilephotoDecoder: Decoder[ProfilePhoto.type] = (_: HCursor) =>
-    Right(ProfilePhoto)
-  implicit lazy val commentsEncoder: Encoder[Comments.type] = (_: Comments.type) => ().asJson
-  implicit lazy val commentsDecoder: Decoder[Comments.type] = (_: HCursor) => Right(Comments)
-  implicit lazy val likeEncoder: Encoder[Like.type]         = (_: Like.type) => ().asJson
-  implicit lazy val likeDecoder: Decoder[Like.type]         = (_: HCursor) => Right(Like)
-  implicit lazy val pollEncoder: Encoder[Poll.type]         = (_: Poll.type) => ().asJson
-  implicit lazy val pollDecoder: Decoder[Poll.type]         = (_: HCursor) => Right(Poll)
+  implicit lazy val profileactivityEncoder: Encoder[ProfileActivity.type] = (_: ProfileActivity.type) => ().asJson
+  implicit lazy val profileactivityDecoder: Decoder[ProfileActivity.type] = (_: HCursor) => Right(ProfileActivity)
+  implicit lazy val profilephotoEncoder: Encoder[ProfilePhoto.type]       = (_: ProfilePhoto.type) => ().asJson
+  implicit lazy val profilephotoDecoder: Decoder[ProfilePhoto.type]       = (_: HCursor) => Right(ProfilePhoto)
+  implicit lazy val commentsEncoder: Encoder[Comments.type]               = (_: Comments.type) => ().asJson
+  implicit lazy val commentsDecoder: Decoder[Comments.type]               = (_: HCursor) => Right(Comments)
+  implicit lazy val likeEncoder: Encoder[Like.type]                       = (_: Like.type) => ().asJson
+  implicit lazy val likeDecoder: Decoder[Like.type]                       = (_: HCursor) => Right(Like)
+  implicit lazy val pollEncoder: Encoder[Poll.type]                       = (_: Poll.type) => ().asJson
+  implicit lazy val pollDecoder: Decoder[Poll.type]                       = (_: HCursor) => Right(Poll)
 
   implicit lazy val platformtypeEncoder: Encoder[PlatformType] = {
-    case iphone: Iphone.type => iphone.asJson.mapObject(_.add("type", Json.fromString("iphone")))
-    case android: Android.type =>
-      android.asJson.mapObject(_.add("type", Json.fromString("android")))
-    case wphone: Wphone.type => wphone.asJson.mapObject(_.add("type", Json.fromString("wphone")))
+    case iphone: Iphone.type   => iphone.asJson.mapObject(_.add("type", Json.fromString("iphone")))
+    case android: Android.type => android.asJson.mapObject(_.add("type", Json.fromString("android")))
+    case wphone: Wphone.type   => wphone.asJson.mapObject(_.add("type", Json.fromString("wphone")))
   }
+
   implicit lazy val platformtypeDecoder: Decoder[PlatformType] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
@@ -3862,6 +3888,7 @@ object CirceImplicits {
     case vk: Vk.type         => vk.asJson.mapObject(_.add("type", Json.fromString("vk")))
     case rss: Rss.type       => rss.asJson.mapObject(_.add("type", Json.fromString("rss")))
   }
+
   implicit lazy val postsourcetypeDecoder: Decoder[PostSourceType] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
@@ -3885,14 +3912,13 @@ object CirceImplicits {
   implicit lazy val smsDecoder: Decoder[Sms.type]       = (_: HCursor) => Right(Sms)
 
   implicit lazy val posttypeEncoder: Encoder[PostType] = {
-    case post: Post.type => post.asJson.mapObject(_.add("type", Json.fromString("post")))
-    case suggest: Suggest.type =>
-      suggest.asJson.mapObject(_.add("type", Json.fromString("suggest")))
-    case reply: Reply.type => reply.asJson.mapObject(_.add("type", Json.fromString("reply")))
-    case postpone: Postpone.type =>
-      postpone.asJson.mapObject(_.add("type", Json.fromString("postpone")))
-    case copy: Copy.type => copy.asJson.mapObject(_.add("type", Json.fromString("copy")))
+    case post: Post.type         => post.asJson.mapObject(_.add("type", Json.fromString("post")))
+    case suggest: Suggest.type   => suggest.asJson.mapObject(_.add("type", Json.fromString("suggest")))
+    case reply: Reply.type       => reply.asJson.mapObject(_.add("type", Json.fromString("reply")))
+    case postpone: Postpone.type => postpone.asJson.mapObject(_.add("type", Json.fromString("postpone")))
+    case copy: Copy.type         => copy.asJson.mapObject(_.add("type", Json.fromString("copy")))
   }
+
   implicit lazy val posttypeDecoder: Decoder[PostType] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
@@ -3914,6 +3940,7 @@ object CirceImplicits {
   implicit lazy val postponeDecoder: Decoder[Postpone.type] = (_: HCursor) => Right(Postpone)
   implicit lazy val suggestEncoder: Encoder[Suggest.type]   = (_: Suggest.type) => ().asJson
   implicit lazy val suggestDecoder: Decoder[Suggest.type]   = (_: HCursor) => Right(Suggest)
+
   implicit lazy val wallpostcommentsanonEncoder: Encoder[WallPostCommentsAnon] =
     (x: WallPostCommentsAnon) => {
       Json.fromFields(
@@ -3936,11 +3963,13 @@ object CirceImplicits {
         _canClose      <- h.get[Boolean]("can_close")
         _canOpen       <- h.get[Boolean]("can_open")
       } yield {
-        WallPostCommentsAnon(count = _count,
-                             canPost = _canPost,
-                             groupsCanPost = _groupsCanPost,
-                             canClose = _canClose,
-                             canOpen = _canOpen)
+        WallPostCommentsAnon(
+          count = _count,
+          canPost = _canPost,
+          groupsCanPost = _groupsCanPost,
+          canClose = _canClose,
+          canOpen = _canOpen
+        )
       }
     }
 
@@ -3964,10 +3993,7 @@ object CirceImplicits {
         _canLike    <- h.get[Boolean]("can_like")
         _canPublish <- h.get[Boolean]("can_publish")
       } yield {
-        WallPostLikesAnon(count = _count,
-                          userLikes = _userLikes,
-                          canLike = _canLike,
-                          canPublish = _canPublish)
+        WallPostLikesAnon(count = _count, userLikes = _userLikes, canLike = _canLike, canPublish = _canPublish)
       }
     }
 
@@ -4315,14 +4341,16 @@ object CirceImplicits {
         _until     <- h.get[Int]("until")
         _position  <- h.get[String]("position")
       } yield {
-        Career(groupId = _groupId,
-               company = _company,
-               countryId = _countryId,
-               cityId = _cityId,
-               cityName = _cityName,
-               from = _from,
-               until = _until,
-               position = _position)
+        Career(
+          groupId = _groupId,
+          company = _company,
+          countryId = _countryId,
+          cityId = _cityId,
+          cityName = _cityName,
+          from = _from,
+          until = _until,
+          position = _position
+        )
       }
     }
 
@@ -4507,11 +4535,13 @@ object CirceImplicits {
         _facultyName    <- h.get[String]("faculty_name")
         _graduation     <- h.get[Integer]("graduation")
       } yield {
-        Education(university = _university,
-                  universityName = _universityName,
-                  faculty = _faculty,
-                  facultyName = _facultyName,
-                  graduation = _graduation)
+        Education(
+          university = _university,
+          universityName = _universityName,
+          faculty = _faculty,
+          facultyName = _facultyName,
+          graduation = _graduation
+        )
       }
     }
 
@@ -4557,11 +4587,7 @@ object CirceImplicits {
         _from      <- h.get[Integer]("from")
         _until     <- h.get[Integer]("until")
       } yield {
-        Military(unit = _unit,
-                 unitId = _unitId,
-                 countryId = _countryId,
-                 from = _from,
-                 until = _until)
+        Military(unit = _unit, unitId = _unitId, countryId = _countryId, from = _from, until = _until)
       }
     }
 
@@ -4836,10 +4862,12 @@ object CirceImplicits {
         _noSound         <- h.get[Boolean]("no_sound")
         _sound           <- h.get[Boolean]("sound")
       } yield {
-        PushSettings(disabledUntil = _disabledUntil,
-                     disabledForever = _disabledForever,
-                     noSound = _noSound,
-                     sound = _sound)
+        PushSettings(
+          disabledUntil = _disabledUntil,
+          disabledForever = _disabledForever,
+          noSound = _noSound,
+          sound = _sound
+        )
       }
     }
 
@@ -4889,13 +4917,15 @@ object CirceImplicits {
         _activeIds      <- h.get[Vector[Int]]("active_ids")
         _isGroupChannel <- h.get[Boolean]("is_group_channel")
       } yield {
-        ChatSettings(membersCount = _membersCount,
-                     title = _title,
-                     pinnedMessage = _pinnedMessage,
-                     state = _state,
-                     photo = _photo,
-                     activeIds = _activeIds,
-                     isGroupChannel = _isGroupChannel)
+        ChatSettings(
+          membersCount = _membersCount,
+          title = _title,
+          pinnedMessage = _pinnedMessage,
+          state = _state,
+          photo = _photo,
+          activeIds = _activeIds,
+          isGroupChannel = _isGroupChannel
+        )
       }
     }
 
@@ -4925,13 +4955,15 @@ object CirceImplicits {
         _geo         <- h.get[Geo]("geo")
         _fwdMessages <- h.get[Vector[Message]]("fwd_messages")
       } yield {
-        PinnedMessage(id = _id,
-                      date = _date,
-                      fromId = _fromId,
-                      text = _text,
-                      attachments = _attachments,
-                      geo = _geo,
-                      fwdMessages = _fwdMessages)
+        PinnedMessage(
+          id = _id,
+          date = _date,
+          fromId = _fromId,
+          text = _text,
+          attachments = _attachments,
+          geo = _geo,
+          fwdMessages = _fwdMessages
+        )
       }
     }
 
@@ -5013,14 +5045,16 @@ object CirceImplicits {
         _readComments <- h.get[Int]("read_comments")
         _viewUrl      <- h.get[String]("view_url")
       } yield {
-        Note(id = _id,
-             ownerId = _ownerId,
-             title = _title,
-             text = _text,
-             date = _date,
-             comments = _comments,
-             readComments = _readComments,
-             viewUrl = _viewUrl)
+        Note(
+          id = _id,
+          ownerId = _ownerId,
+          title = _title,
+          text = _text,
+          date = _date,
+          comments = _comments,
+          readComments = _readComments,
+          viewUrl = _viewUrl
+        )
       }
     }
 
@@ -5287,12 +5321,14 @@ object CirceImplicits {
         _count       <- h.get[Int]("count")
         _updatedTime <- h.get[Int]("updated_time")
       } yield {
-        ProductCollection(id = _id,
-                          ownerId = _ownerId,
-                          title = _title,
-                          photo = _photo,
-                          count = _count,
-                          updatedTime = _updatedTime)
+        ProductCollection(
+          id = _id,
+          ownerId = _ownerId,
+          title = _title,
+          photo = _photo,
+          count = _count,
+          updatedTime = _updatedTime
+        )
       }
     }
 
@@ -5370,12 +5406,14 @@ object CirceImplicits {
         _attachments <- h.get[Vector[Attachment]]("attachments")
         _likes       <- h.get[Likes]("likes")
       } yield {
-        DiscussionComment(id = _id,
-                          fromId = _fromId,
-                          date = _date,
-                          text = _text,
-                          attachments = _attachments,
-                          likes = _likes)
+        DiscussionComment(
+          id = _id,
+          fromId = _fromId,
+          date = _date,
+          text = _text,
+          attachments = _attachments,
+          likes = _likes
+        )
       }
     }
 
@@ -5515,10 +5553,12 @@ object CirceImplicits {
         _images               <- h.get[Vector[StickerImage]]("images")
         _imagesWithBackground <- h.get[Vector[StickerImage]]("images_with_background")
       } yield {
-        Sticker(productId = _productId,
-                stickerId = _stickerId,
-                images = _images,
-                imagesWithBackground = _imagesWithBackground)
+        Sticker(
+          productId = _productId,
+          stickerId = _stickerId,
+          images = _images,
+          imagesWithBackground = _imagesWithBackground
+        )
       }
     }
 
@@ -5697,14 +5737,16 @@ object CirceImplicits {
         _images <- h.get[Vector[Photo]]("images")
         _points <- h.get[Vector[Point]]("points")
       } yield {
-        Background(id = _id,
-                   `type` = _type,
-                   angle = _angle,
-                   color = _color,
-                   width = _width,
-                   height = _height,
-                   images = _images,
-                   points = _points)
+        Background(
+          id = _id,
+          `type` = _type,
+          angle = _angle,
+          color = _color,
+          width = _width,
+          height = _height,
+          images = _images,
+          points = _points
+        )
       }
     }
 
@@ -5748,10 +5790,7 @@ object CirceImplicits {
         _visitors   <- h.get[Visitors]("visitors")
         _reach      <- h.get[Reach]("reach")
       } yield {
-        PeriodFrom(periodFrom = _periodFrom,
-                   periodTo = _periodTo,
-                   visitors = _visitors,
-                   reach = _reach)
+        PeriodFrom(periodFrom = _periodFrom, periodTo = _periodTo, visitors = _visitors, reach = _reach)
       }
     }
 
@@ -5803,14 +5842,16 @@ object CirceImplicits {
         _cities           <- h.get[Vector[CitiesStat]]("cities")
         _countries        <- h.get[Vector[CountriesStat]]("countries")
       } yield {
-        Reach(reach = _reach,
-              reachSubscribers = _reachSubscribers,
-              mobileReach = _mobileReach,
-              sex = _sex,
-              age = _age,
-              sexAge = _sexAge,
-              cities = _cities,
-              countries = _countries)
+        Reach(
+          reach = _reach,
+          reachSubscribers = _reachSubscribers,
+          mobileReach = _mobileReach,
+          sex = _sex,
+          age = _age,
+          sexAge = _sexAge,
+          cities = _cities,
+          countries = _countries
+        )
       }
     }
 
@@ -6000,15 +6041,17 @@ object CirceImplicits {
         _type    <- h.get[Int]("type")
         _preview <- h.get[Preview]("preview")
       } yield {
-        Document(id = _id,
-                 ownerId = _ownerId,
-                 title = _title,
-                 size = _size,
-                 ext = _ext,
-                 url = _url,
-                 date = _date,
-                 `type` = _type,
-                 preview = _preview)
+        Document(
+          id = _id,
+          ownerId = _ownerId,
+          title = _title,
+          size = _size,
+          ext = _ext,
+          url = _url,
+          date = _date,
+          `type` = _type,
+          preview = _preview
+        )
       }
     }
 
@@ -6094,10 +6137,7 @@ object CirceImplicits {
         _linkOgg  <- h.get[String]("link_ogg")
         _linkMp3  <- h.get[String]("link_mp3")
       } yield {
-        AudioMessage(duration = _duration,
-                     waveform = _waveform,
-                     linkOgg = _linkOgg,
-                     linkMp3 = _linkMp3)
+        AudioMessage(duration = _duration, waveform = _waveform, linkOgg = _linkOgg, linkMp3 = _linkMp3)
       }
     }
 
@@ -6617,12 +6657,7 @@ object CirceImplicits {
         _photo50  <- h.get[String]("photo50")
         _photo100 <- h.get[String]("photo100")
       } yield {
-        CommunityLink(id = _id,
-                      url = _url,
-                      name = _name,
-                      desc = _desc,
-                      photo50 = _photo50,
-                      photo100 = _photo100)
+        CommunityLink(id = _id, url = _url, name = _name, desc = _desc, photo50 = _photo50, photo100 = _photo100)
       }
     }
 
@@ -6652,13 +6687,15 @@ object CirceImplicits {
         _currency     <- h.get[Currency]("currency")
         _currencyText <- h.get[String]("currency_text")
       } yield {
-        Market(enabled = _enabled,
-               priceMin = _priceMin,
-               priceMax = _priceMax,
-               mainAlbumId = _mainAlbumId,
-               contactId = _contactId,
-               currency = _currency,
-               currencyText = _currencyText)
+        Market(
+          enabled = _enabled,
+          priceMin = _priceMin,
+          priceMax = _priceMax,
+          mainAlbumId = _mainAlbumId,
+          contactId = _contactId,
+          currency = _currency,
+          currencyText = _currencyText
+        )
       }
     }
 

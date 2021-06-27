@@ -54,11 +54,10 @@ object CirceImplicits {
   import io.circe.HCursor
 
   implicit lazy val mammalEncoder: Encoder[Mammal] = {
-    case elephant: Elephant.type =>
-      elephant.asJson.mapObject(_.add("type", Json.fromString("elephant")))
-    case dolphin: Dolphin.type =>
-      dolphin.asJson.mapObject(_.add("type", Json.fromString("dolphin")))
+    case elephant: Elephant.type => elephant.asJson.mapObject(_.add("type", Json.fromString("elephant")))
+    case dolphin: Dolphin.type   => dolphin.asJson.mapObject(_.add("type", Json.fromString("dolphin")))
   }
+
   implicit lazy val mammalDecoder: Decoder[Mammal] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {

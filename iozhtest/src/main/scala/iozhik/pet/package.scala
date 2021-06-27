@@ -105,6 +105,7 @@ object CirceImplicits {
     case cat: Cat => cat.asJson.mapObject(_.add("type", Json.fromString("cat")))
     case dog: Dog => dog.asJson.mapObject(_.add("type", Json.fromString("dog")))
   }
+
   implicit lazy val petDecoder: Decoder[Pet] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
