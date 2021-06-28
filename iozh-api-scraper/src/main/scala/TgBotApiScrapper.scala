@@ -298,7 +298,9 @@ object TgBotApiScrapper extends IOApp {
       case class Sumt(name: Element, desc: Element, items: Element)
 
       def mkType(name: String, desc: String, s: String): String = {
-        val mustBeLong = desc.contains("greater than 32 bits") || desc.contains("more than 32 significant bits")
+        val mustBeLong = desc.contains("greater than 32 bits") ||
+          desc.contains("more than 32 significant bits") ||
+          name == "user_id"
         val res = s
           .replace(" number", "") // Float number => Float
           .replace("True", "Boolean")
@@ -376,7 +378,7 @@ object TgBotApiScrapper extends IOApp {
             val params = x.table >> elements("tbody > tr")
             val types = x.desc.flatMap(y => y >> elements("a"))
               .map(_.text)
-              .filter(_.head.isUpper)
+              .filter(_.headOption.exists(_.isUpper))
             val resA = types.find(_ == "Message").orElse(types.headOption)
             val resEm = x.desc.flatMap(y => y >> elements("em"))
               .map(_.text)
