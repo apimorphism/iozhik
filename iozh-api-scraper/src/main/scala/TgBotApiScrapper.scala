@@ -309,7 +309,6 @@ object TgBotApiScrapper extends IOApp {
           .replace("Integer", if (mustBeLong) "Long" else "Int")
           .replace("InputFile or String", "IFile")
           .replace("InputFile", "IFile")
-          .replace("CallbackGame", "String")
           .replace("Messages", "Message")
           .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
           .replace("InputMediaAudio, InputMediaDocument, InputMediaPhoto and InputMediaVideo", "InputMedia")

@@ -132,10 +132,10 @@ namespace telegramium {
         status      : String
         /* Information about the user */
         user        : User
-        /* Custom title for this user */
-        customTitle : String
         /* True, if the user's presence in the chat is hidden */
         isAnonymous : Boolean
+        /* Optional. Custom title for this user */
+        customTitle : Option[String]
       }
              
       /* Represents a chat member that has some additional privileges.  */
@@ -147,8 +147,6 @@ namespace telegramium {
         /* True, if the bot is allowed to edit administrator 
         privileges of that user */
         canBeEdited         : Boolean
-        /* Custom title for this user */
-        customTitle         : String
         /* True, if the user's presence in the chat is hidden */
         isAnonymous         : Boolean
         /* True, if the administrator can access the chat event log, 
@@ -157,12 +155,6 @@ namespace telegramium {
         ignore slow mode. Implied by any other administrator 
         privilege */
         canManageChat       : Boolean
-        /* True, if the administrator can post in the channel; 
-        channels only */
-        canPostMessages     : Boolean
-        /* True, if the administrator can edit messages of other users 
-        and can pin messages; channels only */
-        canEditMessages     : Boolean
         /* True, if the administrator can delete messages of other 
         users */
         canDeleteMessages   : Boolean
@@ -182,9 +174,17 @@ namespace telegramium {
         /* True, if the user is allowed to invite new users to the 
         chat */
         canInviteUsers      : Boolean
-        /* True, if the user is allowed to pin messages; groups and 
-        supergroups only */
-        canPinMessages      : Boolean
+        /* Optional. True, if the administrator can post in the 
+        channel; channels only */
+        canPostMessages     : Option[Boolean]
+        /* Optional. True, if the administrator can edit messages of 
+        other users and can pin messages; channels only */
+        canEditMessages     : Option[Boolean]
+        /* Optional. True, if the user is allowed to pin messages; 
+        groups and supergroups only */
+        canPinMessages      : Option[Boolean]
+        /* Optional. Custom title for this user */
+        customTitle         : Option[String]
       }
              
       /* Represents a chat member that isn't currently a member of the chat, but may 
@@ -212,7 +212,7 @@ namespace telegramium {
         /* Information about the user */
         user      : User
         /* Date when restrictions will be lifted for this user; unix 
-        time */
+        time. If 0, then the user is banned forever */
         untilDate : Int
       }
              
@@ -232,8 +232,7 @@ namespace telegramium {
         /* True, if the user is allowed to invite new users to the 
         chat */
         canInviteUsers        : Boolean
-        /* True, if the user is allowed to pin messages; groups and 
-        supergroups only */
+        /* True, if the user is allowed to pin messages */
         canPinMessages        : Boolean
         /* True, if the user is allowed to send text messages, 
         contacts, locations and venues */
@@ -250,7 +249,7 @@ namespace telegramium {
         their messages */
         canAddWebPagePreviews : Boolean
         /* Date when restrictions will be lifted for this user; unix 
-        time */
+        time. If 0, then the user is restricted forever */
         untilDate             : Int
       }
              
@@ -2702,7 +2701,7 @@ namespace telegramium {
       /* Optional. Description of the game that will be launched 
       when the user presses the button. NOTE: This type of button 
       must always be the first button in the first row. */
-      callbackGame                 : Option[String]
+      callbackGame                 : Option[CallbackGame]
       /* Optional. Specify True, to send a Pay button. NOTE: This 
       type of button must always be the first button in the first 
       row. */
