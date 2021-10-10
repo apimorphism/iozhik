@@ -106,7 +106,7 @@ class ScalaApiGeneratorV1 extends Generator {
       val decoderBody = if (target == "java.io.File") {
           s"Decoder[String].map(s => $name(new java.io.File(s)))"
         } else {
-          s"Decoder[$target].map($name)"
+          s"Decoder[$target].map($name.apply)"
         }
       val decoder = s"implicit lazy val ${codecName}Decoder: Decoder[$name] = $decoderBody"
       val encoder = s"implicit lazy val ${codecName}Encoder: Encoder[$name] = $encoderBody"
@@ -501,7 +501,7 @@ class ScalaApiGeneratorV1 extends Generator {
       List(Code(
         name = parentKind.name,
         body = s"""
-           final case object $name extends $parent {
+           case object $name extends $parent {
              override def toString() = "${x.target}"
            }
          """
@@ -946,7 +946,7 @@ class ScalaApiGeneratorV1 extends Generator {
         |  def decoder: Decoder[Res]
         |}
         |
-        |final case class MethodReq[Res](
+        |final case class MethodReq[Res] private (
         |  payload: MethodPayload,
         |  decoder: Decoder[Res]
         |) extends Method[Res]

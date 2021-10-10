@@ -1,6 +1,6 @@
 
 namespace telegramium {
-  namespace bots(snake circe http4s upack) {
+  namespace bots(snake circe http4s) {
 
     enum Emoji {
       item EmojiDice        = "🎲"
@@ -2967,8 +2967,8 @@ namespace telegramium {
           /* Mode for parsing entities in the message text. See 
           formatting options for more details. */
           parseMode                : Option[ParseMode]
-          /* List of special entities that appear in message text, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          message text, which can be specified instead of parse_mode */
           entities                 : List[MessageEntity]
           /* Disables link previews for links in this message */
           disableWebPagePreview    : Option[Boolean]
@@ -3029,8 +3029,9 @@ namespace telegramium {
           /* Mode for parsing entities in the explanation. See 
           formatting options for more details. */
           explanationParseMode     : Option[String]
-          /* List of special entities that appear in the poll 
-          explanation, which can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the poll explanation, which can be specified instead of 
+          parse_mode */
           explanationEntities      : List[MessageEntity]
           /* Amount of time in seconds the poll will be active after 
           creation, 5-600. Can't be used together with close_date. */
@@ -3145,7 +3146,7 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
           chatId      : ChatId
-          /* New default chat permissions */
+          /* A JSON-serialized object for new default chat permissions */
           permissions : ChatPermissions
         } => Method[Boolean]
                 
@@ -3200,8 +3201,8 @@ namespace telegramium {
                 
       
         /* Use this method to stop updating a live location message before live_period 
-          expires. On success, if the message was sent by the bot, the sent Message is 
-          returned, otherwise True is returned.  */
+          expires. On success, if the message is not an inline message, the edited Message 
+          is returned, otherwise True is returned.  */
         def stopMessageLiveLocation {
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
@@ -3317,7 +3318,7 @@ namespace telegramium {
                 
       
         /* Use this method to stop a poll which was sent by the bot. On success, the 
-          stopped Poll with the final results is returned.  */
+          stopped Poll is returned.  */
         def stopPoll {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -3486,8 +3487,8 @@ namespace telegramium {
           /* Mode for parsing entities in the message text. See 
           formatting options for more details. */
           parseMode             : Option[ParseMode]
-          /* List of special entities that appear in message text, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          message text, which can be specified instead of parse_mode */
           entities              : List[MessageEntity]
           /* Disables link previews for links in this message */
           disableWebPagePreview : Option[Boolean]
@@ -3543,10 +3544,10 @@ namespace telegramium {
         } => Method[File]
                 
       
-        /* Use this method to set the score of the specified user in a game. On success, 
-          if the message was sent by the bot, returns the edited Message, otherwise 
-          returns True. Returns an error, if the new score is not greater than the user's 
-          current score in the chat and force is False.  */
+        /* Use this method to set the score of the specified user in a game message. On 
+          success, if the message is not an inline message, the Message is returned, 
+          otherwise True is returned. Returns an error, if the new score is not greater 
+          than the user's current score in the chat and force is False.  */
         def setGameScore {
           /* User identifier */
           userId             : Long
@@ -3612,8 +3613,9 @@ namespace telegramium {
           /* Mode for parsing entities in the new caption. See 
           formatting options for more details. */
           parseMode                : Option[ParseMode]
-          /* List of special entities that appear in the new caption, 
-          which can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the new caption, which can be specified instead of 
+          parse_mode */
           captionEntities          : List[MessageEntity]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -3835,8 +3837,8 @@ namespace telegramium {
           /* Mode for parsing entities in the document caption. See 
           formatting options for more details. */
           parseMode                   : Option[ParseMode]
-          /* List of special entities that appear in the caption, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
           captionEntities             : List[MessageEntity]
           /* Disables automatic server-side content type detection for 
           files uploaded using multipart/form-data */
@@ -3936,8 +3938,8 @@ namespace telegramium {
           /* Mode for parsing entities in the audio caption. See 
           formatting options for more details. */
           parseMode                : Option[ParseMode]
-          /* List of special entities that appear in the caption, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
           captionEntities          : List[MessageEntity]
           /* Duration of the audio in seconds */
           duration                 : Option[Int]
@@ -4096,8 +4098,8 @@ namespace telegramium {
           /* Mode for parsing entities in the voice message caption. See 
           formatting options for more details. */
           parseMode                : Option[ParseMode]
-          /* List of special entities that appear in the caption, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
           captionEntities          : List[MessageEntity]
           /* Duration of the voice message in seconds */
           duration                 : Option[Int]
@@ -4197,8 +4199,8 @@ namespace telegramium {
           /* Mode for parsing entities in the message caption. See 
           formatting options for more details. */
           parseMode       : Option[ParseMode]
-          /* List of special entities that appear in the caption, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
           captionEntities : List[MessageEntity]
           /* A JSON-serialized object for an inline keyboard. */
           replyMarkup     : Option[InlineKeyboardMarkup]
@@ -4208,9 +4210,9 @@ namespace telegramium {
         /* Use this method to edit animation, audio, document, photo, or video messages. 
           If a message is part of a message album, then it can be edited only to an audio 
           for audio albums, only to a document for document albums and to a photo or a 
-          video otherwise. When an inline message is edited, a new file can't be uploaded. 
-          Use a previously uploaded file via its file_id or specify a URL. On success, if 
-          the edited message was sent by the bot, the edited Message is returned, 
+          video otherwise. When an inline message is edited, a new file can't be uploaded; 
+          use a previously uploaded file via its file_id or specify a URL. On success, if 
+          the edited message is not an inline message, the edited Message is returned, 
           otherwise True is returned.  */
         def editMessageMedia {
           /* Required if inline_message_id is not specified. Unique 
@@ -4355,8 +4357,8 @@ namespace telegramium {
           /* Mode for parsing entities in the video caption. See 
           formatting options for more details. */
           parseMode                : Option[ParseMode]
-          /* List of special entities that appear in the caption, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
           captionEntities          : List[MessageEntity]
           /* Pass True, if the uploaded video is suitable for streaming */
           supportsStreaming        : Option[Boolean]
@@ -4490,8 +4492,8 @@ namespace telegramium {
           /* Mode for parsing entities in the animation caption. See 
           formatting options for more details. */
           parseMode                : Option[ParseMode]
-          /* List of special entities that appear in the caption, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
           captionEntities          : List[MessageEntity]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -4598,8 +4600,8 @@ namespace telegramium {
           /* Mode for parsing entities in the photo caption. See 
           formatting options for more details. */
           parseMode                : Option[ParseMode]
-          /* List of special entities that appear in the caption, which 
-          can be specified instead of parse_mode */
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
           captionEntities          : List[MessageEntity]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */

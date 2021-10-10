@@ -214,7 +214,7 @@ object TgBotApiScrapper extends IOApp {
       .flatMap(_.split("\n")).map("    " + _).intercalate("\n")
     s"""
        |namespace telegramium {
-       |  namespace bots(snake circe http4s upack) {
+       |  namespace bots(snake circe http4s) {
        |
        |    enum Emoji {
        |      item EmojiDice        = "🎲"
