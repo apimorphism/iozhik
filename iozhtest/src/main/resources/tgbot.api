@@ -344,7 +344,7 @@ namespace telegramium {
         width           : Option[Int]
         /* Optional. Animation height */
         height          : Option[Int]
-        /* Optional. Animation duration */
+        /* Optional. Animation duration in seconds */
         duration        : Option[Int]
       }
              
@@ -400,7 +400,7 @@ namespace telegramium {
         width             : Option[Int]
         /* Optional. Video height */
         height            : Option[Int]
-        /* Optional. Video duration */
+        /* Optional. Video duration in seconds */
         duration          : Option[Int]
         /* Optional. Pass True, if the uploaded video is suitable for 
         streaming */
@@ -437,7 +437,7 @@ namespace telegramium {
         captionEntities             : List[MessageEntity]
         /* Optional. Disables automatic server-side content type 
         detection for files uploaded using multipart/form-data. 
-        Always true, if the document is sent as part of an album. */
+        Always True, if the document is sent as part of an album. */
         disableContentTypeDetection : Option[Boolean]
       }
              
@@ -495,7 +495,7 @@ namespace telegramium {
         gifWidth            : Option[Int]
         /* Optional. Height of the GIF */
         gifHeight           : Option[Int]
-        /* Optional. Duration of the GIF */
+        /* Optional. Duration of the GIF in seconds */
         gifDuration         : Option[Int]
         /* URL of the static (JPEG or GIF) or animated (MPEG4) 
         thumbnail for the result */
@@ -597,7 +597,7 @@ namespace telegramium {
         type : "photo:3"
         /* Unique identifier for this result, 1-64 bytes */
         id                  : String
-        /* A valid URL of the photo. Photo must be in jpeg format. 
+        /* A valid URL of the photo. Photo must be in JPEG format. 
         Photo size must not exceed 5MB */
         photoUrl            : String
         /* URL of the thumbnail for the photo */
@@ -657,7 +657,7 @@ namespace telegramium {
         /* Optional. Content of the message to be sent instead of the 
         file */
         inputMessageContent : Option[InputMessageContent]
-        /* Optional. URL of the thumbnail (jpeg only) for the file */
+        /* Optional. URL of the thumbnail (JPEG only) for the file */
         thumbUrl            : Option[String]
         /* Optional. Thumbnail width */
         thumbWidth          : Option[Int]
@@ -762,7 +762,7 @@ namespace telegramium {
         mpeg4Width          : Option[Int]
         /* Optional. Video height */
         mpeg4Height         : Option[Int]
-        /* Optional. Video duration */
+        /* Optional. Video duration in seconds */
         mpeg4Duration       : Option[Int]
         /* URL of the static (JPEG or GIF) or animated (MPEG4) 
         thumbnail for the result */
@@ -949,7 +949,7 @@ namespace telegramium {
         /* Mime type of the content of video url, “text/html” or 
         “video/mp4” */
         mimeType            : String
-        /* URL of the thumbnail (jpeg only) for the video */
+        /* URL of the thumbnail (JPEG only) for the video */
         thumbUrl            : String
         /* Title for the result */
         title               : String
@@ -1521,8 +1521,23 @@ namespace telegramium {
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size */
+      /* Optional. File size in bytes */
       fileSize     : Option[Int]
+    }
+           
+    /* Represents a join request sent to a chat.  */
+    ChatJoinRequest {
+      /* Chat to which the request was sent */
+      chat       : Chat
+      /* User that sent the join request */
+      from       : User
+      /* Date the request was sent in Unix time */
+      date       : Int
+      /* Optional. Bio of the user. */
+      bio        : Option[String]
+      /* Optional. Chat invite link that was used by the user to 
+      send the join request */
+      inviteLink : Option[ChatInviteLink]
     }
            
     /* This object represents a chat.  */
@@ -1565,7 +1580,7 @@ namespace telegramium {
       permissions           : Option[ChatPermissions]
       /* Optional. For supergroups, the minimum allowed delay 
       between consecutive messages sent by each unpriviledged 
-      user. Returned only in getChat. */
+      user; in seconds. Returned only in getChat. */
       slowModeDelay         : Option[Int]
       /* Optional. The time after which all messages sent to the 
       chat will be automatically deleted; in seconds. Returned 
@@ -1608,7 +1623,7 @@ namespace telegramium {
       duration     : Int
       /* Optional. Video thumbnail */
       thumb        : Option[PhotoSize]
-      /* Optional. File size */
+      /* Optional. File size in bytes */
       fileSize     : Option[Int]
     }
            
@@ -1622,7 +1637,7 @@ namespace telegramium {
       measured in meters; 0-1500 */
       horizontalAccuracy   : Option[Float]
       /* Optional. Time relative to the message sending date, during 
-      which the location can be updated, in seconds. For active 
+      which the location can be updated; in seconds. For active 
       live locations only. */
       livePeriod           : Option[Int]
       /* Optional. The direction in which user is moving, in 
@@ -1648,7 +1663,7 @@ namespace telegramium {
            
     /* This object represents a service message about a voice chat ended in the chat.  */
     VoiceChatEnded {
-      /* Voice chat duration; in seconds */
+      /* Voice chat duration in seconds */
       duration : Int
     }
            
@@ -1791,6 +1806,10 @@ namespace telegramium {
       specify “chat_member” in the list of allowed_updates to 
       receive these updates. */
       chatMember         : Option[ChatMemberUpdated]
+      /* Optional. A request to join the chat has been sent. The bot 
+      must have the can_invite_users administrator right in the 
+      chat to receive these updates. */
+      chatJoinRequest    : Option[ChatJoinRequest]
     }
            
     /* This object describes the position on faces where a mask should be placed by 
@@ -1851,7 +1870,7 @@ namespace telegramium {
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
       fileUniqueId : String
-      /* File size */
+      /* File size in bytes */
       fileSize     : Int
       /* Unix time when the file was uploaded */
       fileDate     : Int
@@ -1870,7 +1889,7 @@ namespace telegramium {
       width        : Int
       /* Photo height */
       height       : Int
-      /* Optional. File size */
+      /* Optional. File size in bytes */
       fileSize     : Option[Int]
     }
            
@@ -1982,7 +2001,7 @@ namespace telegramium {
     /* This object represents a service message about a change in auto-delete timer 
       settings.  */
     MessageAutoDeleteTimerChanged {
-      /* New auto-delete time for messages in the chat */
+      /* New auto-delete time for messages in the chat; in seconds */
       messageAutoDeleteTime : Int
     }
            
@@ -2048,20 +2067,28 @@ namespace telegramium {
       /* The invite link. If the link was created by another chat 
       administrator, then the second part of the link will be 
       replaced with “…”. */
-      inviteLink  : String
+      inviteLink              : String
       /* Creator of the link */
-      creator     : User
+      creator                 : User
+      /* True, if users joining the chat via the link need to be 
+      approved by chat administrators */
+      createsJoinRequest      : Boolean
       /* True, if the link is primary */
-      isPrimary   : Boolean
+      isPrimary               : Boolean
       /* True, if the link is revoked */
-      isRevoked   : Boolean
+      isRevoked               : Boolean
+      /* Optional. Invite link name */
+      name                    : Option[String]
       /* Optional. Point in time (Unix timestamp) when the link will 
       expire or has been expired */
-      expireDate  : Option[Int]
+      expireDate              : Option[Int]
       /* Optional. Maximum number of users that can be members of 
       the chat simultaneously after joining the chat via this 
       invite link; 1-99999 */
-      memberLimit : Option[Int]
+      memberLimit             : Option[Int]
+      /* Optional. Number of pending join requests created using 
+      this link */
+      pendingJoinRequestCount : Option[Int]
     }
            
     /* This object represents an animated emoji that displays a random value.  */
@@ -2114,7 +2141,7 @@ namespace telegramium {
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
       fileUniqueId : String
-      /* Optional. File size, if known */
+      /* Optional. File size in bytes, if known */
       fileSize     : Option[Int]
       /* Optional. File path. Use 
       https://api.telegram.org/file/bot<token>/<file_path> to get 
@@ -2195,7 +2222,7 @@ namespace telegramium {
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size */
+      /* Optional. File size in bytes */
       fileSize     : Option[Int]
       /* Optional. Thumbnail of the album cover to which the music 
       file belongs */
@@ -2424,7 +2451,7 @@ namespace telegramium {
       /* Optional. For mask stickers, the position where the mask 
       should be placed */
       maskPosition : Option[MaskPosition]
-      /* Optional. File size */
+      /* Optional. File size in bytes */
       fileSize     : Option[Int]
     }
            
@@ -2748,7 +2775,7 @@ namespace telegramium {
       duration     : Int
       /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size */
+      /* Optional. File size in bytes */
       fileSize     : Option[Int]
     }
            
@@ -2825,7 +2852,7 @@ namespace telegramium {
       fileName     : Option[String]
       /* Optional. Mime type of a file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size */
+      /* Optional. File size in bytes */
       fileSize     : Option[Int]
     }
            
@@ -2845,7 +2872,7 @@ namespace telegramium {
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size */
+      /* Optional. File size in bytes */
       fileSize     : Option[Int]
     }
            
@@ -2887,7 +2914,8 @@ namespace telegramium {
       
         /* Use this method to set a new profile photo for the chat. Photos can't be 
           changed for private chats. The bot must be an administrator in the chat for this 
-          to work and must have the appropriate admin rights. Returns True on success.  */
+          to work and must have the appropriate administrator rights. Returns True on 
+          success.  */
         def setChatPhoto {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -2917,8 +2945,8 @@ namespace telegramium {
       
         /* Use this method to clear the list of pinned messages in a chat. If the chat is 
           not a private chat, the bot must be an administrator in the chat for this to 
-          work and must have the 'can_pin_messages' admin right in a supergroup or 
-          'can_edit_messages' admin right in a channel. Returns True on success.  */
+          work and must have the 'can_pin_messages' administrator right in a supergroup or 
+          'can_edit_messages' administrator right in a channel. Returns True on success.  */
         def unpinAllChatMessages {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -2935,7 +2963,7 @@ namespace telegramium {
           /* Text of the notification. If not specified, nothing will be 
           shown to the user, 0-200 characters */
           text            : Option[String]
-          /* If true, an alert will be shown by the client instead of a 
+          /* If True, an alert will be shown by the client instead of a 
           notification at the top of the chat screen. Defaults to 
           false. */
           showAlert       : Option[Boolean]
@@ -3141,7 +3169,7 @@ namespace telegramium {
       
         /* Use this method to set default chat permissions for all members. The bot must 
           be an administrator in the group or a supergroup for this to work and must have 
-          the can_restrict_members admin rights. Returns True on success.  */
+          the can_restrict_members administrator rights. Returns True on success.  */
         def setChatPermissions {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
@@ -3191,8 +3219,9 @@ namespace telegramium {
       
         /* Use this method to delete a group sticker set from a supergroup. The bot must 
           be an administrator in the chat for this to work and must have the appropriate 
-          admin rights. Use the field can_set_sticker_set optionally returned in getChat 
-          requests to check if the bot can use this method. Returns True on success.  */
+          administrator rights. Use the field can_set_sticker_set optionally returned in 
+          getChat requests to check if the bot can use this method. Returns True on 
+          success.  */
         def deleteChatStickerSet {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
@@ -3221,13 +3250,25 @@ namespace telegramium {
       
         /* Use this method to generate a new primary invite link for a chat; any 
           previously generated primary link is revoked. The bot must be an administrator 
-          in the chat for this to work and must have the appropriate admin rights. Returns 
-          the new invite link as String on success.  */
+          in the chat for this to work and must have the appropriate administrator rights. 
+          Returns the new invite link as String on success.  */
         def exportChatInviteLink {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId : ChatId
         } => Method[String]
+                
+      
+        /* Use this method to decline a chat join request. The bot must be an 
+          administrator in the chat for this to work and must have the can_invite_users 
+          administrator right. Returns True on success.  */
+        def declineChatJoinRequest {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId : ChatId
+          /* Unique identifier of the target user */
+          userId : Long
+        } => Method[Boolean]
                 
       
         /* Use this method to send an animated emoji that will display a random value. On 
@@ -3272,9 +3313,9 @@ namespace telegramium {
           the user is about to receive: typing for text messages, 
           upload_photo for photos, record_video or upload_video for 
           videos, record_voice or upload_voice for voice notes, 
-          upload_document for general files, find_location for 
-          location data, record_video_note or upload_video_note for 
-          video notes. */
+          upload_document for general files, choose_sticker for 
+          stickers, find_location for location data, record_video_note 
+          or upload_video_note for video notes. */
           action : String
         } => Method[Boolean]
                 
@@ -3332,9 +3373,9 @@ namespace telegramium {
       
         /* Use this method to remove a message from the list of pinned messages in a chat. 
           If the chat is not a private chat, the bot must be an administrator in the chat 
-          for this to work and must have the 'can_pin_messages' admin right in a 
-          supergroup or 'can_edit_messages' admin right in a channel. Returns True on 
-          success.  */
+          for this to work and must have the 'can_pin_messages' administrator right in a 
+          supergroup or 'can_edit_messages' administrator right in a channel. Returns True 
+          on success.  */
         def unpinChatMessage {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -3457,7 +3498,7 @@ namespace telegramium {
       
         /* Use this method to change the description of a group, a supergroup or a 
           channel. The bot must be an administrator in the chat for this to work and must 
-          have the appropriate admin rights. Returns True on success.  */
+          have the appropriate administrator rights. Returns True on success.  */
         def setChatDescription {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -3583,7 +3624,7 @@ namespace telegramium {
       
         /* Use this method to change the title of a chat. Titles can't be changed for 
           private chats. The bot must be an administrator in the chat for this to work and 
-          must have the appropriate admin rights. Returns True on success.  */
+          must have the appropriate administrator rights. Returns True on success.  */
         def setChatTitle {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -3691,7 +3732,7 @@ namespace telegramium {
       
         /* Use this method to delete a chat photo. Photos can't be changed for private 
           chats. The bot must be an administrator in the chat for this to work and must 
-          have the appropriate admin rights. Returns True on success.  */
+          have the appropriate administrator rights. Returns True on success.  */
         def deleteChatPhoto {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -3701,20 +3742,26 @@ namespace telegramium {
       
         /* Use this method to edit a non-primary invite link created by the bot. The bot 
           must be an administrator in the chat for this to work and must have the 
-          appropriate admin rights. Returns the edited invite link as a ChatInviteLink 
-          object.  */
+          appropriate administrator rights. Returns the edited invite link as a 
+          ChatInviteLink object.  */
         def editChatInviteLink {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId      : ChatId
+          chatId             : ChatId
           /* The invite link to edit */
-          inviteLink  : String
+          inviteLink         : String
+          /* Invite link name; 0-32 characters */
+          name               : Option[String]
           /* Point in time (Unix timestamp) when the link will expire */
-          expireDate  : Option[Int]
+          expireDate         : Option[Int]
           /* Maximum number of users that can be members of the chat 
           simultaneously after joining the chat via this invite link; 
           1-99999 */
-          memberLimit : Option[Int]
+          memberLimit        : Option[Int]
+          /* True, if users joining the chat via the link need to be 
+          approved by chat administrators. If True, member_limit can't 
+          be specified */
+          createsJoinRequest : Option[Boolean]
         } => Method[ChatInviteLink]
                 
       
@@ -3910,7 +3957,7 @@ namespace telegramium {
           account' button above the results, or even before showing 
           any. The user presses the button, switches to a private chat 
           with the bot and, in doing so, passes a start parameter that 
-          instructs the bot to return an oauth link. Once done, the 
+          instructs the bot to return an OAuth link. Once done, the 
           bot can offer a switch_inline button so that the user can 
           easily return to the chat where they wanted to use the bot's 
           inline capabilities. */
@@ -3974,8 +4021,8 @@ namespace telegramium {
       
         /* Use this method to restrict a user in a supergroup. The bot must be an 
           administrator in the supergroup for this to work and must have the appropriate 
-          admin rights. Pass True for all permissions to lift restrictions from a user. 
-          Returns True on success.  */
+          administrator rights. Pass True for all permissions to lift restrictions from a 
+          user. Returns True on success.  */
         def restrictChatMember {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
@@ -3992,8 +4039,8 @@ namespace telegramium {
         } => Method[Boolean]
                 
       
-        /* A simple method for testing your bot's auth token. Requires no parameters. 
-          Returns basic information about the bot in form of a User object.  */
+        /* A simple method for testing your bot's authentication token. Requires no 
+          parameters. Returns basic information about the bot in form of a User object.  */
         def getMe {
       
         } => Method[User]
@@ -4045,7 +4092,7 @@ namespace telegramium {
           case of supergroups and channels, the user will not be able to return to the 
           chat on their own using invite links, etc., unless unbanned first. The bot must 
           be an administrator in the chat for this to work and must have the appropriate 
-          admin rights. Returns True on success.  */
+          administrator rights. Returns True on success.  */
         def banChatMember {
           /* Unique identifier for the target group or username of the 
           target supergroup or channel (in the format 
@@ -4131,8 +4178,8 @@ namespace telegramium {
       
         /* Use this method to promote or demote a user in a supergroup or a channel. The 
           bot must be an administrator in the chat for this to work and must have the 
-          appropriate admin rights. Pass False for all boolean parameters to demote a 
-          user. Returns True on success.  */
+          appropriate administrator rights. Pass False for all boolean parameters to 
+          demote a user. Returns True on success.  */
         def promoteChatMember {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -4250,8 +4297,9 @@ namespace telegramium {
       
         /* Use this method to add a message to the list of pinned messages in a chat. If 
           the chat is not a private chat, the bot must be an administrator in the chat for 
-          this to work and must have the 'can_pin_messages' admin right in a supergroup or 
-          'can_edit_messages' admin right in a channel. Returns True on success.  */
+          this to work and must have the 'can_pin_messages' administrator right in a 
+          supergroup or 'can_edit_messages' administrator right in a channel. Returns True 
+          on success.  */
         def pinChatMessage {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -4307,18 +4355,24 @@ namespace telegramium {
       
         /* Use this method to create an additional invite link for a chat. The bot must be 
           an administrator in the chat for this to work and must have the appropriate 
-          admin rights. The link can be revoked using the method revokeChatInviteLink. 
-          Returns the new invite link as ChatInviteLink object.  */
+          administrator rights. The link can be revoked using the method 
+          revokeChatInviteLink. Returns the new invite link as ChatInviteLink object.  */
         def createChatInviteLink {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId      : ChatId
+          chatId             : ChatId
+          /* Invite link name; 0-32 characters */
+          name               : Option[String]
           /* Point in time (Unix timestamp) when the link will expire */
-          expireDate  : Option[Int]
+          expireDate         : Option[Int]
           /* Maximum number of users that can be members of the chat 
           simultaneously after joining the chat via this invite link; 
           1-99999 */
-          memberLimit : Option[Int]
+          memberLimit        : Option[Int]
+          /* True, if users joining the chat via the link need to be 
+          approved by chat administrators. If True, member_limit can't 
+          be specified */
+          createsJoinRequest : Option[Boolean]
         } => Method[ChatInviteLink]
                 
       
@@ -4379,8 +4433,9 @@ namespace telegramium {
       
         /* Use this method to set a new group sticker set for a supergroup. The bot must 
           be an administrator in the chat for this to work and must have the appropriate 
-          admin rights. Use the field can_set_sticker_set optionally returned in getChat 
-          requests to check if the bot can use this method. Returns True on success.  */
+          administrator rights. Use the field can_set_sticker_set optionally returned in 
+          getChat requests to check if the bot can use this method. Returns True on 
+          success.  */
         def setChatStickerSet {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
@@ -4411,8 +4466,8 @@ namespace telegramium {
       
         /* Use this method to revoke an invite link created by the bot. If the primary 
           link is revoked, a new link is automatically generated. The bot must be an 
-          administrator in the chat for this to work and must have the appropriate admin 
-          rights. Returns the revoked invite link as ChatInviteLink object.  */
+          administrator in the chat for this to work and must have the appropriate 
+          administrator rights. Returns the revoked invite link as ChatInviteLink object.  */
         def revokeChatInviteLink {
           /* Unique identifier of the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -4530,7 +4585,19 @@ namespace telegramium {
           unavailable'). Telegram will display this message to the 
           user. */
           errorMessage    : Option[String]
-        } => Method[Update]
+        } => Method[Boolean]
+                
+      
+        /* Use this method to approve a chat join request. The bot must be an 
+          administrator in the chat for this to work and must have the can_invite_users 
+          administrator right. Returns True on success.  */
+        def approveChatJoinRequest {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId : ChatId
+          /* Unique identifier of the target user */
+          userId : Long
+        } => Method[Boolean]
                 
       
         /* Once the user has confirmed their payment and shipping details, the Bot API 
@@ -4552,7 +4619,7 @@ namespace telegramium {
           your payment details. Please choose a different color or 
           garment!"). Telegram will display this message to the user. */
           errorMessage       : Option[String]
-        } => Method[Update]
+        } => Method[Boolean]
                 
       
         /* Use this method to send static .WEBP or animated .TGS stickers. On success, the 

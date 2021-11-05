@@ -502,7 +502,7 @@ class ScalaApiGeneratorV1 extends Generator {
         name = parentKind.name,
         body = s"""
            case object $name extends $parent {
-             override def toString() = "${x.target}"
+             override def toString = "${x.target}"
            }
          """
       ))
