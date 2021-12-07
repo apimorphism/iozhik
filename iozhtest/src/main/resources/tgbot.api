@@ -1566,6 +1566,10 @@ namespace telegramium {
       /* Optional. Bio of the other party in a private chat. 
       Returned only in getChat. */
       bio                   : Option[String]
+      /* Optional. True, if privacy settings of the other party in 
+      the private chat allows to use tg://user?id=<user_id> links 
+      only in chats with the user. Returned only in getChat. */
+      hasPrivateForwards    : Option[Boolean]
       /* Optional. Description, for groups, supergroups and channel 
       chats. Returned only in getChat. */
       description           : Option[String]
@@ -1586,6 +1590,9 @@ namespace telegramium {
       chat will be automatically deleted; in seconds. Returned 
       only in getChat. */
       messageAutoDeleteTime : Option[Int]
+      /* Optional. True, if messages from the chat can't be 
+      forwarded to other chats. Returned only in getChat. */
+      hasProtectedContent   : Option[Boolean]
       /* Optional. For supergroups, name of group sticker set. 
       Returned only in getChat. */
       stickerSetName        : Option[String]
@@ -2491,6 +2498,9 @@ namespace telegramium {
       /* Optional. For forwarded messages, date the original message 
       was sent in Unix time */
       forwardDate                   : Option[Int]
+      /* Optional. True, if the message is a channel post that was 
+      automatically forwarded to the connected discussion group */
+      isAutomaticForward            : Option[Boolean]
       /* Optional. For replies, the original message. Note that the 
       Message object in this field will not contain further 
       reply_to_message fields even if it itself is a reply. */
@@ -2499,6 +2509,8 @@ namespace telegramium {
       viaBot                        : Option[User]
       /* Optional. Date the message was last edited in Unix time */
       editDate                      : Option[Int]
+      /* Optional. True, if the message can't be forwarded */
+      hasProtectedContent           : Option[Boolean]
       /* Optional. The unique identifier of a media message group 
       this message belongs to */
       mediaGroupId                  : Option[String]
@@ -2697,8 +2709,10 @@ namespace telegramium {
     InlineKeyboardButton {
       /* Label text on the button */
       text                         : String
-      /* Optional. HTTP or tg:// url to be opened when button is 
-      pressed */
+      /* Optional. HTTP or tg:// url to be opened when the button is 
+      pressed. Links tg://user?id=<user_id> can be used to mention 
+      a user by their ID without using a username, if this is 
+      allowed by their privacy settings. */
       url                          : Option[String]
       /* Optional. An HTTP URL used to automatically authorize the 
       user. Can be used as a replacement for the Telegram Login 
@@ -2731,7 +2745,7 @@ namespace telegramium {
       callbackGame                 : Option[CallbackGame]
       /* Optional. Specify True, to send a Pay button. NOTE: This 
       type of button must always be the first button in the first 
-      row. */
+      row and can only be used in invoice messages. */
       pay                          : Option[Boolean]
     }
            
@@ -3176,6 +3190,25 @@ namespace telegramium {
           chatId      : ChatId
           /* A JSON-serialized object for new default chat permissions */
           permissions : ChatPermissions
+        } => Method[Boolean]
+                
+      
+        /* Use this method to ban a channel chat in a supergroup or a channel. The owner 
+          of the chat will not be able to send messages and join live streams on behalf of 
+          the chat, unless it is unbanned first. The bot must be an administrator in the 
+          supergroup or channel for this to work and must have the appropriate 
+          administrator rights. Returns True on success.  */
+        def banChatSenderChat {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId       : ChatId
+          /* Unique identifier of the target sender chat */
+          senderChatId : Int
+          /* Date when the sender chat will be unbanned, unix time. If 
+          the chat is banned for more than 366 days or less than 30 
+          seconds from the current time they are considered to be 
+          banned forever. */
+          untilDate    : Option[Int]
         } => Method[Boolean]
                 
       
@@ -3962,6 +3995,18 @@ namespace telegramium {
           easily return to the chat where they wanted to use the bot's 
           inline capabilities. */
           switchPmParameter : Option[String]
+        } => Method[Boolean]
+                
+      
+        /* Use this method to unban a previously banned channel chat in a supergroup or 
+          channel. The bot must be an administrator for this to work and must have the 
+          appropriate administrator rights. Returns True on success.  */
+        def unbanChatSenderChat {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId       : ChatId
+          /* Unique identifier of the target sender chat */
+          senderChatId : Int
         } => Method[Boolean]
                 
       
