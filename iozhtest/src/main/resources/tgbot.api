@@ -1961,11 +1961,14 @@ namespace telegramium {
       title         : String
       /* True, if the sticker set contains animated stickers */
       isAnimated    : Boolean
+      /* True, if the sticker set contains video stickers */
+      isVideo       : Boolean
       /* True, if the sticker set contains masks */
       containsMasks : Boolean
       /* List of all set stickers */
       stickers      : List[Sticker]
-      /* Optional. Sticker set thumbnail in the .WEBP or .TGS format */
+      /* Optional. Sticker set thumbnail in the .WEBP, .TGS, or 
+      .WEBM format */
       thumb         : Option[PhotoSize]
     }
            
@@ -2453,6 +2456,8 @@ namespace telegramium {
       height       : Int
       /* True, if the sticker is animated */
       isAnimated   : Boolean
+      /* True, if the sticker is a video sticker */
+      isVideo      : Boolean
       /* Optional. Sticker thumbnail in the .WEBP or .JPG format */
       thumb        : Option[PhotoSize]
       /* Optional. Emoji associated with the sticker */
@@ -3154,7 +3159,7 @@ namespace telegramium {
       
         /* Use this method to create a new sticker set owned by a user. The bot will be 
           able to edit the sticker set thus created. You must use exactly one of the 
-          fields png_sticker or tgs_sticker. Returns True on success.  */
+          fields png_sticker, tgs_sticker, or webm_sticker. Returns True on success.  */
         def createNewStickerSet {
           /* User identifier of created sticker set owner */
           userId        : Long
@@ -3176,9 +3181,14 @@ namespace telegramium {
           pngSticker    : (file) Option[IFile]
           /* TGS animation with the sticker, uploaded using 
           multipart/form-data. See 
-          https://core.telegram.org/animated_stickers#technical-requirements 
+          https://core.telegram.org/stickers#animated-sticker-requirements 
           for technical requirements */
           tgsSticker    : (file) Option[IFile]
+          /* WEBM video with the sticker, uploaded using 
+          multipart/form-data. See 
+          https://core.telegram.org/stickers#video-sticker-requirements 
+          for technical requirements */
+          webmSticker   : (file) Option[IFile]
           /* One or more emoji corresponding to the sticker */
           emojis        : String
           /* Pass True, if a set of mask stickers should be created */
@@ -3375,10 +3385,10 @@ namespace telegramium {
                 
       
         /* Use this method to add a new sticker to a set created by the bot. You must use 
-          exactly one of the fields png_sticker or tgs_sticker. Animated stickers can be 
-          added to animated sticker sets and only to them. Animated sticker sets can have 
-          up to 50 stickers. Static sticker sets can have up to 120 stickers. Returns True 
-          on success.  */
+          exactly one of the fields png_sticker, tgs_sticker, or webm_sticker. Animated 
+          stickers can be added to animated sticker sets and only to them. Animated 
+          sticker sets can have up to 50 stickers. Static sticker sets can have up to 120 
+          stickers. Returns True on success.  */
         def addStickerToSet {
           /* User identifier of sticker set owner */
           userId       : Long
@@ -3393,9 +3403,14 @@ namespace telegramium {
           pngSticker   : (file) Option[IFile]
           /* TGS animation with the sticker, uploaded using 
           multipart/form-data. See 
-          https://core.telegram.org/animated_stickers#technical-requirements 
+          https://core.telegram.org/stickers#animated-sticker-requirements 
           for technical requirements */
           tgsSticker   : (file) Option[IFile]
+          /* WEBM video with the sticker, uploaded using 
+          multipart/form-data. See 
+          https://core.telegram.org/stickers#video-sticker-requirements 
+          for technical requirements */
+          webmSticker  : (file) Option[IFile]
           /* One or more emoji corresponding to the sticker */
           emojis       : String
           /* A JSON-serialized object for position where the mask should 
@@ -3550,7 +3565,8 @@ namespace telegramium {
           parameter only_if_banned. Returns True on success.  */
         def unbanChatMember {
           /* Unique identifier for the target group or username of the 
-          target supergroup or channel (in the format &#064;username) */
+          target supergroup or channel (in the format 
+          &#064;channelusername) */
           chatId       : ChatId
           /* Unique identifier of the target user */
           userId       : Long
@@ -4410,7 +4426,8 @@ namespace telegramium {
                 
       
         /* Use this method to set the thumbnail of a sticker set. Animated thumbnails can 
-          be set for animated sticker sets only. Returns True on success.  */
+          be set for animated sticker sets only. Video thumbnails can be set only for 
+          video sticker sets only. Returns True on success.  */
         def setStickerSetThumb {
           /* Sticker set name */
           name   : String
@@ -4419,13 +4436,16 @@ namespace telegramium {
           /* A PNG image with the thumbnail, must be up to 128 kilobytes 
           in size and have width and height exactly 100px, or a TGS 
           animation with the thumbnail up to 32 kilobytes in size; see 
-          https://core.telegram.org/animated_stickers#technical-requirements 
-          for animated sticker technical requirements. Pass a file_id 
-          as a String to send a file that already exists on the 
-          Telegram servers, pass an HTTP URL as a String for Telegram 
-          to get a file from the Internet, or upload a new one using 
-          multipart/form-data. Animated sticker set thumbnail can't be 
-          uploaded via HTTP URL. */
+          https://core.telegram.org/stickers#animated-sticker-requirements 
+          for animated sticker technical requirements, or a WEBM video 
+          with the thumbnail up to 32 kilobytes in size; see 
+          https://core.telegram.org/stickers#video-sticker-requirements 
+          for video sticker technical requirements. Pass a file_id as 
+          a String to send a file that already exists on the Telegram 
+          servers, pass an HTTP URL as a String for Telegram to get a 
+          file from the Internet, or upload a new one using 
+          multipart/form-data. Animated sticker set thumbnails can't 
+          be uploaded via HTTP URL. */
           thumb  : (file) Option[IFile]
         } => Method[Boolean]
                 
@@ -4724,8 +4744,8 @@ namespace telegramium {
         } => Method[Boolean]
                 
       
-        /* Use this method to send static .WEBP or animated .TGS stickers. On success, the 
-          sent Message is returned.  */
+        /* Use this method to send static .WEBP, animated .TGS, or video .WEBM stickers. 
+          On success, the sent Message is returned.  */
         def sendSticker {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
