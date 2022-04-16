@@ -134,8 +134,7 @@ object TgBotApiScrapper extends IOApp {
             |  /* ${wrap(m.desc, 80)} */
             |  def ${m.name} {
             |$fields
-            |  } => Method[${m.returns}]
-          """.stripMargin
+            |  } => Method[${m.returns}]""".stripMargin
         m.name -> body
       }.toMap
     val messageEntityItem = items.collect {
@@ -376,6 +375,7 @@ object TgBotApiScrapper extends IOApp {
           case x: Item if x.name.text.head.isLower =>
             val params = x.table >> elements("tbody > tr")
             val types = x.desc.flatMap(y => y >> elements("a"))
+              .filter(_.attr("href").startsWith("#"))
               .map(_.text)
               .filter(_.headOption.exists(_.isUpper))
             val resA = types.find(_ == "Message").orElse(types.headOption)

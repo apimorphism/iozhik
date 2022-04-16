@@ -158,8 +158,8 @@ namespace telegramium {
         /* True, if the administrator can delete messages of other 
         users */
         canDeleteMessages   : Boolean
-        /* True, if the administrator can manage voice chats */
-        canManageVoiceChats : Boolean
+        /* True, if the administrator can manage video chats */
+        canManageVideoChats : Boolean
         /* True, if the administrator can restrict, ban or unban chat 
         members */
         canRestrictMembers  : Boolean
@@ -305,6 +305,32 @@ namespace telegramium {
       /* Represents the scope of bot commands, covering all private chats.  */
       BotCommandScopeAllPrivateChats {
         type : "all_private_chats:6"
+      }
+             
+    }
+          
+    enum MenuButton {
+    
+      /* Describes that no specific value for the menu button was set.  */
+      MenuButtonDefault {
+        type : "default:0"
+      }
+             
+      /* Represents a menu button, which launches a Web App.  */
+      MenuButtonWebApp {
+        type : "web_app:1"
+        /* Text on the button */
+        text   : String
+        /* Description of the Web App that will be launched when the 
+        user presses the button. The Web App will be able to send an 
+        arbitrary message on behalf of the user using the method 
+        answerWebAppQuery. */
+        webApp : WebAppInfo
+      }
+             
+      /* Represents a menu button, which opens the bot's list of commands.  */
+      MenuButtonCommands {
+        type : "commands:2"
       }
              
     }
@@ -1673,12 +1699,6 @@ namespace telegramium {
       shippingAddress : ShippingAddress
     }
            
-    /* This object represents a service message about a voice chat ended in the chat.  */
-    VoiceChatEnded {
-      /* Voice chat duration in seconds */
-      duration : Int
-    }
-           
     /* Describes actions that a non-administrator user is allowed to take in a chat.  */
     ChatPermissions {
       /* Optional. True, if the user is allowed to send text 
@@ -1852,8 +1872,8 @@ namespace telegramium {
            
     /* This object represents one button of the reply keyboard. For simple text 
       buttons String can be used instead of this object to specify text of the button. 
-      Optional fields request_contact, request_location, and request_poll are mutually 
-      exclusive.  */
+      Optional fields web_app, request_contact, request_location, and request_poll are 
+      mutually exclusive.  */
     KeyboardButton {
       /* Text of the button. If none of the optional fields are 
       used, it will be sent as a message when the button is 
@@ -1861,15 +1881,20 @@ namespace telegramium {
       text            : String
       /* Optional. If True, the user's phone number will be sent as 
       a contact when the button is pressed. Available in private 
-      chats only */
+      chats only. */
       requestContact  : Option[Boolean]
       /* Optional. If True, the user's current location will be sent 
-      when the button is pressed. Available in private chats only */
+      when the button is pressed. Available in private chats only. */
       requestLocation : Option[Boolean]
       /* Optional. If specified, the user will be asked to create a 
       poll and send it to the bot when the button is pressed. 
-      Available in private chats only */
+      Available in private chats only. */
       requestPoll     : Option[KeyboardButtonPollType]
+      /* Optional. If specified, the described Web App will be 
+      launched when the button is pressed. The Web App will be 
+      able to send a “web_app_data” service message. Available in 
+      private chats only. */
+      webApp          : Option[WebAppInfo]
     }
            
     /* This object represents a file uploaded to Telegram Passport. Currently all 
@@ -1903,6 +1928,13 @@ namespace telegramium {
       height       : Int
       /* Optional. File size in bytes */
       fileSize     : Option[Int]
+    }
+           
+    /* This object represents a service message about new members invited to a video 
+      chat.  */
+    VideoChatParticipantsInvited {
+      /* New members that were invited to the video chat */
+      users : List[User]
     }
            
     /* This object represents type of a poll, which is allowed to be created and sent 
@@ -2003,6 +2035,13 @@ namespace telegramium {
       vcard       : Option[String]
     }
            
+    /* Contains information about a Web App.  */
+    WebAppInfo {
+      /* An HTTPS URL of a Web App to be opened with additional data 
+      as specified in Initializing Web Apps */
+      url : String
+    }
+           
     /* This object represents one row of the high scores table for a game.  */
     GameHighScore {
       /* Position in high score table for the game */
@@ -2052,6 +2091,17 @@ namespace telegramium {
       /* Optional. Google Places type of the venue. (See supported 
       types.) */
       googlePlaceType : Option[String]
+    }
+           
+    /* Contains data sent from a Web App to the bot.  */
+    WebAppData {
+      /* The data. Be aware that a bad client can send arbitrary 
+      data in this field. */
+      data       : String
+      /* Text of the web_app keyboard button, from which the Web App 
+      was opened. Be aware that a bad client can send arbitrary 
+      data in this field. */
+      buttonText : String
     }
            
     /* This object contains basic information about a successful payment.  */
@@ -2164,6 +2214,12 @@ namespace telegramium {
       filePath     : Option[String]
     }
            
+    /* This object represents a service message about a video chat ended in the chat.  */
+    VideoChatEnded {
+      /* Video chat duration in seconds */
+      duration : Int
+    }
+           
     /* This object represents a game. Use BotFather to create and edit games, their 
       short names will act as unique identifiers.  */
     Game {
@@ -2247,27 +2303,31 @@ namespace telegramium {
     /* Contains information about the current status of a webhook.  */
     WebhookInfo {
       /* Webhook URL, may be empty if webhook is not set up */
-      url                  : String
+      url                          : String
       /* True, if a custom certificate was provided for webhook 
       certificate checks */
-      hasCustomCertificate : Boolean
+      hasCustomCertificate         : Boolean
       /* Number of updates awaiting delivery */
-      pendingUpdateCount   : Int
+      pendingUpdateCount           : Int
       /* Optional. Currently used webhook IP address */
-      ipAddress            : Option[String]
+      ipAddress                    : Option[String]
       /* Optional. Unix time for the most recent error that happened 
       when trying to deliver an update via webhook */
-      lastErrorDate        : Option[Int]
+      lastErrorDate                : Option[Int]
       /* Optional. Error message in human-readable format for the 
       most recent error that happened when trying to deliver an 
       update via webhook */
-      lastErrorMessage     : Option[String]
+      lastErrorMessage             : Option[String]
+      /* Optional. Unix time of the most recent error that happened 
+      when trying to synchronize available updates with Telegram 
+      datacenters */
+      lastSynchronizationErrorDate : Option[Int]
       /* Optional. Maximum allowed number of simultaneous HTTPS 
       connections to the webhook for update delivery */
-      maxConnections       : Option[Int]
+      maxConnections               : Option[Int]
       /* Optional. A list of update types the bot is subscribed to. 
       Defaults to all update types except chat_member */
-      allowedUpdates       : List[String]
+      allowedUpdates               : List[String]
     }
            
     /* This object represents the content of a service message, sent whenever a user 
@@ -2279,14 +2339,6 @@ namespace telegramium {
       watcher  : User
       /* The distance between the users */
       distance : Int
-    }
-           
-    /* This object represents a service message about a voice chat scheduled in the 
-      chat.  */
-    VoiceChatScheduled {
-      /* Point in time (Unix timestamp) when the voice chat is 
-      supposed to be started by a chat administrator */
-      startDate : Int
     }
            
     /* This object contains basic information about an invoice.  */
@@ -2308,6 +2360,14 @@ namespace telegramium {
       totalAmount    : Int
     }
            
+    /* This object represents a service message about a video chat scheduled in the 
+      chat.  */
+    VideoChatScheduled {
+      /* Point in time (Unix timestamp) when the video chat is 
+      supposed to be started by a chat administrator */
+      startDate : Int
+    }
+           
     /* This object represents a chat photo.  */
     ChatPhoto {
       /* File identifier of small (160x160) chat photo. This file_id 
@@ -2326,6 +2386,14 @@ namespace telegramium {
       is supposed to be the same over time and for different bots. 
       Can't be used to download or reuse the file. */
       bigFileUniqueId   : String
+    }
+           
+    /* Contains information about an inline message sent by a Web App on behalf of a 
+      user.  */
+    SentWebAppMessage {
+      /* Optional. Identifier of the sent inline message. Available 
+      only if there is an inline keyboard attached to the message. */
+      inlineMessageId : Option[String]
     }
            
     /* This object represents an incoming inline query. When the user sends an empty 
@@ -2653,15 +2721,17 @@ namespace telegramium {
       /* Optional. Service message. A user in the chat triggered 
       another user's proximity alert while sharing Live Location. */
       proximityAlertTriggered       : Option[ProximityAlertTriggered]
-      /* Optional. Service message: voice chat scheduled */
-      voiceChatScheduled            : Option[VoiceChatScheduled]
-      /* Optional. Service message: voice chat started */
-      voiceChatStarted              : Option[VoiceChatStarted]
-      /* Optional. Service message: voice chat ended */
-      voiceChatEnded                : Option[VoiceChatEnded]
+      /* Optional. Service message: video chat scheduled */
+      videoChatScheduled            : Option[VideoChatScheduled]
+      /* Optional. Service message: video chat started */
+      videoChatStarted              : Option[VideoChatStarted]
+      /* Optional. Service message: video chat ended */
+      videoChatEnded                : Option[VideoChatEnded]
       /* Optional. Service message: new participants invited to a 
-      voice chat */
-      voiceChatParticipantsInvited  : Option[VoiceChatParticipantsInvited]
+      video chat */
+      videoChatParticipantsInvited  : Option[VideoChatParticipantsInvited]
+      /* Optional. Service message: data sent by a Web App */
+      webAppData                    : Option[WebAppData]
       /* Optional. Inline keyboard attached to the message. 
       login_url buttons are represented as ordinary url buttons. */
       replyMarkup                   : Option[InlineKeyboardMarkup]
@@ -2675,6 +2745,46 @@ namespace telegramium {
       title  : String
       /* List of price portions */
       prices : List[LabeledPrice]
+    }
+           
+    /* Represents the rights of an administrator in a chat.  */
+    ChatAdministratorRights {
+      /* True, if the user's presence in the chat is hidden */
+      isAnonymous         : Boolean
+      /* True, if the administrator can access the chat event log, 
+      chat statistics, message statistics in channels, see channel 
+      members, see anonymous administrators in supergroups and 
+      ignore slow mode. Implied by any other administrator 
+      privilege */
+      canManageChat       : Boolean
+      /* True, if the administrator can delete messages of other 
+      users */
+      canDeleteMessages   : Boolean
+      /* True, if the administrator can manage video chats */
+      canManageVideoChats : Boolean
+      /* True, if the administrator can restrict, ban or unban chat 
+      members */
+      canRestrictMembers  : Boolean
+      /* True, if the administrator can add new administrators with 
+      a subset of their own privileges or demote administrators 
+      that he has promoted, directly or indirectly (promoted by 
+      administrators that were appointed by the user) */
+      canPromoteMembers   : Boolean
+      /* True, if the user is allowed to change the chat title, 
+      photo and other settings */
+      canChangeInfo       : Boolean
+      /* True, if the user is allowed to invite new users to the 
+      chat */
+      canInviteUsers      : Boolean
+      /* Optional. True, if the administrator can post in the 
+      channel; channels only */
+      canPostMessages     : Option[Boolean]
+      /* Optional. True, if the administrator can edit messages of 
+      other users and can pin messages; channels only */
+      canEditMessages     : Option[Boolean]
+      /* Optional. True, if the user is allowed to pin messages; 
+      groups and supergroups only */
+      canPinMessages      : Option[Boolean]
     }
            
     /* This object contains information about an incoming pre-checkout query.  */
@@ -2698,12 +2808,6 @@ namespace telegramium {
       shippingOptionId : Option[String]
       /* Optional. Order info provided by the user */
       orderInfo        : Option[OrderInfo]
-    }
-           
-    /* This object represents a service message about a voice chat started in the 
-      chat. Currently holds no information.  */
-    VoiceChatStarted {
-  
     }
            
     /* Contains data required for decrypting and authenticating 
@@ -2731,13 +2835,19 @@ namespace telegramium {
       a user by their ID without using a username, if this is 
       allowed by their privacy settings. */
       url                          : Option[String]
+      /* Optional. Data to be sent in a callback query to the bot 
+      when button is pressed, 1-64 bytes */
+      callbackData                 : Option[String]
+      /* Optional. Description of the Web App that will be launched 
+      when the user presses the button. The Web App will be able 
+      to send an arbitrary message on behalf of the user using the 
+      method answerWebAppQuery. Available only in private chats 
+      between a user and the bot. */
+      webApp                       : Option[WebAppInfo]
       /* Optional. An HTTP URL used to automatically authorize the 
       user. Can be used as a replacement for the Telegram Login 
       Widget. */
       loginUrl                     : Option[LoginUrl]
-      /* Optional. Data to be sent in a callback query to the bot 
-      when button is pressed, 1-64 bytes */
-      callbackData                 : Option[String]
       /* Optional. If set, pressing the button will prompt the user 
       to select one of their chats, open that chat and insert the 
       bot's username and the specified inline query in the input 
@@ -2810,11 +2920,10 @@ namespace telegramium {
       fileSize     : Option[Int]
     }
            
-    /* This object represents a service message about new members invited to a voice 
-      chat.  */
-    VoiceChatParticipantsInvited {
-      /* Optional. New members that were invited to the voice chat */
-      users : List[User]
+    /* This object represents a service message about a video chat started in the 
+      chat. Currently holds no information.  */
+    VideoChatStarted {
+  
     }
            
     /* This object represent a user's profile pictures.  */
@@ -2922,7 +3031,6 @@ namespace telegramium {
         def getWebhookInfo {
       
         } => Method[WebhookInfo]
-                
       
         /* Use this method to change the list of the bot's commands. See 
           https://core.telegram.org/bots#commands for more details about bot commands. 
@@ -2941,7 +3049,6 @@ namespace telegramium {
           language there are no dedicated commands */
           languageCode : Option[String]
         } => Method[Boolean]
-                
       
         /* Use this method to set a new profile photo for the chat. Photos can't be 
           changed for private chats. The bot must be an administrator in the chat for this 
@@ -2954,7 +3061,6 @@ namespace telegramium {
           /* New chat photo, uploaded using multipart/form-data */
           photo  : (file) IFile
         } => Method[Boolean]
-                
       
         /* Use this method to get data for high score tables. Will return the score of the 
           specified user and several of their neighbors in a game. On success, returns an 
@@ -2972,7 +3078,6 @@ namespace telegramium {
           Identifier of the inline message */
           inlineMessageId : Option[String]
         } => Method[List[GameHighScore]]
-                
       
         /* Use this method to clear the list of pinned messages in a chat. If the chat is 
           not a private chat, the bot must be an administrator in the chat for this to 
@@ -2983,7 +3088,6 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId : ChatId
         } => Method[Boolean]
-                
       
         /* Use this method to send answers to callback queries sent from inline keyboards. 
           The answer will be displayed to the user as a notification at the top of the 
@@ -3012,7 +3116,15 @@ namespace telegramium {
           0. */
           cacheTime       : Option[Int]
         } => Method[Boolean]
-                
+      
+        /* Use this method to get the current default administrator rights of the bot. 
+          Returns ChatAdministratorRights on success.  */
+        def getMyDefaultAdministratorRights {
+          /* Pass True to get default administrator rights of the bot in 
+          channels. Otherwise, default administrator rights of the bot 
+          for groups and supergroups will be returned. */
+          forChannels : Option[Boolean]
+        } => Method[ChatAdministratorRights]
       
         /* Use this method to send text messages. On success, the sent Message is 
           returned.  */
@@ -3047,7 +3159,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to get a list of profile pictures for a user. Returns a 
           UserProfilePhotos object.  */
@@ -3061,7 +3172,6 @@ namespace telegramium {
           1-100 are accepted. Defaults to 100. */
           limit  : Option[Int]
         } => Method[UserProfilePhotos]
-                
       
         /* Use this method to send a native poll. On success, the sent Message is 
           returned.  */
@@ -3122,7 +3232,16 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
+      
+        /* Use this method to set the result of an interaction with a Web App and send a 
+          corresponding message on behalf of the user to the chat from which the query 
+          originated. On success, a SentWebAppMessage object is returned.  */
+        def answerWebAppQuery {
+          /* Unique identifier for the query to be answered */
+          webAppQueryId : String
+          /* A JSON-serialized object describing the message to be sent */
+          result        : InlineQueryResult
+        } => Method[SentWebAppMessage]
       
         /* Use this method to send phone contacts. On success, the sent Message is 
           returned.  */
@@ -3155,7 +3274,6 @@ namespace telegramium {
           remove keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to create a new sticker set owned by a user. The bot will be 
           able to edit the sticker set thus created. You must use exactly one of the 
@@ -3166,9 +3284,9 @@ namespace telegramium {
           /* Short name of sticker set, to be used in t.me/addstickers/ 
           URLs (e.g., animals). Can contain only english letters, 
           digits and underscores. Must begin with a letter, can't 
-          contain consecutive underscores and must end in “_by_<bot 
-          username>”. <bot_username> is case insensitive. 1-64 
-          characters. */
+          contain consecutive underscores and must end in 
+          "_by_<bot_username>". <bot_username> is case insensitive. 
+          1-64 characters. */
           name          : String
           /* Sticker set title, 1-64 characters */
           title         : String
@@ -3197,7 +3315,6 @@ namespace telegramium {
           be placed on faces */
           maskPosition  : Option[MaskPosition]
         } => Method[Boolean]
-                
       
         /* Use this method to upload a .PNG file with a sticker for later use in 
           createNewStickerSet and addStickerToSet methods (can be used multiple times). 
@@ -3210,7 +3327,6 @@ namespace telegramium {
           height must be exactly 512px. */
           pngSticker : (file) IFile
         } => Method[File]
-                
       
         /* Use this method to set default chat permissions for all members. The bot must 
           be an administrator in the group or a supergroup for this to work and must have 
@@ -3222,7 +3338,6 @@ namespace telegramium {
           /* A JSON-serialized object for new default chat permissions */
           permissions : ChatPermissions
         } => Method[Boolean]
-                
       
         /* Use this method to ban a channel chat in a supergroup or a channel. Until the 
           chat is unbanned, the owner of the banned chat won't be able to send messages on 
@@ -3236,7 +3351,6 @@ namespace telegramium {
           /* Unique identifier of the target sender chat */
           senderChatId : Int
         } => Method[Boolean]
-                
       
         /* Use this method to send point on the map. On success, the sent Message is 
           returned.  */
@@ -3277,7 +3391,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to delete a group sticker set from a supergroup. The bot must 
           be an administrator in the chat for this to work and must have the appropriate 
@@ -3289,7 +3402,6 @@ namespace telegramium {
           target supergroup (in the format &#064;supergroupusername) */
           chatId : ChatId
         } => Method[Boolean]
-                
       
         /* Use this method to stop updating a live location message before live_period 
           expires. On success, if the message is not an inline message, the edited Message 
@@ -3308,7 +3420,6 @@ namespace telegramium {
           /* A JSON-serialized object for a new inline keyboard. */
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
-                
       
         /* Use this method to generate a new primary invite link for a chat; any 
           previously generated primary link is revoked. The bot must be an administrator 
@@ -3319,7 +3430,6 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId : ChatId
         } => Method[String]
-                
       
         /* Use this method to decline a chat join request. The bot must be an 
           administrator in the chat for this to work and must have the can_invite_users 
@@ -3331,7 +3441,6 @@ namespace telegramium {
           /* Unique identifier of the target user */
           userId : Long
         } => Method[Boolean]
-                
       
         /* Use this method to send an animated emoji that will display a random value. On 
           success, the sent Message is returned.  */
@@ -3362,7 +3471,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method when you need to tell the user that something is happening on 
           the bot's side. The status is set for 5 seconds or less (when a message arrives 
@@ -3382,7 +3490,6 @@ namespace telegramium {
           or upload_video_note for video notes. */
           action : String
         } => Method[Boolean]
-                
       
         /* Use this method to add a new sticker to a set created by the bot. You must use 
           exactly one of the fields png_sticker, tgs_sticker, or webm_sticker. Animated 
@@ -3417,7 +3524,6 @@ namespace telegramium {
           be placed on faces */
           maskPosition : Option[MaskPosition]
         } => Method[Boolean]
-                
       
         /* Use this method to delete a sticker from a set created by the bot. Returns True 
           on success.  */
@@ -3425,7 +3531,6 @@ namespace telegramium {
           /* File identifier of the sticker */
           sticker : String
         } => Method[Boolean]
-                
       
         /* Use this method to stop a poll which was sent by the bot. On success, the 
           stopped Poll is returned.  */
@@ -3438,7 +3543,6 @@ namespace telegramium {
           /* A JSON-serialized object for a new message inline keyboard. */
           replyMarkup : Option[InlineKeyboardMarkup]
         } => Method[Poll]
-                
       
         /* Use this method to remove a message from the list of pinned messages in a chat. 
           If the chat is not a private chat, the bot must be an administrator in the chat 
@@ -3454,7 +3558,6 @@ namespace telegramium {
           unpinned. */
           messageId : Option[Int]
         } => Method[Boolean]
-                
       
         /* Use this method to get the number of members in a chat. Returns Int on success.  */
         def getChatMemberCount {
@@ -3463,7 +3566,6 @@ namespace telegramium {
           &#064;channelusername) */
           chatId : ChatId
         } => Method[Int]
-                
       
         /* Use this method to send a group of photos, videos, documents or audios as an 
           album. Documents and audio files can be only grouped in an album with messages 
@@ -3487,7 +3589,6 @@ namespace telegramium {
           specified replied-to message is not found */
           allowSendingWithoutReply : Option[Boolean]
         } => Method[List[Message]]
-                
       
         /* Use this method to send a game. On success, the sent Message is returned.  */
         def sendGame {
@@ -3512,7 +3613,6 @@ namespace telegramium {
           the first button must launch the game. */
           replyMarkup              : Option[InlineKeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to send information about a venue. On success, the sent Message 
           is returned.  */
@@ -3554,7 +3654,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to unban a previously banned user in a supergroup or channel. 
           The user will not return to the group or channel automatically, but will be able 
@@ -3573,7 +3672,6 @@ namespace telegramium {
           /* Do nothing if the user is not banned */
           onlyIfBanned : Option[Boolean]
         } => Method[Boolean]
-                
       
         /* Use this method to change the description of a group, a supergroup or a 
           channel. The bot must be an administrator in the chat for this to work and must 
@@ -3585,7 +3683,6 @@ namespace telegramium {
           /* New chat description, 0-255 characters */
           description : Option[String]
         } => Method[Boolean]
-                
       
         /* Use this method to edit text and game messages. On success, if the edited 
           message is not an inline message, the edited Message is returned, otherwise True 
@@ -3615,7 +3712,6 @@ namespace telegramium {
           /* A JSON-serialized object for an inline keyboard. */
           replyMarkup           : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
-                
       
         /* Use this method to edit live location messages. A location can be edited until 
           its live_period expires or editing is explicitly disabled by a call to 
@@ -3649,7 +3745,6 @@ namespace telegramium {
           /* A JSON-serialized object for a new inline keyboard. */
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
-                
       
         /* Use this method to get basic info about a file and prepare it for downloading. 
           For the moment, bots can download files of up to 20MB in size. On success, a 
@@ -3662,7 +3757,6 @@ namespace telegramium {
           /* File identifier to get info about */
           fileId : String
         } => Method[File]
-                
       
         /* Use this method to set the score of the specified user in a game message. On 
           success, if the message is not an inline message, the Message is returned, 
@@ -3689,7 +3783,6 @@ namespace telegramium {
           Identifier of the inline message */
           inlineMessageId    : Option[String]
         } => Method[Either[Boolean, Message]]
-                
       
         /* Use this method for your bot to leave a group, supergroup or channel. Returns 
           True on success.  */
@@ -3699,7 +3792,6 @@ namespace telegramium {
           &#064;channelusername) */
           chatId : ChatId
         } => Method[Boolean]
-                
       
         /* Use this method to change the title of a chat. Titles can't be changed for 
           private chats. The bot must be an administrator in the chat for this to work and 
@@ -3711,7 +3803,6 @@ namespace telegramium {
           /* New chat title, 1-255 characters */
           title  : String
         } => Method[Boolean]
-                
       
         /* Use this method to copy messages of any kind. Service messages and invoice 
           messages can't be copied. The method is analogous to the method forwardMessage, 
@@ -3753,7 +3844,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[MessageId]
-                
       
         /* As of v.4.0, Telegram clients support rounded square mp4 videos of up to 1 
           minute long. Use this method to send video messages. On success, the sent 
@@ -3797,7 +3887,17 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
+      
+        /* Use this method to change the bot's menu button in a private chat, or the 
+          default menu button. Returns True on success.  */
+        def setChatMenuButton {
+          /* Unique identifier for the target private chat. If not 
+          specified, default bot's menu button will be changed */
+          chatId     : Option[Int]
+          /* A JSON-serialized object for the new bot's menu button. 
+          Defaults to MenuButtonDefault */
+          menuButton : Option[MenuButton]
+        } => Method[Boolean]
       
         /* Informs a user that some of the Telegram Passport elements they provided 
           contains errors. The user will not be able to re-submit their Passport to you 
@@ -3813,7 +3913,6 @@ namespace telegramium {
           /* A JSON-serialized array describing the errors */
           errors : List[PassportElementError]
         } => Method[Boolean]
-                
       
         /* Use this method to delete a chat photo. Photos can't be changed for private 
           chats. The bot must be an administrator in the chat for this to work and must 
@@ -3823,7 +3922,6 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId : ChatId
         } => Method[Boolean]
-                
       
         /* Use this method to edit a non-primary invite link created by the bot. The bot 
           must be an administrator in the chat for this to work and must have the 
@@ -3848,7 +3946,6 @@ namespace telegramium {
           be specified */
           createsJoinRequest : Option[Boolean]
         } => Method[ChatInviteLink]
-                
       
         /* Use this method to send invoices. On success, the sent Message is returned.  */
         def sendInvoice {
@@ -3942,7 +4039,6 @@ namespace telegramium {
           the first button must be a Pay button. */
           replyMarkup               : Option[InlineKeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to send general files. On success, the sent Message is 
           returned. Bots can currently send files of any type of up to 50 MB in size, this 
@@ -3994,7 +4090,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup                 : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to delete a message, including service messages, with the 
           following limitations: - A message can only be deleted if it was sent less than 
@@ -4012,7 +4107,6 @@ namespace telegramium {
           /* Identifier of the message to delete */
           messageId : Int
         } => Method[Boolean]
-                
       
         /* Use this method to send answers to an inline query. On success, True is 
           returned. No more than 50 results per query are allowed.  */
@@ -4054,7 +4148,6 @@ namespace telegramium {
           inline capabilities. */
           switchPmParameter : Option[String]
         } => Method[Boolean]
-                
       
         /* Use this method to unban a previously banned channel chat in a supergroup or 
           channel. The bot must be an administrator for this to work and must have the 
@@ -4066,7 +4159,6 @@ namespace telegramium {
           /* Unique identifier of the target sender chat */
           senderChatId : Int
         } => Method[Boolean]
-                
       
         /* Use this method to send audio files, if you want Telegram clients to display 
           them in the music player. Your audio must be in the .MP3 or .M4A format. On 
@@ -4123,7 +4215,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to restrict a user in a supergroup. The bot must be an 
           administrator in the supergroup for this to work and must have the appropriate 
@@ -4143,14 +4234,12 @@ namespace telegramium {
           to be restricted forever */
           untilDate   : Option[Int]
         } => Method[Boolean]
-                
       
         /* A simple method for testing your bot's authentication token. Requires no 
           parameters. Returns basic information about the bot in form of a User object.  */
         def getMe {
       
         } => Method[User]
-                
       
         /* Use this method to forward messages of any kind. Service messages can't be 
           forwarded. On success, the sent Message is returned.  */
@@ -4171,7 +4260,6 @@ namespace telegramium {
           /* Message identifier in the chat specified in from_chat_id */
           messageId           : Int
         } => Method[Message]
-                
       
         /* Use this method to get information about a member of a chat. Returns a 
           ChatMember object on success.  */
@@ -4183,7 +4271,6 @@ namespace telegramium {
           /* Unique identifier of the target user */
           userId : Long
         } => Method[ChatMember]
-                
       
         /* Use this method to get the current list of the bot's commands for the given 
           scope and user language. Returns Array of BotCommand on success. If commands 
@@ -4195,7 +4282,6 @@ namespace telegramium {
           /* A two-letter ISO 639-1 language code or an empty string */
           languageCode : Option[String]
         } => Method[List[BotCommand]]
-                
       
         /* Use this method to ban a user in a group, a supergroup or a channel. In the 
           case of supergroups and channels, the user will not be able to return to the 
@@ -4220,7 +4306,6 @@ namespace telegramium {
           removed. Always True for supergroups and channels. */
           revokeMessages : Option[Boolean]
         } => Method[Boolean]
-                
       
         /* Use this method to get a list of administrators in a chat. On success, returns 
           an Array of ChatMember objects that contains information about all chat 
@@ -4232,7 +4317,6 @@ namespace telegramium {
           &#064;channelusername) */
           chatId : ChatId
         } => Method[List[ChatMember]]
-                
       
         /* Use this method to send audio files, if you want Telegram clients to display 
           the file as a playable voice message. For this to work, your audio must be in an 
@@ -4275,7 +4359,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to log out from the cloud Bot API server before launching the 
           bot locally. You must log out the bot before running it locally, otherwise there 
@@ -4286,7 +4369,6 @@ namespace telegramium {
         def logOut {
       
         } => Method[Boolean]
-                
       
         /* Use this method to promote or demote a user in a supergroup or a channel. The 
           bot must be an administrator in the chat for this to work and must have the 
@@ -4316,8 +4398,8 @@ namespace telegramium {
           /* Pass True, if the administrator can delete messages of 
           other users */
           canDeleteMessages   : Option[Boolean]
-          /* Pass True, if the administrator can manage voice chats */
-          canManageVoiceChats : Option[Boolean]
+          /* Pass True, if the administrator can manage video chats */
+          canManageVideoChats : Option[Boolean]
           /* Pass True, if the administrator can restrict, ban or unban 
           chat members */
           canRestrictMembers  : Option[Boolean]
@@ -4336,7 +4418,6 @@ namespace telegramium {
           supergroups only */
           canPinMessages      : Option[Boolean]
         } => Method[Boolean]
-                
       
         /* Use this method to edit captions of messages. On success, if the edited message 
           is not an inline message, the edited Message is returned, otherwise True is 
@@ -4364,7 +4445,6 @@ namespace telegramium {
           /* A JSON-serialized object for an inline keyboard. */
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
-                
       
         /* Use this method to edit animation, audio, document, photo, or video messages. 
           If a message is part of a message album, then it can be edited only to an audio 
@@ -4390,7 +4470,21 @@ namespace telegramium {
           /* A JSON-serialized object for a new inline keyboard. */
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
-                
+      
+        /* Use this method to change the default administrator rights requested by the bot 
+          when it's added as an administrator to groups or channels. These rights will be 
+          suggested to users, but they are are free to modify the list before adding the 
+          bot. Returns True on success.  */
+        def setMyDefaultAdministratorRights {
+          /* A JSON-serialized object describing new default 
+          administrator rights. If not specified, the default 
+          administrator rights will be cleared. */
+          rights      : Option[ChatAdministratorRights]
+          /* Pass True to change the default administrator rights of the 
+          bot in channels. Otherwise, the default administrator rights 
+          of the bot for groups and supergroups will be changed. */
+          forChannels : Option[Boolean]
+        } => Method[Boolean]
       
         /* Use this method to delete the list of the bot's commands for the given scope 
           and user language. After deletion, higher level commands will be shown to 
@@ -4405,7 +4499,6 @@ namespace telegramium {
           language there are no dedicated commands */
           languageCode : Option[String]
         } => Method[Boolean]
-                
       
         /* Use this method to add a message to the list of pinned messages in a chat. If 
           the chat is not a private chat, the bot must be an administrator in the chat for 
@@ -4423,7 +4516,6 @@ namespace telegramium {
           are always disabled in channels and private chats. */
           disableNotification : Option[Boolean]
         } => Method[Boolean]
-                
       
         /* Use this method to set the thumbnail of a sticker set. Animated thumbnails can 
           be set for animated sticker sets only. Video thumbnails can be set only for 
@@ -4448,7 +4540,6 @@ namespace telegramium {
           be uploaded via HTTP URL. */
           thumb  : (file) Option[IFile]
         } => Method[Boolean]
-                
       
         /* Use this method to edit only the reply markup of messages. On success, if the 
           edited message is not an inline message, the edited Message is returned, 
@@ -4467,7 +4558,6 @@ namespace telegramium {
           /* A JSON-serialized object for an inline keyboard. */
           replyMarkup     : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
-                
       
         /* Use this method to create an additional invite link for a chat. The bot must be 
           an administrator in the chat for this to work and must have the appropriate 
@@ -4490,7 +4580,6 @@ namespace telegramium {
           be specified */
           createsJoinRequest : Option[Boolean]
         } => Method[ChatInviteLink]
-                
       
         /* Use this method to send video files, Telegram clients support mp4 videos (other 
           formats may be sent as Document). On success, the sent Message is returned. Bots 
@@ -4548,7 +4637,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to set a new group sticker set for a supergroup. The bot must 
           be an administrator in the chat for this to work and must have the appropriate 
@@ -4562,7 +4650,6 @@ namespace telegramium {
           /* Name of the sticker set to be set as the group sticker set */
           stickerSetName : String
         } => Method[Boolean]
-                
       
         /* Use this method to get up to date information about the chat (current name of 
           the user for one-on-one conversations, current username of a user, group or 
@@ -4573,7 +4660,6 @@ namespace telegramium {
           &#064;channelusername) */
           chatId : ChatId
         } => Method[Chat]
-                
       
         /* Use this method to remove webhook integration if you decide to switch back to 
           getUpdates. Returns True on success.  */
@@ -4581,7 +4667,6 @@ namespace telegramium {
           /* Pass True to drop all pending updates */
           dropPendingUpdates : Option[Boolean]
         } => Method[Boolean]
-                
       
         /* Use this method to revoke an invite link created by the bot. If the primary 
           link is revoked, a new link is automatically generated. The bot must be an 
@@ -4594,7 +4679,6 @@ namespace telegramium {
           /* The invite link to revoke */
           inviteLink : String
         } => Method[ChatInviteLink]
-                
       
         /* Use this method to close the bot instance before moving it from one local 
           server to another. You need to delete the webhook before calling this method to 
@@ -4604,7 +4688,6 @@ namespace telegramium {
         def close {
       
         } => Method[Boolean]
-                
       
         /* Use this method to move a sticker in a set created by the bot to a specific 
           position. Returns True on success.  */
@@ -4614,7 +4697,6 @@ namespace telegramium {
           /* New sticker position in the set, zero-based */
           position : Int
         } => Method[Boolean]
-                
       
         /* Use this method to set a custom title for an administrator in a supergroup 
           promoted by the bot. Returns True on success.  */
@@ -4628,7 +4710,14 @@ namespace telegramium {
           emoji are not allowed */
           customTitle : String
         } => Method[Boolean]
-                
+      
+        /* Use this method to get the current value of the bot's menu button in a private 
+          chat, or the default menu button. Returns MenuButton on success.  */
+        def getChatMenuButton {
+          /* Unique identifier for the target private chat. If not 
+          specified, default bot's menu button will be returned */
+          chatId : Option[Int]
+        } => Method[MenuButton]
       
         /* Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without 
           sound). On success, the sent Message is returned. Bots can currently send 
@@ -4685,7 +4774,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* If you sent an invoice requesting a shipping address and the parameter 
           is_flexible was specified, the Bot API will send an Update with a shipping_query 
@@ -4708,7 +4796,6 @@ namespace telegramium {
           user. */
           errorMessage    : Option[String]
         } => Method[Boolean]
-                
       
         /* Use this method to approve a chat join request. The bot must be an 
           administrator in the chat for this to work and must have the can_invite_users 
@@ -4720,7 +4807,6 @@ namespace telegramium {
           /* Unique identifier of the target user */
           userId : Long
         } => Method[Boolean]
-                
       
         /* Once the user has confirmed their payment and shipping details, the Bot API 
           sends the final confirmation in the form of an Update with the field 
@@ -4742,7 +4828,6 @@ namespace telegramium {
           garment!"). Telegram will display this message to the user. */
           errorMessage       : Option[String]
         } => Method[Boolean]
-                
       
         /* Use this method to send static .WEBP, animated .TGS, or video .WEBM stickers. 
           On success, the sent Message is returned.  */
@@ -4771,7 +4856,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to send photos. On success, the sent Message is returned.  */
         def sendPhoto {
@@ -4811,7 +4895,6 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
-                
       
         /* Use this method to receive incoming updates using long polling (wiki). An Array 
           of Update objects is returned.  */
@@ -4845,7 +4928,6 @@ namespace telegramium {
           short period of time. */
           allowedUpdates : List[String]
         } => Method[List[Update]]
-                
       
         /* Use this method to get a sticker set. On success, a StickerSet object is 
           returned.  */
@@ -4853,7 +4935,6 @@ namespace telegramium {
           /* Name of the sticker set */
           name : String
         } => Method[StickerSet]
-                
       
         /* Use this method to specify a url and receive incoming updates via an outgoing 
           webhook. Whenever there is an update for the bot, we will send an HTTPS POST 
@@ -4893,7 +4974,6 @@ namespace telegramium {
           /* Pass True to drop all pending updates */
           dropPendingUpdates : Option[Boolean]
         } => Method[Boolean]
-                
       }
     }
   }
