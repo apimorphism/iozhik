@@ -299,6 +299,8 @@ object TgBotApiScrapper extends IOApp {
       def mkType(name: String, desc: String, s: String): String = {
         val mustBeLong = desc.contains("greater than 32 bits") ||
           desc.contains("more than 32 significant bits") ||
+          desc.contains("bigger than 2^31") ||
+          desc.contains("size in bytes") ||
           name == "user_id"
         val res = s
           .replace(" number", "") // Float number => Float
@@ -329,6 +331,7 @@ object TgBotApiScrapper extends IOApp {
             "one of EmojiDice, EmojiDarts, EmojiBasketball, EmojiFootball, EmojiBowling or EmojiSlotMachine"
           )
           .replace("@", "&#064;")
+          .replace("^", "&#94;")
       }
 
       def removeMoreLinks(desc: Element) = {

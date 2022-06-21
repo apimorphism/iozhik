@@ -94,7 +94,7 @@ namespace telegramium {
         /* Optional. Requests clients to hide the keyboard as soon as 
         it's been used. The keyboard will still be available, but 
         clients will automatically display the usual letter-keyboard 
-        in the chat – the user can press a special button in the 
+        in the chat - the user can press a special button in the 
         input field to see the custom keyboard again. Defaults to 
         false. */
         oneTimeKeyboard       : Option[Boolean]
@@ -673,7 +673,7 @@ namespace telegramium {
         captionEntities     : List[MessageEntity]
         /* A valid URL for the file */
         documentUrl         : String
-        /* Mime type of the content of the file, either 
+        /* MIME type of the content of the file, either 
         “application/pdf” or “application/zip” */
         mimeType            : String
         /* Optional. Short description of the result */
@@ -782,7 +782,8 @@ namespace telegramium {
         type : "mpeg4_gif:8"
         /* Unique identifier for this result, 1-64 bytes */
         id                  : String
-        /* A valid URL for the MP4 file. File size must not exceed 1MB */
+        /* A valid URL for the MPEG4 file. File size must not exceed 
+        1MB */
         mpeg4Url            : String
         /* Optional. Video width */
         mpeg4Width          : Option[Int]
@@ -824,7 +825,7 @@ namespace telegramium {
         type : "mpeg4_gif:9"
         /* Unique identifier for this result, 1-64 bytes */
         id                  : String
-        /* A valid file identifier for the MP4 file */
+        /* A valid file identifier for the MPEG4 file */
         mpeg4FileId         : String
         /* Optional. Title for the result */
         title               : Option[String]
@@ -972,7 +973,7 @@ namespace telegramium {
         id                  : String
         /* A valid URL for the embedded video player or video file */
         videoUrl            : String
-        /* Mime type of the content of video url, “text/html” or 
+        /* MIME type of the content of the video URL, “text/html” or 
         “video/mp4” */
         mimeType            : String
         /* URL of the thumbnail (JPEG only) for the video */
@@ -1165,7 +1166,7 @@ namespace telegramium {
         /* Bot-defined invoice payload, 1-128 bytes. This will not be 
         displayed to the user, use for your internal processes. */
         payload                   : String
-        /* Payment provider token, obtained via Botfather */
+        /* Payment provider token, obtained via &#064;BotFather */
         providerToken             : String
         /* Three-letter ISO 4217 currency code, see more on currencies */
         currency                  : String
@@ -1194,12 +1195,10 @@ namespace telegramium {
         provided by the payment provider. */
         providerData              : Option[String]
         /* Optional. URL of the product photo for the invoice. Can be 
-        a photo of the goods or a marketing image for a service. 
-        People like it better when they see what they are paying 
-        for. */
+        a photo of the goods or a marketing image for a service. */
         photoUrl                  : Option[String]
-        /* Optional. Photo size */
-        photoSize                 : Option[Int]
+        /* Optional. Photo size in bytes */
+        photoSize                 : Option[Long]
         /* Optional. Photo width */
         photoWidth                : Option[Int]
         /* Optional. Photo height */
@@ -1216,11 +1215,11 @@ namespace telegramium {
         /* Optional. Pass True, if you require the user's shipping 
         address to complete the order */
         needShippingAddress       : Option[Boolean]
-        /* Optional. Pass True, if user's phone number should be sent 
-        to provider */
+        /* Optional. Pass True, if the user's phone number should be 
+        sent to provider */
         sendPhoneNumberToProvider : Option[Boolean]
-        /* Optional. Pass True, if user's email address should be sent 
-        to provider */
+        /* Optional. Pass True, if the user's email address should be 
+        sent to provider */
         sendEmailToProvider       : Option[Boolean]
         /* Optional. Pass True, if the final price depends on the 
         shipping method */
@@ -1499,7 +1498,7 @@ namespace telegramium {
       /* text_link  */
       TextLinkMessageEntity {
         type : "text_link:13"
-        /* url that will be opened after user taps on the text */
+        /* URL that will be opened after user taps on the text */
         url  : String
       }
              
@@ -1515,7 +1514,7 @@ namespace telegramium {
              
     }
           
-    /* Contains information about why a request was unsuccessful.  */
+    /* Describes why a request was unsuccessful.  */
     ResponseParameters {
       /* Optional. The group has been migrated to a supergroup with 
       the specified identifier. This number may have more than 32 
@@ -1552,8 +1551,12 @@ namespace telegramium {
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size in bytes */
-      fileSize     : Option[Int]
+      /* Optional. File size in bytes. It can be bigger than 
+      2&#94;31 and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
+      double-precision float type are safe for storing this value. */
+      fileSize     : Option[Long]
     }
            
     /* Represents a join request sent to a chat.  */
@@ -1601,6 +1604,13 @@ namespace telegramium {
       the private chat allows to use tg://user?id=<user_id> links 
       only in chats with the user. Returned only in getChat. */
       hasPrivateForwards    : Option[Boolean]
+      /* Optional. True, if users need to join the supergroup before 
+      they can send messages. Returned only in getChat. */
+      joinToSendMessages    : Option[Boolean]
+      /* Optional. True, if all users directly joining the 
+      supergroup need to be approved by supergroup administrators. 
+      Returned only in getChat. */
+      joinByRequest         : Option[Boolean]
       /* Optional. Description, for groups, supergroups and channel 
       chats. Returned only in getChat. */
       description           : Option[String]
@@ -1662,7 +1672,7 @@ namespace telegramium {
       /* Optional. Video thumbnail */
       thumb        : Option[PhotoSize]
       /* Optional. File size in bytes */
-      fileSize     : Option[Int]
+      fileSize     : Option[Long]
     }
            
     /* This object represents a point on the map.  */
@@ -1681,7 +1691,7 @@ namespace telegramium {
       /* Optional. The direction in which user is moving, in 
       degrees; 1-360. For active live locations only. */
       heading              : Option[Int]
-      /* Optional. Maximum distance for proximity alerts about 
+      /* Optional. The maximum distance for proximity alerts about 
       approaching another chat member, in meters. For sent live 
       locations only. */
       proximityAlertRadius : Option[Int]
@@ -1740,7 +1750,7 @@ namespace telegramium {
            
     /* This object represents a shipping address.  */
     ShippingAddress {
-      /* ISO 3166-1 alpha-2 country code */
+      /* Two-letter ISO 3166-1 alpha-2 country code */
       countryCode : String
       /* State, if applicable */
       state       : String
@@ -1788,20 +1798,20 @@ namespace telegramium {
     Update {
       /* The update's unique identifier. Update identifiers start 
       from a certain positive number and increase sequentially. 
-      This ID becomes especially handy if you're using Webhooks, 
+      This ID becomes especially handy if you're using webhooks, 
       since it allows you to ignore repeated updates or to restore 
       the correct update sequence, should they get out of order. 
       If there are no new updates for at least a week, then 
       identifier of the next update will be chosen randomly 
       instead of sequentially. */
       updateId           : Int
-      /* Optional. New incoming message of any kind — text, photo, 
+      /* Optional. New incoming message of any kind - text, photo, 
       sticker, etc. */
       message            : Option[Message]
       /* Optional. New version of a message that is known to the bot 
       and was edited */
       editedMessage      : Option[Message]
-      /* Optional. New incoming channel post of any kind — text, 
+      /* Optional. New incoming channel post of any kind - text, 
       photo, sticker, etc. */
       channelPost        : Option[Message]
       /* Optional. New version of a channel post that is known to 
@@ -1908,7 +1918,7 @@ namespace telegramium {
       download or reuse the file. */
       fileUniqueId : String
       /* File size in bytes */
-      fileSize     : Int
+      fileSize     : Long
       /* Unix time when the file was uploaded */
       fileDate     : Int
     }
@@ -1927,7 +1937,7 @@ namespace telegramium {
       /* Photo height */
       height       : Int
       /* Optional. File size in bytes */
-      fileSize     : Option[Int]
+      fileSize     : Option[Long]
     }
            
     /* This object represents a service message about new members invited to a video 
@@ -2035,7 +2045,7 @@ namespace telegramium {
       vcard       : Option[String]
     }
            
-    /* Contains information about a Web App.  */
+    /* Describes a Web App.  */
     WebAppInfo {
       /* An HTTPS URL of a Web App to be opened with additional data 
       as specified in Initializing Web Apps */
@@ -2093,12 +2103,12 @@ namespace telegramium {
       googlePlaceType : Option[String]
     }
            
-    /* Contains data sent from a Web App to the bot.  */
+    /* Describes data sent from a Web App to the bot.  */
     WebAppData {
       /* The data. Be aware that a bad client can send arbitrary 
       data in this field. */
       data       : String
-      /* Text of the web_app keyboard button, from which the Web App 
+      /* Text of the web_app keyboard button from which the Web App 
       was opened. Be aware that a bad client can send arbitrary 
       data in this field. */
       buttonText : String
@@ -2119,7 +2129,7 @@ namespace telegramium {
       /* Optional. Identifier of the shipping option chosen by the 
       user */
       shippingOptionId        : Option[String]
-      /* Optional. Order info provided by the user */
+      /* Optional. Order information provided by the user */
       orderInfo               : Option[OrderInfo]
       /* Telegram payment identifier */
       telegramPaymentChargeId : String
@@ -2147,8 +2157,8 @@ namespace telegramium {
       /* Optional. Point in time (Unix timestamp) when the link will 
       expire or has been expired */
       expireDate              : Option[Int]
-      /* Optional. Maximum number of users that can be members of 
-      the chat simultaneously after joining the chat via this 
+      /* Optional. The maximum number of users that can be members 
+      of the chat simultaneously after joining the chat via this 
       invite link; 1-99999 */
       memberLimit             : Option[Int]
       /* Optional. Number of pending join requests created using 
@@ -2184,8 +2194,7 @@ namespace telegramium {
       inviteLink    : Option[ChatInviteLink]
     }
            
-    /* Contains information about Telegram Passport data shared with the bot by the 
-      user.  */
+    /* Describes Telegram Passport data shared with the bot by the user.  */
     PassportData {
       /* Array with information about documents and other Telegram 
       Passport elements that was shared with the bot */
@@ -2206,8 +2215,12 @@ namespace telegramium {
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
       fileUniqueId : String
-      /* Optional. File size in bytes, if known */
-      fileSize     : Option[Int]
+      /* Optional. File size in bytes. It can be bigger than 
+      2&#94;31 and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
+      double-precision float type are safe for storing this value. */
+      fileSize     : Option[Long]
       /* Optional. File path. Use 
       https://api.telegram.org/file/bot<token>/<file_path> to get 
       the file. */
@@ -2293,14 +2306,18 @@ namespace telegramium {
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size in bytes */
-      fileSize     : Option[Int]
+      /* Optional. File size in bytes. It can be bigger than 
+      2&#94;31 and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
+      double-precision float type are safe for storing this value. */
+      fileSize     : Option[Long]
       /* Optional. Thumbnail of the album cover to which the music 
       file belongs */
       thumb        : Option[PhotoSize]
     }
            
-    /* Contains information about the current status of a webhook.  */
+    /* Describes the current status of a webhook.  */
     WebhookInfo {
       /* Webhook URL, may be empty if webhook is not set up */
       url                          : String
@@ -2322,7 +2339,7 @@ namespace telegramium {
       when trying to synchronize available updates with Telegram 
       datacenters */
       lastSynchronizationErrorDate : Option[Int]
-      /* Optional. Maximum allowed number of simultaneous HTTPS 
+      /* Optional. The maximum allowed number of simultaneous HTTPS 
       connections to the webhook for update delivery */
       maxConnections               : Option[Int]
       /* Optional. A list of update types the bot is subscribed to. 
@@ -2388,8 +2405,7 @@ namespace telegramium {
       bigFileUniqueId   : String
     }
            
-    /* Contains information about an inline message sent by a Web App on behalf of a 
-      user.  */
+    /* Describes an inline message sent by a Web App on behalf of a user.  */
     SentWebAppMessage {
       /* Optional. Identifier of the sent inline message. Available 
       only if there is an inline keyboard attached to the message. */
@@ -2408,7 +2424,7 @@ namespace telegramium {
       /* Offset of the results to be returned, can be controlled by 
       the bot */
       offset   : String
-      /* Optional. Type of the chat, from which the inline query was 
+      /* Optional. Type of the chat from which the inline query was 
       sent. Can be either “sender” for a private chat with the 
       inline query sender, “private”, “group”, “supergroup”, or 
       “channel”. The chat type should be always known for requests 
@@ -2439,6 +2455,11 @@ namespace telegramium {
       username                : Option[String]
       /* Optional. IETF language tag of the user's language */
       languageCode            : Option[String]
+      /* Optional. True, if this user is a Telegram Premium user */
+      isPremium               : Option[Boolean]
+      /* Optional. True, if this user added the bot to the 
+      attachment menu */
+      addedToAttachmentMenu   : Option[Boolean]
       /* Optional. True, if the bot can be invited to groups. 
       Returned only in getMe. */
       canJoinGroups           : Option[Boolean]
@@ -2450,8 +2471,8 @@ namespace telegramium {
       supportsInlineQueries   : Option[Boolean]
     }
            
-    /* Contains information about documents or other Telegram Passport elements shared 
-      with the bot by the user.  */
+    /* Describes documents or other Telegram Passport elements shared with the bot by 
+      the user.  */
     EncryptedPassportElement {
       /* Element type. One of “personal_details”, “passport”, 
       “driver_license”, “identity_card”, “internal_passport”, 
@@ -2513,31 +2534,34 @@ namespace telegramium {
     Sticker {
       /* Identifier for this file, which can be used to download or 
       reuse the file */
-      fileId       : String
+      fileId           : String
       /* Unique identifier for this file, which is supposed to be 
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
-      fileUniqueId : String
+      fileUniqueId     : String
       /* Sticker width */
-      width        : Int
+      width            : Int
       /* Sticker height */
-      height       : Int
+      height           : Int
       /* True, if the sticker is animated */
-      isAnimated   : Boolean
+      isAnimated       : Boolean
       /* True, if the sticker is a video sticker */
-      isVideo      : Boolean
+      isVideo          : Boolean
       /* Optional. Sticker thumbnail in the .WEBP or .JPG format */
-      thumb        : Option[PhotoSize]
+      thumb            : Option[PhotoSize]
       /* Optional. Emoji associated with the sticker */
-      emoji        : Option[Emoji]
+      emoji            : Option[Emoji]
       /* Optional. Name of the sticker set to which the sticker 
       belongs */
-      setName      : Option[String]
+      setName          : Option[String]
+      /* Optional. Premium animation for the sticker, if the sticker 
+      is premium */
+      premiumAnimation : Option[File]
       /* Optional. For mask stickers, the position where the mask 
       should be placed */
-      maskPosition : Option[MaskPosition]
+      maskPosition     : Option[MaskPosition]
       /* Optional. File size in bytes */
-      fileSize     : Option[Int]
+      fileSize         : Option[Long]
     }
            
     /* This object represents a message.  */
@@ -2604,7 +2628,7 @@ namespace telegramium {
       administrator */
       authorSignature               : Option[String]
       /* Optional. For text messages, the actual UTF-8 text of the 
-      message, 0-4096 characters */
+      message */
       text                          : Option[String]
       /* Optional. For text messages, special entities like 
       usernames, URLs, bot commands, etc. that appear in the text */
@@ -2633,7 +2657,7 @@ namespace telegramium {
       file */
       voice                         : Option[Voice]
       /* Optional. Caption for the animation, audio, document, 
-      photo, video or voice, 0-1024 characters */
+      photo, video or voice */
       caption                       : Option[String]
       /* Optional. For messages with a caption, special entities 
       like usernames, URLs, bot commands, etc. that appear in the 
@@ -2806,11 +2830,11 @@ namespace telegramium {
       /* Optional. Identifier of the shipping option chosen by the 
       user */
       shippingOptionId : Option[String]
-      /* Optional. Order info provided by the user */
+      /* Optional. Order information provided by the user */
       orderInfo        : Option[OrderInfo]
     }
            
-    /* Contains data required for decrypting and authenticating 
+    /* Describes data required for decrypting and authenticating 
       EncryptedPassportElement. See the Telegram Passport Documentation for a complete 
       description of the data decryption and authentication processes.  */
     EncryptedCredentials {
@@ -2830,7 +2854,7 @@ namespace telegramium {
     InlineKeyboardButton {
       /* Label text on the button */
       text                         : String
-      /* Optional. HTTP or tg:// url to be opened when the button is 
+      /* Optional. HTTP or tg:// URL to be opened when the button is 
       pressed. Links tg://user?id=<user_id> can be used to mention 
       a user by their ID without using a username, if this is 
       allowed by their privacy settings. */
@@ -2844,26 +2868,26 @@ namespace telegramium {
       method answerWebAppQuery. Available only in private chats 
       between a user and the bot. */
       webApp                       : Option[WebAppInfo]
-      /* Optional. An HTTP URL used to automatically authorize the 
+      /* Optional. An HTTPS URL used to automatically authorize the 
       user. Can be used as a replacement for the Telegram Login 
       Widget. */
       loginUrl                     : Option[LoginUrl]
       /* Optional. If set, pressing the button will prompt the user 
       to select one of their chats, open that chat and insert the 
       bot's username and the specified inline query in the input 
-      field. Can be empty, in which case just the bot's username 
+      field. May be empty, in which case just the bot's username 
       will be inserted. Note: This offers an easy way for users to 
       start using your bot in inline mode when they are currently 
       in a private chat with it. Especially useful when combined 
-      with switch_pm… actions – in this case the user will be 
+      with switch_pm… actions - in this case the user will be 
       automatically returned to the chat they switched from, 
       skipping the chat selection screen. */
       switchInlineQuery            : Option[String]
       /* Optional. If set, pressing the button will insert the bot's 
       username and the specified inline query in the current 
-      chat's input field. Can be empty, in which case only the 
+      chat's input field. May be empty, in which case only the 
       bot's username will be inserted. This offers a quick way for 
-      the user to open your bot in inline mode in the same chat – 
+      the user to open your bot in inline mode in the same chat - 
       good for selecting something from multiple options. */
       switchInlineQueryCurrentChat : Option[String]
       /* Optional. Description of the game that will be launched 
@@ -2916,8 +2940,12 @@ namespace telegramium {
       duration     : Int
       /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size in bytes */
-      fileSize     : Option[Int]
+      /* Optional. File size in bytes. It can be bigger than 
+      2&#94;31 and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
+      double-precision float type are safe for storing this value. */
+      fileSize     : Option[Long]
     }
            
     /* This object represents a service message about a video chat started in the 
@@ -2957,8 +2985,8 @@ namespace telegramium {
       for high scores in games. */
       chatInstance    : String
       /* Optional. Data associated with the callback button. Be 
-      aware that a bad client can send arbitrary data in this 
-      field. */
+      aware that the message originated the query can contain no 
+      callback buttons with this data. */
       data            : Option[String]
       /* Optional. Short name of a Game to be returned, serves as 
       the unique identifier for the game */
@@ -2990,10 +3018,14 @@ namespace telegramium {
       thumb        : Option[PhotoSize]
       /* Optional. Original filename as defined by sender */
       fileName     : Option[String]
-      /* Optional. Mime type of a file as defined by sender */
+      /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size in bytes */
-      fileSize     : Option[Int]
+      /* Optional. File size in bytes. It can be bigger than 
+      2&#94;31 and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
+      double-precision float type are safe for storing this value. */
+      fileSize     : Option[Long]
     }
            
     /* This object represents a general file (as opposed to photos, voice messages and 
@@ -3012,8 +3044,12 @@ namespace telegramium {
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
       mimeType     : Option[String]
-      /* Optional. File size in bytes */
-      fileSize     : Option[Int]
+      /* Optional. File size in bytes. It can be bigger than 
+      2&#94;31 and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
+      double-precision float type are safe for storing this value. */
+      fileSize     : Option[Long]
     }
            
 
@@ -3104,7 +3140,7 @@ namespace telegramium {
           showAlert       : Option[Boolean]
           /* URL that will be opened by the user's client. If you have 
           created a Game and accepted the conditions via 
-          &#064;Botfather, specify the URL that opens your game — note 
+          &#064;BotFather, specify the URL that opens your game - note 
           that this will only work if the query comes from a 
           callback_game button. Otherwise, you may use links like 
           t.me/your_bot?start=XXXX that open your bot with a 
@@ -3282,7 +3318,7 @@ namespace telegramium {
           /* User identifier of created sticker set owner */
           userId        : Long
           /* Short name of sticker set, to be used in t.me/addstickers/ 
-          URLs (e.g., animals). Can contain only english letters, 
+          URLs (e.g., animals). Can contain only English letters, 
           digits and underscores. Must begin with a letter, can't 
           contain consecutive underscores and must end in 
           "_by_<bot_username>". <bot_username> is case insensitive. 
@@ -3525,6 +3561,73 @@ namespace telegramium {
           maskPosition : Option[MaskPosition]
         } => Method[Boolean]
       
+        /* Use this method to create a link for an invoice. Returns the created invoice 
+          link as String on success.  */
+        def createInvoiceLink {
+          /* Product name, 1-32 characters */
+          title                     : String
+          /* Product description, 1-255 characters */
+          description               : String
+          /* Bot-defined invoice payload, 1-128 bytes. This will not be 
+          displayed to the user, use for your internal processes. */
+          payload                   : String
+          /* Payment provider token, obtained via BotFather */
+          providerToken             : String
+          /* Three-letter ISO 4217 currency code, see more on currencies */
+          currency                  : String
+          /* Price breakdown, a JSON-serialized list of components (e.g. 
+          product price, tax, discount, delivery cost, delivery tax, 
+          bonus, etc.) */
+          prices                    : List[LabeledPrice]
+          /* The maximum accepted amount for tips in the smallest units 
+          of the currency (integer, not float/double). For example, 
+          for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See 
+          the exp parameter in currencies.json, it shows the number of 
+          digits past the decimal point for each currency (2 for the 
+          majority of currencies). Defaults to 0 */
+          maxTipAmount              : Option[Int]
+          /* A JSON-serialized array of suggested amounts of tips in the 
+          smallest units of the currency (integer, not float/double). 
+          At most 4 suggested tip amounts can be specified. The 
+          suggested tip amounts must be positive, passed in a strictly 
+          increased order and must not exceed max_tip_amount. */
+          suggestedTipAmounts       : List[Int]
+          /* JSON-serialized data about the invoice, which will be 
+          shared with the payment provider. A detailed description of 
+          required fields should be provided by the payment provider. */
+          providerData              : Option[String]
+          /* URL of the product photo for the invoice. Can be a photo of 
+          the goods or a marketing image for a service. */
+          photoUrl                  : Option[String]
+          /* Photo size in bytes */
+          photoSize                 : Option[Long]
+          /* Photo width */
+          photoWidth                : Option[Int]
+          /* Photo height */
+          photoHeight               : Option[Int]
+          /* Pass True, if you require the user's full name to complete 
+          the order */
+          needName                  : Option[Boolean]
+          /* Pass True, if you require the user's phone number to 
+          complete the order */
+          needPhoneNumber           : Option[Boolean]
+          /* Pass True, if you require the user's email address to 
+          complete the order */
+          needEmail                 : Option[Boolean]
+          /* Pass True, if you require the user's shipping address to 
+          complete the order */
+          needShippingAddress       : Option[Boolean]
+          /* Pass True, if the user's phone number should be sent to the 
+          provider */
+          sendPhoneNumberToProvider : Option[Boolean]
+          /* Pass True, if the user's email address should be sent to 
+          the provider */
+          sendEmailToProvider       : Option[Boolean]
+          /* Pass True, if the final price depends on the shipping 
+          method */
+          isFlexible                : Option[Boolean]
+        } => Method[String]
+      
         /* Use this method to delete a sticker from a set created by the bot. Returns True 
           on success.  */
         def deleteStickerFromSet {
@@ -3595,7 +3698,7 @@ namespace telegramium {
           /* Unique identifier for the target chat */
           chatId                   : Int
           /* Short name of the game, serves as the unique identifier for 
-          the game. Set up your games via Botfather. */
+          the game. Set up your games via &#064;BotFather. */
           gameShortName            : String
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -3738,7 +3841,7 @@ namespace telegramium {
           /* Direction in which the user is moving, in degrees. Must be 
           between 1 and 360 if specified. */
           heading              : Option[Int]
-          /* Maximum distance for proximity alerts about approaching 
+          /* The maximum distance for proximity alerts about approaching 
           another chat member, in meters. Must be between 1 and 100000 
           if specified. */
           proximityAlertRadius : Option[Int]
@@ -3746,15 +3849,15 @@ namespace telegramium {
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
-        /* Use this method to get basic info about a file and prepare it for downloading. 
-          For the moment, bots can download files of up to 20MB in size. On success, a 
-          File object is returned. The file can then be downloaded via the link 
+        /* Use this method to get basic information about a file and prepare it for 
+          downloading. For the moment, bots can download files of up to 20MB in size. On 
+          success, a File object is returned. The file can then be downloaded via the link 
           https://api.telegram.org/file/bot<token>/<file_path>, where <file_path> is taken 
           from the response. It is guaranteed that the link will be valid for at least 1 
           hour. When the link expires, a new one can be requested by calling getFile 
           again.  */
         def getFile {
-          /* File identifier to get info about */
+          /* File identifier to get information about */
           fileId : String
         } => Method[File]
       
@@ -3845,7 +3948,7 @@ namespace telegramium {
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[MessageId]
       
-        /* As of v.4.0, Telegram clients support rounded square mp4 videos of up to 1 
+        /* As of v.4.0, Telegram clients support rounded square MPEG4 videos of up to 1 
           minute long. Use this method to send video messages. On success, the sent 
           Message is returned.  */
         def sendVideoNote {
@@ -3894,7 +3997,7 @@ namespace telegramium {
           /* Unique identifier for the target private chat. If not 
           specified, default bot's menu button will be changed */
           chatId     : Option[Int]
-          /* A JSON-serialized object for the new bot's menu button. 
+          /* A JSON-serialized object for the bot's new menu button. 
           Defaults to MenuButtonDefault */
           menuButton : Option[MenuButton]
         } => Method[Boolean]
@@ -3937,7 +4040,7 @@ namespace telegramium {
           name               : Option[String]
           /* Point in time (Unix timestamp) when the link will expire */
           expireDate         : Option[Int]
-          /* Maximum number of users that can be members of the chat 
+          /* The maximum number of users that can be members of the chat 
           simultaneously after joining the chat via this invite link; 
           1-99999 */
           memberLimit        : Option[Int]
@@ -3959,7 +4062,7 @@ namespace telegramium {
           /* Bot-defined invoice payload, 1-128 bytes. This will not be 
           displayed to the user, use for your internal processes. */
           payload                   : String
-          /* Payments provider token, obtained via Botfather */
+          /* Payment provider token, obtained via &#064;BotFather */
           providerToken             : String
           /* Three-letter ISO 4217 currency code, see more on currencies */
           currency                  : String
@@ -3988,7 +4091,7 @@ namespace telegramium {
           the bot (instead of a Pay button), with the value used as 
           the start parameter */
           startParameter            : Option[String]
-          /* A JSON-serialized data about the invoice, which will be 
+          /* JSON-serialized data about the invoice, which will be 
           shared with the payment provider. A detailed description of 
           required fields should be provided by the payment provider. */
           providerData              : Option[String]
@@ -3996,8 +4099,8 @@ namespace telegramium {
           the goods or a marketing image for a service. People like it 
           better when they see what they are paying for. */
           photoUrl                  : Option[String]
-          /* Photo size */
-          photoSize                 : Option[Int]
+          /* Photo size in bytes */
+          photoSize                 : Option[Long]
           /* Photo width */
           photoWidth                : Option[Int]
           /* Photo height */
@@ -4014,10 +4117,10 @@ namespace telegramium {
           /* Pass True, if you require the user's shipping address to 
           complete the order */
           needShippingAddress       : Option[Boolean]
-          /* Pass True, if user's phone number should be sent to 
+          /* Pass True, if the user's phone number should be sent to 
           provider */
           sendPhoneNumberToProvider : Option[Boolean]
-          /* Pass True, if user's email address should be sent to 
+          /* Pass True, if the user's email address should be sent to 
           provider */
           sendEmailToProvider       : Option[Boolean]
           /* Pass True, if the final price depends on the shipping 
@@ -4571,7 +4674,7 @@ namespace telegramium {
           name               : Option[String]
           /* Point in time (Unix timestamp) when the link will expire */
           expireDate         : Option[Int]
-          /* Maximum number of users that can be members of the chat 
+          /* The maximum number of users that can be members of the chat 
           simultaneously after joining the chat via this invite link; 
           1-99999 */
           memberLimit        : Option[Int]
@@ -4581,10 +4684,10 @@ namespace telegramium {
           createsJoinRequest : Option[Boolean]
         } => Method[ChatInviteLink]
       
-        /* Use this method to send video files, Telegram clients support mp4 videos (other 
-          formats may be sent as Document). On success, the sent Message is returned. Bots 
-          can currently send video files of up to 50 MB in size, this limit may be changed 
-          in the future.  */
+        /* Use this method to send video files, Telegram clients support MPEG4 videos 
+          (other formats may be sent as Document). On success, the sent Message is 
+          returned. Bots can currently send video files of up to 50 MB in size, this limit 
+          may be changed in the future.  */
         def sendVideo {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -4936,16 +5039,16 @@ namespace telegramium {
           name : String
         } => Method[StickerSet]
       
-        /* Use this method to specify a url and receive incoming updates via an outgoing 
+        /* Use this method to specify a URL and receive incoming updates via an outgoing 
           webhook. Whenever there is an update for the bot, we will send an HTTPS POST 
-          request to the specified url, containing a JSON-serialized Update. In case of an 
+          request to the specified URL, containing a JSON-serialized Update. In case of an 
           unsuccessful request, we will give up after a reasonable amount of attempts. 
-          Returns True on success. If you'd like to make sure that the Webhook request 
-          comes from Telegram, we recommend using a secret path in the URL, e.g. 
-          https://www.example.com/<token>. Since nobody else knows your bot's token, you 
-          can be pretty sure it's us.  */
+          Returns True on success. If you'd like to make sure that the webhook was set by 
+          you, you can specify secret data in the parameter secret_token. If specified, 
+          the request will contain a header “X-Telegram-Bot-Api-Secret-Token” with the 
+          secret token as content.  */
         def setWebhook {
-          /* HTTPS url to send updates to. Use an empty string to remove 
+          /* HTTPS URL to send updates to. Use an empty string to remove 
           webhook integration */
           url                : String
           /* Upload your public key certificate so that the root 
@@ -4955,10 +5058,11 @@ namespace telegramium {
           /* The fixed IP address which will be used to send webhook 
           requests instead of the IP address resolved through DNS */
           ipAddress          : Option[String]
-          /* Maximum allowed number of simultaneous HTTPS connections to 
-          the webhook for update delivery, 1-100. Defaults to 40. Use 
-          lower values to limit the load on your bot's server, and 
-          higher values to increase your bot's throughput. */
+          /* The maximum allowed number of simultaneous HTTPS 
+          connections to the webhook for update delivery, 1-100. 
+          Defaults to 40. Use lower values to limit the load on your 
+          bot's server, and higher values to increase your bot's 
+          throughput. */
           maxConnections     : Option[Int]
           /* A JSON-serialized list of the update types you want your 
           bot to receive. For example, specify [“message”, 
@@ -4973,6 +5077,12 @@ namespace telegramium {
           allowedUpdates     : List[String]
           /* Pass True to drop all pending updates */
           dropPendingUpdates : Option[Boolean]
+          /* A secret token to be sent in a header 
+          “X-Telegram-Bot-Api-Secret-Token” in every webhook request, 
+          1-256 characters. Only characters A-Z, a-z, 0-9, _ and - are 
+          allowed. The header is useful to ensure that the request 
+          comes from a webhook set by you. */
+          secretToken        : Option[String]
         } => Method[Boolean]
       }
     }
