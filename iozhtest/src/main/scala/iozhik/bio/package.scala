@@ -51,6 +51,7 @@ object CirceImplicits {
 
   import io.circe.syntax._
   import io.circe.{Encoder, Decoder, Json}
+  import iozhik._
   import io.circe.HCursor
 
   implicit lazy val mammalEncoder: Encoder[Mammal] = {
@@ -63,6 +64,7 @@ object CirceImplicits {
     value <- fType match {
       case "elephant" => Decoder[Elephant.type]
       case "dolphin"  => Decoder[Dolphin.type]
+      case unknown    => throw DecodingError(s"Unknown type for Mammal: $unknown")
     }
   } yield value
 

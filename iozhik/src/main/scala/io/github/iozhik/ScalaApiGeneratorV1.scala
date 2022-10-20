@@ -160,6 +160,7 @@ class ScalaApiGeneratorV1 extends Generator {
                         |   fType <- Decoder[String].prepare(_.downField($tag))
                         |   value <- fType match {
                         |     ${cases.map(_._2).intercalate(d)}
+                        |     case unknown => throw DecodingError(s"Unknown type for $name: $$unknown")
                         |   }
                         | } yield value
         """.stripMargin
@@ -1163,7 +1164,8 @@ class ScalaApiGeneratorV1 extends Generator {
           path = code.path.replace(".", pathDelim),
         )
       }
-      commons ++ content
+
+      predef ++ commons ++ content
     }
   }
 
@@ -1171,6 +1173,7 @@ class ScalaApiGeneratorV1 extends Generator {
     "CirceImplicits" -> """
         | import io.circe.syntax._
         | import io.circe.{Encoder, Decoder, Json}
+        | import iozhik._
       """.stripMargin,
     "ScodecImplicits" ->
       """

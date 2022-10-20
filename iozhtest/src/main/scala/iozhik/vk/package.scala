@@ -4,6 +4,7 @@ object CirceImplicits {
 
   import io.circe.syntax._
   import io.circe.{Encoder, Decoder, Json}
+  import iozhik._
   import io.circe.HCursor
 
   implicit lazy val eventEncoder: Encoder[Event] = {
@@ -1623,6 +1624,7 @@ object CirceImplicits {
             attachments = attachments
           )
         }
+      case unknown => throw DecodingError(s"Unknown type for Event: $unknown")
     }
   } yield value
 
@@ -3359,6 +3361,7 @@ object CirceImplicits {
     value <- fType match {
       case "photo" => Decoder[AttachmentPhoto]
       case "video" => Decoder[AttachmentVideo]
+      case unknown => throw DecodingError(s"Unknown type for Attachment: $unknown")
     }
   } yield value
 
@@ -3845,6 +3848,7 @@ object CirceImplicits {
       case "profile_activity" => Decoder[ProfileActivity.type]
       case "like"             => Decoder[Like.type]
       case "comments"         => Decoder[Comments.type]
+      case unknown            => throw DecodingError(s"Unknown type for DataType: $unknown")
     }
   } yield value
 
@@ -3871,6 +3875,7 @@ object CirceImplicits {
       case "iphone"  => Decoder[Iphone.type]
       case "android" => Decoder[Android.type]
       case "wphone"  => Decoder[Wphone.type]
+      case unknown   => throw DecodingError(s"Unknown type for PlatformType: $unknown")
     }
   } yield value
 
@@ -3897,6 +3902,7 @@ object CirceImplicits {
       case "api"    => Decoder[Api.type]
       case "vk"     => Decoder[Vk.type]
       case "rss"    => Decoder[Rss.type]
+      case unknown  => throw DecodingError(s"Unknown type for PostSourceType: $unknown")
     }
   } yield value
 
@@ -3927,6 +3933,7 @@ object CirceImplicits {
       case "reply"    => Decoder[Reply.type]
       case "postpone" => Decoder[Postpone.type]
       case "copy"     => Decoder[Copy.type]
+      case unknown    => throw DecodingError(s"Unknown type for PostType: $unknown")
     }
   } yield value
 

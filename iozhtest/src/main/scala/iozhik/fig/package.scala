@@ -241,6 +241,7 @@ object CirceImplicits {
 
   import io.circe.syntax._
   import io.circe.{Encoder, Decoder, Json}
+  import iozhik._
 
   implicit lazy val propsEncoder: Encoder[Props] =
     (x: Props) => {
@@ -294,6 +295,7 @@ object CirceImplicits {
       case "square"   => Decoder[Square]
       case "circle"   => Decoder[Circle]
       case "triangle" => Decoder[Triangle]
+      case unknown    => throw DecodingError(s"Unknown type for Figure: $unknown")
     }
   } yield value
 

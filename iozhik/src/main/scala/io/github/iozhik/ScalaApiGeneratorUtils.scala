@@ -1,6 +1,6 @@
 package io.github.iozhik
 
-import io.github.iozhik.Generator.Model.{Kind, Space, Struc, Symtable}
+import io.github.iozhik.Generator.Model._
 import cats.implicits._
 import io.github.iozhik.GeneratorUtils.sanitize
 
@@ -26,4 +26,15 @@ object ScalaApiGeneratorUtils {
         .getOrElse("")
       body = "[" + items.mkString(", ") + "]"
     } yield sanitize(x.name, keywords) + modifier + (if (x.params.nonEmpty) body else "")
+
+  val predef: List[Code] = 
+    List(
+      Code(
+        body = """package iozhik
+        
+        final case class DecodingError(message: String) extends Throwable(message)""",
+        name = "DecodingError.scala",
+        path = "iozhik"
+      )
+    )  
 }

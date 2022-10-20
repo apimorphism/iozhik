@@ -4,6 +4,7 @@ object CirceImplicits {
 
   import io.circe.syntax._
   import io.circe.{Encoder, Decoder, Json}
+  import iozhik._
 
   implicit lazy val getreqEncoder: Encoder[GetReq] =
     (x: GetReq) => {

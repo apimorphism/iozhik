@@ -237,6 +237,7 @@ object CirceImplicits {
 
   import io.circe.syntax._
   import io.circe.{Encoder, Decoder, Json}
+  import iozhik._
 
   implicit lazy val plasticpropsEncoder: Encoder[PlasticProps] =
     (x: PlasticProps) => {
@@ -377,6 +378,7 @@ object CirceImplicits {
         } yield {
           Plastic(density = density, color = color, plasticity = plasticity)
         }
+      case unknown => throw DecodingError(s"Unknown type for Material: $unknown")
     }
   } yield value
 

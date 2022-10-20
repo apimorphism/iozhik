@@ -100,6 +100,7 @@ object CirceImplicits {
 
   import io.circe.syntax._
   import io.circe.{Encoder, Decoder, Json}
+  import iozhik._
 
   implicit lazy val petEncoder: Encoder[Pet] = {
     case cat: Cat => cat.asJson.mapObject(_.add("type", Json.fromString("cat")))
@@ -109,8 +110,9 @@ object CirceImplicits {
   implicit lazy val petDecoder: Decoder[Pet] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
-      case "cat" => Decoder[Cat]
-      case "dog" => Decoder[Dog]
+      case "cat"   => Decoder[Cat]
+      case "dog"   => Decoder[Dog]
+      case unknown => throw DecodingError(s"Unknown type for Pet: $unknown")
     }
   } yield value
 
