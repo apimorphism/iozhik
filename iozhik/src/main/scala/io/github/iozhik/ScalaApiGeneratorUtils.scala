@@ -9,6 +9,11 @@ object ScalaApiGeneratorUtils {
     "case", "class", "type", "object", "def"
   )
 
+  val defaults = List(
+    "List" -> "List.empty",
+    "Option" -> "Option.empty"
+  )
+
   def genKind(x: Kind)(implicit symt: Symtable, space: Space): Either[String, String] =
     for {
       items <- x.params.map(genKind).sequence
@@ -37,4 +42,9 @@ object ScalaApiGeneratorUtils {
         path = "iozhik"
       )
     )  
+
+  def requiredFieldsFirst(fields: List[Field]): List[Field] = {
+    val required = fields.filterNot(f => defaults.exists(d => f.kind.name.startsWith(d._1)))
+    required ++ fields.diff(required)
+  }
 }

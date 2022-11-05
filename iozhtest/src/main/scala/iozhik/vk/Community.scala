@@ -8,10 +8,6 @@ package iozhik.vk
   *   короткий адрес, например, apiclub
   * @param isClosed
   *   является ли сообщество закрытым 0 - открытое, 1 - закрытое, 2 - частное
-  * @param deactivated
-  *   * возвращается в случае, если сообщество удалено или заблокировано. Возможные значения: * deleted — сообщество
-  *   удалено; * banned — сообщество заблокировано;
-  *
   * @param isAdmin
   *   информация о том, является ли текущий пользователь руководителем.
   * @param adminLevel
@@ -27,11 +23,17 @@ package iozhik.vk
   * @param type
   *   * тип сообщества: * group — группа; * page — публичная страница; * event — мероприятие.
   *
+  * @param ageLimits
+  *   возрастное ограничение. * 1 — нет; * 2 — 16+; * 3 — 18+.
+  * @param links
+  *   информация из блока ссылок сообщества.
+  * @param deactivated
+  *   * возвращается в случае, если сообщество удалено или заблокировано. Возможные значения: * deleted — сообщество
+  *   удалено; * banned — сообщество заблокировано;
+  *
   * @param activity
   *   строка тематики паблика. У групп возвращается строковое значение, открыта ли группа или нет, а у событий дата
   *   начала.
-  * @param ageLimits
-  *   возрастное ограничение. * 1 — нет; * 2 — 16+; * 3 — 18+.
   * @param banInfo
   *   информация о занесении в черный список сообщества (поле возвращается только при запросе информации об одном
   *   сообществе).
@@ -73,8 +75,6 @@ package iozhik.vk
   *   информация о том, скрыто ли сообщество из ленты новостей текущего пользователя
   * @param isMessagesBlocked
   *   информация о том, заблокированы ли сообщения от этого сообщества (для текущего пользователя)
-  * @param links
-  *   информация из блока ссылок сообщества.
   * @param mainAlbumId
   *   идентификатор основного фотоальбота
   * @param mainSection
@@ -116,7 +116,6 @@ final case class Community(
   name: String,
   screenName: String,
   isClosed: Integer,
-  deactivated: Option[String] = Option.empty,
   isAdmin: Boolean,
   adminLevel: Integer,
   isMember: Boolean,
@@ -126,8 +125,10 @@ final case class Community(
   photo50: String,
   photo100: String,
   photo200: String,
-  activity: Option[String] = Option.empty,
   ageLimits: Int,
+  links: Vector[CommunityLink],
+  deactivated: Option[String] = Option.empty,
+  activity: Option[String] = Option.empty,
   banInfo: Option[BanInfo] = Option.empty,
   canCreateTopic: Option[Boolean] = Option.empty,
   canMessage: Option[Boolean] = Option.empty,
@@ -146,7 +147,6 @@ final case class Community(
   isFavorite: Option[Boolean] = Option.empty,
   isHiddenFromFeed: Option[Boolean] = Option.empty,
   isMessagesBlocked: Option[Boolean] = Option.empty,
-  links: Vector[CommunityLink],
   mainAlbumId: Option[Int] = Option.empty,
   mainSection: Option[Int] = Option.empty,
   market: Option[Market] = Option.empty,

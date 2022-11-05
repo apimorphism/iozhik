@@ -183,6 +183,9 @@ namespace telegramium {
         /* Optional. True, if the user is allowed to pin messages; 
         groups and supergroups only */
         canPinMessages      : Option[Boolean]
+        /* Optional. True, if the user is allowed to create, rename, 
+        close, and reopen forum topics; supergroups only */
+        canManageTopics     : Option[Boolean]
         /* Optional. Custom title for this user */
         customTitle         : Option[String]
       }
@@ -234,6 +237,8 @@ namespace telegramium {
         canInviteUsers        : Boolean
         /* True, if the user is allowed to pin messages */
         canPinMessages        : Boolean
+        /* True, if the user is allowed to create forum topics */
+        canManageTopics       : Boolean
         /* True, if the user is allowed to send text messages, 
         contacts, locations and venues */
         canSendMessages       : Boolean
@@ -1523,6 +1528,12 @@ namespace telegramium {
              
     }
           
+    /* This object represents a service message about a forum topic reopened in the 
+      chat. Currently holds no information.  */
+    ForumTopicReopened {
+  
+    }
+           
     /* Describes why a request was unsuccessful.  */
     ResponseParameters {
       /* Optional. The group has been migrated to a supergroup with 
@@ -1604,8 +1615,18 @@ namespace telegramium {
       firstName                          : Option[String]
       /* Optional. Last name of the other party in a private chat */
       lastName                           : Option[String]
+      /* Optional. True, if the supergroup chat is a forum (has 
+      topics enabled) */
+      isForum                            : Option[Boolean]
       /* Optional. Chat photo. Returned only in getChat. */
       photo                              : Option[ChatPhoto]
+      /* Optional. If non-empty, the list of all active chat 
+      usernames; for private chats, supergroups and channels. 
+      Returned only in getChat. */
+      activeUsernames                    : List[String]
+      /* Optional. Custom emoji identifier of emoji status of the 
+      other party in a private chat. Returned only in getChat. */
+      emojiStatusCustomEmojiId           : Option[String]
       /* Optional. Bio of the other party in a private chat. 
       Returned only in getChat. */
       bio                                : Option[String]
@@ -1751,6 +1772,9 @@ namespace telegramium {
       /* Optional. True, if the user is allowed to pin messages. 
       Ignored in public supergroups */
       canPinMessages        : Option[Boolean]
+      /* Optional. True, if the user is allowed to create forum 
+      topics. If omitted defaults to the value of can_pin_messages */
+      canManageTopics       : Option[Boolean]
     }
            
     /* This object contains information about one answer option in a poll.  */
@@ -2217,6 +2241,12 @@ namespace telegramium {
       credentials : EncryptedCredentials
     }
            
+    /* This object represents a service message about a forum topic closed in the 
+      chat. Currently holds no information.  */
+    ForumTopicClosed {
+  
+    }
+           
     /* This object represents a file ready to be downloaded. The file can be 
       downloaded via the link https://api.telegram.org/file/bot<token>/<file_path>. It 
       is guaranteed that the link will be valid for at least 1 hour. When the link 
@@ -2370,6 +2400,19 @@ namespace telegramium {
       watcher  : User
       /* The distance between the users */
       distance : Int
+    }
+           
+    /* This object represents a forum topic.  */
+    ForumTopic {
+      /* Unique identifier of the forum topic */
+      messageThreadId   : Int
+      /* Name of the topic */
+      name              : String
+      /* Color of the topic icon in RGB format */
+      iconColor         : Int
+      /* Optional. Unique identifier of the custom emoji shown as 
+      the topic icon */
+      iconCustomEmojiId : Option[String]
     }
            
     /* This object contains basic information about an invoice.  */
@@ -2590,6 +2633,9 @@ namespace telegramium {
     Message {
       /* Unique message identifier inside this chat */
       messageId                     : Int
+      /* Optional. Unique identifier of a message thread to which 
+      the message belongs; for supergroups only */
+      messageThreadId               : Option[Int]
       /* Optional. Sender of the message; empty for messages sent to 
       channels. For backward compatibility, the field contains a 
       fake sender user in non-channel chats, if the message was 
@@ -2629,6 +2675,8 @@ namespace telegramium {
       /* Optional. For forwarded messages, date the original message 
       was sent in Unix time */
       forwardDate                   : Option[Int]
+      /* Optional. True, if the message is sent to a forum topic */
+      isTopicMessage                : Option[Boolean]
       /* Optional. True, if the message is a channel post that was 
       automatically forwarded to the connected discussion group */
       isAutomaticForward            : Option[Boolean]
@@ -2767,6 +2815,12 @@ namespace telegramium {
       /* Optional. Service message. A user in the chat triggered 
       another user's proximity alert while sharing Live Location. */
       proximityAlertTriggered       : Option[ProximityAlertTriggered]
+      /* Optional. Service message: forum topic created */
+      forumTopicCreated             : Option[ForumTopicCreated]
+      /* Optional. Service message: forum topic closed */
+      forumTopicClosed              : Option[ForumTopicClosed]
+      /* Optional. Service message: forum topic reopened */
+      forumTopicReopened            : Option[ForumTopicReopened]
       /* Optional. Service message: video chat scheduled */
       videoChatScheduled            : Option[VideoChatScheduled]
       /* Optional. Service message: video chat started */
@@ -2831,6 +2885,9 @@ namespace telegramium {
       /* Optional. True, if the user is allowed to pin messages; 
       groups and supergroups only */
       canPinMessages      : Option[Boolean]
+      /* Optional. True, if the user is allowed to create, rename, 
+      close, and reopen forum topics; supergroups only */
+      canManageTopics     : Option[Boolean]
     }
            
     /* This object contains information about an incoming pre-checkout query.  */
@@ -3021,6 +3078,18 @@ namespace telegramium {
       messageId : Int
     }
            
+    /* This object represents a service message about a new forum topic created in the 
+      chat.  */
+    ForumTopicCreated {
+      /* Name of the topic */
+      name              : String
+      /* Color of the topic icon in RGB format */
+      iconColor         : Int
+      /* Optional. Unique identifier of the custom emoji shown as 
+      the topic icon */
+      iconCustomEmojiId : Option[String]
+    }
+           
     /* This object represents a video file.  */
     Video {
       /* Identifier for this file, which can be used to download or 
@@ -3090,9 +3159,8 @@ namespace telegramium {
       
         } => Method[WebhookInfo]
       
-        /* Use this method to change the list of the bot's commands. See 
-          https://core.telegram.org/bots#commands for more details about bot commands. 
-          Returns True on success.  */
+        /* Use this method to change the list of the bot's commands. See this manual for 
+          more details about bot commands. Returns True on success.  */
         def setMyCommands {
           /* A JSON-serialized list of bot commands to be set as the 
           list of the bot's commands. At most 100 commands can be 
@@ -3137,6 +3205,19 @@ namespace telegramium {
           inlineMessageId : Option[String]
         } => Method[List[GameHighScore]]
       
+        /* Use this method to reopen a closed topic in a forum supergroup chat. The bot 
+          must be an administrator in the chat for this to work and must have the 
+          can_manage_topics administrator rights, unless it is the creator of the topic. 
+          Returns True on success.  */
+        def reopenForumTopic {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format &#064;supergroupusername) */
+          chatId          : ChatId
+          /* Unique identifier for the target message thread of the 
+          forum topic */
+          messageThreadId : Int
+        } => Method[Boolean]
+      
         /* Use this method to clear the list of pinned messages in a chat. If the chat is 
           not a private chat, the bot must be an administrator in the chat for this to 
           work and must have the 'can_pin_messages' administrator right in a supergroup or 
@@ -3175,6 +3256,13 @@ namespace telegramium {
           cacheTime       : Option[Int]
         } => Method[Boolean]
       
+        /* Use this method to get custom emoji stickers, which can be used as a forum 
+          topic icon by any user. Requires no parameters. Returns an Array of Sticker 
+          objects.  */
+        def getForumTopicIconStickers {
+      
+        } => Method[List[Sticker]]
+      
         /* Use this method to get the current default administrator rights of the bot. 
           Returns ChatAdministratorRights on success.  */
         def getMyDefaultAdministratorRights {
@@ -3190,6 +3278,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Text of the message to be sent, 1-4096 characters after 
           entities parsing */
           text                     : String
@@ -3237,6 +3328,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Poll question, 1-300 characters */
           question                 : String
           /* A JSON-serialized list of answer options, 2-10 strings 
@@ -3307,6 +3401,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Contact's phone number */
           phoneNumber              : String
           /* Contact's first name */
@@ -3329,7 +3426,7 @@ namespace telegramium {
           allowSendingWithoutReply : Option[Boolean]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove keyboard or to force a reply from the user. */
+          remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -3418,6 +3515,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Latitude of the location */
           latitude                 : Float
           /* Longitude of the location */
@@ -3508,6 +3608,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Emoji on which the dice throw animation is based. 
           Currently, must be one of EmojiDice, EmojiDarts, 
           EmojiBasketball, EmojiFootball, EmojiBowling or 
@@ -3700,6 +3803,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* A JSON-serialized array describing messages to be sent, 
           must include 2-10 items */
           media                    : List[InputMedia]
@@ -3720,6 +3826,9 @@ namespace telegramium {
         def sendGame {
           /* Unique identifier for the target chat */
           chatId                   : Int
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Short name of the game, serves as the unique identifier for 
           the game. Set up your games via &#064;BotFather. */
           gameShortName            : String
@@ -3746,6 +3855,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Latitude of the venue */
           latitude                 : Float
           /* Longitude of the venue */
@@ -3781,6 +3893,26 @@ namespace telegramium {
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
       
+        /* Use this method to create a topic in a forum supergroup chat. The bot must be 
+          an administrator in the chat for this to work and must have the 
+          can_manage_topics administrator rights. Returns information about the created 
+          topic as a ForumTopic object.  */
+        def createForumTopic {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format &#064;supergroupusername) */
+          chatId            : ChatId
+          /* Topic name, 1-128 characters */
+          name              : String
+          /* Color of the topic icon in RGB format. Currently, must be 
+          one of 0x6FB9F0, 0xFFD67E, 0xCB86DB, 0x8EEE98, 0xFF93B2, or 
+          0xFB6F5F */
+          iconColor         : Option[Int]
+          /* Unique identifier of the custom emoji shown as the topic 
+          icon. Use getForumTopicIconStickers to get all allowed 
+          custom emoji identifiers. */
+          iconCustomEmojiId : Option[String]
+        } => Method[ForumTopic]
+      
         /* Use this method to unban a previously banned user in a supergroup or channel. 
           The user will not return to the group or channel automatically, but will be able 
           to join via link, etc. The bot must be an administrator for this to work. By 
@@ -3806,6 +3938,19 @@ namespace telegramium {
           identifiers can be specified. */
           customEmojiIds : List[String]
         } => Method[List[Sticker]]
+      
+        /* Use this method to delete a forum topic along with all its messages in a forum 
+          supergroup chat. The bot must be an administrator in the chat for this to work 
+          and must have the can_delete_messages administrator rights. Returns True on 
+          success.  */
+        def deleteForumTopic {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format &#064;supergroupusername) */
+          chatId          : ChatId
+          /* Unique identifier for the target message thread of the 
+          forum topic */
+          messageThreadId : Int
+        } => Method[Boolean]
       
         /* Use this method to change the description of a group, a supergroup or a 
           channel. The bot must be an administrator in the chat for this to work and must 
@@ -3880,6 +4025,18 @@ namespace telegramium {
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
+        /* Use this method to clear the list of pinned messages in a forum topic. The bot 
+          must be an administrator in the chat for this to work and must have the 
+          can_pin_messages administrator right in the supergroup. Returns True on success.  */
+        def unpinAllForumTopicMessages {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format &#064;supergroupusername) */
+          chatId          : ChatId
+          /* Unique identifier for the target message thread of the 
+          forum topic */
+          messageThreadId : Int
+        } => Method[Boolean]
+      
         /* Use this method to get basic information about a file and prepare it for 
           downloading. For the moment, bots can download files of up to 20MB in size. On 
           success, a File object is returned. The file can then be downloaded via the link 
@@ -3934,7 +4091,7 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId : ChatId
-          /* New chat title, 1-255 characters */
+          /* New chat title, 1-128 characters */
           title  : String
         } => Method[Boolean]
       
@@ -3947,6 +4104,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Unique identifier for the chat where the original message 
           was sent (or channel username in the format 
           &#064;channelusername) */
@@ -3987,6 +4147,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Video note to send. Pass a file_id as String to send a 
           video note that exists on the Telegram servers (recommended) 
           or upload a new video using multipart/form-data. Sending 
@@ -4087,6 +4250,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                    : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId           : Option[Int]
           /* Product name, 1-32 characters */
           title                     : String
           /* Product description, 1-255 characters */
@@ -4181,6 +4347,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                      : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId             : Option[Int]
           /* File to send. Pass a file_id as String to send a file that 
           exists on the Telegram servers (recommended), pass an HTTP 
           URL as a String for Telegram to get a file from the 
@@ -4227,13 +4396,15 @@ namespace telegramium {
       
         /* Use this method to delete a message, including service messages, with the 
           following limitations: - A message can only be deleted if it was sent less than 
-          48 hours ago. - A dice message in a private chat can only be deleted if it was 
-          sent more than 24 hours ago. - Bots can delete outgoing messages in private 
-          chats, groups, and supergroups. - Bots can delete incoming messages in private 
-          chats. - Bots granted can_post_messages permissions can delete outgoing messages 
-          in channels. - If the bot is an administrator of a group, it can delete any 
-          message there. - If the bot has can_delete_messages permission in a supergroup 
-          or a channel, it can delete any message there. Returns True on success.  */
+          48 hours ago. - Service messages about a supergroup, channel, or forum topic 
+          creation can't be deleted. - A dice message in a private chat can only be 
+          deleted if it was sent more than 24 hours ago. - Bots can delete outgoing 
+          messages in private chats, groups, and supergroups. - Bots can delete incoming 
+          messages in private chats. - Bots granted can_post_messages permissions can 
+          delete outgoing messages in channels. - If the bot is an administrator of a 
+          group, it can delete any message there. - If the bot has can_delete_messages 
+          permission in a supergroup or a channel, it can delete any message there. 
+          Returns True on success.  */
         def deleteMessage {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -4303,6 +4474,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Audio file to send. Pass a file_id as String to send an 
           audio file that exists on the Telegram servers 
           (recommended), pass an HTTP URL as a String for Telegram to 
@@ -4381,6 +4555,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId              : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId     : Option[Int]
           /* Unique identifier for the chat where the original message 
           was sent (or channel username in the format 
           &#064;channelusername) */
@@ -4459,6 +4636,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Audio file to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a file from the 
@@ -4549,6 +4729,9 @@ namespace telegramium {
           /* Pass True if the administrator can pin messages, 
           supergroups only */
           canPinMessages      : Option[Boolean]
+          /* Pass True if the user is allowed to create, rename, close, 
+          and reopen forum topics, supergroups only */
+          canManageTopics     : Option[Boolean]
         } => Method[Boolean]
       
         /* Use this method to edit captions of messages. On success, if the edited message 
@@ -4721,6 +4904,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Video to send. Pass a file_id as String to send a video 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a video from the 
@@ -4843,6 +5029,19 @@ namespace telegramium {
           customTitle : String
         } => Method[Boolean]
       
+        /* Use this method to close an open topic in a forum supergroup chat. The bot must 
+          be an administrator in the chat for this to work and must have the 
+          can_manage_topics administrator rights, unless it is the creator of the topic. 
+          Returns True on success.  */
+        def closeForumTopic {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format &#064;supergroupusername) */
+          chatId          : ChatId
+          /* Unique identifier for the target message thread of the 
+          forum topic */
+          messageThreadId : Int
+        } => Method[Boolean]
+      
         /* Use this method to get the current value of the bot's menu button in a private 
           chat, or the default menu button. Returns MenuButton on success.  */
         def getChatMenuButton {
@@ -4858,6 +5057,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Animation to send. Pass a file_id as String to send an 
           animation that exists on the Telegram servers (recommended), 
           pass an HTTP URL as a String for Telegram to get an 
@@ -4967,6 +5169,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Sticker to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a .WEBP file from 
@@ -4989,11 +5194,33 @@ namespace telegramium {
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
       
+        /* Use this method to edit name and icon of a topic in a forum supergroup chat. 
+          The bot must be an administrator in the chat for this to work and must have 
+          can_manage_topics administrator rights, unless it is the creator of the topic. 
+          Returns True on success.  */
+        def editForumTopic {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format &#064;supergroupusername) */
+          chatId            : ChatId
+          /* Unique identifier for the target message thread of the 
+          forum topic */
+          messageThreadId   : Int
+          /* New topic name, 1-128 characters */
+          name              : String
+          /* New unique identifier of the custom emoji shown as the 
+          topic icon. Use getForumTopicIconStickers to get all allowed 
+          custom emoji identifiers */
+          iconCustomEmojiId : String
+        } => Method[Boolean]
+      
         /* Use this method to send photos. On success, the sent Message is returned.  */
         def sendPhoto {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                   : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          the forum; for forum supergroups only */
+          messageThreadId          : Option[Int]
           /* Photo to send. Pass a file_id as String to send a photo 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a photo from the 

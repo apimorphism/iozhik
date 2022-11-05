@@ -22,12 +22,12 @@ final case class Video(
   comments: Int,
   player: String,
   platform: String,
-  canEdit: Option[Int] = Option.empty,
   canAdd: Int,
-  isPrivate: Option[Int] = Option.empty,
   accessKey: Int,
+  isFavorite: Boolean,
+  canEdit: Option[Int] = Option.empty,
+  isPrivate: Option[Int] = Option.empty,
   processing: Option[Int] = Option.empty,
   live: Option[Int] = Option.empty,
-  upcoming: Option[Int] = Option.empty,
-  isFavorite: Boolean
+  upcoming: Option[Int] = Option.empty
 )

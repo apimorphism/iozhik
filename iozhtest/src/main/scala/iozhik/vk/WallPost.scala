@@ -9,7 +9,6 @@ final case class WallPost(
   text: String,
   replyOwnerId: Int,
   replyPostId: Int,
-  friendsOnly: Option[Int] = Option.empty,
   comments: WallPostCommentsAnon,
   likes: WallPostLikesAnon,
   reposts: WallPostReportsAnon,
@@ -25,5 +24,6 @@ final case class WallPost(
   canEdit: Boolean,
   isPinned: Boolean,
   markedAsAds: Boolean,
-  isFavorite: Boolean
+  isFavorite: Boolean,
+  friendsOnly: Option[Int] = Option.empty
 )

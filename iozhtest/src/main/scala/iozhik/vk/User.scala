@@ -13,6 +13,8 @@ package iozhik.vk
   *   скрыт ли профиль пользователя настройками приватности.
   * @param canAccessClosed
   *   может ли текущий пользователь видеть профиль при is_closed = 1 (например, он есть в друзьях).
+  * @param universities
+  *   список вузов, в которых учился пользователь.
   * @param about
   *   содержимое поля «О себе» из профиля.
   * @param activities
@@ -121,8 +123,6 @@ package iozhik.vk
   *   информация о том, есть ли на странице пользователя «огонёк».
   * @param tv
   *   любимые телешоу
-  * @param universities
-  *   список вузов, в которых учился пользователь.
   * @param verified
   *   возвращается 1, если страница пользователя верифицирована, 0 — если нет.
   * @param wallDefault
@@ -135,6 +135,7 @@ final case class User(
   deactivated: String,
   isClosed: Boolean,
   canAccessClosed: Boolean,
+  universities: Vector[University],
   about: Option[String] = Option.empty,
   activities: Option[String] = Option.empty,
   bdate: Option[String] = Option.empty,
@@ -213,7 +214,6 @@ final case class User(
   timezone: Option[Int] = Option.empty,
   trending: Option[Boolean] = Option.empty,
   tv: Option[String] = Option.empty,
-  universities: Vector[University],
   verified: Option[Boolean] = Option.empty,
   wallDefault: Option[String] = Option.empty
 )

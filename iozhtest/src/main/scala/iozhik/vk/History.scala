@@ -20,15 +20,9 @@ package iozhik.vk
   *   информация о том, может ли пользователь просмотреть историю (0 — нет, 1 — да). * Если can_see = 0, объект истории
   *   содержит только поля id, owner_id, date, expires_at, can_see, type.
   *
-  * @param seen
-  *   [1] 1, если история просмотрена текущим пользователем.
   * @param type
   *   * тип истории. Возможные значения: * photo — фотография; * video — видеозапись.
   *
-  * @param photo
-  *   (для type = photo). Фотография из истории. Поля объекта описаны на отдельной странице.
-  * @param video
-  *   (для type = video). Видео из истории. Поля объекта описаны на отдельной странице.
   * @param link
   *   ссылка для перехода из истории.
   * @param parentStoryOwnerId
@@ -49,6 +43,12 @@ package iozhik.vk
   *   число просмотров.
   * @param accessKey
   *   ключ доступа для приватного объекта.
+  * @param seen
+  *   [1] 1, если история просмотрена текущим пользователем.
+  * @param photo
+  *   (для type = photo). Фотография из истории. Поля объекта описаны на отдельной странице.
+  * @param video
+  *   (для type = video). Видео из истории. Поля объекта описаны на отдельной странице.
   */
 final case class History(
   id: Integer,
@@ -58,10 +58,7 @@ final case class History(
   isExpired: Boolean,
   isDeleted: Boolean,
   canSee: Boolean,
-  seen: Option[Integer] = Option.empty,
   `type`: String,
-  photo: Option[Photo] = Option.empty,
-  video: Option[HistoryVideo] = Option.empty,
   link: Link,
   parentStoryOwnerId: Integer,
   parentStoryId: Integer,
@@ -71,5 +68,8 @@ final case class History(
   canShare: Boolean,
   canComment: Boolean,
   views: Integer,
-  accessKey: String
+  accessKey: String,
+  seen: Option[Integer] = Option.empty,
+  photo: Option[Photo] = Option.empty,
+  video: Option[HistoryVideo] = Option.empty
 )

@@ -31,11 +31,6 @@ class ScalaApiGeneratorV1 extends Generator {
     if (name == null) "" else loop('_' :: name.toList).mkString
   }
 
-  private val defaults = List(
-    "List" -> "List.empty",
-    "Option" -> "Option.empty"
-  )
-
   private val predefined = Set(
     "Boolean", "Int", "Long", "Double", "Float",
     "Vector", "List", "Option", "String", "Either", "Map"
@@ -513,7 +508,7 @@ class ScalaApiGeneratorV1 extends Generator {
   private def genStrucDocs(struc: Struc) = {
     val docsBody = (if (struc.doc.nonEmpty) struc.doc.split("\n").toList.map(_.trim) else List.empty)
       .intercalate(s"$delimiter* ")
-    val params = struc.fields.flatMap { field =>
+    val params = requiredFieldsFirst(struc.fields).flatMap { field =>
       if (field.doc.nonEmpty) Some((s"@param ${field.name}" + field.doc).split(delimiter).toList.map(_.trim))
       else None
     }
@@ -537,7 +532,7 @@ class ScalaApiGeneratorV1 extends Generator {
       .flatMap(_.fields)
     for {
       kind <- genKind(kindOrDefault)
-      fields <- x.fields.traverse(genField(_, withDoc = abstractOrEnum, isDef = abstractOrEnum))
+      fields <- requiredFieldsFirst(x.fields).traverse(genField(_, withDoc = abstractOrEnum, isDef = abstractOrEnum))
       mixins <- x.mixins.traverse(genKind)
       leaves <- x.leaves.traverse(genStruc)
       wrapps <- x.wrapps.traverse(genWrapp(kindOrDefault, _))
@@ -621,7 +616,7 @@ class ScalaApiGeneratorV1 extends Generator {
     val d = delimiter
     val params = x.dom.fold(
       _ => "",
-      struc => struc.fields.flatMap { field =>
+      struc => requiredFieldsFirst(struc.fields).flatMap { field =>
         (s"@param ${field.name}" + field.doc).split(d).toList.map(_.trim)
       }
         .intercalate(s"$d* ")
@@ -676,7 +671,7 @@ class ScalaApiGeneratorV1 extends Generator {
       kind <- genKind(x.kind)
       params <- x.dom.fold(
         _ => Right(List.empty),
-        struc => struc.fields.traverse(genField(_, withDoc = false))
+        struc => requiredFieldsFirst(struc.fields).traverse(genField(_, withDoc = false))
       )
       reqName = x.kind.name.capitalize + DomPostfix
       dom <- x.dom.fold(
@@ -692,11 +687,11 @@ class ScalaApiGeneratorV1 extends Generator {
       cod <- genDefunCod(x)
       codName <- genDefunCodName(x)
     } yield {
-      val reqFields = x.dom.fold(_ => List.empty, struc => struc.fields)
-      val domImports = x.dom.fold(_ => List.empty[String], struc => genStrucImportsWithCodecs(struc.fields.map(_.kind)))
+      val reqFields = x.dom.fold(_ => List.empty, struc => requiredFieldsFirst(struc.fields))
+      val domImports = x.dom.fold(_ => List.empty[String], struc => genStrucImportsWithCodecs(requiredFieldsFirst(struc.fields).map(_.kind)))
       val codImports = x.cod.fold(
         kind => genStrucImportsWithCodecs(kind.params),
-        struc => genStrucImportsWithCodecs(struc.fields.map(_.kind))
+        struc => genStrucImportsWithCodecs(requiredFieldsFirst(struc.fields).map(_.kind))
       )
       val docs = genDefunDocs(x)
       val reqParams = params.intercalate(", ")

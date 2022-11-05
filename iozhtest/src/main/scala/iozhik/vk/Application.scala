@@ -25,13 +25,13 @@ final case class Application(
   isInCatalog: Boolean,
   friends: Vector[Int],
   installed: Boolean,
-  isHtml5App: Option[Boolean] = Option.empty,
   screenOrientation: Int,
   mobileControlsType: Integer,
+  screenshots: Vector[Photo],
+  pushEnabled: Boolean,
+  isHtml5App: Option[Boolean] = Option.empty,
   mobileViewSupportType: Option[Boolean] = Option.empty,
   description: Option[String] = Option.empty,
   screenName: Option[String] = Option.empty,
-  icon16: Option[String] = Option.empty,
-  screenshots: Vector[Photo],
-  pushEnabled: Boolean
+  icon16: Option[String] = Option.empty
 )
