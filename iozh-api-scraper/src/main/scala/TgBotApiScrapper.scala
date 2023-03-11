@@ -303,7 +303,7 @@ object TgBotApiScrapper extends IOApp {
           desc.contains("bigger than 2^31") ||
           desc.contains("size in bytes") ||
           name == "user_id"
-        val res = s
+        s
           .replace(" number", "") // Float number => Float
           .replace("True", "Boolean")
           .replace("False", "Boolean")
@@ -314,11 +314,6 @@ object TgBotApiScrapper extends IOApp {
           .replace("Messages", "Message")
           .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
           .replace("InputMediaAudio, InputMediaDocument, InputMediaPhoto and InputMediaVideo", "InputMedia")
-        if (name == "emoji") {
-          "String"
-        } else {
-          res
-        }
       }
 
       def fixDesc(desc: String): String = {
