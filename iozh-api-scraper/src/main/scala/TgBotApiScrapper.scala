@@ -289,8 +289,9 @@ object TgBotApiScrapper extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
     IO {
-      val browser = JsoupBrowser()
+      val browser = JsoupBrowser.typed()
       val doc = browser.get("https://core.telegram.org/bots/api")
+      doc.underlying.select("img.emoji").forEach(e => e.replaceWith(new nodes.TextNode(e.attr("alt"))))
       val rawItems = doc >> elements("div#dev_page_content > *")
 
       case class Item(name: Element, desc: List[Element], table: Element)
@@ -314,7 +315,7 @@ object TgBotApiScrapper extends IOApp {
           .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
           .replace("InputMediaAudio, InputMediaDocument, InputMediaPhoto and InputMediaVideo", "InputMedia")
         if (name == "emoji") {
-          "Emoji"
+          "String"
         } else {
           res
         }
@@ -322,14 +323,6 @@ object TgBotApiScrapper extends IOApp {
 
       def fixDesc(desc: String): String = {
         desc
-          .replace("1-6 for “”, “” and “”", "1-6 for EmojiDice, EmojiDarts and EmojiBowling")
-          .replace("1-5 for “” and “”", "1-5 for EmojiBasketball and EmojiFootball")
-          .replace("1-64 for “”", "1-64 for EmojiSlotMachine")
-          .replace("Defaults to “”", "Defaults to EmojiDice")
-          .replace(
-            "one of “”, “”, “”, “”, “”, or “”",
-            "one of EmojiDice, EmojiDarts, EmojiBasketball, EmojiFootball, EmojiBowling or EmojiSlotMachine"
-          )
           .replace("@", "&#064;")
           .replace("^", "&#94;")
       }

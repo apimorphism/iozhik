@@ -20,7 +20,7 @@ object Dependencies {
     val http4s     = "0.20.0"
     val slf4j      = "1.7.26"
     val logback    = "1.2.3"
-    val scraper    = "2.1.0"
+    val scraper    = "3.0.0"
     val msgPack    = "0.8.13"
     val uPickle    = "0.7.1"
     val javaFmt    = "1.7"

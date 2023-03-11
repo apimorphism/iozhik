@@ -170,7 +170,7 @@ namespace telegramium {
         canRestrictMembers  : Boolean
         /* True, if the administrator can add new administrators with 
         a subset of their own privileges or demote administrators 
-        that he has promoted, directly or indirectly (promoted by 
+        that they have promoted, directly or indirectly (promoted by 
         administrators that were appointed by the user) */
         canPromoteMembers   : Boolean
         /* True, if the user is allowed to change the chat title, 
@@ -234,6 +234,29 @@ namespace telegramium {
         /* True, if the user is a member of the chat at the moment of 
         the request */
         isMember              : Boolean
+        /* True, if the user is allowed to send text messages, 
+        contacts, invoices, locations and venues */
+        canSendMessages       : Boolean
+        /* True, if the user is allowed to send audios */
+        canSendAudios         : Boolean
+        /* True, if the user is allowed to send documents */
+        canSendDocuments      : Boolean
+        /* True, if the user is allowed to send photos */
+        canSendPhotos         : Boolean
+        /* True, if the user is allowed to send videos */
+        canSendVideos         : Boolean
+        /* True, if the user is allowed to send video notes */
+        canSendVideoNotes     : Boolean
+        /* True, if the user is allowed to send voice notes */
+        canSendVoiceNotes     : Boolean
+        /* True, if the user is allowed to send polls */
+        canSendPolls          : Boolean
+        /* True, if the user is allowed to send animations, games, 
+        stickers and use inline bots */
+        canSendOtherMessages  : Boolean
+        /* True, if the user is allowed to add web page previews to 
+        their messages */
+        canAddWebPagePreviews : Boolean
         /* True, if the user is allowed to change the chat title, 
         photo and other settings */
         canChangeInfo         : Boolean
@@ -244,20 +267,6 @@ namespace telegramium {
         canPinMessages        : Boolean
         /* True, if the user is allowed to create forum topics */
         canManageTopics       : Boolean
-        /* True, if the user is allowed to send text messages, 
-        contacts, locations and venues */
-        canSendMessages       : Boolean
-        /* True, if the user is allowed to send audios, documents, 
-        photos, videos, video notes and voice notes */
-        canSendMediaMessages  : Boolean
-        /* True, if the user is allowed to send polls */
-        canSendPolls          : Boolean
-        /* True, if the user is allowed to send animations, games, 
-        stickers and use inline bots */
-        canSendOtherMessages  : Boolean
-        /* True, if the user is allowed to add web page previews to 
-        their messages */
-        canAddWebPagePreviews : Boolean
         /* Date when restrictions will be lifted for this user; unix 
         time. If 0, then the user is restricted forever */
         untilDate             : Int
@@ -366,7 +375,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumb           : Option[IFile]
+        thumbnail       : Option[IFile]
         /* Optional. Caption of the animation to be sent, 0-1024 
         characters after entities parsing */
         caption         : Option[String]
@@ -428,7 +437,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumb             : Option[IFile]
+        thumbnail         : Option[IFile]
         /* Optional. Caption of the video to be sent, 0-1024 
         characters after entities parsing */
         caption           : Option[String]
@@ -470,7 +479,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumb                       : Option[IFile]
+        thumbnail                   : Option[IFile]
         /* Optional. Caption of the document to be sent, 0-1024 
         characters after entities parsing */
         caption                     : Option[String]
@@ -504,7 +513,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumb           : Option[IFile]
+        thumbnail       : Option[IFile]
         /* Optional. Caption of the audio to be sent, 0-1024 
         characters after entities parsing */
         caption         : Option[String]
@@ -544,11 +553,11 @@ namespace telegramium {
         gifDuration         : Option[Int]
         /* URL of the static (JPEG or GIF) or animated (MPEG4) 
         thumbnail for the result */
-        thumbUrl            : String
+        thumbnailUrl        : String
         /* Optional. MIME type of the thumbnail, must be one of 
         “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to 
         “image/jpeg” */
-        thumbMimeType       : Option[String]
+        thumbnailMimeType   : Option[String]
         /* Optional. Title for the result */
         title               : Option[String]
         /* Optional. Caption of the GIF file to be sent, 0-1024 
@@ -599,11 +608,11 @@ namespace telegramium {
         venue */
         inputMessageContent : Option[InputMessageContent]
         /* Optional. Url of the thumbnail for the result */
-        thumbUrl            : Option[String]
+        thumbnailUrl        : Option[String]
         /* Optional. Thumbnail width */
-        thumbWidth          : Option[Int]
+        thumbnailWidth      : Option[Int]
         /* Optional. Thumbnail height */
-        thumbHeight         : Option[Int]
+        thumbnailHeight     : Option[Int]
       }
              
       /* Represents a contact with a phone number. By default, this contact will be sent 
@@ -628,11 +637,11 @@ namespace telegramium {
         contact */
         inputMessageContent : Option[InputMessageContent]
         /* Optional. Url of the thumbnail for the result */
-        thumbUrl            : Option[String]
+        thumbnailUrl        : Option[String]
         /* Optional. Thumbnail width */
-        thumbWidth          : Option[Int]
+        thumbnailWidth      : Option[Int]
         /* Optional. Thumbnail height */
-        thumbHeight         : Option[Int]
+        thumbnailHeight     : Option[Int]
       }
              
       /* Represents a link to a photo. By default, this photo will be sent by the user 
@@ -646,7 +655,7 @@ namespace telegramium {
         Photo size must not exceed 5MB */
         photoUrl            : String
         /* URL of the thumbnail for the photo */
-        thumbUrl            : String
+        thumbnailUrl        : String
         /* Optional. Width of the photo */
         photoWidth          : Option[Int]
         /* Optional. Height of the photo */
@@ -703,11 +712,11 @@ namespace telegramium {
         file */
         inputMessageContent : Option[InputMessageContent]
         /* Optional. URL of the thumbnail (JPEG only) for the file */
-        thumbUrl            : Option[String]
+        thumbnailUrl        : Option[String]
         /* Optional. Thumbnail width */
-        thumbWidth          : Option[Int]
+        thumbnailWidth      : Option[Int]
         /* Optional. Thumbnail height */
-        thumbHeight         : Option[Int]
+        thumbnailHeight     : Option[Int]
       }
              
       /* Represents a link to a voice message stored on the Telegram servers. By 
@@ -756,11 +765,11 @@ namespace telegramium {
         /* Optional. Short description of the result */
         description         : Option[String]
         /* Optional. Url of the thumbnail for the result */
-        thumbUrl            : Option[String]
+        thumbnailUrl        : Option[String]
         /* Optional. Thumbnail width */
-        thumbWidth          : Option[Int]
+        thumbnailWidth      : Option[Int]
         /* Optional. Thumbnail height */
-        thumbHeight         : Option[Int]
+        thumbnailHeight     : Option[Int]
       }
              
       /* Represents a link to an MP3 audio file. By default, this audio file will be 
@@ -812,11 +821,11 @@ namespace telegramium {
         mpeg4Duration       : Option[Int]
         /* URL of the static (JPEG or GIF) or animated (MPEG4) 
         thumbnail for the result */
-        thumbUrl            : String
+        thumbnailUrl        : String
         /* Optional. MIME type of the thumbnail, must be one of 
         “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to 
         “image/jpeg” */
-        thumbMimeType       : Option[String]
+        thumbnailMimeType   : Option[String]
         /* Optional. Title for the result */
         title               : Option[String]
         /* Optional. Caption of the MPEG-4 file to be sent, 0-1024 
@@ -996,7 +1005,7 @@ namespace telegramium {
         “video/mp4” */
         mimeType            : String
         /* URL of the thumbnail (JPEG only) for the video */
-        thumbUrl            : String
+        thumbnailUrl        : String
         /* Title for the result */
         title               : String
         /* Optional. Caption of the video to be sent, 0-1024 
@@ -1083,11 +1092,11 @@ namespace telegramium {
         location */
         inputMessageContent  : Option[InputMessageContent]
         /* Optional. Url of the thumbnail for the result */
-        thumbUrl             : Option[String]
+        thumbnailUrl         : Option[String]
         /* Optional. Thumbnail width */
-        thumbWidth           : Option[Int]
+        thumbnailWidth       : Option[Int]
         /* Optional. Thumbnail height */
-        thumbHeight          : Option[Int]
+        thumbnailHeight      : Option[Int]
       }
              
       /* Represents a link to an animated GIF file stored on the Telegram servers. By 
@@ -1580,7 +1589,7 @@ namespace telegramium {
       /* Duration of the video in seconds as defined by sender */
       duration     : Int
       /* Optional. Animation thumbnail as defined by sender */
-      thumb        : Option[PhotoSize]
+      thumbnail    : Option[PhotoSize]
       /* Optional. Original animation filename as defined by sender */
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
@@ -1599,6 +1608,16 @@ namespace telegramium {
       chat       : Chat
       /* User that sent the join request */
       from       : User
+      /* Identifier of a private chat with the user who sent the 
+      join request. This number may have more than 32 significant 
+      bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a 64-bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. The bot can use this identifier for 24 hours to 
+      send messages until the join request is processed, assuming 
+      no other administrator contacted the user. */
+      userChatId : Long
       /* Date the request was sent in Unix time */
       date       : Int
       /* Optional. Bio of the user. */
@@ -1726,7 +1745,7 @@ namespace telegramium {
       /* Duration of the video in seconds as defined by sender */
       duration     : Int
       /* Optional. Video thumbnail */
-      thumb        : Option[PhotoSize]
+      thumbnail    : Option[PhotoSize]
       /* Optional. File size in bytes */
       fileSize     : Option[Long]
     }
@@ -1768,21 +1787,27 @@ namespace telegramium {
     /* Describes actions that a non-administrator user is allowed to take in a chat.  */
     ChatPermissions {
       /* Optional. True, if the user is allowed to send text 
-      messages, contacts, locations and venues */
+      messages, contacts, invoices, locations and venues */
       canSendMessages       : Option[Boolean]
-      /* Optional. True, if the user is allowed to send audios, 
-      documents, photos, videos, video notes and voice notes, 
-      implies can_send_messages */
-      canSendMediaMessages  : Option[Boolean]
-      /* Optional. True, if the user is allowed to send polls, 
-      implies can_send_messages */
+      /* Optional. True, if the user is allowed to send audios */
+      canSendAudios         : Option[Boolean]
+      /* Optional. True, if the user is allowed to send documents */
+      canSendDocuments      : Option[Boolean]
+      /* Optional. True, if the user is allowed to send photos */
+      canSendPhotos         : Option[Boolean]
+      /* Optional. True, if the user is allowed to send videos */
+      canSendVideos         : Option[Boolean]
+      /* Optional. True, if the user is allowed to send video notes */
+      canSendVideoNotes     : Option[Boolean]
+      /* Optional. True, if the user is allowed to send voice notes */
+      canSendVoiceNotes     : Option[Boolean]
+      /* Optional. True, if the user is allowed to send polls */
       canSendPolls          : Option[Boolean]
       /* Optional. True, if the user is allowed to send animations, 
-      games, stickers and use inline bots, implies 
-      can_send_media_messages */
+      games, stickers and use inline bots */
       canSendOtherMessages  : Option[Boolean]
       /* Optional. True, if the user is allowed to add web page 
-      previews to their messages, implies can_send_media_messages */
+      previews to their messages */
       canAddWebPagePreviews : Option[Boolean]
       /* Optional. True, if the user is allowed to change the chat 
       title, photo and other settings. Ignored in public 
@@ -1805,6 +1830,28 @@ namespace telegramium {
       text       : String
       /* Number of users that voted for this option */
       voterCount : Int
+    }
+           
+    /* This object contains information about the user whose identifier was shared 
+      with the bot using a KeyboardButtonRequestUser button.  */
+    UserShared {
+      /* Identifier of the request */
+      requestId : Int
+      /* Identifier of the shared user. This number may have more 
+      than 32 significant bits and some programming languages may 
+      have difficulty/silent defects in interpreting it. But it 
+      has at most 52 significant bits, so a 64-bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. The bot may not have access to the user and 
+      could be unable to use this identifier, unless the user is 
+      already known to the bot by some other means. */
+      userId    : Long
+    }
+           
+    /* This object represents the bot's short description.  */
+    BotShortDescription {
+      /* The bot's short description */
+      shortDescription : String
     }
            
     /* This object represents a shipping address.  */
@@ -1946,14 +1993,24 @@ namespace telegramium {
     }
            
     /* This object represents one button of the reply keyboard. For simple text 
-      buttons String can be used instead of this object to specify text of the button. 
-      Optional fields web_app, request_contact, request_location, and request_poll are 
-      mutually exclusive.  */
+      buttons, String can be used instead of this object to specify the button text. 
+      The optional fields web_app, request_user, request_chat, request_contact, 
+      request_location, and request_poll are mutually exclusive.  */
     KeyboardButton {
       /* Text of the button. If none of the optional fields are 
       used, it will be sent as a message when the button is 
       pressed */
       text            : String
+      /* Optional. If specified, pressing the button will open a 
+      list of suitable users. Tapping on any user will send their 
+      identifier to the bot in a “user_shared” service message. 
+      Available in private chats only. */
+      requestUser     : Option[KeyboardButtonRequestUser]
+      /* Optional. If specified, pressing the button will open a 
+      list of suitable chats. Tapping on a chat will send its 
+      identifier to the bot in a “chat_shared” service message. 
+      Available in private chats only. */
+      requestChat     : Option[KeyboardButtonRequestChat]
       /* Optional. If True, the user's phone number will be sent as 
       a contact when the button is pressed. Available in private 
       chats only. */
@@ -2083,7 +2140,7 @@ namespace telegramium {
       stickers    : List[Sticker]
       /* Optional. Sticker set thumbnail in the .WEBP, .TGS, or 
       .WEBM format */
-      thumb       : Option[PhotoSize]
+      thumbnail   : Option[PhotoSize]
     }
            
     /* This object represents an answer of a user in a non-anonymous poll.  */
@@ -2241,11 +2298,9 @@ namespace telegramium {
     /* This object represents an animated emoji that displays a random value.  */
     Dice {
       /* Emoji on which the dice throw animation is based */
-      emoji : Emoji
-      /* Value of the dice, 1-6 for EmojiDice, EmojiDarts and 
-      EmojiBowling base emoji, 1-5 for EmojiBasketball and 
-      EmojiFootball base emoji, 1-64 for EmojiSlotMachine base 
-      emoji */
+      emoji : String
+      /* Value of the dice, 1-6 for “🎲”, “🎯” and “🎳” base emoji, 
+      1-5 for “🏀” and “⚽” base emoji, 1-64 for “🎰” base emoji */
       value : Int
     }
            
@@ -2273,6 +2328,50 @@ namespace telegramium {
       data        : List[EncryptedPassportElement]
       /* Encrypted credentials required to decrypt the data */
       credentials : EncryptedCredentials
+    }
+           
+    /* This object defines the criteria used to request a suitable chat. The 
+      identifier of the selected chat will be shared with the bot when the 
+      corresponding button is pressed.  */
+    KeyboardButtonRequestChat {
+      /* Signed 32-bit identifier of the request, which will be 
+      received back in the ChatShared object. Must be unique 
+      within the message */
+      requestId               : Int
+      /* Pass True to request a channel chat, pass False to request 
+      a group or a supergroup chat. */
+      chatIsChannel           : Boolean
+      /* Optional. Pass True to request a forum supergroup, pass 
+      False to request a non-forum chat. If not specified, no 
+      additional restrictions are applied. */
+      chatIsForum             : Option[Boolean]
+      /* Optional. Pass True to request a supergroup or a channel 
+      with a username, pass False to request a chat without a 
+      username. If not specified, no additional restrictions are 
+      applied. */
+      chatHasUsername         : Option[Boolean]
+      /* Optional. Pass True to request a chat owned by the user. 
+      Otherwise, no additional restrictions are applied. */
+      chatIsCreated           : Option[Boolean]
+      /* Optional. A JSON-serialized object listing the required 
+      administrator rights of the user in the chat. The rights 
+      must be a superset of bot_administrator_rights. If not 
+      specified, no additional restrictions are applied. */
+      userAdministratorRights : Option[ChatAdministratorRights]
+      /* Optional. A JSON-serialized object listing the required 
+      administrator rights of the bot in the chat. The rights must 
+      be a subset of user_administrator_rights. If not specified, 
+      no additional restrictions are applied. */
+      botAdministratorRights  : Option[ChatAdministratorRights]
+      /* Optional. Pass True to request a chat with the bot as a 
+      member. Otherwise, no additional restrictions are applied. */
+      botIsMember             : Option[Boolean]
+    }
+           
+    /* This object represents the bot's description.  */
+    BotDescription {
+      /* The bot's description */
+      description : String
     }
            
     /* This object represents a service message about a forum topic closed in the 
@@ -2392,7 +2491,7 @@ namespace telegramium {
       fileSize     : Option[Long]
       /* Optional. Thumbnail of the album cover to which the music 
       file belongs */
-      thumb        : Option[PhotoSize]
+      thumbnail    : Option[PhotoSize]
     }
            
     /* Describes the current status of a webhook.  */
@@ -2650,9 +2749,9 @@ namespace telegramium {
       /* True, if the sticker is a video sticker */
       isVideo          : Boolean
       /* Optional. Sticker thumbnail in the .WEBP or .JPG format */
-      thumb            : Option[PhotoSize]
+      thumbnail        : Option[PhotoSize]
       /* Optional. Emoji associated with the sticker */
-      emoji            : Option[Emoji]
+      emoji            : Option[String]
       /* Optional. Name of the sticker set to which the sticker 
       belongs */
       setName          : Option[String]
@@ -2665,6 +2764,11 @@ namespace telegramium {
       /* Optional. For custom emoji stickers, unique identifier of 
       the custom emoji */
       customEmojiId    : Option[String]
+      /* Optional. True, if the sticker must be repainted to a text 
+      color in messages, the color of the Telegram Premium badge 
+      in emoji status, white color on chat photos, or another 
+      appropriate color in other places */
+      needsRepainting  : Option[Boolean]
       /* Optional. File size in bytes */
       fileSize         : Option[Long]
     }
@@ -2850,6 +2954,10 @@ namespace telegramium {
       /* Optional. Message is a service message about a successful 
       payment, information about the payment. */
       successfulPayment             : Option[SuccessfulPayment]
+      /* Optional. Service message: a user was shared with the bot */
+      userShared                    : Option[UserShared]
+      /* Optional. Service message: a chat was shared with the bot */
+      chatShared                    : Option[ChatShared]
       /* Optional. The domain name of the website on which the user 
       has logged in. */
       connectedWebsite              : Option[String]
@@ -2920,7 +3028,7 @@ namespace telegramium {
       canRestrictMembers  : Boolean
       /* True, if the administrator can add new administrators with 
       a subset of their own privileges or demote administrators 
-      that he has promoted, directly or indirectly (promoted by 
+      that they have promoted, directly or indirectly (promoted by 
       administrators that were appointed by the user) */
       canPromoteMembers   : Boolean
       /* True, if the user is allowed to change the chat title, 
@@ -3135,6 +3243,40 @@ namespace telegramium {
       gameShortName   : Option[String]
     }
            
+    /* This object defines the criteria used to request a suitable user. The 
+      identifier of the selected user will be shared with the bot when the 
+      corresponding button is pressed.  */
+    KeyboardButtonRequestUser {
+      /* Signed 32-bit identifier of the request, which will be 
+      received back in the UserShared object. Must be unique 
+      within the message */
+      requestId     : Int
+      /* Optional. Pass True to request a bot, pass False to request 
+      a regular user. If not specified, no additional restrictions 
+      are applied. */
+      userIsBot     : Option[Boolean]
+      /* Optional. Pass True to request a premium user, pass False 
+      to request a non-premium user. If not specified, no 
+      additional restrictions are applied. */
+      userIsPremium : Option[Boolean]
+    }
+           
+    /* This object contains information about the chat whose identifier was shared 
+      with the bot using a KeyboardButtonRequestChat button.  */
+    ChatShared {
+      /* Identifier of the request */
+      requestId : Int
+      /* Identifier of the shared chat. This number may have more 
+      than 32 significant bits and some programming languages may 
+      have difficulty/silent defects in interpreting it. But it 
+      has at most 52 significant bits, so a 64-bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. The bot may not have access to the chat and 
+      could be unable to use this identifier, unless the chat is 
+      already known to the bot by some other means. */
+      chatId    : Long
+    }
+           
     /* This object represents a unique message identifier.  */
     MessageId {
       /* Unique message identifier */
@@ -3169,7 +3311,7 @@ namespace telegramium {
       /* Duration of the video in seconds as defined by sender */
       duration     : Int
       /* Optional. Video thumbnail */
-      thumb        : Option[PhotoSize]
+      thumbnail    : Option[PhotoSize]
       /* Optional. Original filename as defined by sender */
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
@@ -3193,7 +3335,7 @@ namespace telegramium {
       download or reuse the file. */
       fileUniqueId : String
       /* Optional. Document thumbnail as defined by sender */
-      thumb        : Option[PhotoSize]
+      thumbnail    : Option[PhotoSize]
       /* Optional. Original filename as defined by sender */
       fileName     : Option[String]
       /* Optional. MIME type of the file as defined by sender */
@@ -3204,6 +3346,25 @@ namespace telegramium {
       most 52 significant bits, so a signed 64-bit integer or 
       double-precision float type are safe for storing this value. */
       fileSize     : Option[Long]
+    }
+           
+    /* This object describes a sticker to be added to a sticker set.  */
+    InputSticker {
+      /* The added sticker. Pass a file_id as a String to send a 
+      file that already exists on the Telegram servers, pass an 
+      HTTP URL as a String for Telegram to get a file from the 
+      Internet, or upload a new one using multipart/form-data. 
+      Animated and video stickers can't be uploaded via HTTP URL. */
+      sticker      : IFile
+      /* List of 1-20 emoji associated with the sticker */
+      emojiList    : List[String]
+      /* Optional. Position where the mask should be placed on 
+      faces. For “mask” stickers only. */
+      maskPosition : Option[MaskPosition]
+      /* Optional. List of 0-20 search keywords for the sticker with 
+      total length of up to 64 characters. For “regular” and 
+      “custom_emoji” stickers only. */
+      keywords     : List[String]
     }
            
 
@@ -3512,59 +3673,62 @@ namespace telegramium {
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
       
+        /* Use this method to set the thumbnail of a custom emoji sticker set. Returns 
+          True on success.  */
+        def setCustomEmojiStickerSetThumbnail {
+          /* Sticker set name */
+          name          : String
+          /* Custom emoji identifier of a sticker from the sticker set; 
+          pass an empty string to drop the thumbnail and use the first 
+          sticker as the thumbnail. */
+          customEmojiId : Option[String]
+        } => Method[Boolean]
+      
         /* Use this method to create a new sticker set owned by a user. The bot will be 
-          able to edit the sticker set thus created. You must use exactly one of the 
-          fields png_sticker, tgs_sticker, or webm_sticker. Returns True on success.  */
+          able to edit the sticker set thus created. Returns True on success.  */
         def createNewStickerSet {
           /* User identifier of created sticker set owner */
-          userId       : Long
+          userId          : Long
           /* Short name of sticker set, to be used in t.me/addstickers/ 
           URLs (e.g., animals). Can contain only English letters, 
           digits and underscores. Must begin with a letter, can't 
           contain consecutive underscores and must end in 
           "_by_<bot_username>". <bot_username> is case insensitive. 
           1-64 characters. */
-          name         : String
+          name            : String
           /* Sticker set title, 1-64 characters */
-          title        : String
-          /* PNG image with the sticker, must be up to 512 kilobytes in 
-          size, dimensions must not exceed 512px, and either width or 
-          height must be exactly 512px. Pass a file_id as a String to 
-          send a file that already exists on the Telegram servers, 
-          pass an HTTP URL as a String for Telegram to get a file from 
-          the Internet, or upload a new one using multipart/form-data. */
-          pngSticker   : (file) Option[IFile]
-          /* TGS animation with the sticker, uploaded using 
-          multipart/form-data. See 
-          https://core.telegram.org/stickers#animated-sticker-requirements 
-          for technical requirements */
-          tgsSticker   : (file) Option[IFile]
-          /* WEBM video with the sticker, uploaded using 
-          multipart/form-data. See 
-          https://core.telegram.org/stickers#video-sticker-requirements 
-          for technical requirements */
-          webmSticker  : (file) Option[IFile]
-          /* Type of stickers in the set, pass “regular” or “mask”. 
-          Custom emoji sticker sets can't be created via the Bot API 
-          at the moment. By default, a regular sticker set is created. */
-          stickerType  : Option[String]
-          /* One or more emoji corresponding to the sticker */
-          emojis       : String
-          /* A JSON-serialized object for position where the mask should 
-          be placed on faces */
-          maskPosition : Option[MaskPosition]
+          title           : String
+          /* A JSON-serialized list of 1-50 initial stickers to be added 
+          to the sticker set */
+          stickers        : List[InputSticker]
+          /* Format of stickers in the set, must be one of “static”, 
+          “animated”, “video” */
+          stickerFormat   : String
+          /* Type of stickers in the set, pass “regular”, “mask”, or 
+          “custom_emoji”. By default, a regular sticker set is 
+          created. */
+          stickerType     : Option[String]
+          /* Pass True if stickers in the sticker set must be repainted 
+          to the color of text when used in messages, the accent color 
+          if used as emoji status, white on chat photos, or another 
+          appropriate color based on context; for custom emoji sticker 
+          sets only */
+          needsRepainting : Option[Boolean]
         } => Method[Boolean]
       
-        /* Use this method to upload a .PNG file with a sticker for later use in 
-          createNewStickerSet and addStickerToSet methods (can be used multiple times). 
-          Returns the uploaded File on success.  */
+        /* Use this method to upload a file with a sticker for later use in the 
+          createNewStickerSet and addStickerToSet methods (the file can be used multiple 
+          times). Returns the uploaded File on success.  */
         def uploadStickerFile {
           /* User identifier of sticker file owner */
-          userId     : Long
-          /* PNG image with the sticker, must be up to 512 kilobytes in 
-          size, dimensions must not exceed 512px, and either width or 
-          height must be exactly 512px. */
-          pngSticker : (file) IFile
+          userId        : Long
+          /* A file with the sticker in .WEBP, .PNG, .TGS, or .WEBM 
+          format. See https://core.telegram.org/stickers for technical 
+          requirements. */
+          sticker       : (file) IFile
+          /* Format of the sticker, must be one of “static”, “animated”, 
+          “video” */
+          stickerFormat : String
         } => Method[File]
       
         /* Use this method to set default chat permissions for all members. The bot must 
@@ -3573,9 +3737,17 @@ namespace telegramium {
         def setChatPermissions {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
-          chatId      : ChatId
+          chatId                        : ChatId
           /* A JSON-serialized object for new default chat permissions */
-          permissions : ChatPermissions
+          permissions                   : ChatPermissions
+          /* Pass True if chat permissions are set independently. 
+          Otherwise, the can_send_other_messages and 
+          can_add_web_page_previews permissions will imply the 
+          can_send_messages, can_send_audios, can_send_documents, 
+          can_send_photos, can_send_videos, can_send_video_notes, and 
+          can_send_voice_notes permissions; the can_send_polls 
+          permission will imply the can_send_messages permission. */
+          useIndependentChatPermissions : Option[Boolean]
         } => Method[Boolean]
       
         /* Use this method to ban a channel chat in a supergroup or a channel. Until the 
@@ -3589,6 +3761,17 @@ namespace telegramium {
           chatId       : ChatId
           /* Unique identifier of the target sender chat */
           senderChatId : Int
+        } => Method[Boolean]
+      
+        /* Use this method to change the mask position of a mask sticker. The sticker must 
+          belong to a sticker set that was created by the bot. Returns True on success.  */
+        def setStickerMaskPosition {
+          /* File identifier of the sticker */
+          sticker      : String
+          /* A JSON-serialized object with the position where the mask 
+          should be placed on faces. Omit the parameter to remove the 
+          mask position. */
+          maskPosition : Option[MaskPosition]
         } => Method[Boolean]
       
         /* Use this method to send point on the map. On success, the sent Message is 
@@ -3645,6 +3828,13 @@ namespace telegramium {
           chatId : ChatId
         } => Method[Boolean]
       
+        /* Use this method to get the current bot short description for the given user 
+          language. Returns BotShortDescription on success.  */
+        def getMyShortDescription {
+          /* A two-letter ISO 639-1 language code or an empty string */
+          languageCode : Option[String]
+        } => Method[BotShortDescription]
+      
         /* Use this method to stop updating a live location message before live_period 
           expires. On success, if the message is not an inline message, the edited Message 
           is returned, otherwise True is returned.  */
@@ -3694,13 +3884,11 @@ namespace telegramium {
           the forum; for forum supergroups only */
           messageThreadId          : Option[Int]
           /* Emoji on which the dice throw animation is based. 
-          Currently, must be one of EmojiDice, EmojiDarts, 
-          EmojiBasketball, EmojiFootball, EmojiBowling or 
-          EmojiSlotMachine. Dice can have values 1-6 for EmojiDice, 
-          EmojiDarts and EmojiBowling, values 1-5 for EmojiBasketball 
-          and EmojiFootball, and values 1-64 for EmojiSlotMachine. 
-          Defaults to EmojiDice */
-          emoji                    : Option[Emoji]
+          Currently, must be one of “🎲”, “🎯”, “🏀”, “⚽”, “🎳”, or 
+          “🎰”. Dice can have values 1-6 for “🎲”, “🎯” and “🎳”, 
+          values 1-5 for “🏀” and “⚽”, and values 1-64 for “🎰”. 
+          Defaults to “🎲” */
+          emoji                    : Option[String]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification      : Option[Boolean]
@@ -3739,38 +3927,20 @@ namespace telegramium {
           action          : String
         } => Method[Boolean]
       
-        /* Use this method to add a new sticker to a set created by the bot. You must use 
-          exactly one of the fields png_sticker, tgs_sticker, or webm_sticker. Animated 
-          stickers can be added to animated sticker sets and only to them. Animated 
-          sticker sets can have up to 50 stickers. Static sticker sets can have up to 120 
-          stickers. Returns True on success.  */
+        /* Use this method to add a new sticker to a set created by the bot. The format of 
+          the added sticker must match the format of the other stickers in the set. Emoji 
+          sticker sets can have up to 200 stickers. Animated and video sticker sets can 
+          have up to 50 stickers. Static sticker sets can have up to 120 stickers. Returns 
+          True on success.  */
         def addStickerToSet {
           /* User identifier of sticker set owner */
-          userId       : Long
+          userId  : Long
           /* Sticker set name */
-          name         : String
-          /* PNG image with the sticker, must be up to 512 kilobytes in 
-          size, dimensions must not exceed 512px, and either width or 
-          height must be exactly 512px. Pass a file_id as a String to 
-          send a file that already exists on the Telegram servers, 
-          pass an HTTP URL as a String for Telegram to get a file from 
-          the Internet, or upload a new one using multipart/form-data. */
-          pngSticker   : (file) Option[IFile]
-          /* TGS animation with the sticker, uploaded using 
-          multipart/form-data. See 
-          https://core.telegram.org/stickers#animated-sticker-requirements 
-          for technical requirements */
-          tgsSticker   : (file) Option[IFile]
-          /* WEBM video with the sticker, uploaded using 
-          multipart/form-data. See 
-          https://core.telegram.org/stickers#video-sticker-requirements 
-          for technical requirements */
-          webmSticker  : (file) Option[IFile]
-          /* One or more emoji corresponding to the sticker */
-          emojis       : String
-          /* A JSON-serialized object for position where the mask should 
-          be placed on faces */
-          maskPosition : Option[MaskPosition]
+          name    : String
+          /* A JSON-serialized object with information about the added 
+          sticker. If exactly the same sticker had already been added 
+          to the set, then the set isn't changed. */
+          sticker : InputSticker
         } => Method[Boolean]
       
         /* Use this method to create a link for an invoice. Returns the created invoice 
@@ -4089,6 +4259,13 @@ namespace telegramium {
           replyMarkup           : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
+        /* Use this method to get the current bot description for the given user language. 
+          Returns BotDescription on success.  */
+        def getMyDescription {
+          /* A two-letter ISO 639-1 language code or an empty string */
+          languageCode : Option[String]
+        } => Method[BotDescription]
+      
         /* Use this method to edit live location messages. A location can be edited until 
           its live_period expires or editing is explicitly disabled by a call to 
           stopMessageLiveLocation. On success, if the edited message is not an inline 
@@ -4265,7 +4442,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumb                    : (file) Option[IFile]
+          thumbnail                : (file) Option[IFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification      : Option[Boolean]
@@ -4437,6 +4614,15 @@ namespace telegramium {
           replyMarkup               : Option[InlineKeyboardMarkup]
         } => Method[Message]
       
+        /* Use this method to set the title of a created sticker set. Returns True on 
+          success.  */
+        def setStickerSetTitle {
+          /* Sticker set name */
+          name  : String
+          /* Sticker set title, 1-64 characters */
+          title : String
+        } => Method[Boolean]
+      
         /* Use this method to send general files. On success, the sent Message is 
           returned. Bots can currently send files of any type of up to 50 MB in size, this 
           limit may be changed in the future.  */
@@ -4461,7 +4647,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumb                       : (file) Option[IFile]
+          thumbnail                   : (file) Option[IFile]
           /* Document caption (may also be used when resending documents 
           by file_id), 0-1024 characters after entities parsing */
           caption                     : Option[String]
@@ -4612,7 +4798,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumb                    : (file) Option[IFile]
+          thumbnail                : (file) Option[IFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification      : Option[Boolean]
@@ -4637,16 +4823,38 @@ namespace telegramium {
         def restrictChatMember {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
-          chatId      : ChatId
+          chatId                        : ChatId
           /* Unique identifier of the target user */
-          userId      : Long
+          userId                        : Long
           /* A JSON-serialized object for new user permissions */
-          permissions : ChatPermissions
+          permissions                   : ChatPermissions
+          /* Pass True if chat permissions are set independently. 
+          Otherwise, the can_send_other_messages and 
+          can_add_web_page_previews permissions will imply the 
+          can_send_messages, can_send_audios, can_send_documents, 
+          can_send_photos, can_send_videos, can_send_video_notes, and 
+          can_send_voice_notes permissions; the can_send_polls 
+          permission will imply the can_send_messages permission. */
+          useIndependentChatPermissions : Option[Boolean]
           /* Date when restrictions will be lifted for the user, unix 
           time. If user is restricted for more than 366 days or less 
           than 30 seconds from the current time, they are considered 
           to be restricted forever */
-          untilDate   : Option[Int]
+          untilDate                     : Option[Int]
+        } => Method[Boolean]
+      
+        /* Use this method to change the bot's short description, which is shown on the 
+          bot's profile page and is sent together with the link when users share the bot. 
+          Returns True on success.  */
+        def setMyShortDescription {
+          /* New short description for the bot; 0-120 characters. Pass 
+          an empty string to remove the dedicated short description 
+          for the given language. */
+          shortDescription : Option[String]
+          /* A two-letter ISO 639-1 language code. If empty, the short 
+          description will be applied to all users for whose language 
+          there is no dedicated short description. */
+          languageCode     : Option[String]
         } => Method[Boolean]
       
         /* A simple method for testing your bot's authentication token. Requires no 
@@ -4678,9 +4886,9 @@ namespace telegramium {
           messageId           : Int
         } => Method[Message]
       
-        /* Use this method to get information about a member of a chat. The method is 
-          guaranteed to work only if the bot is an administrator in the chat. Returns a 
-          ChatMember object on success.  */
+        /* Use this method to get information about a member of a chat. The method is only 
+          guaranteed to work for other users if the bot is an administrator in the chat. 
+          Returns a ChatMember object on success.  */
         def getChatMember {
           /* Unique identifier for the target chat or username of the 
           target supergroup or channel (in the format 
@@ -4824,8 +5032,9 @@ namespace telegramium {
           canRestrictMembers  : Option[Boolean]
           /* Pass True if the administrator can add new administrators 
           with a subset of their own privileges or demote 
-          administrators that he has promoted, directly or indirectly 
-          (promoted by administrators that were appointed by him) */
+          administrators that they have promoted, directly or 
+          indirectly (promoted by administrators that were appointed 
+          by him) */
           canPromoteMembers   : Option[Boolean]
           /* Pass True if the administrator can change chat title, photo 
           and other settings */
@@ -4895,8 +5104,8 @@ namespace telegramium {
       
         /* Use this method to change the default administrator rights requested by the bot 
           when it's added as an administrator to groups or channels. These rights will be 
-          suggested to users, but they are are free to modify the list before adding the 
-          bot. Returns True on success.  */
+          suggested to users, but they are free to modify the list before adding the bot. 
+          Returns True on success.  */
         def setMyDefaultAdministratorRights {
           /* A JSON-serialized object describing new default 
           administrator rights. If not specified, the default 
@@ -4939,28 +5148,11 @@ namespace telegramium {
           disableNotification : Option[Boolean]
         } => Method[Boolean]
       
-        /* Use this method to set the thumbnail of a sticker set. Animated thumbnails can 
-          be set for animated sticker sets only. Video thumbnails can be set only for 
-          video sticker sets only. Returns True on success.  */
-        def setStickerSetThumb {
+        /* Use this method to delete a sticker set that was created by the bot. Returns 
+          True on success.  */
+        def deleteStickerSet {
           /* Sticker set name */
-          name   : String
-          /* User identifier of the sticker set owner */
-          userId : Long
-          /* A PNG image with the thumbnail, must be up to 128 kilobytes 
-          in size and have width and height exactly 100px, or a TGS 
-          animation with the thumbnail up to 32 kilobytes in size; see 
-          https://core.telegram.org/stickers#animated-sticker-requirements 
-          for animated sticker technical requirements, or a WEBM video 
-          with the thumbnail up to 32 kilobytes in size; see 
-          https://core.telegram.org/stickers#video-sticker-requirements 
-          for video sticker technical requirements. Pass a file_id as 
-          a String to send a file that already exists on the Telegram 
-          servers, pass an HTTP URL as a String for Telegram to get a 
-          file from the Internet, or upload a new one using 
-          multipart/form-data. Animated sticker set thumbnails can't 
-          be uploaded via HTTP URL. */
-          thumb  : (file) Option[IFile]
+          name : String
         } => Method[Boolean]
       
         /* Use this method to edit only the reply markup of messages. On success, if the 
@@ -5034,7 +5226,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumb                    : (file) Option[IFile]
+          thumbnail                : (file) Option[IFile]
           /* Video caption (may also be used when resending videos by 
           file_id), 0-1024 characters after entities parsing */
           caption                  : Option[String]
@@ -5201,7 +5393,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumb                    : (file) Option[IFile]
+          thumbnail                : (file) Option[IFile]
           /* Animation caption (may also be used when resending 
           animation by file_id), 0-1024 characters after entities 
           parsing */
@@ -5232,6 +5424,18 @@ namespace telegramium {
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
       
+        /* Use this method to change the bot's description, which is shown in the chat 
+          with the bot if the chat is empty. Returns True on success.  */
+        def setMyDescription {
+          /* New bot description; 0-512 characters. Pass an empty string 
+          to remove the dedicated description for the given language. */
+          description  : Option[String]
+          /* A two-letter ISO 639-1 language code. If empty, the 
+          description will be applied to all users for whose language 
+          there is no dedicated description. */
+          languageCode : Option[String]
+        } => Method[Boolean]
+      
         /* If you sent an invoice requesting a shipping address and the parameter 
           is_flexible was specified, the Bot API will send an Update with a shipping_query 
           field to the bot. Use this method to reply to shipping queries. On success, True 
@@ -5252,6 +5456,33 @@ namespace telegramium {
           unavailable'). Telegram will display this message to the 
           user. */
           errorMessage    : Option[String]
+        } => Method[Boolean]
+      
+        /* Use this method to set the thumbnail of a regular or mask sticker set. The 
+          format of the thumbnail file must match the format of the stickers in the set. 
+          Returns True on success.  */
+        def setStickerSetThumbnail {
+          /* Sticker set name */
+          name      : String
+          /* User identifier of the sticker set owner */
+          userId    : Long
+          /* A .WEBP or .PNG image with the thumbnail, must be up to 128 
+          kilobytes in size and have a width and height of exactly 
+          100px, or a .TGS animation with a thumbnail up to 32 
+          kilobytes in size (see 
+          https://core.telegram.org/stickers#animated-sticker-requirements 
+          for animated sticker technical requirements), or a WEBM 
+          video with the thumbnail up to 32 kilobytes in size; see 
+          https://core.telegram.org/stickers#video-sticker-requirements 
+          for video sticker technical requirements. Pass a file_id as 
+          a String to send a file that already exists on the Telegram 
+          servers, pass an HTTP URL as a String for Telegram to get a 
+          file from the Internet, or upload a new one using 
+          multipart/form-data. Animated and video sticker set 
+          thumbnails can't be uploaded via HTTP URL. If omitted, then 
+          the thumbnail is dropped and the first sticker is used as 
+          the thumbnail. */
+          thumbnail : (file) Option[IFile]
         } => Method[Boolean]
       
         /* Use this method to approve a chat join request. The bot must be an 
@@ -5297,9 +5528,15 @@ namespace telegramium {
           messageThreadId          : Option[Int]
           /* Sticker to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
-          HTTP URL as a String for Telegram to get a .WEBP file from 
-          the Internet, or upload a new one using multipart/form-data. */
+          HTTP URL as a String for Telegram to get a .WEBP sticker 
+          from the Internet, or upload a new .WEBP or .TGS sticker 
+          using multipart/form-data. Video stickers can only be sent 
+          by a file_id. Animated stickers can't be sent via an HTTP 
+          URL. */
           sticker                  : (file) IFile
+          /* Emoji associated with the sticker; only for just uploaded 
+          stickers */
+          emoji                    : Option[String]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification      : Option[Boolean]
@@ -5316,6 +5553,17 @@ namespace telegramium {
           remove reply keyboard or to force a reply from the user. */
           replyMarkup              : Option[KeyboardMarkup]
         } => Method[Message]
+      
+        /* Use this method to change the list of emoji assigned to a regular or custom 
+          emoji sticker. The sticker must belong to a sticker set created by the bot. 
+          Returns True on success.  */
+        def setStickerEmojiList {
+          /* File identifier of the sticker */
+          sticker   : String
+          /* A JSON-serialized list of 1-20 emoji associated with the 
+          sticker */
+          emojiList : List[String]
+        } => Method[Boolean]
       
         /* Use this method to edit name and icon of a topic in a forum supergroup chat. 
           The bot must be an administrator in the chat for this to work and must have 
@@ -5467,6 +5715,17 @@ namespace telegramium {
           allowed. The header is useful to ensure that the request 
           comes from a webhook set by you. */
           secretToken        : Option[String]
+        } => Method[Boolean]
+      
+        /* Use this method to change search keywords assigned to a regular or custom emoji 
+          sticker. The sticker must belong to a sticker set created by the bot. Returns 
+          True on success.  */
+        def setStickerKeywords {
+          /* File identifier of the sticker */
+          sticker  : String
+          /* A JSON-serialized list of 0-20 search keywords for the 
+          sticker with total length of up to 64 characters */
+          keywords : List[String]
         } => Method[Boolean]
       }
     }
