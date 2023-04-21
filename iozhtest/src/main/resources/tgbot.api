@@ -1557,6 +1557,12 @@ namespace telegramium {
   
     }
            
+    /* This object represents the bot's name.  */
+    BotName {
+      /* The bot's name */
+      name : String
+    }
+           
     /* Describes why a request was unsuccessful.  */
     ResponseParameters {
       /* Optional. The group has been migrated to a supergroup with 
@@ -1892,10 +1898,13 @@ namespace telegramium {
       shippingAddress : Option[ShippingAddress]
     }
            
-    /* This object represents a service message about a user allowing a bot added to 
-      the attachment menu to write messages. Currently holds no information.  */
+    /* This object represents a service message about a user allowing a bot to write 
+      messages after adding the bot to the attachment menu or launching a Web App from 
+      a link.  */
     WriteAccessAllowed {
-  
+      /* Optional. Name of the Web App which was launched from a 
+      link */
+      webAppName : Option[String]
     }
            
     /* This object represents the contents of a file to be uploaded. Must be posted 
@@ -2198,6 +2207,23 @@ namespace telegramium {
       messageAutoDeleteTime : Int
     }
            
+    /* This object represents an inline button that switches the current user to 
+      inline mode in a chosen chat, with an optional default inline query.  */
+    SwitchInlineQueryChosenChat {
+      /* Optional. The default inline query to be inserted in the 
+      input field. If left empty, only the bot's username will be 
+      inserted */
+      query             : Option[String]
+      /* Optional. True, if private chats with users can be chosen */
+      allowUserChats    : Option[Boolean]
+      /* Optional. True, if private chats with bots can be chosen */
+      allowBotChats     : Option[Boolean]
+      /* Optional. True, if group and supergroup chats can be chosen */
+      allowGroupChats   : Option[Boolean]
+      /* Optional. True, if channel chats can be chosen */
+      allowChannelChats : Option[Boolean]
+    }
+           
     /* This object represents a portion of the price for goods or services.  */
     LabeledPrice {
       /* Portion label */
@@ -2307,18 +2333,21 @@ namespace telegramium {
     /* This object represents changes in the status of a chat member.  */
     ChatMemberUpdated {
       /* Chat the user belongs to */
-      chat          : Chat
+      chat                    : Chat
       /* Performer of the action, which resulted in the change */
-      from          : User
+      from                    : User
       /* Date the change was done in Unix time */
-      date          : Int
+      date                    : Int
       /* Previous information about the chat member */
-      oldChatMember : ChatMember
+      oldChatMember           : ChatMember
       /* New information about the chat member */
-      newChatMember : ChatMember
+      newChatMember           : ChatMember
       /* Optional. Chat invite link, which was used by the user to 
       join the chat; for joining by invite link events only. */
-      inviteLink    : Option[ChatInviteLink]
+      inviteLink              : Option[ChatInviteLink]
+      /* Optional. True, if the user joined the chat via a chat 
+      folder invite link */
+      viaChatFolderInviteLink : Option[Boolean]
     }
            
     /* Describes Telegram Passport data shared with the bot by the user.  */
@@ -3084,6 +3113,32 @@ namespace telegramium {
       iconCustomEmojiId : Option[String]
     }
            
+    /* This object represents a button to be shown above inline query results. You 
+      must use exactly one of the optional fields.  */
+    InlineQueryResultsButton {
+      /* Label text on the button */
+      text           : String
+      /* Optional. Description of the Web App that will be launched 
+      when the user presses the button. The Web App will be able 
+      to switch back to the inline mode using the method 
+      web_app_switch_inline_query inside the Web App. */
+      webApp         : Option[WebAppInfo]
+      /* Optional. Deep-linking parameter for the /start message 
+      sent to the bot when a user presses the button. 1-64 
+      characters, only A-Z, a-z, 0-9, _ and - are allowed. 
+      Example: An inline bot that sends YouTube videos can ask the 
+      user to connect the bot to their YouTube account to adapt 
+      search results accordingly. To do this, it displays a 
+      'Connect your YouTube account' button above the results, or 
+      even before showing any. The user presses the button, 
+      switches to a private chat with the bot and, in doing so, 
+      passes a start parameter that instructs the bot to return an 
+      OAuth link. Once done, the bot can offer a switch_inline 
+      button so that the user can easily return to the chat where 
+      they wanted to use the bot's inline capabilities. */
+      startParameter : Option[String]
+    }
+           
     /* Describes data required for decrypting and authenticating 
       EncryptedPassportElement. See the Telegram Passport Documentation for a complete 
       description of the data decryption and authentication processes.  */
@@ -3140,6 +3195,11 @@ namespace telegramium {
       the user to open your bot in inline mode in the same chat - 
       good for selecting something from multiple options. */
       switchInlineQueryCurrentChat : Option[String]
+      /* Optional. If set, pressing the button will prompt the user 
+      to select one of their chats of the specified type, open 
+      that chat and insert the bot's username and the specified 
+      inline query in the input field */
+      switchInlineQueryChosenChat  : Option[SwitchInlineQueryChosenChat]
       /* Optional. Description of the game that will be launched 
       when the user presses the button. NOTE: This type of button 
       must always be the first button in the first row. */
@@ -3353,8 +3413,10 @@ namespace telegramium {
       /* The added sticker. Pass a file_id as a String to send a 
       file that already exists on the Telegram servers, pass an 
       HTTP URL as a String for Telegram to get a file from the 
-      Internet, or upload a new one using multipart/form-data. 
-      Animated and video stickers can't be uploaded via HTTP URL. */
+      Internet, upload a new one using multipart/form-data, or 
+      pass “attach://<file_attach_name>” to upload a new one using 
+      multipart/form-data under <file_attach_name> name. Animated 
+      and video stickers can't be uploaded via HTTP URL. */
       sticker      : IFile
       /* List of 1-20 emoji associated with the sticker */
       emojiList    : List[String]
@@ -3505,6 +3567,13 @@ namespace telegramium {
         def getForumTopicIconStickers {
       
         } => Method[List[Sticker]]
+      
+        /* Use this method to get the current bot name for the given user language. 
+          Returns BotName on success.  */
+        def getMyName {
+          /* A two-letter ISO 639-1 language code or an empty string */
+          languageCode : Option[String]
+        } => Method[BotName]
       
         /* Use this method to get the current default administrator rights of the bot. 
           Returns ChatAdministratorRights on success.  */
@@ -4700,41 +4769,25 @@ namespace telegramium {
           returned. No more than 50 results per query are allowed.  */
         def answerInlineQuery {
           /* Unique identifier for the answered query */
-          inlineQueryId     : String
+          inlineQueryId : String
           /* A JSON-serialized array of results for the inline query */
-          results           : List[InlineQueryResult]
+          results       : List[InlineQueryResult]
           /* The maximum amount of time in seconds that the result of 
           the inline query may be cached on the server. Defaults to 
           300. */
-          cacheTime         : Option[Int]
+          cacheTime     : Option[Int]
           /* Pass True if results may be cached on the server side only 
           for the user that sent the query. By default, results may be 
-          returned to any user who sends the same query */
-          isPersonal        : Option[Boolean]
+          returned to any user who sends the same query. */
+          isPersonal    : Option[Boolean]
           /* Pass the offset that a client should send in the next query 
           with the same text to receive more results. Pass an empty 
           string if there are no more results or if you don't support 
           pagination. Offset length can't exceed 64 bytes. */
-          nextOffset        : Option[String]
-          /* If passed, clients will display a button with specified 
-          text that switches the user to a private chat with the bot 
-          and sends the bot a start message with the parameter 
-          switch_pm_parameter */
-          switchPmText      : Option[String]
-          /* Deep-linking parameter for the /start message sent to the 
-          bot when user presses the switch button. 1-64 characters, 
-          only A-Z, a-z, 0-9, _ and - are allowed. Example: An inline 
-          bot that sends YouTube videos can ask the user to connect 
-          the bot to their YouTube account to adapt search results 
-          accordingly. To do this, it displays a 'Connect your YouTube 
-          account' button above the results, or even before showing 
-          any. The user presses the button, switches to a private chat 
-          with the bot and, in doing so, passes a start parameter that 
-          instructs the bot to return an OAuth link. Once done, the 
-          bot can offer a switch_inline button so that the user can 
-          easily return to the chat where they wanted to use the bot's 
-          inline capabilities. */
-          switchPmParameter : Option[String]
+          nextOffset    : Option[String]
+          /* A JSON-serialized object describing a button to be shown 
+          above inline query results */
+          button        : Option[InlineQueryResultsButton]
         } => Method[Boolean]
       
         /* Use this method to unban a previously banned channel chat in a supergroup or 
@@ -5586,6 +5639,17 @@ namespace telegramium {
           iconCustomEmojiId : Option[String]
         } => Method[Boolean]
       
+        /* Use this method to change the bot's name. Returns True on success.  */
+        def setMyName {
+          /* New bot name; 0-64 characters. Pass an empty string to 
+          remove the dedicated name for the given language. */
+          name         : Option[String]
+          /* A two-letter ISO 639-1 language code. If empty, the name 
+          will be shown to all users for whose language there is no 
+          dedicated name. */
+          languageCode : Option[String]
+        } => Method[Boolean]
+      
         /* Use this method to send photos. On success, the sent Message is returned.  */
         def sendPhoto {
           /* Unique identifier for the target chat or username of the 
@@ -5642,7 +5706,7 @@ namespace telegramium {
           an offset higher than its update_id. The negative offset can 
           be specified to retrieve updates starting from -offset 
           update from the end of the updates queue. All previous 
-          updates will forgotten. */
+          updates will be forgotten. */
           offset         : Option[Int]
           /* Limits the number of updates to be retrieved. Values 
           between 1-100 are accepted. Defaults to 100. */

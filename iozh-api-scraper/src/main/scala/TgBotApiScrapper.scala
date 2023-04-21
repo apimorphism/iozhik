@@ -407,7 +407,7 @@ object TgBotApiScrapper extends IOApp {
             val itemName = x.name.text
             Entity(
               name = itemName,
-              desc = x.desc.map(_.text).intercalate("\n"),
+              desc = x.desc.map(removeMoreLinks).intercalate("\n"),
               table = params.map { y =>
                 val name = y.children.toList.head.text
                 val kind = y.children.toList(1).text
