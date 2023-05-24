@@ -302,7 +302,9 @@ object TgBotApiScrapper extends IOApp {
           desc.contains("more than 32 significant bits") ||
           desc.contains("bigger than 2^31") ||
           desc.contains("size in bytes") ||
-          name == "user_id"
+          name == "user_id" ||
+          name == "chat_id" ||
+          name == "sender_chat_id"
         s
           .replace(" number", "") // Float number => Float
           .replace("True", "Boolean")

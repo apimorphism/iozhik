@@ -3121,7 +3121,7 @@ namespace telegramium {
       /* Optional. Description of the Web App that will be launched 
       when the user presses the button. The Web App will be able 
       to switch back to the inline mode using the method 
-      web_app_switch_inline_query inside the Web App. */
+      switchInlineQuery inside the Web App. */
       webApp         : Option[WebAppInfo]
       /* Optional. Deep-linking parameter for the /start message 
       sent to the bot when a user presses the button. 1-64 
@@ -3501,7 +3501,7 @@ namespace telegramium {
           userId          : Long
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat */
-          chatId          : Option[Int]
+          chatId          : Option[Long]
           /* Required if inline_message_id is not specified. Identifier 
           of the sent message */
           messageId       : Option[Int]
@@ -3829,7 +3829,7 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId       : ChatId
           /* Unique identifier of the target sender chat */
-          senderChatId : Int
+          senderChatId : Long
         } => Method[Boolean]
       
         /* Use this method to change the mask position of a mask sticker. The sticker must 
@@ -4149,7 +4149,7 @@ namespace telegramium {
         /* Use this method to send a game. On success, the sent Message is returned.  */
         def sendGame {
           /* Unique identifier for the target chat */
-          chatId                   : Int
+          chatId                   : Long
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
           messageThreadId          : Option[Int]
@@ -4409,7 +4409,7 @@ namespace telegramium {
           disableEditMessage : Option[Boolean]
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat */
-          chatId             : Option[Int]
+          chatId             : Option[Long]
           /* Required if inline_message_id is not specified. Identifier 
           of the sent message */
           messageId          : Option[Int]
@@ -4534,7 +4534,7 @@ namespace telegramium {
         def setChatMenuButton {
           /* Unique identifier for the target private chat. If not 
           specified, default bot's menu button will be changed */
-          chatId     : Option[Int]
+          chatId     : Option[Long]
           /* A JSON-serialized object for the bot's new menu button. 
           Defaults to MenuButtonDefault */
           menuButton : Option[MenuButton]
@@ -4798,7 +4798,7 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId       : ChatId
           /* Unique identifier of the target sender chat */
-          senderChatId : Int
+          senderChatId : Long
         } => Method[Boolean]
       
         /* Use this method to close an open 'General' topic in a forum supergroup chat. 
@@ -5412,7 +5412,7 @@ namespace telegramium {
         def getChatMenuButton {
           /* Unique identifier for the target private chat. If not 
           specified, default bot's menu button will be returned */
-          chatId : Option[Int]
+          chatId : Option[Long]
         } => Method[MenuButton]
       
         /* Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without 
