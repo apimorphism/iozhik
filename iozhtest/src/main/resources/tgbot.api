@@ -1666,6 +1666,9 @@ namespace telegramium {
       /* Optional. Custom emoji identifier of emoji status of the 
       other party in a private chat. Returned only in getChat. */
       emojiStatusCustomEmojiId           : Option[String]
+      /* Optional. Expiration date of the emoji status of the other 
+      party in a private chat, if any. Returned only in getChat. */
+      emojiStatusExpirationDate          : Option[Int]
       /* Optional. Bio of the other party in a private chat. 
       Returned only in getChat. */
       bio                                : Option[String]
@@ -2156,10 +2159,14 @@ namespace telegramium {
     PollAnswer {
       /* Unique poll identifier */
       pollId    : String
-      /* The user, who changed the answer to the poll */
-      user      : User
-      /* 0-based identifiers of answer options, chosen by the user. 
-      May be empty if the user retracted their vote. */
+      /* Optional. The chat that changed the answer to the poll, if 
+      the voter is anonymous */
+      voterChat : Option[Chat]
+      /* Optional. The user that changed the answer to the poll, if 
+      the voter isn't anonymous */
+      user      : Option[User]
+      /* 0-based identifiers of chosen answer options. May be empty 
+      if the vote was retracted. */
       optionIds : List[Int]
     }
            
@@ -2348,6 +2355,12 @@ namespace telegramium {
       /* Optional. True, if the user joined the chat via a chat 
       folder invite link */
       viaChatFolderInviteLink : Option[Boolean]
+    }
+           
+    /* This object represents a message about a forwarded story in the chat. Currently 
+      holds no information.  */
+    Story {
+  
     }
            
     /* Describes Telegram Passport data shared with the bot by the user.  */
@@ -2891,6 +2904,8 @@ namespace telegramium {
       /* Optional. Message is a sticker, information about the 
       sticker */
       sticker                       : Option[Sticker]
+      /* Optional. Message is a forwarded story */
+      story                         : Option[Story]
       /* Optional. Message is a video, information about the video */
       video                         : Option[Video]
       /* Optional. Message is a video note, information about the 
@@ -3181,12 +3196,7 @@ namespace telegramium {
       to select one of their chats, open that chat and insert the 
       bot's username and the specified inline query in the input 
       field. May be empty, in which case just the bot's username 
-      will be inserted. Note: This offers an easy way for users to 
-      start using your bot in inline mode when they are currently 
-      in a private chat with it. Especially useful when combined 
-      with switch_pm… actions - in this case the user will be 
-      automatically returned to the chat they switched from, 
-      skipping the chat selection screen. */
+      will be inserted. */
       switchInlineQuery            : Option[String]
       /* Optional. If set, pressing the button will insert the bot's 
       username and the specified inline query in the current 
@@ -5101,6 +5111,15 @@ namespace telegramium {
           /* Pass True if the user is allowed to create, rename, close, 
           and reopen forum topics, supergroups only */
           canManageTopics     : Option[Boolean]
+        } => Method[Boolean]
+      
+        /* Use this method to clear the list of pinned messages in a General forum topic. 
+          The bot must be an administrator in the chat for this to work and must have the 
+          can_pin_messages administrator right in the supergroup. Returns True on success.  */
+        def unpinAllGeneralForumTopicMessages {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format &#064;supergroupusername) */
+          chatId : ChatId
         } => Method[Boolean]
       
         /* Use this method to edit captions of messages. On success, if the edited message 
