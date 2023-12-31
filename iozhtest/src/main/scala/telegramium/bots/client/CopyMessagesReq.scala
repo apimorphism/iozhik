@@ -1,27 +1,30 @@
 package telegramium.bots.client
 
 import telegramium.bots.ChatId
-import telegramium.bots.InputMedia
-import telegramium.bots.ReplyParameters
 
 /** @param chatId
   *   Unique identifier for the target chat or username of the target channel (in the format &#064;channelusername)
+  * @param fromChatId
+  *   Unique identifier for the chat where the original messages were sent (or channel username in the format
+  *   &#064;channelusername)
   * @param messageThreadId
   *   Unique identifier for the target message thread (topic) of the forum; for forum supergroups only
-  * @param media
-  *   A JSON-serialized array describing messages to be sent, must include 2-10 items
+  * @param messageIds
+  *   Identifiers of 1-100 messages in the chat from_chat_id to copy. The identifiers must be specified in a strictly
+  *   increasing order.
   * @param disableNotification
-  *   Sends messages silently. Users will receive a notification with no sound.
+  *   Sends the messages silently. Users will receive a notification with no sound.
   * @param protectContent
   *   Protects the contents of the sent messages from forwarding and saving
-  * @param replyParameters
-  *   Description of the message to reply to
+  * @param removeCaption
+  *   Pass True to copy the messages without their captions
   */
-final case class SendMediaGroupReq(
+final case class CopyMessagesReq(
   chatId: ChatId,
+  fromChatId: ChatId,
   messageThreadId: Option[Int] = Option.empty,
-  media: List[InputMedia] = List.empty,
+  messageIds: List[Int] = List.empty,
   disableNotification: Option[Boolean] = Option.empty,
   protectContent: Option[Boolean] = Option.empty,
-  replyParameters: Option[ReplyParameters] = Option.empty
+  removeCaption: Option[Boolean] = Option.empty
 )

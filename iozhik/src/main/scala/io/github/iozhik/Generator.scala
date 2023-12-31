@@ -100,7 +100,7 @@ object Generator {
       wrapps: List[Wrapp] = List.empty[Wrapp],
       enumstrs: List[EnumStr] = List.empty[EnumStr],
     ) extends SpaceItem with StrucItem with Sym {
-      def typet(): Option[Typet] = typets.find(t => t.name == "_type_" || t.name == "type")
+      def typet(): Option[Typet] = typets.headOption
 
       def typetForBins: Option[Typet] = {
         typet().orElse {

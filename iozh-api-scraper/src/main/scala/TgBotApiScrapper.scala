@@ -63,6 +63,7 @@ object TgBotApiScrapper extends IOApp {
   private val quotedPattern = "(?<=“).*?(?=”)".r
   private val forXOnlyPattern = "(?<=For “).*?(?=” only)".r
   private val messageEntityDescPattern = "Optional. For “.*” only, ".r
+  private val discriminatorPattern = ".*, always “(.*?)”".r
 
   def gen(items: List[ApiItem]): String = {
     def trarr(s: String): String = {
@@ -74,13 +75,15 @@ object TgBotApiScrapper extends IOApp {
       }
     }
 
+    def isParseMode(name: String) = name == "parse_mode" || name == "quote_parse_mode" || name == "explanation_parse_mode"
+
     def genFields(params: List[EntityParam]) = {
       val maxLen = params.map(p => camelify(p.name).length).maximumOption.getOrElse(0)
       params
         .map { f =>
           val kind = if (f.kind.startsWith("Array of"))
             trarr(f.kind)
-          else if (f.name == "parse_mode")
+          else if (isParseMode(f.name))
             "Option[ParseMode]"
           else {
             if (f.desc.contains("Optional"))
@@ -89,7 +92,7 @@ object TgBotApiScrapper extends IOApp {
               f.kind
           }
           if (f.kind == "__type_tag__")
-            "    type : \"" + f.desc + ":__type_id_placeholder__\""
+            s"""    ${f.name} : """" + f.desc + ":__type_id_placeholder__\""
           else
             s"    /* ${wrap(f.desc, 60)}*/\n    ${camelify(f.name).padTo(maxLen, ' ')} : $kind"
         }
@@ -105,7 +108,7 @@ object TgBotApiScrapper extends IOApp {
           .map { f =>
             val kind = if (f.kind.startsWith("Array of")) {
               trarr(f.kind)
-            } else if (f.name == "parse_mode") {
+            } else if (isParseMode(f.name)) {
               "Option[ParseMode]"
             } else {
               if (f.desc.toLowerCase.contains("optional") || f.required.toLowerCase.contains("optional")) {
@@ -123,7 +126,7 @@ object TgBotApiScrapper extends IOApp {
               }
             }
             if (f.kind == "__type_tag__") {
-              "    type : \"" + f.desc + ":__type_id_placeholder__\""
+              s"""    ${f.name} : """" + f.desc + ":__type_id_placeholder__\""
             } else {
               s"    /* ${wrap(f.desc, 60)}*/\n    ${camelify(f.name).padTo(maxLen, ' ')} : $kind"
             }
@@ -336,7 +339,7 @@ object TgBotApiScrapper extends IOApp {
 
       def isH4(e: Element): Boolean = e.tagName.toLowerCase == "h4"
       def isP(e: Element): Boolean = e.tagName.toLowerCase == "p"
-      def isTable(e: Element): Boolean = e.tagName.toLowerCase == "table"
+      def isTable(e: Element): Boolean = e.tagName.toLowerCase == "table" && !e.attrs("class").contains("table-bordered")
       def isUL(e: Element): Boolean = e.tagName.toLowerCase == "ul"
       def isBQ(e: Element): Boolean = e.tagName.toLowerCase == "blockquote"
       def isDiv(e: Element): Boolean = e.tagName.toLowerCase == "div"
@@ -414,11 +417,16 @@ object TgBotApiScrapper extends IOApp {
                 val name = y.children.toList.head.text
                 val kind = y.children.toList(1).text
                 val desc = removeMoreLinks(y.children.toList(2))
-                if ((name == "type" || name == "source") && (desc.contains(", must be ") || itemName == "MessageEntity")) {
+                if (
+                  (name == "type" || name == "source" || name == "status") && 
+                    (desc.contains(", must be ") || desc.contains(", always ") || itemName == "MessageEntity")
+                ) {
+                  val cleanedDesc = desc.replaceAll(".*must be ", "")
+                  val typeDesc = discriminatorPattern.findFirstMatchIn(cleanedDesc).map(_.group(1)).getOrElse(cleanedDesc)
                   EntityParam(
                     name = name,
                     kind = "__type_tag__",
-                    desc = desc.replaceAll(".*must be ", "")
+                    desc = typeDesc
                   )
                 } else {
                   EntityParam(
