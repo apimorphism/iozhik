@@ -50,8 +50,8 @@ namespace telegramium {
         /* Optional. Use this parameter if you want to force reply 
         from specific users only. Targets: 1) users that are 
         &#064;mentioned in the text of the Message object; 2) if the 
-        bot's message is a reply (has reply_to_message_id), sender 
-        of the original message. */
+        bot's message is a reply to a message in the same chat and 
+        forum topic, sender of the original message. */
         selective             : Option[Boolean]
       }
              
@@ -70,11 +70,12 @@ namespace telegramium {
         /* Optional. Use this parameter if you want to remove the 
         keyboard for specific users only. Targets: 1) users that are 
         &#064;mentioned in the text of the Message object; 2) if the 
-        bot's message is a reply (has reply_to_message_id), sender 
-        of the original message. Example: A user votes in a poll, 
-        bot returns confirmation message in reply to the vote and 
-        removes the keyboard for that user, while still showing the 
-        keyboard with poll options to users who haven't voted yet. */
+        bot's message is a reply to a message in the same chat and 
+        forum topic, sender of the original message. Example: A user 
+        votes in a poll, bot returns confirmation message in reply 
+        to the vote and removes the keyboard for that user, while 
+        still showing the keyboard with poll options to users who 
+        haven't voted yet. */
         selective      : Option[Boolean]
       }
              
@@ -109,11 +110,11 @@ namespace telegramium {
         /* Optional. Use this parameter if you want to show the 
         keyboard to specific users only. Targets: 1) users that are 
         &#064;mentioned in the text of the Message object; 2) if the 
-        bot's message is a reply (has reply_to_message_id), sender 
-        of the original message. Example: A user requests to change 
-        the bot's language, bot replies to the request with a 
-        keyboard to select the new language. Other users in the 
-        group don't see the keyboard. */
+        bot's message is a reply to a message in the same chat and 
+        forum topic, sender of the original message. Example: A user 
+        requests to change the bot's language, bot replies to the 
+        request with a keyboard to select the new language. Other 
+        users in the group don't see the keyboard. */
         selective             : Option[Boolean]
       }
              
@@ -151,6 +152,9 @@ namespace telegramium {
         sender user in non-channel chats, if the message was sent on 
         behalf of a chat. */
         senderChat                    : Option[Chat]
+        /* Optional. If the sender of the message boosted the chat, 
+        the number of boosts added by the user */
+        senderBoostCount              : Option[Int]
         /* Date the message was sent in Unix time. It is always a 
         positive number, representing a valid date. */
         date                          : Int
@@ -175,6 +179,8 @@ namespace telegramium {
         /* Optional. For replies that quote part of the original 
         message, the quoted part of the message */
         quote                         : Option[TextQuote]
+        /* Optional. For replies to a story, the original story */
+        replyToStory                  : Option[Story]
         /* Optional. Bot through which the message was sent */
         viaBot                        : Option[User]
         /* Optional. Date the message was last edited in Unix time */
@@ -325,6 +331,8 @@ namespace telegramium {
         /* Optional. Service message. A user in the chat triggered 
         another user's proximity alert while sharing Live Location. */
         proximityAlertTriggered       : Option[ProximityAlertTriggered]
+        /* Optional. Service message: user boosted the chat */
+        boostAdded                    : Option[ChatBoostAdded]
         /* Optional. Service message: forum topic created */
         forumTopicCreated             : Option[ForumTopicCreated]
         /* Optional. Service message: forum topic edited */
@@ -449,10 +457,9 @@ namespace telegramium {
         /* True, if the user's presence in the chat is hidden */
         isAnonymous         : Boolean
         /* True, if the administrator can access the chat event log, 
-        boost list in channels, see channel members, report spam 
-        messages, see anonymous administrators in supergroups and 
-        ignore slow mode. Implied by any other administrator 
-        privilege */
+        get boost list, see hidden supergroup and channel members, 
+        report spam messages and ignore slow mode. Implied by any 
+        other administrator privilege. */
         canManageChat       : Boolean
         /* True, if the administrator can delete messages of other 
         users */
@@ -473,6 +480,14 @@ namespace telegramium {
         /* True, if the user is allowed to invite new users to the 
         chat */
         canInviteUsers      : Boolean
+        /* True, if the administrator can post stories to the chat */
+        canPostStories      : Boolean
+        /* True, if the administrator can edit stories posted by other 
+        users */
+        canEditStories      : Boolean
+        /* True, if the administrator can delete stories posted by 
+        other users */
+        canDeleteStories    : Boolean
         /* Optional. True, if the administrator can post messages in 
         the channel, or access channel statistics; channels only */
         canPostMessages     : Option[Boolean]
@@ -482,15 +497,6 @@ namespace telegramium {
         /* Optional. True, if the user is allowed to pin messages; 
         groups and supergroups only */
         canPinMessages      : Option[Boolean]
-        /* Optional. True, if the administrator can post stories in 
-        the channel; channels only */
-        canPostStories      : Option[Boolean]
-        /* Optional. True, if the administrator can edit stories 
-        posted by other users; channels only */
-        canEditStories      : Option[Boolean]
-        /* Optional. True, if the administrator can delete stories 
-        posted by other users; channels only */
-        canDeleteStories    : Option[Boolean]
         /* Optional. True, if the user is allowed to create, rename, 
         close, and reopen forum topics; supergroups only */
         canManageTopics     : Option[Boolean]
@@ -1949,7 +1955,7 @@ namespace telegramium {
     ChatBoostUpdated {
       /* Chat which was boosted */
       chat  : Chat
-      /* Infomation about the chat boost */
+      /* Information about the chat boost */
       boost : ChatBoost
     }
            
@@ -2098,9 +2104,14 @@ namespace telegramium {
       supergroups. Returned only in getChat. */
       permissions                        : Option[ChatPermissions]
       /* Optional. For supergroups, the minimum allowed delay 
-      between consecutive messages sent by each unpriviledged 
-      user; in seconds. Returned only in getChat. */
+      between consecutive messages sent by each unprivileged user; 
+      in seconds. Returned only in getChat. */
       slowModeDelay                      : Option[Int]
+      /* Optional. For supergroups, the minimum number of boosts 
+      that a non-administrator user needs to add in order to 
+      ignore slow mode and chat permissions. Returned only in 
+      getChat. */
+      unrestrictBoostCount               : Option[Int]
       /* Optional. The time after which all messages sent to the 
       chat will be automatically deleted; in seconds. Returned 
       only in getChat. */
@@ -2126,6 +2137,10 @@ namespace telegramium {
       /* Optional. True, if the bot can change the group sticker 
       set. Returned only in getChat. */
       canSetStickerSet                   : Option[Boolean]
+      /* Optional. For supergroups, the name of the group's custom 
+      emoji sticker set. Custom emoji from this set can be used by 
+      all users and bots in the group. Returned only in getChat. */
+      customEmojiStickerSetName          : Option[String]
       /* Optional. Unique identifier for the linked chat, i.e. the 
       discussion group identifier for a channel and vice versa; 
       for supergroups and channel chats. This identifier may be 
@@ -2323,7 +2338,7 @@ namespace telegramium {
     GiveawayWinners {
       /* The chat that created the giveaway */
       chat                          : Chat
-      /* Identifier of the messsage with the giveaway in the chat */
+      /* Identifier of the message with the giveaway in the chat */
       giveawayMessageId             : Int
       /* Point in time (Unix timestamp) when winners of the giveaway 
       were selected */
@@ -2355,24 +2370,28 @@ namespace telegramium {
     Update {
       /* The update's unique identifier. Update identifiers start 
       from a certain positive number and increase sequentially. 
-      This ID becomes especially handy if you're using webhooks, 
-      since it allows you to ignore repeated updates or to restore 
-      the correct update sequence, should they get out of order. 
-      If there are no new updates for at least a week, then 
-      identifier of the next update will be chosen randomly 
+      This identifier becomes especially handy if you're using 
+      webhooks, since it allows you to ignore repeated updates or 
+      to restore the correct update sequence, should they get out 
+      of order. If there are no new updates for at least a week, 
+      then identifier of the next update will be chosen randomly 
       instead of sequentially. */
       updateId             : Int
       /* Optional. New incoming message of any kind - text, photo, 
       sticker, etc. */
       message              : Option[Message]
       /* Optional. New version of a message that is known to the bot 
-      and was edited */
+      and was edited. This update may at times be triggered by 
+      changes to message fields that are either unavailable or not 
+      actively used by your bot. */
       editedMessage        : Option[Message]
       /* Optional. New incoming channel post of any kind - text, 
       photo, sticker, etc. */
       channelPost          : Option[Message]
       /* Optional. New version of a channel post that is known to 
-      the bot and was edited */
+      the bot and was edited. This update may at times be 
+      triggered by changes to message fields that are either 
+      unavailable or not actively used by your bot. */
       editedChannelPost    : Option[Message]
       /* Optional. A reaction to a message was changed by a user. 
       The bot must be an administrator in the chat and must 
@@ -2383,7 +2402,9 @@ namespace telegramium {
       /* Optional. Reactions to a message with anonymous reactions 
       were changed. The bot must be an administrator in the chat 
       and must explicitly specify "message_reaction_count" in the 
-      list of allowed_updates to receive these updates. */
+      list of allowed_updates to receive these updates. The 
+      updates are grouped and can be sent with delay up to a few 
+      minutes. */
       messageReactionCount : Option[MessageReactionCountUpdated]
       /* Optional. New incoming inline query */
       inlineQuery          : Option[InlineQuery]
@@ -2401,7 +2422,7 @@ namespace telegramium {
       information about checkout */
       preCheckoutQuery     : Option[PreCheckoutQuery]
       /* Optional. New poll state. Bots receive only updates about 
-      stopped polls and polls, which are sent by the bot */
+      manually stopped polls and polls, which are sent by the bot */
       poll                 : Option[Poll]
       /* Optional. A user changed their answer in a non-anonymous 
       poll. Bots receive new votes only in polls that were sent by 
@@ -2948,10 +2969,12 @@ namespace telegramium {
       viaChatFolderInviteLink : Option[Boolean]
     }
            
-    /* This object represents a message about a forwarded story in the chat. Currently 
-      holds no information.  */
+    /* This object represents a story.  */
     Story {
-  
+      /* Chat that posted the story */
+      chat : Chat
+      /* Unique identifier for the story in the chat */
+      id   : Int
     }
            
     /* This object defines the criteria used to request suitable users. The 
@@ -3209,14 +3232,14 @@ namespace telegramium {
       the first URL found in the message text will be used */
       url              : Option[String]
       /* Optional. True, if the media in the link preview is 
-      suppposed to be shrunk; ignored if the URL isn't explicitly 
+      supposed to be shrunk; ignored if the URL isn't explicitly 
       specified or media size change isn't supported for the 
       preview */
       preferSmallMedia : Option[Boolean]
       /* Optional. True, if the media in the link preview is 
-      suppposed to be enlarged; ignored if the URL isn't 
-      explicitly specified or media size change isn't supported 
-      for the preview */
+      supposed to be enlarged; ignored if the URL isn't explicitly 
+      specified or media size change isn't supported for the 
+      preview */
       preferLargeMedia : Option[Boolean]
       /* Optional. True, if the link preview must be shown above the 
       message text; otherwise, the link preview will be shown 
@@ -3319,6 +3342,12 @@ namespace telegramium {
       /* Optional. Identifier of the sent inline message. Available 
       only if there is an inline keyboard attached to the message. */
       inlineMessageId : Option[String]
+    }
+           
+    /* This object represents a service message about a user boosting a chat.  */
+    ChatBoostAdded {
+      /* Number of boosts added by the user */
+      boostCount : Int
     }
            
     /* This object represents an incoming inline query. When the user sends an empty 
@@ -3507,10 +3536,9 @@ namespace telegramium {
       /* True, if the user's presence in the chat is hidden */
       isAnonymous         : Boolean
       /* True, if the administrator can access the chat event log, 
-      boost list in channels, see channel members, report spam 
-      messages, see anonymous administrators in supergroups and 
-      ignore slow mode. Implied by any other administrator 
-      privilege */
+      get boost list, see hidden supergroup and channel members, 
+      report spam messages and ignore slow mode. Implied by any 
+      other administrator privilege. */
       canManageChat       : Boolean
       /* True, if the administrator can delete messages of other 
       users */
@@ -3531,6 +3559,14 @@ namespace telegramium {
       /* True, if the user is allowed to invite new users to the 
       chat */
       canInviteUsers      : Boolean
+      /* True, if the administrator can post stories to the chat */
+      canPostStories      : Boolean
+      /* True, if the administrator can edit stories posted by other 
+      users */
+      canEditStories      : Boolean
+      /* True, if the administrator can delete stories posted by 
+      other users */
+      canDeleteStories    : Boolean
       /* Optional. True, if the administrator can post messages in 
       the channel, or access channel statistics; channels only */
       canPostMessages     : Option[Boolean]
@@ -3540,15 +3576,6 @@ namespace telegramium {
       /* Optional. True, if the user is allowed to pin messages; 
       groups and supergroups only */
       canPinMessages      : Option[Boolean]
-      /* Optional. True, if the administrator can post stories in 
-      the channel; channels only */
-      canPostStories      : Option[Boolean]
-      /* Optional. True, if the administrator can edit stories 
-      posted by other users; channels only */
-      canEditStories      : Option[Boolean]
-      /* Optional. True, if the administrator can delete stories 
-      posted by other users; channels only */
-      canDeleteStories    : Option[Boolean]
       /* Optional. True, if the user is allowed to create, rename, 
       close, and reopen forum topics; supergroups only */
       canManageTopics     : Option[Boolean]
@@ -3650,8 +3677,8 @@ namespace telegramium {
       text                         : String
       /* Optional. HTTP or tg:// URL to be opened when the button is 
       pressed. Links tg://user?id=<user_id> can be used to mention 
-      a user by their ID without using a username, if this is 
-      allowed by their privacy settings. */
+      a user by their identifier without using a username, if this 
+      is allowed by their privacy settings. */
       url                          : Option[String]
       /* Optional. Data to be sent in a callback query to the bot 
       when button is pressed, 1-64 bytes */
@@ -5593,10 +5620,9 @@ namespace telegramium {
           hidden */
           isAnonymous         : Option[Boolean]
           /* Pass True if the administrator can access the chat event 
-          log, boost list in channels, see channel members, report 
-          spam messages, see anonymous administrators in supergroups 
-          and ignore slow mode. Implied by any other administrator 
-          privilege */
+          log, get boost list, see hidden supergroup and channel 
+          members, report spam messages and ignore slow mode. Implied 
+          by any other administrator privilege. */
           canManageChat       : Option[Boolean]
           /* Pass True if the administrator can delete messages of other 
           users */
@@ -5618,6 +5644,14 @@ namespace telegramium {
           /* Pass True if the administrator can invite new users to the 
           chat */
           canInviteUsers      : Option[Boolean]
+          /* Pass True if the administrator can post stories to the chat */
+          canPostStories      : Option[Boolean]
+          /* Pass True if the administrator can edit stories posted by 
+          other users */
+          canEditStories      : Option[Boolean]
+          /* Pass True if the administrator can delete stories posted by 
+          other users */
+          canDeleteStories    : Option[Boolean]
           /* Pass True if the administrator can post messages in the 
           channel, or access channel statistics; channels only */
           canPostMessages     : Option[Boolean]
@@ -5627,15 +5661,6 @@ namespace telegramium {
           /* Pass True if the administrator can pin messages, 
           supergroups only */
           canPinMessages      : Option[Boolean]
-          /* Pass True if the administrator can post stories in the 
-          channel; channels only */
-          canPostStories      : Option[Boolean]
-          /* Pass True if the administrator can edit stories posted by 
-          other users; channels only */
-          canEditStories      : Option[Boolean]
-          /* Pass True if the administrator can delete stories posted by 
-          other users; channels only */
-          canDeleteStories    : Option[Boolean]
           /* Pass True if the user is allowed to create, rename, close, 
           and reopen forum topics, supergroups only */
           canManageTopics     : Option[Boolean]
