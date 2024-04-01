@@ -308,7 +308,8 @@ object TgBotApiScrapper extends IOApp {
           name == "user_id" ||
           name == "chat_id" ||
           name == "sender_chat_id"
-        s
+        val result = if (s == "List[Messages]") "List[Message]" else s
+        result
           .replace(" number", "") // Float number => Float
           .replace("True", "Boolean")
           .replace("False", "Boolean")
@@ -316,7 +317,6 @@ object TgBotApiScrapper extends IOApp {
           .replace("Integer", if (mustBeLong) "Long" else "Int")
           .replace("InputFile or String", "IFile")
           .replace("InputFile", "IFile")
-          .replace("Messages", "Message")
           .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
           .replace("InputMediaAudio, InputMediaDocument, InputMediaPhoto and InputMediaVideo", "InputMedia")
       }
@@ -361,11 +361,13 @@ object TgBotApiScrapper extends IOApp {
           case x1 :: x2 :: x3 :: x4 :: _ if isH4(x1) && isP(x2) && isBQ(x3) && isTable(x4) =>
             Item(name = x1, desc = List(x2), table = x4)
           case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && isTable(x3) =>
-            Item(name = x1, desc = List(x2), table = x3)
+            Item(name = x1, desc = List(x2), table = x3)  
           case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && isUL(x3) =>
             Sumt(name = x1, desc = x2, items = x3)
           case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && !x1.text.contains(" ") =>
             Item(name = x1, desc = List(x2), table = x3)
+          case x1 :: x2 :: _ if isH4(x1) && isTable(x2) =>
+            Item(name = x1, desc = List.empty, table = x2)
         }
         .collect {
           case x: Item if x.name.text.head.isLower =>

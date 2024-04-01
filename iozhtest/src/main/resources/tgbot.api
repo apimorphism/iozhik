@@ -155,9 +155,19 @@ namespace telegramium {
         /* Optional. If the sender of the message boosted the chat, 
         the number of boosts added by the user */
         senderBoostCount              : Option[Int]
+        /* Optional. The bot that actually sent the message on behalf 
+        of the business account. Available only for outgoing 
+        messages sent on behalf of the connected business account. */
+        senderBusinessBot             : Option[User]
         /* Date the message was sent in Unix time. It is always a 
         positive number, representing a valid date. */
         date                          : Int
+        /* Optional. Unique identifier of the business connection from 
+        which the message was received. If non-empty, the message 
+        belongs to a chat of the corresponding business account that 
+        is independent from any potential bot chat which might share 
+        the same identifier. */
+        businessConnectionId          : Option[String]
         /* Chat the message belongs to */
         chat                          : Chat
         /* Optional. Information about the original message for 
@@ -187,6 +197,10 @@ namespace telegramium {
         editDate                      : Option[Int]
         /* Optional. True, if the message can't be forwarded */
         hasProtectedContent           : Option[Boolean]
+        /* Optional. True, if the message was sent by an implicit 
+        action, for example, as an away or a greeting business 
+        message, or as a scheduled message */
+        isFromOffline                 : Option[Boolean]
         /* Optional. The unique identifier of a media message group 
         this message belongs to */
         mediaGroupId                  : Option[String]
@@ -489,16 +503,16 @@ namespace telegramium {
         other users */
         canDeleteStories    : Boolean
         /* Optional. True, if the administrator can post messages in 
-        the channel, or access channel statistics; channels only */
+        the channel, or access channel statistics; for channels only */
         canPostMessages     : Option[Boolean]
         /* Optional. True, if the administrator can edit messages of 
-        other users and can pin messages; channels only */
+        other users and can pin messages; for channels only */
         canEditMessages     : Option[Boolean]
-        /* Optional. True, if the user is allowed to pin messages; 
+        /* Optional. True, if the user is allowed to pin messages; for 
         groups and supergroups only */
         canPinMessages      : Option[Boolean]
         /* Optional. True, if the user is allowed to create, rename, 
-        close, and reopen forum topics; supergroups only */
+        close, and reopen forum topics; for supergroups only */
         canManageTopics     : Option[Boolean]
         /* Optional. Custom title for this user */
         customTitle         : Option[String]
@@ -2044,6 +2058,21 @@ namespace telegramium {
       usernames; for private chats, supergroups and channels. 
       Returned only in getChat. */
       activeUsernames                    : List[String]
+      /* Optional. For private chats, the date of birth of the user. 
+      Returned only in getChat. */
+      birthdate                          : Option[Birthdate]
+      /* Optional. For private chats with business accounts, the 
+      intro of the business. Returned only in getChat. */
+      businessIntro                      : Option[BusinessIntro]
+      /* Optional. For private chats with business accounts, the 
+      location of the business. Returned only in getChat. */
+      businessLocation                   : Option[BusinessLocation]
+      /* Optional. For private chats with business accounts, the 
+      opening hours of the business. Returned only in getChat. */
+      businessOpeningHours               : Option[BusinessOpeningHours]
+      /* Optional. For private chats, the personal channel of the 
+      user. Returned only in getChat. */
+      personalChat                       : Option[Chat]
       /* Optional. List of available reactions allowed in the chat. 
       If omitted, then all emoji reactions are allowed. Returned 
       only in getChat. */
@@ -2178,10 +2207,10 @@ namespace telegramium {
            
     /* This object represents a point on the map.  */
     Location {
-      /* Longitude as defined by sender */
-      longitude            : Float
       /* Latitude as defined by sender */
       latitude             : Float
+      /* Longitude as defined by sender */
+      longitude            : Float
       /* Optional. The radius of uncertainty for the location, 
       measured in meters; 0-1500 */
       horizontalAccuracy   : Option[Float]
@@ -2196,6 +2225,15 @@ namespace telegramium {
       approaching another chat member, in meters. For sent live 
       locations only. */
       proximityAlertRadius : Option[Int]
+    }
+           
+    /*  */
+    BusinessOpeningHours {
+      /* Unique name of the time zone for which the opening hours 
+      are defined */
+      timeZoneName : String
+      /* List of time intervals describing business opening hours */
+      openingHours : List[BusinessOpeningHoursInterval]
     }
            
     /* This object contains information about an incoming shipping query.  */
@@ -2333,6 +2371,16 @@ namespace telegramium {
   
     }
            
+    /*  */
+    BusinessIntro {
+      /* Optional. Title text of the business intro */
+      title   : Option[String]
+      /* Optional. Message text of the business intro */
+      message : Option[String]
+      /* Optional. Sticker of the business intro */
+      sticker : Option[Sticker]
+    }
+           
     /* This object represents a message about the completion of a giveaway with public 
       winners.  */
     GiveawayWinners {
@@ -2376,77 +2424,90 @@ namespace telegramium {
       of order. If there are no new updates for at least a week, 
       then identifier of the next update will be chosen randomly 
       instead of sequentially. */
-      updateId             : Int
+      updateId                : Int
       /* Optional. New incoming message of any kind - text, photo, 
       sticker, etc. */
-      message              : Option[Message]
+      message                 : Option[Message]
       /* Optional. New version of a message that is known to the bot 
       and was edited. This update may at times be triggered by 
       changes to message fields that are either unavailable or not 
       actively used by your bot. */
-      editedMessage        : Option[Message]
+      editedMessage           : Option[Message]
       /* Optional. New incoming channel post of any kind - text, 
       photo, sticker, etc. */
-      channelPost          : Option[Message]
+      channelPost             : Option[Message]
       /* Optional. New version of a channel post that is known to 
       the bot and was edited. This update may at times be 
       triggered by changes to message fields that are either 
       unavailable or not actively used by your bot. */
-      editedChannelPost    : Option[Message]
+      editedChannelPost       : Option[Message]
+      /* Optional. The bot was connected to or disconnected from a 
+      business account, or a user edited an existing connection 
+      with the bot */
+      businessConnection      : Option[BusinessConnection]
+      /* Optional. New non-service message from a connected business 
+      account */
+      businessMessage         : Option[Message]
+      /* Optional. New version of a message from a connected 
+      business account */
+      editedBusinessMessage   : Option[Message]
+      /* Optional. Messages were deleted from a connected business 
+      account */
+      deletedBusinessMessages : Option[BusinessMessagesDeleted]
       /* Optional. A reaction to a message was changed by a user. 
       The bot must be an administrator in the chat and must 
       explicitly specify "message_reaction" in the list of 
       allowed_updates to receive these updates. The update isn't 
       received for reactions set by bots. */
-      messageReaction      : Option[MessageReactionUpdated]
+      messageReaction         : Option[MessageReactionUpdated]
       /* Optional. Reactions to a message with anonymous reactions 
       were changed. The bot must be an administrator in the chat 
       and must explicitly specify "message_reaction_count" in the 
       list of allowed_updates to receive these updates. The 
       updates are grouped and can be sent with delay up to a few 
       minutes. */
-      messageReactionCount : Option[MessageReactionCountUpdated]
+      messageReactionCount    : Option[MessageReactionCountUpdated]
       /* Optional. New incoming inline query */
-      inlineQuery          : Option[InlineQuery]
+      inlineQuery             : Option[InlineQuery]
       /* Optional. The result of an inline query that was chosen by 
       a user and sent to their chat partner. Please see our 
       documentation on the feedback collecting for details on how 
       to enable these updates for your bot. */
-      chosenInlineResult   : Option[ChosenInlineResult]
+      chosenInlineResult      : Option[ChosenInlineResult]
       /* Optional. New incoming callback query */
-      callbackQuery        : Option[CallbackQuery]
+      callbackQuery           : Option[CallbackQuery]
       /* Optional. New incoming shipping query. Only for invoices 
       with flexible price */
-      shippingQuery        : Option[ShippingQuery]
+      shippingQuery           : Option[ShippingQuery]
       /* Optional. New incoming pre-checkout query. Contains full 
       information about checkout */
-      preCheckoutQuery     : Option[PreCheckoutQuery]
+      preCheckoutQuery        : Option[PreCheckoutQuery]
       /* Optional. New poll state. Bots receive only updates about 
       manually stopped polls and polls, which are sent by the bot */
-      poll                 : Option[Poll]
+      poll                    : Option[Poll]
       /* Optional. A user changed their answer in a non-anonymous 
       poll. Bots receive new votes only in polls that were sent by 
       the bot itself. */
-      pollAnswer           : Option[PollAnswer]
+      pollAnswer              : Option[PollAnswer]
       /* Optional. The bot's chat member status was updated in a 
       chat. For private chats, this update is received only when 
       the bot is blocked or unblocked by the user. */
-      myChatMember         : Option[ChatMemberUpdated]
+      myChatMember            : Option[ChatMemberUpdated]
       /* Optional. A chat member's status was updated in a chat. The 
       bot must be an administrator in the chat and must explicitly 
       specify "chat_member" in the list of allowed_updates to 
       receive these updates. */
-      chatMember           : Option[ChatMemberUpdated]
+      chatMember              : Option[ChatMemberUpdated]
       /* Optional. A request to join the chat has been sent. The bot 
       must have the can_invite_users administrator right in the 
       chat to receive these updates. */
-      chatJoinRequest      : Option[ChatJoinRequest]
+      chatJoinRequest         : Option[ChatJoinRequest]
       /* Optional. A chat boost was added or changed. The bot must 
       be an administrator in the chat to receive these updates. */
-      chatBoost            : Option[ChatBoostUpdated]
+      chatBoost               : Option[ChatBoostUpdated]
       /* Optional. A boost was removed from a chat. The bot must be 
       an administrator in the chat to receive these updates. */
-      removedChatBoost     : Option[ChatBoostRemoved]
+      removedChatBoost        : Option[ChatBoostRemoved]
     }
            
     /* This object describes the position on faces where a mask should be placed by 
@@ -2467,6 +2528,18 @@ namespace telegramium {
       /* Mask scaling coefficient. For example, 2.0 means double 
       size. */
       scale  : Float
+    }
+           
+    /*  */
+    BusinessOpeningHoursInterval {
+      /* The minute's sequence number in a week, starting on Monday, 
+      marking the start of the time interval during which the 
+      business is open; 0 - 7 24 60 */
+      openingMinute : Int
+      /* The minute's sequence number in a week, starting on Monday, 
+      marking the end of the time interval during which the 
+      business is open; 0 - 8 24 60 */
+      closingMinute : Int
     }
            
     /* A placeholder, currently holds no information. Use BotFather to set up your 
@@ -2573,15 +2646,8 @@ namespace telegramium {
     UsersShared {
       /* Identifier of the request */
       requestId : Int
-      /* Identifiers of the shared users. These numbers may have 
-      more than 32 significant bits and some programming languages 
-      may have difficulty/silent defects in interpreting them. But 
-      they have at most 52 significant bits, so 64-bit integers or 
-      double-precision float types are safe for storing these 
-      identifiers. The bot may not have access to the users and 
-      could be unable to use these identifiers, unless the users 
-      are already known to the bot by some other means. */
-      userIds   : List[Long]
+      /* Information about users shared with the bot. */
+      users     : List[SharedUser]
     }
            
     /* This object contains information about a poll.  */
@@ -2631,10 +2697,6 @@ namespace telegramium {
       /* Type of stickers in the set, currently one of “regular”, 
       “mask”, “custom_emoji” */
       stickerType : String
-      /* True, if the sticker set contains animated stickers */
-      isAnimated  : Boolean
-      /* True, if the sticker set contains video stickers */
-      isVideo     : Boolean
       /* List of all set stickers */
       stickers    : List[Sticker]
       /* Optional. Sticker set thumbnail in the .WEBP, .TGS, or 
@@ -2731,11 +2793,13 @@ namespace telegramium {
       messageId                : Int
       /* Optional. If the message to be replied to is from a 
       different chat, unique identifier for the chat or username 
-      of the channel (in the format &#064;channelusername) */
+      of the channel (in the format &#064;channelusername). Not 
+      supported for messages sent on behalf of a business account. */
       chatId                   : Option[ChatId]
       /* Optional. Pass True if the message should be sent even if 
-      the specified message to be replied to is not found; can be 
-      used only for replies in the same chat and forum topic. */
+      the specified message to be replied to is not found. Always 
+      False for replies in another chat or forum topic. Always 
+      True for messages sent on behalf of a business account. */
       allowSendingWithoutReply : Option[Boolean]
       /* Optional. Quoted part of the message to be replied to; 
       0-1024 characters after entities parsing. The quote must be 
@@ -2977,25 +3041,32 @@ namespace telegramium {
       id   : Int
     }
            
-    /* This object defines the criteria used to request suitable users. The 
-      identifiers of the selected users will be shared with the bot when the 
-      corresponding button is pressed.  */
+    /* This object defines the criteria used to request suitable users. Information 
+      about the selected users will be shared with the bot when the corresponding 
+      button is pressed.  */
     KeyboardButtonRequestUsers {
       /* Signed 32-bit identifier of the request that will be 
       received back in the UsersShared object. Must be unique 
       within the message */
-      requestId     : Int
+      requestId       : Int
       /* Optional. Pass True to request bots, pass False to request 
       regular users. If not specified, no additional restrictions 
       are applied. */
-      userIsBot     : Option[Boolean]
+      userIsBot       : Option[Boolean]
       /* Optional. Pass True to request premium users, pass False to 
       request non-premium users. If not specified, no additional 
       restrictions are applied. */
-      userIsPremium : Option[Boolean]
+      userIsPremium   : Option[Boolean]
       /* Optional. The maximum number of users to be selected; 1-10. 
       Defaults to 1. */
-      maxQuantity   : Option[Int]
+      maxQuantity     : Option[Int]
+      /* Optional. Pass True to request the users' first and last 
+      name */
+      requestName     : Option[Boolean]
+      /* Optional. Pass True to request the users' username */
+      requestUsername : Option[Boolean]
+      /* Optional. Pass True to request the users' photo */
+      requestPhoto    : Option[Boolean]
     }
            
     /* Describes Telegram Passport data shared with the bot by the user.  */
@@ -3007,9 +3078,10 @@ namespace telegramium {
       credentials : EncryptedCredentials
     }
            
-    /* This object defines the criteria used to request a suitable chat. The 
-      identifier of the selected chat will be shared with the bot when the 
-      corresponding button is pressed.  */
+    /* This object defines the criteria used to request a suitable chat. Information 
+      about the selected chat will be shared with the bot when the corresponding 
+      button is pressed. The bot will be granted requested rights in the сhat if 
+      appropriate  */
     KeyboardButtonRequestChat {
       /* Signed 32-bit identifier of the request, which will be 
       received back in the ChatShared object. Must be unique 
@@ -3043,6 +3115,12 @@ namespace telegramium {
       /* Optional. Pass True to request a chat with the bot as a 
       member. Otherwise, no additional restrictions are applied. */
       botIsMember             : Option[Boolean]
+      /* Optional. Pass True to request the chat's title */
+      requestTitle            : Option[Boolean]
+      /* Optional. Pass True to request the chat's username */
+      requestUsername         : Option[Boolean]
+      /* Optional. Pass True to request the chat's photo */
+      requestPhoto            : Option[Boolean]
     }
            
     /* This object represents the bot's description.  */
@@ -3055,6 +3133,16 @@ namespace telegramium {
       chat. Currently holds no information.  */
     ForumTopicClosed {
   
+    }
+           
+    /*  */
+    Birthdate {
+      /* Day of the user's birth; 1-31 */
+      day   : Int
+      /* Month of the user's birth; 1-12 */
+      month : Int
+      /* Optional. Year of the user's birth */
+      year  : Option[Int]
     }
            
     /* This object represents a file ready to be downloaded. The file can be 
@@ -3317,6 +3405,29 @@ namespace telegramium {
       premiumSubscriptionMonthCount : Option[Int]
     }
            
+    /* Describes the connection of the bot with a business account.  */
+    BusinessConnection {
+      /* Unique identifier of the business connection */
+      id         : String
+      /* Business account user that created the business connection */
+      user       : User
+      /* Identifier of a private chat with the user who created the 
+      business connection. This number may have more than 32 
+      significant bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a 64-bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. */
+      userChatId : Long
+      /* Date the connection was established in Unix time */
+      date       : Int
+      /* True, if the bot can act on behalf of the business account 
+      in chats that were active in the last 24 hours */
+      canReply   : Boolean
+      /* True, if the connection is active */
+      isEnabled  : Boolean
+    }
+           
     /* This object represents a chat photo.  */
     ChatPhoto {
       /* File identifier of small (160x160) chat photo. This file_id 
@@ -3374,6 +3485,14 @@ namespace telegramium {
       location : Option[Location]
     }
            
+    /*  */
+    BusinessLocation {
+      /* Address of the business */
+      address  : String
+      /* Optional. Location of the business */
+      location : Option[Location]
+    }
+           
     /* This object represents a service message about General forum topic unhidden in 
       the chat. Currently holds no information.  */
     GeneralForumTopicUnhidden {
@@ -3413,6 +3532,10 @@ namespace telegramium {
       /* Optional. True, if the bot supports inline queries. 
       Returned only in getMe. */
       supportsInlineQueries   : Option[Boolean]
+      /* Optional. True, if the bot can be connected to a Telegram 
+      Business account to receive its messages. Returned only in 
+      getMe. */
+      canConnectToBusiness    : Option[Boolean]
     }
            
     /* Describes documents or other Telegram Passport elements shared with the bot by 
@@ -3425,44 +3548,45 @@ namespace telegramium {
       “temporary_registration”, “phone_number”, “email”. */
       type        : String
       /* Optional. Base64-encoded encrypted Telegram Passport 
-      element data provided by the user, available for 
+      element data provided by the user; available only for 
       “personal_details”, “passport”, “driver_license”, 
       “identity_card”, “internal_passport” and “address” types. 
       Can be decrypted and verified using the accompanying 
       EncryptedCredentials. */
       data        : Option[String]
-      /* Optional. User's verified phone number, available only for 
+      /* Optional. User's verified phone number; available only for 
       “phone_number” type */
       phoneNumber : Option[String]
-      /* Optional. User's verified email address, available only for 
+      /* Optional. User's verified email address; available only for 
       “email” type */
       email       : Option[String]
       /* Optional. Array of encrypted files with documents provided 
-      by the user, available for “utility_bill”, “bank_statement”, 
-      “rental_agreement”, “passport_registration” and 
-      “temporary_registration” types. Files can be decrypted and 
-      verified using the accompanying EncryptedCredentials. */
+      by the user; available only for “utility_bill”, 
+      “bank_statement”, “rental_agreement”, 
+      “passport_registration” and “temporary_registration” types. 
+      Files can be decrypted and verified using the accompanying 
+      EncryptedCredentials. */
       files       : List[PassportFile]
       /* Optional. Encrypted file with the front side of the 
-      document, provided by the user. Available for “passport”, 
-      “driver_license”, “identity_card” and “internal_passport”. 
-      The file can be decrypted and verified using the 
-      accompanying EncryptedCredentials. */
+      document, provided by the user; available only for 
+      “passport”, “driver_license”, “identity_card” and 
+      “internal_passport”. The file can be decrypted and verified 
+      using the accompanying EncryptedCredentials. */
       frontSide   : Option[PassportFile]
       /* Optional. Encrypted file with the reverse side of the 
-      document, provided by the user. Available for 
+      document, provided by the user; available only for 
       “driver_license” and “identity_card”. The file can be 
       decrypted and verified using the accompanying 
       EncryptedCredentials. */
       reverseSide : Option[PassportFile]
       /* Optional. Encrypted file with the selfie of the user 
-      holding a document, provided by the user; available for 
-      “passport”, “driver_license”, “identity_card” and 
-      “internal_passport”. The file can be decrypted and verified 
-      using the accompanying EncryptedCredentials. */
+      holding a document, provided by the user; available if 
+      requested for “passport”, “driver_license”, “identity_card” 
+      and “internal_passport”. The file can be decrypted and 
+      verified using the accompanying EncryptedCredentials. */
       selfie      : Option[PassportFile]
       /* Optional. Array of encrypted files with translated versions 
-      of documents provided by the user. Available if requested 
+      of documents provided by the user; available if requested 
       for “passport”, “driver_license”, “identity_card”, 
       “internal_passport”, “utility_bill”, “bank_statement”, 
       “rental_agreement”, “passport_registration” and 
@@ -3568,16 +3692,16 @@ namespace telegramium {
       other users */
       canDeleteStories    : Boolean
       /* Optional. True, if the administrator can post messages in 
-      the channel, or access channel statistics; channels only */
+      the channel, or access channel statistics; for channels only */
       canPostMessages     : Option[Boolean]
       /* Optional. True, if the administrator can edit messages of 
-      other users and can pin messages; channels only */
+      other users and can pin messages; for channels only */
       canEditMessages     : Option[Boolean]
-      /* Optional. True, if the user is allowed to pin messages; 
+      /* Optional. True, if the user is allowed to pin messages; for 
       groups and supergroups only */
       canPinMessages      : Option[Boolean]
       /* Optional. True, if the user is allowed to create, rename, 
-      close, and reopen forum topics; supergroups only */
+      close, and reopen forum topics; for supergroups only */
       canManageTopics     : Option[Boolean]
     }
            
@@ -3740,6 +3864,32 @@ namespace telegramium {
       isManual : Option[Boolean]
     }
            
+    /* This object contains information about a user that was shared with the bot 
+      using a KeyboardButtonRequestUser button.  */
+    SharedUser {
+      /* Identifier of the shared user. This number may have more 
+      than 32 significant bits and some programming languages may 
+      have difficulty/silent defects in interpreting it. But it 
+      has at most 52 significant bits, so 64-bit integers or 
+      double-precision float types are safe for storing these 
+      identifiers. The bot may not have access to the user and 
+      could be unable to use this identifier, unless the user is 
+      already known to the bot by some other means. */
+      userId    : Long
+      /* Optional. First name of the user, if the name was requested 
+      by the bot */
+      firstName : Option[String]
+      /* Optional. Last name of the user, if the name was requested 
+      by the bot */
+      lastName  : Option[String]
+      /* Optional. Username of the user, if the username was 
+      requested by the bot */
+      username  : Option[String]
+      /* Optional. Available sizes of the chat photo, if the photo 
+      was requested by the bot */
+      photo     : List[PhotoSize]
+    }
+           
     /* This object represents a parameter of the inline keyboard button used to 
       automatically authorize a user. Serves as a great replacement for the Telegram 
       Login Widget when the user is coming from Telegram. All the user needs to do is 
@@ -3832,8 +3982,8 @@ namespace telegramium {
       gameShortName   : Option[String]
     }
            
-    /* This object contains information about the chat whose identifier was shared 
-      with the bot using a KeyboardButtonRequestChat button.  */
+    /* This object contains information about a chat that was shared with the bot 
+      using a KeyboardButtonRequestChat button.  */
     ChatShared {
       /* Identifier of the request */
       requestId : Int
@@ -3846,6 +3996,15 @@ namespace telegramium {
       could be unable to use this identifier, unless the chat is 
       already known to the bot by some other means. */
       chatId    : Long
+      /* Optional. Title of the chat, if the title was requested by 
+      the bot. */
+      title     : Option[String]
+      /* Optional. Username of the chat, if the username was 
+      requested by the bot and available. */
+      username  : Option[String]
+      /* Optional. Available sizes of the chat photo, if the photo 
+      was requested by the bot */
+      photo     : List[PhotoSize]
     }
            
     /* This object represents a unique message identifier.  */
@@ -3884,6 +4043,19 @@ namespace telegramium {
       oldReaction : List[ReactionType]
       /* New list of reaction types that have been set by the user */
       newReaction : List[ReactionType]
+    }
+           
+    /* This object is received when messages are deleted from a connected business 
+      account.  */
+    BusinessMessagesDeleted {
+      /* Unique identifier of the business connection */
+      businessConnectionId : String
+      /* Information about a chat in the business account. The bot 
+      may not have access to the chat or the corresponding user. */
+      chat                 : Chat
+      /* A JSON-serialized list of identifiers of deleted messages 
+      in the chat of the business account */
+      messageIds           : List[Int]
     }
            
     /* This object represents a service message about a new forum topic created in the 
@@ -3961,6 +4133,10 @@ namespace telegramium {
       multipart/form-data under <file_attach_name> name. Animated 
       and video stickers can't be uploaded via HTTP URL. */
       sticker      : IFile
+      /* Format of the added sticker, must be one of “static” for a 
+      .WEBP or .PNG image, “animated” for a .TGS animation, 
+      “video” for a WEBM video */
+      format       : String
       /* List of 1-20 emoji associated with the sticker */
       emojiList    : List[String]
       /* Optional. Position where the mask should be placed on 
@@ -4128,6 +4304,13 @@ namespace telegramium {
           languageCode : Option[String]
         } => Method[BotName]
       
+        /* Use this method to get information about the connection of the bot with a 
+          business account. Returns a BusinessConnection object on success.  */
+        def getBusinessConnection {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+        } => Method[BusinessConnection]
+      
         /* Use this method to get the current default administrator rights of the bot. 
           Returns ChatAdministratorRights on success.  */
         def getMyDefaultAdministratorRights {
@@ -4140,35 +4323,40 @@ namespace telegramium {
         /* Use this method to send text messages. On success, the sent Message is 
           returned.  */
         def sendMessage {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Text of the message to be sent, 1-4096 characters after 
           entities parsing */
-          text                : String
+          text                 : String
           /* Mode for parsing entities in the message text. See 
           formatting options for more details. */
-          parseMode           : Option[ParseMode]
+          parseMode            : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           message text, which can be specified instead of parse_mode */
-          entities            : List[MessageEntity]
+          entities             : List[MessageEntity]
           /* Link preview generation options for the message */
-          linkPreviewOptions  : Option[LinkPreviewOptions]
+          linkPreviewOptions   : Option[LinkPreviewOptions]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to get a list of profile pictures for a user. Returns a 
@@ -4187,6 +4375,9 @@ namespace telegramium {
         /* Use this method to send a native poll. On success, the sent Message is 
           returned.  */
         def sendPoll {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId  : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                : ChatId
@@ -4240,7 +4431,9 @@ namespace telegramium {
           replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
           replyMarkup           : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -4257,33 +4450,38 @@ namespace telegramium {
         /* Use this method to send phone contacts. On success, the sent Message is 
           returned.  */
         def sendContact {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Contact's phone number */
-          phoneNumber         : String
+          phoneNumber          : String
           /* Contact's first name */
-          firstName           : String
+          firstName            : String
           /* Contact's last name */
-          lastName            : Option[String]
+          lastName             : Option[String]
           /* Additional data about the contact in the form of a vCard, 
           0-2048 bytes */
-          vcard               : Option[String]
+          vcard                : Option[String]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to set the thumbnail of a custom emoji sticker set. Returns 
@@ -4314,9 +4512,6 @@ namespace telegramium {
           /* A JSON-serialized list of 1-50 initial stickers to be added 
           to the sticker set */
           stickers        : List[InputSticker]
-          /* Format of stickers in the set, must be one of “static”, 
-          “animated”, “video” */
-          stickerFormat   : String
           /* Type of stickers in the set, pass “regular”, “mask”, or 
           “custom_emoji”. By default, a regular sticker set is 
           created. */
@@ -4330,8 +4525,8 @@ namespace telegramium {
         } => Method[Boolean]
       
         /* Use this method to upload a file with a sticker for later use in the 
-          createNewStickerSet and addStickerToSet methods (the file can be used multiple 
-          times). Returns the uploaded File on success.  */
+          createNewStickerSet, addStickerToSet, or replaceStickerInSet methods (the file 
+          can be used multiple times). Returns the uploaded File on success.  */
         def uploadStickerFile {
           /* User identifier of sticker file owner */
           userId        : Long
@@ -4350,8 +4545,9 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId     : ChatId
-          /* Identifiers of 1-100 messages to delete. See deleteMessage 
-          for limitations on which messages can be deleted */
+          /* A JSON-serialized list of 1-100 identifiers of messages to 
+          delete. See deleteMessage for limitations on which messages 
+          can be deleted */
           messageIds : List[Int]
         } => Method[Boolean]
       
@@ -4372,6 +4568,22 @@ namespace telegramium {
           can_send_voice_notes permissions; the can_send_polls 
           permission will imply the can_send_messages permission. */
           useIndependentChatPermissions : Option[Boolean]
+        } => Method[Boolean]
+      
+        /* Use this method to replace an existing sticker in a sticker set with a new one. 
+          The method is equivalent to calling deleteStickerFromSet, then addStickerToSet, 
+          then setStickerPositionInSet. Returns True on success.  */
+        def replaceStickerInSet {
+          /* User identifier of the sticker set owner */
+          userId     : Long
+          /* Sticker set name */
+          name       : String
+          /* File identifier of the replaced sticker */
+          oldSticker : String
+          /* A JSON-serialized object with information about the added 
+          sticker. If exactly the same sticker had already been added 
+          to the set, then the set remains unchanged. */
+          sticker    : InputSticker
         } => Method[Boolean]
       
         /* Use this method to ban a channel chat in a supergroup or a channel. Until the 
@@ -4401,6 +4613,9 @@ namespace telegramium {
         /* Use this method to send point on the map. On success, the sent Message is 
           returned.  */
         def sendLocation {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId               : ChatId
@@ -4434,7 +4649,9 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -4467,9 +4684,9 @@ namespace telegramium {
           were sent (or channel username in the format 
           &#064;channelusername) */
           fromChatId          : ChatId
-          /* Identifiers of 1-100 messages in the chat from_chat_id to 
-          copy. The identifiers must be specified in a strictly 
-          increasing order. */
+          /* A JSON-serialized list of 1-100 identifiers of messages in 
+          the chat from_chat_id to copy. The identifiers must be 
+          specified in a strictly increasing order. */
           messageIds          : List[Int]
           /* Sends the messages silently. Users will receive a 
           notification with no sound. */
@@ -4530,29 +4747,34 @@ namespace telegramium {
         /* Use this method to send an animated emoji that will display a random value. On 
           success, the sent Message is returned.  */
         def sendDice {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Emoji on which the dice throw animation is based. 
           Currently, must be one of “🎲”, “🎯”, “🏀”, “⚽”, “🎳”, or 
           “🎰”. Dice can have values 1-6 for “🎲”, “🎯” and “🎳”, 
           values 1-5 for “🏀” and “⚽”, and values 1-64 for “🎰”. 
           Defaults to “🎲” */
-          emoji               : Option[String]
+          emoji                : Option[String]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method when you need to tell the user that something is happening on 
@@ -4561,12 +4783,15 @@ namespace telegramium {
           success. We only recommend using this method when a response from the bot will 
           take a noticeable amount of time to arrive.  */
         def sendChatAction {
+          /* Unique identifier of the business connection on behalf of 
+          which the action will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId          : ChatId
-          /* Unique identifier for the target message thread; 
+          chatId               : ChatId
+          /* Unique identifier for the target message thread; for 
           supergroups only */
-          messageThreadId : Option[Int]
+          messageThreadId      : Option[Int]
           /* Type of action to broadcast. Choose one, depending on what 
           the user is about to receive: typing for text messages, 
           upload_photo for photos, record_video or upload_video for 
@@ -4574,14 +4799,12 @@ namespace telegramium {
           upload_document for general files, choose_sticker for 
           stickers, find_location for location data, record_video_note 
           or upload_video_note for video notes. */
-          action          : String
+          action               : String
         } => Method[Boolean]
       
-        /* Use this method to add a new sticker to a set created by the bot. The format of 
-          the added sticker must match the format of the other stickers in the set. Emoji 
-          sticker sets can have up to 200 stickers. Animated and video sticker sets can 
-          have up to 50 stickers. Static sticker sets can have up to 120 stickers. Returns 
-          True on success.  */
+        /* Use this method to add a new sticker to a set created by the bot. Emoji sticker 
+          sets can have up to 200 stickers. Other sticker sets can have up to 120 
+          stickers. Returns True on success.  */
         def addStickerToSet {
           /* User identifier of sticker set owner */
           userId  : Long
@@ -4705,88 +4928,100 @@ namespace telegramium {
           album. Documents and audio files can be only grouped in an album with messages 
           of the same type. On success, an array of Messages that were sent is returned.  */
         def sendMediaGroup {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* A JSON-serialized array describing messages to be sent, 
           must include 2-10 items */
-          media               : List[InputMedia]
+          media                : List[InputMedia]
           /* Sends messages silently. Users will receive a notification 
           with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent messages from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
         } => Method[List[Message]]
       
         /* Use this method to send a game. On success, the sent Message is returned.  */
         def sendGame {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat */
-          chatId              : Long
+          chatId               : Long
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Short name of the game, serves as the unique identifier for 
           the game. Set up your games via &#064;BotFather. */
-          gameShortName       : String
+          gameShortName        : String
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* A JSON-serialized object for an inline keyboard. If empty, 
           one 'Play game_title' button will be shown. If not empty, 
-          the first button must launch the game. */
-          replyMarkup         : Option[InlineKeyboardMarkup]
+          the first button must launch the game. Not supported for 
+          messages sent on behalf of a business account. */
+          replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to send information about a venue. On success, the sent Message 
           is returned.  */
         def sendVenue {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Latitude of the venue */
-          latitude            : Float
+          latitude             : Float
           /* Longitude of the venue */
-          longitude           : Float
+          longitude            : Float
           /* Name of the venue */
-          title               : String
+          title                : String
           /* Address of the venue */
-          address             : String
+          address              : String
           /* Foursquare identifier of the venue */
-          foursquareId        : Option[String]
+          foursquareId         : Option[String]
           /* Foursquare type of the venue, if known. (For example, 
           “arts_entertainment/default”, “arts_entertainment/aquarium” 
           or “food/icecream”.) */
-          foursquareType      : Option[String]
+          foursquareType       : Option[String]
           /* Google Places identifier of the venue */
-          googlePlaceId       : Option[String]
+          googlePlaceId        : Option[String]
           /* Google Places type of the venue. (See supported types.) */
-          googlePlaceType     : Option[String]
+          googlePlaceType      : Option[String]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to create a topic in a forum supergroup chat. The bot must be 
@@ -4842,8 +5077,8 @@ namespace telegramium {
         /* Use this method to get information about custom emoji stickers by their 
           identifiers. Returns an Array of Sticker objects.  */
         def getCustomEmojiStickers {
-          /* List of custom emoji identifiers. At most 200 custom emoji 
-          identifiers can be specified. */
+          /* A JSON-serialized list of custom emoji identifiers. At most 
+          200 custom emoji identifiers can be specified. */
           customEmojiIds : List[String]
         } => Method[List[Sticker]]
       
@@ -5057,21 +5292,24 @@ namespace telegramium {
           minute long. Use this method to send video messages. On success, the sent 
           Message is returned.  */
         def sendVideoNote {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Video note to send. Pass a file_id as String to send a 
           video note that exists on the Telegram servers (recommended) 
           or upload a new video using multipart/form-data. Sending 
           video notes by a URL is currently unsupported */
-          videoNote           : (file) IFile
+          videoNote            : (file) IFile
           /* Duration of sent video in seconds */
-          duration            : Option[Int]
+          duration             : Option[Int]
           /* Video width and height, i.e. diameter of the video message */
-          length              : Option[Int]
+          length               : Option[Int]
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
@@ -5081,19 +5319,21 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail           : (file) Option[IFile]
+          thumbnail            : (file) Option[IFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to change the bot's menu button in a private chat, or the 
@@ -5260,6 +5500,9 @@ namespace telegramium {
           returned. Bots can currently send files of any type of up to 50 MB in size, this 
           limit may be changed in the future.  */
         def sendDocument {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId        : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId                      : ChatId
@@ -5303,7 +5546,9 @@ namespace telegramium {
           replyParameters             : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
           replyMarkup                 : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -5377,32 +5622,35 @@ namespace telegramium {
           to 50 MB in size, this limit may be changed in the future. For sending voice 
           messages, use the sendVoice method instead.  */
         def sendAudio {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Audio file to send. Pass a file_id as String to send an 
           audio file that exists on the Telegram servers 
           (recommended), pass an HTTP URL as a String for Telegram to 
           get an audio file from the Internet, or upload a new one 
           using multipart/form-data. */
-          audio               : (file) IFile
+          audio                : (file) IFile
           /* Audio caption, 0-1024 characters after entities parsing */
-          caption             : Option[String]
+          caption              : Option[String]
           /* Mode for parsing entities in the audio caption. See 
           formatting options for more details. */
-          parseMode           : Option[ParseMode]
+          parseMode            : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities     : List[MessageEntity]
+          captionEntities      : List[MessageEntity]
           /* Duration of the audio in seconds */
-          duration            : Option[Int]
+          duration             : Option[Int]
           /* Performer */
-          performer           : Option[String]
+          performer            : Option[String]
           /* Track name */
-          title               : Option[String]
+          title                : Option[String]
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
@@ -5412,19 +5660,21 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail           : (file) Option[IFile]
+          thumbnail            : (file) Option[IFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to restrict a user in a supergroup. The bot must be an 
@@ -5560,40 +5810,45 @@ namespace telegramium {
           success, the sent Message is returned. Bots can currently send voice messages of 
           up to 50 MB in size, this limit may be changed in the future.  */
         def sendVoice {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Audio file to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a file from the 
           Internet, or upload a new one using multipart/form-data. */
-          voice               : (file) IFile
+          voice                : (file) IFile
           /* Voice message caption, 0-1024 characters after entities 
           parsing */
-          caption             : Option[String]
+          caption              : Option[String]
           /* Mode for parsing entities in the voice message caption. See 
           formatting options for more details. */
-          parseMode           : Option[ParseMode]
+          parseMode            : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities     : List[MessageEntity]
+          captionEntities      : List[MessageEntity]
           /* Duration of the voice message in seconds */
-          duration            : Option[Int]
+          duration             : Option[Int]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to log out from the cloud Bot API server before launching the 
@@ -5653,16 +5908,16 @@ namespace telegramium {
           other users */
           canDeleteStories    : Option[Boolean]
           /* Pass True if the administrator can post messages in the 
-          channel, or access channel statistics; channels only */
+          channel, or access channel statistics; for channels only */
           canPostMessages     : Option[Boolean]
           /* Pass True if the administrator can edit messages of other 
-          users and can pin messages; channels only */
+          users and can pin messages; for channels only */
           canEditMessages     : Option[Boolean]
-          /* Pass True if the administrator can pin messages, 
+          /* Pass True if the administrator can pin messages; for 
           supergroups only */
           canPinMessages      : Option[Boolean]
           /* Pass True if the user is allowed to create, rename, close, 
-          and reopen forum topics, supergroups only */
+          and reopen forum topics; for supergroups only */
           canManageTopics     : Option[Boolean]
         } => Method[Boolean]
       
@@ -5825,23 +6080,26 @@ namespace telegramium {
           returned. Bots can currently send video files of up to 50 MB in size, this limit 
           may be changed in the future.  */
         def sendVideo {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Video to send. Pass a file_id as String to send a video 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a video from the 
           Internet, or upload a new video using multipart/form-data. */
-          video               : (file) IFile
+          video                : (file) IFile
           /* Duration of sent video in seconds */
-          duration            : Option[Int]
+          duration             : Option[Int]
           /* Video width */
-          width               : Option[Int]
+          width                : Option[Int]
           /* Video height */
-          height              : Option[Int]
+          height               : Option[Int]
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
@@ -5851,33 +6109,35 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail           : (file) Option[IFile]
+          thumbnail            : (file) Option[IFile]
           /* Video caption (may also be used when resending videos by 
           file_id), 0-1024 characters after entities parsing */
-          caption             : Option[String]
+          caption              : Option[String]
           /* Mode for parsing entities in the video caption. See 
           formatting options for more details. */
-          parseMode           : Option[ParseMode]
+          parseMode            : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities     : List[MessageEntity]
+          captionEntities      : List[MessageEntity]
           /* Pass True if the video needs to be covered with a spoiler 
           animation */
-          hasSpoiler          : Option[Boolean]
+          hasSpoiler           : Option[Boolean]
           /* Pass True if the uploaded video is suitable for streaming */
-          supportsStreaming   : Option[Boolean]
+          supportsStreaming    : Option[Boolean]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to set a new group sticker set for a supergroup. The bot must 
@@ -5987,24 +6247,27 @@ namespace telegramium {
           sound). On success, the sent Message is returned. Bots can currently send 
           animation files of up to 50 MB in size, this limit may be changed in the future.  */
         def sendAnimation {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Animation to send. Pass a file_id as String to send an 
           animation that exists on the Telegram servers (recommended), 
           pass an HTTP URL as a String for Telegram to get an 
           animation from the Internet, or upload a new animation using 
           multipart/form-data. */
-          animation           : (file) IFile
+          animation            : (file) IFile
           /* Duration of sent animation in seconds */
-          duration            : Option[Int]
+          duration             : Option[Int]
           /* Animation width */
-          width               : Option[Int]
+          width                : Option[Int]
           /* Animation height */
-          height              : Option[Int]
+          height               : Option[Int]
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
@@ -6014,32 +6277,34 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail           : (file) Option[IFile]
+          thumbnail            : (file) Option[IFile]
           /* Animation caption (may also be used when resending 
           animation by file_id), 0-1024 characters after entities 
           parsing */
-          caption             : Option[String]
+          caption              : Option[String]
           /* Mode for parsing entities in the animation caption. See 
           formatting options for more details. */
-          parseMode           : Option[ParseMode]
+          parseMode            : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities     : List[MessageEntity]
+          captionEntities      : List[MessageEntity]
           /* Pass True if the animation needs to be covered with a 
           spoiler animation */
-          hasSpoiler          : Option[Boolean]
+          hasSpoiler           : Option[Boolean]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to change the bot's description, which is shown in the chat 
@@ -6101,6 +6366,10 @@ namespace telegramium {
           the thumbnail is dropped and the first sticker is used as 
           the thumbnail. */
           thumbnail : (file) Option[IFile]
+          /* Format of the thumbnail, must be one of “static” for a 
+          .WEBP or .PNG image, “animated” for a .TGS animation, or 
+          “video” for a WEBM video */
+          format    : String
         } => Method[Boolean]
       
         /* Use this method to approve a chat join request. The bot must be an 
@@ -6138,35 +6407,38 @@ namespace telegramium {
         /* Use this method to send static .WEBP, animated .TGS, or video .WEBM stickers. 
           On success, the sent Message is returned.  */
         def sendSticker {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Sticker to send. Pass a file_id as String to send a file 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a .WEBP sticker 
-          from the Internet, or upload a new .WEBP or .TGS sticker 
-          using multipart/form-data. Video stickers can only be sent 
-          by a file_id. Animated stickers can't be sent via an HTTP 
-          URL. */
-          sticker             : (file) IFile
+          from the Internet, or upload a new .WEBP, .TGS, or .WEBM 
+          sticker using multipart/form-data. Video and animated 
+          stickers can't be sent via an HTTP URL. */
+          sticker              : (file) IFile
           /* Emoji associated with the sticker; only for just uploaded 
           stickers */
-          emoji               : Option[String]
+          emoji                : Option[String]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove reply keyboard or to force a reply from the user. Not 
+          supported for messages sent on behalf of a business account. */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to change the list of emoji assigned to a regular or custom 
@@ -6228,9 +6500,9 @@ namespace telegramium {
           were sent (or channel username in the format 
           &#064;channelusername) */
           fromChatId          : ChatId
-          /* Identifiers of 1-100 messages in the chat from_chat_id to 
-          forward. The identifiers must be specified in a strictly 
-          increasing order. */
+          /* A JSON-serialized list of 1-100 identifiers of messages in 
+          the chat from_chat_id to forward. The identifiers must be 
+          specified in a strictly increasing order. */
           messageIds          : List[Int]
           /* Sends the messages silently. Users will receive a 
           notification with no sound. */
@@ -6242,12 +6514,15 @@ namespace telegramium {
       
         /* Use this method to send photos. On success, the sent Message is returned.  */
         def sendPhoto {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId               : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId      : Option[Int]
           /* Photo to send. Pass a file_id as String to send a photo 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a photo from the 
@@ -6255,31 +6530,33 @@ namespace telegramium {
           The photo must be at most 10 MB in size. The photo's width 
           and height must not exceed 10000 in total. Width and height 
           ratio must be at most 20. */
-          photo               : (file) IFile
+          photo                : (file) IFile
           /* Photo caption (may also be used when resending photos by 
           file_id), 0-1024 characters after entities parsing */
-          caption             : Option[String]
+          caption              : Option[String]
           /* Mode for parsing entities in the photo caption. See 
           formatting options for more details. */
-          parseMode           : Option[ParseMode]
+          parseMode            : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities     : List[MessageEntity]
+          captionEntities      : List[MessageEntity]
           /* Pass True if the photo needs to be covered with a spoiler 
           animation */
-          hasSpoiler          : Option[Boolean]
+          hasSpoiler           : Option[Boolean]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent       : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
-          replyMarkup         : Option[KeyboardMarkup]
+          remove a reply keyboard or to force a reply from the user. 
+          Not supported for messages sent on behalf of a business 
+          account */
+          replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to receive incoming updates using long polling (wiki). Returns 
@@ -6393,11 +6670,11 @@ namespace telegramium {
           a media group, the reaction is set to the first non-deleted 
           message in the group instead. */
           messageId : Int
-          /* New list of reaction types to set on the message. 
-          Currently, as non-premium users, bots can set up to one 
-          reaction per message. A custom emoji reaction can be used if 
-          it is either already present on the message or explicitly 
-          allowed by chat administrators. */
+          /* A JSON-serialized list of reaction types to set on the 
+          message. Currently, as non-premium users, bots can set up to 
+          one reaction per message. A custom emoji reaction can be 
+          used if it is either already present on the message or 
+          explicitly allowed by chat administrators. */
           reaction  : List[ReactionType]
           /* Pass True to set the reaction with a big animation */
           isBig     : Option[Boolean]
