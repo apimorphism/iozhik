@@ -39,7 +39,9 @@ namespace telegramium {
       /* Upon receiving a message with this object, Telegram clients will display a 
         reply interface to the user (act as if the user has selected the bot's message 
         and tapped 'Reply'). This can be extremely useful if you want to create 
-        user-friendly step-by-step interfaces without having to sacrifice privacy mode.  */
+        user-friendly step-by-step interfaces without having to sacrifice privacy mode. 
+        Not supported in channels and for messages sent on behalf of a Telegram Business 
+        account.  */
       ForceReply {
         /* Shows reply interface to the user, as if they manually 
         selected the bot's message and tapped 'Reply' */
@@ -60,7 +62,8 @@ namespace telegramium {
         current custom keyboard and display the default letter-keyboard. By default, 
         custom keyboards are displayed until a new keyboard is sent by a bot. An 
         exception is made for one-time keyboards that are hidden immediately after the 
-        user presses a button (see ReplyKeyboardMarkup).  */
+        user presses a button (see ReplyKeyboardMarkup). Not supported in channels and 
+        for messages sent on behalf of a Telegram Business account.  */
       ReplyKeyboardRemove {
         /* Requests clients to remove the custom keyboard (user will 
         not be able to summon this keyboard; if you want to hide the 
@@ -81,7 +84,8 @@ namespace telegramium {
              
     
       /* This object represents a custom keyboard with reply options (see Introduction 
-        to bots for details and examples).  */
+        to bots for details and examples). Not supported in channels and for messages 
+        sent on behalf of a Telegram Business account.  */
       ReplyKeyboardMarkup {
         /* Array of button rows, each represented by an Array of 
         KeyboardButton objects */
@@ -347,6 +351,8 @@ namespace telegramium {
         proximityAlertTriggered       : Option[ProximityAlertTriggered]
         /* Optional. Service message: user boosted the chat */
         boostAdded                    : Option[ChatBoostAdded]
+        /* Optional. Service message: chat background set */
+        chatBackgroundSet             : Option[ChatBackground]
         /* Optional. Service message: forum topic created */
         forumTopicCreated             : Option[ForumTopicCreated]
         /* Optional. Service message: forum topic edited */
@@ -446,6 +452,96 @@ namespace telegramium {
              
     }
           
+    enum BackgroundFill {
+    
+      /* The background is a gradient fill.  */
+      BackgroundFillGradient {
+        type : "gradient:0"
+        /* Top color of the gradient in the RGB24 format */
+        topColor      : Int
+        /* Bottom color of the gradient in the RGB24 format */
+        bottomColor   : Int
+        /* Clockwise rotation angle of the background fill in degrees; 
+        0-359 */
+        rotationAngle : Int
+      }
+             
+      /* The background is a freeform gradient that rotates after every message in the 
+        chat.  */
+      BackgroundFillFreeformGradient {
+        type : "freeform_gradient:1"
+        /* A list of the 3 or 4 base colors that are used to generate 
+        the freeform gradient in the RGB24 format */
+        colors : List[Int]
+      }
+             
+      /* The background is filled using the selected color.  */
+      BackgroundFillSolid {
+        type : "solid:2"
+        /* The color of the background fill in the RGB24 format */
+        color : Int
+      }
+             
+    }
+          
+    enum BackgroundType {
+    
+      /* The background is a wallpaper in the JPEG format.  */
+      BackgroundTypeWallpaper {
+        type : "wallpaper:0"
+        /* Document with the wallpaper */
+        document         : Document
+        /* Dimming of the background in dark themes, as a percentage; 
+        0-100 */
+        darkThemeDimming : Int
+        /* Optional. True, if the wallpaper is downscaled to fit in a 
+        450x450 square and then box-blurred with radius 12 */
+        isBlurred        : Option[Boolean]
+        /* Optional. True, if the background moves slightly when the 
+        device is tilted */
+        isMoving         : Option[Boolean]
+      }
+             
+      /* The background is a PNG or TGV (gzipped subset of SVG with MIME type 
+        “application/x-tgwallpattern”) pattern to be combined with the background fill 
+        chosen by the user.  */
+      BackgroundTypePattern {
+        type : "pattern:1"
+        /* Document with the pattern */
+        document   : Document
+        /* The background fill that is combined with the pattern */
+        fill       : BackgroundFill
+        /* Intensity of the pattern when it is shown above the filled 
+        background; 0-100 */
+        intensity  : Int
+        /* Optional. True, if the background fill must be applied only 
+        to the pattern itself. All other pixels are black in this 
+        case. For dark themes only */
+        isInverted : Option[Boolean]
+        /* Optional. True, if the background moves slightly when the 
+        device is tilted */
+        isMoving   : Option[Boolean]
+      }
+             
+      /* The background is taken directly from a built-in chat theme.  */
+      BackgroundTypeChatTheme {
+        type : "chat_theme:2"
+        /* Name of the chat theme, which is usually an emoji */
+        themeName : String
+      }
+             
+      /* The background is automatically filled based on the selected colors.  */
+      BackgroundTypeFill {
+        type : "fill:3"
+        /* The background fill */
+        fill             : BackgroundFill
+        /* Dimming of the background in dark themes, as a percentage; 
+        0-100 */
+        darkThemeDimming : Int
+      }
+             
+    }
+          
     enum ChatMember {
     
       /* Represents a chat member that owns the chat and has all administrator 
@@ -497,7 +593,8 @@ namespace telegramium {
         /* True, if the administrator can post stories to the chat */
         canPostStories      : Boolean
         /* True, if the administrator can edit stories posted by other 
-        users */
+        users, post stories to the chat page, pin chat stories, and 
+        access the chat's story archive */
         canEditStories      : Boolean
         /* True, if the administrator can delete stories posted by 
         other users */
@@ -1458,8 +1555,9 @@ namespace telegramium {
         /* Optional. The radius of uncertainty for the location, 
         measured in meters; 0-1500 */
         horizontalAccuracy   : Option[Float]
-        /* Optional. Period in seconds for which the location can be 
-        updated, should be between 60 and 86400. */
+        /* Optional. Period in seconds during which the location can 
+        be updated, should be between 60 and 86400, or 0x7FFFFFFF 
+        for live locations that can be edited indefinitely. */
         livePeriod           : Option[Int]
         /* Optional. For live locations, a direction in which the user 
         is moving, in degrees. Must be between 1 and 360 if 
@@ -1661,8 +1759,9 @@ namespace telegramium {
         /* Optional. The radius of uncertainty for the location, 
         measured in meters; 0-1500 */
         horizontalAccuracy   : Option[Float]
-        /* Optional. Period in seconds for which the location can be 
-        updated, should be between 60 and 86400. */
+        /* Optional. Period in seconds during which the location can 
+        be updated, should be between 60 and 86400, or 0x7FFFFFFF 
+        for live locations that can be edited indefinitely. */
         livePeriod           : Option[Int]
         /* Optional. For live locations, a direction in which the user 
         is moving, in degrees. Must be between 1 and 360 if 
@@ -2036,152 +2135,22 @@ namespace telegramium {
       has at most 52 significant bits, so a signed 64-bit integer 
       or double-precision float type are safe for storing this 
       identifier. */
-      id                                 : Long
-      /* Type of chat, can be either “private”, “group”, 
+      id        : Long
+      /* Type of the chat, can be either “private”, “group”, 
       “supergroup” or “channel” */
-      type                               : String
+      type      : String
       /* Optional. Title, for supergroups, channels and group chats */
-      title                              : Option[String]
+      title     : Option[String]
       /* Optional. Username, for private chats, supergroups and 
       channels if available */
-      username                           : Option[String]
+      username  : Option[String]
       /* Optional. First name of the other party in a private chat */
-      firstName                          : Option[String]
+      firstName : Option[String]
       /* Optional. Last name of the other party in a private chat */
-      lastName                           : Option[String]
+      lastName  : Option[String]
       /* Optional. True, if the supergroup chat is a forum (has 
       topics enabled) */
-      isForum                            : Option[Boolean]
-      /* Optional. Chat photo. Returned only in getChat. */
-      photo                              : Option[ChatPhoto]
-      /* Optional. If non-empty, the list of all active chat 
-      usernames; for private chats, supergroups and channels. 
-      Returned only in getChat. */
-      activeUsernames                    : List[String]
-      /* Optional. For private chats, the date of birth of the user. 
-      Returned only in getChat. */
-      birthdate                          : Option[Birthdate]
-      /* Optional. For private chats with business accounts, the 
-      intro of the business. Returned only in getChat. */
-      businessIntro                      : Option[BusinessIntro]
-      /* Optional. For private chats with business accounts, the 
-      location of the business. Returned only in getChat. */
-      businessLocation                   : Option[BusinessLocation]
-      /* Optional. For private chats with business accounts, the 
-      opening hours of the business. Returned only in getChat. */
-      businessOpeningHours               : Option[BusinessOpeningHours]
-      /* Optional. For private chats, the personal channel of the 
-      user. Returned only in getChat. */
-      personalChat                       : Option[Chat]
-      /* Optional. List of available reactions allowed in the chat. 
-      If omitted, then all emoji reactions are allowed. Returned 
-      only in getChat. */
-      availableReactions                 : List[ReactionType]
-      /* Optional. Identifier of the accent color for the chat name 
-      and backgrounds of the chat photo, reply header, and link 
-      preview. See accent colors for more details. Returned only 
-      in getChat. Always returned in getChat. */
-      accentColorId                      : Option[Int]
-      /* Optional. Custom emoji identifier of emoji chosen by the 
-      chat for the reply header and link preview background. 
-      Returned only in getChat. */
-      backgroundCustomEmojiId            : Option[String]
-      /* Optional. Identifier of the accent color for the chat's 
-      profile background. See profile accent colors for more 
-      details. Returned only in getChat. */
-      profileAccentColorId               : Option[Int]
-      /* Optional. Custom emoji identifier of the emoji chosen by 
-      the chat for its profile background. Returned only in 
-      getChat. */
-      profileBackgroundCustomEmojiId     : Option[String]
-      /* Optional. Custom emoji identifier of the emoji status of 
-      the chat or the other party in a private chat. Returned only 
-      in getChat. */
-      emojiStatusCustomEmojiId           : Option[String]
-      /* Optional. Expiration date of the emoji status of the chat 
-      or the other party in a private chat, in Unix time, if any. 
-      Returned only in getChat. */
-      emojiStatusExpirationDate          : Option[Int]
-      /* Optional. Bio of the other party in a private chat. 
-      Returned only in getChat. */
-      bio                                : Option[String]
-      /* Optional. True, if privacy settings of the other party in 
-      the private chat allows to use tg://user?id=<user_id> links 
-      only in chats with the user. Returned only in getChat. */
-      hasPrivateForwards                 : Option[Boolean]
-      /* Optional. True, if the privacy settings of the other party 
-      restrict sending voice and video note messages in the 
-      private chat. Returned only in getChat. */
-      hasRestrictedVoiceAndVideoMessages : Option[Boolean]
-      /* Optional. True, if users need to join the supergroup before 
-      they can send messages. Returned only in getChat. */
-      joinToSendMessages                 : Option[Boolean]
-      /* Optional. True, if all users directly joining the 
-      supergroup need to be approved by supergroup administrators. 
-      Returned only in getChat. */
-      joinByRequest                      : Option[Boolean]
-      /* Optional. Description, for groups, supergroups and channel 
-      chats. Returned only in getChat. */
-      description                        : Option[String]
-      /* Optional. Primary invite link, for groups, supergroups and 
-      channel chats. Returned only in getChat. */
-      inviteLink                         : Option[String]
-      /* Optional. The most recent pinned message (by sending date). 
-      Returned only in getChat. */
-      pinnedMessage                      : Option[Message]
-      /* Optional. Default chat member permissions, for groups and 
-      supergroups. Returned only in getChat. */
-      permissions                        : Option[ChatPermissions]
-      /* Optional. For supergroups, the minimum allowed delay 
-      between consecutive messages sent by each unprivileged user; 
-      in seconds. Returned only in getChat. */
-      slowModeDelay                      : Option[Int]
-      /* Optional. For supergroups, the minimum number of boosts 
-      that a non-administrator user needs to add in order to 
-      ignore slow mode and chat permissions. Returned only in 
-      getChat. */
-      unrestrictBoostCount               : Option[Int]
-      /* Optional. The time after which all messages sent to the 
-      chat will be automatically deleted; in seconds. Returned 
-      only in getChat. */
-      messageAutoDeleteTime              : Option[Int]
-      /* Optional. True, if aggressive anti-spam checks are enabled 
-      in the supergroup. The field is only available to chat 
-      administrators. Returned only in getChat. */
-      hasAggressiveAntiSpamEnabled       : Option[Boolean]
-      /* Optional. True, if non-administrators can only get the list 
-      of bots and administrators in the chat. Returned only in 
-      getChat. */
-      hasHiddenMembers                   : Option[Boolean]
-      /* Optional. True, if messages from the chat can't be 
-      forwarded to other chats. Returned only in getChat. */
-      hasProtectedContent                : Option[Boolean]
-      /* Optional. True, if new chat members will have access to old 
-      messages; available only to chat administrators. Returned 
-      only in getChat. */
-      hasVisibleHistory                  : Option[Boolean]
-      /* Optional. For supergroups, name of group sticker set. 
-      Returned only in getChat. */
-      stickerSetName                     : Option[String]
-      /* Optional. True, if the bot can change the group sticker 
-      set. Returned only in getChat. */
-      canSetStickerSet                   : Option[Boolean]
-      /* Optional. For supergroups, the name of the group's custom 
-      emoji sticker set. Custom emoji from this set can be used by 
-      all users and bots in the group. Returned only in getChat. */
-      customEmojiStickerSetName          : Option[String]
-      /* Optional. Unique identifier for the linked chat, i.e. the 
-      discussion group identifier for a channel and vice versa; 
-      for supergroups and channel chats. This identifier may be 
-      greater than 32 bits and some programming languages may have 
-      difficulty/silent defects in interpreting it. But it is 
-      smaller than 52 bits, so a signed 64 bit integer or 
-      double-precision float type are safe for storing this 
-      identifier. Returned only in getChat. */
-      linkedChatId                       : Option[Long]
-      /* Optional. For supergroups, the location to which the 
-      supergroup is connected. Returned only in getChat. */
-      location                           : Option[ChatLocation]
+      isForum   : Option[Boolean]
     }
            
     /* This object represents a video message (available in Telegram apps as of 
@@ -2227,7 +2196,7 @@ namespace telegramium {
       proximityAlertRadius : Option[Int]
     }
            
-    /*  */
+    /* Describes the opening hours of a business.  */
     BusinessOpeningHours {
       /* Unique name of the time zone for which the opening hours 
       are defined */
@@ -2292,9 +2261,13 @@ namespace telegramium {
     /* This object contains information about one answer option in a poll.  */
     PollOption {
       /* Option text, 1-100 characters */
-      text       : String
+      text         : String
+      /* Optional. Special entities that appear in the option text. 
+      Currently, only custom emoji entities are allowed in poll 
+      option texts */
+      textEntities : List[MessageEntity]
       /* Number of users that voted for this option */
-      voterCount : Int
+      voterCount   : Int
     }
            
     /* This object represents a service message about the creation of a scheduled 
@@ -2335,6 +2308,20 @@ namespace telegramium {
       address  : String
     }
            
+    /* This object contains information about one answer option in a poll to send.  */
+    InputPollOption {
+      /* Option text, 1-100 characters */
+      text          : String
+      /* Optional. Mode for parsing entities in the text. See 
+      formatting options for more details. Currently, only custom 
+      emoji entities are allowed */
+      textParseMode : Option[String]
+      /* Optional. A JSON-serialized list of special entities that 
+      appear in the poll option text. It can be specified instead 
+      of text_parse_mode */
+      textEntities  : List[MessageEntity]
+    }
+           
     /* This object represents information about an order.  */
     OrderInfo {
       /* Optional. User name */
@@ -2371,7 +2358,8 @@ namespace telegramium {
   
     }
            
-    /*  */
+    /* Contains information about the start page settings of a Telegram Business 
+      account.  */
     BusinessIntro {
       /* Optional. Title text of the business intro */
       title   : Option[String]
@@ -2530,15 +2518,15 @@ namespace telegramium {
       scale  : Float
     }
            
-    /*  */
+    /* Describes an interval of time during which a business is open.  */
     BusinessOpeningHoursInterval {
       /* The minute's sequence number in a week, starting on Monday, 
       marking the start of the time interval during which the 
-      business is open; 0 - 7 24 60 */
+      business is open; 0 - 7 * 24 * 60 */
       openingMinute : Int
       /* The minute's sequence number in a week, starting on Monday, 
       marking the end of the time interval during which the 
-      business is open; 0 - 8 24 60 */
+      business is open; 0 - 8 * 24 * 60 */
       closingMinute : Int
     }
            
@@ -2656,6 +2644,10 @@ namespace telegramium {
       id                    : String
       /* Poll question, 1-300 characters */
       question              : String
+      /* Optional. Special entities that appear in the question. 
+      Currently, only custom emoji entities are allowed in poll 
+      questions */
+      questionEntities      : List[MessageEntity]
       /* List of poll options */
       options               : List[PollOption]
       /* Total number of users that voted in the poll */
@@ -3028,6 +3020,9 @@ namespace telegramium {
       /* Optional. Chat invite link, which was used by the user to 
       join the chat; for joining by invite link events only. */
       inviteLink              : Option[ChatInviteLink]
+      /* Optional. True, if the user joined the chat after sending a 
+      direct join request and being approved by an administrator */
+      viaJoinRequest          : Option[Boolean]
       /* Optional. True, if the user joined the chat via a chat 
       folder invite link */
       viaChatFolderInviteLink : Option[Boolean]
@@ -3061,11 +3056,11 @@ namespace telegramium {
       Defaults to 1. */
       maxQuantity     : Option[Int]
       /* Optional. Pass True to request the users' first and last 
-      name */
+      names */
       requestName     : Option[Boolean]
-      /* Optional. Pass True to request the users' username */
+      /* Optional. Pass True to request the users' usernames */
       requestUsername : Option[Boolean]
-      /* Optional. Pass True to request the users' photo */
+      /* Optional. Pass True to request the users' photos */
       requestPhoto    : Option[Boolean]
     }
            
@@ -3080,8 +3075,8 @@ namespace telegramium {
            
     /* This object defines the criteria used to request a suitable chat. Information 
       about the selected chat will be shared with the bot when the corresponding 
-      button is pressed. The bot will be granted requested rights in the сhat if 
-      appropriate  */
+      button is pressed. The bot will be granted requested rights in the chat if 
+      appropriate.  */
     KeyboardButtonRequestChat {
       /* Signed 32-bit identifier of the request, which will be 
       received back in the ChatShared object. Must be unique 
@@ -3135,7 +3130,7 @@ namespace telegramium {
   
     }
            
-    /*  */
+    /* Describes the birthdate of a user.  */
     Birthdate {
       /* Day of the user's birth; 1-31 */
       day   : Int
@@ -3367,6 +3362,12 @@ namespace telegramium {
       totalAmount    : Int
     }
            
+    /* This object represents a chat background.  */
+    ChatBackground {
+      /* Type of the background */
+      type : BackgroundType
+    }
+           
     /* This object represents a service message about a video chat scheduled in the 
       chat.  */
     VideoChatScheduled {
@@ -3485,7 +3486,7 @@ namespace telegramium {
       location : Option[Location]
     }
            
-    /*  */
+    /* Contains information about the location of a Telegram Business account.  */
     BusinessLocation {
       /* Address of the business */
       address  : String
@@ -3686,7 +3687,8 @@ namespace telegramium {
       /* True, if the administrator can post stories to the chat */
       canPostStories      : Boolean
       /* True, if the administrator can edit stories posted by other 
-      users */
+      users, post stories to the chat page, pin chat stories, and 
+      access the chat's story archive */
       canEditStories      : Boolean
       /* True, if the administrator can delete stories posted by 
       other users */
@@ -3794,6 +3796,148 @@ namespace telegramium {
       secret : String
     }
            
+    /* This object contains full information about a chat.  */
+    ChatFullInfo {
+      /* Unique identifier for this chat. This number may have more 
+      than 32 significant bits and some programming languages may 
+      have difficulty/silent defects in interpreting it. But it 
+      has at most 52 significant bits, so a signed 64-bit integer 
+      or double-precision float type are safe for storing this 
+      identifier. */
+      id                                 : Long
+      /* Type of the chat, can be either “private”, “group”, 
+      “supergroup” or “channel” */
+      type                               : String
+      /* Optional. Title, for supergroups, channels and group chats */
+      title                              : Option[String]
+      /* Optional. Username, for private chats, supergroups and 
+      channels if available */
+      username                           : Option[String]
+      /* Optional. First name of the other party in a private chat */
+      firstName                          : Option[String]
+      /* Optional. Last name of the other party in a private chat */
+      lastName                           : Option[String]
+      /* Optional. True, if the supergroup chat is a forum (has 
+      topics enabled) */
+      isForum                            : Option[Boolean]
+      /* Identifier of the accent color for the chat name and 
+      backgrounds of the chat photo, reply header, and link 
+      preview. See accent colors for more details. */
+      accentColorId                      : Int
+      /* The maximum number of reactions that can be set on a 
+      message in the chat */
+      maxReactionCount                   : Int
+      /* Optional. Chat photo */
+      photo                              : Option[ChatPhoto]
+      /* Optional. If non-empty, the list of all active chat 
+      usernames; for private chats, supergroups and channels */
+      activeUsernames                    : List[String]
+      /* Optional. For private chats, the date of birth of the user */
+      birthdate                          : Option[Birthdate]
+      /* Optional. For private chats with business accounts, the 
+      intro of the business */
+      businessIntro                      : Option[BusinessIntro]
+      /* Optional. For private chats with business accounts, the 
+      location of the business */
+      businessLocation                   : Option[BusinessLocation]
+      /* Optional. For private chats with business accounts, the 
+      opening hours of the business */
+      businessOpeningHours               : Option[BusinessOpeningHours]
+      /* Optional. For private chats, the personal channel of the 
+      user */
+      personalChat                       : Option[Chat]
+      /* Optional. List of available reactions allowed in the chat. 
+      If omitted, then all emoji reactions are allowed. */
+      availableReactions                 : List[ReactionType]
+      /* Optional. Custom emoji identifier of the emoji chosen by 
+      the chat for the reply header and link preview background */
+      backgroundCustomEmojiId            : Option[String]
+      /* Optional. Identifier of the accent color for the chat's 
+      profile background. See profile accent colors for more 
+      details. */
+      profileAccentColorId               : Option[Int]
+      /* Optional. Custom emoji identifier of the emoji chosen by 
+      the chat for its profile background */
+      profileBackgroundCustomEmojiId     : Option[String]
+      /* Optional. Custom emoji identifier of the emoji status of 
+      the chat or the other party in a private chat */
+      emojiStatusCustomEmojiId           : Option[String]
+      /* Optional. Expiration date of the emoji status of the chat 
+      or the other party in a private chat, in Unix time, if any */
+      emojiStatusExpirationDate          : Option[Int]
+      /* Optional. Bio of the other party in a private chat */
+      bio                                : Option[String]
+      /* Optional. True, if privacy settings of the other party in 
+      the private chat allows to use tg://user?id=<user_id> links 
+      only in chats with the user */
+      hasPrivateForwards                 : Option[Boolean]
+      /* Optional. True, if the privacy settings of the other party 
+      restrict sending voice and video note messages in the 
+      private chat */
+      hasRestrictedVoiceAndVideoMessages : Option[Boolean]
+      /* Optional. True, if users need to join the supergroup before 
+      they can send messages */
+      joinToSendMessages                 : Option[Boolean]
+      /* Optional. True, if all users directly joining the 
+      supergroup need to be approved by supergroup administrators */
+      joinByRequest                      : Option[Boolean]
+      /* Optional. Description, for groups, supergroups and channel 
+      chats */
+      description                        : Option[String]
+      /* Optional. Primary invite link, for groups, supergroups and 
+      channel chats */
+      inviteLink                         : Option[String]
+      /* Optional. The most recent pinned message (by sending date) */
+      pinnedMessage                      : Option[Message]
+      /* Optional. Default chat member permissions, for groups and 
+      supergroups */
+      permissions                        : Option[ChatPermissions]
+      /* Optional. For supergroups, the minimum allowed delay 
+      between consecutive messages sent by each unprivileged user; 
+      in seconds */
+      slowModeDelay                      : Option[Int]
+      /* Optional. For supergroups, the minimum number of boosts 
+      that a non-administrator user needs to add in order to 
+      ignore slow mode and chat permissions */
+      unrestrictBoostCount               : Option[Int]
+      /* Optional. The time after which all messages sent to the 
+      chat will be automatically deleted; in seconds */
+      messageAutoDeleteTime              : Option[Int]
+      /* Optional. True, if aggressive anti-spam checks are enabled 
+      in the supergroup. The field is only available to chat 
+      administrators. */
+      hasAggressiveAntiSpamEnabled       : Option[Boolean]
+      /* Optional. True, if non-administrators can only get the list 
+      of bots and administrators in the chat */
+      hasHiddenMembers                   : Option[Boolean]
+      /* Optional. True, if messages from the chat can't be 
+      forwarded to other chats */
+      hasProtectedContent                : Option[Boolean]
+      /* Optional. True, if new chat members will have access to old 
+      messages; available only to chat administrators */
+      hasVisibleHistory                  : Option[Boolean]
+      /* Optional. For supergroups, name of the group sticker set */
+      stickerSetName                     : Option[String]
+      /* Optional. True, if the bot can change the group sticker set */
+      canSetStickerSet                   : Option[Boolean]
+      /* Optional. For supergroups, the name of the group's custom 
+      emoji sticker set. Custom emoji from this set can be used by 
+      all users and bots in the group. */
+      customEmojiStickerSetName          : Option[String]
+      /* Optional. Unique identifier for the linked chat, i.e. the 
+      discussion group identifier for a channel and vice versa; 
+      for supergroups and channel chats. This identifier may be 
+      greater than 32 bits and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it is 
+      smaller than 52 bits, so a signed 64 bit integer or 
+      double-precision float type are safe for storing this 
+      identifier. */
+      linkedChatId                       : Option[Long]
+      /* Optional. For supergroups, the location to which the 
+      supergroup is connected */
+      location                           : Option[ChatLocation]
+    }
+           
     /* This object represents one button of an inline keyboard. You must use exactly 
       one of the optional fields.  */
     InlineKeyboardButton {
@@ -3805,13 +3949,15 @@ namespace telegramium {
       is allowed by their privacy settings. */
       url                          : Option[String]
       /* Optional. Data to be sent in a callback query to the bot 
-      when button is pressed, 1-64 bytes */
+      when button is pressed, 1-64 bytes. Not supported for 
+      messages sent on behalf of a Telegram Business account. */
       callbackData                 : Option[String]
       /* Optional. Description of the Web App that will be launched 
       when the user presses the button. The Web App will be able 
       to send an arbitrary message on behalf of the user using the 
       method answerWebAppQuery. Available only in private chats 
-      between a user and the bot. */
+      between a user and the bot. Not supported for messages sent 
+      on behalf of a Telegram Business account. */
       webApp                       : Option[WebAppInfo]
       /* Optional. An HTTPS URL used to automatically authorize the 
       user. Can be used as a replacement for the Telegram Login 
@@ -3821,19 +3967,23 @@ namespace telegramium {
       to select one of their chats, open that chat and insert the 
       bot's username and the specified inline query in the input 
       field. May be empty, in which case just the bot's username 
-      will be inserted. */
+      will be inserted. Not supported for messages sent on behalf 
+      of a Telegram Business account. */
       switchInlineQuery            : Option[String]
       /* Optional. If set, pressing the button will insert the bot's 
       username and the specified inline query in the current 
       chat's input field. May be empty, in which case only the 
       bot's username will be inserted. This offers a quick way for 
       the user to open your bot in inline mode in the same chat - 
-      good for selecting something from multiple options. */
+      good for selecting something from multiple options. Not 
+      supported in channels and for messages sent on behalf of a 
+      Telegram Business account. */
       switchInlineQueryCurrentChat : Option[String]
       /* Optional. If set, pressing the button will prompt the user 
       to select one of their chats of the specified type, open 
       that chat and insert the bot's username and the specified 
-      inline query in the input field */
+      inline query in the input field. Not supported for messages 
+      sent on behalf of a Telegram Business account. */
       switchInlineQueryChosenChat  : Option[SwitchInlineQueryChosenChat]
       /* Optional. Description of the game that will be launched 
       when the user presses the button. NOTE: This type of button 
@@ -3865,7 +4015,7 @@ namespace telegramium {
     }
            
     /* This object contains information about a user that was shared with the bot 
-      using a KeyboardButtonRequestUser button.  */
+      using a KeyboardButtonRequestUsers button.  */
     SharedUser {
       /* Identifier of the shared user. This number may have more 
       than 32 significant bits and some programming languages may 
@@ -4053,8 +4203,8 @@ namespace telegramium {
       /* Information about a chat in the business account. The bot 
       may not have access to the chat or the corresponding user. */
       chat                 : Chat
-      /* A JSON-serialized list of identifiers of deleted messages 
-      in the chat of the business account */
+      /* The list of identifiers of deleted messages in the chat of 
+      the business account */
       messageIds           : List[Int]
     }
            
@@ -4353,9 +4503,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -4386,9 +4534,16 @@ namespace telegramium {
           messageThreadId       : Option[Int]
           /* Poll question, 1-300 characters */
           question              : String
-          /* A JSON-serialized list of answer options, 2-10 strings 
-          1-100 characters each */
-          options               : List[String]
+          /* Mode for parsing entities in the question. See formatting 
+          options for more details. Currently, only custom emoji 
+          entities are allowed */
+          questionParseMode     : Option[String]
+          /* A JSON-serialized list of special entities that appear in 
+          the poll question. It can be specified instead of 
+          question_parse_mode */
+          questionEntities      : List[MessageEntity]
+          /* A JSON-serialized list of 2-10 answer options */
+          options               : List[InputPollOption]
           /* True, if the poll needs to be anonymous, defaults to True */
           isAnonymous           : Option[Boolean]
           /* Poll type, “quiz” or “regular”, defaults to “regular” */
@@ -4407,8 +4562,8 @@ namespace telegramium {
           formatting options for more details. */
           explanationParseMode  : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
-          the poll explanation, which can be specified instead of 
-          parse_mode */
+          the poll explanation. It can be specified instead of 
+          explanation_parse_mode */
           explanationEntities   : List[MessageEntity]
           /* Amount of time in seconds the poll will be active after 
           creation, 5-600. Can't be used together with close_date. */
@@ -4431,9 +4586,7 @@ namespace telegramium {
           replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup           : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -4478,9 +4631,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -4629,8 +4780,10 @@ namespace telegramium {
           /* The radius of uncertainty for the location, measured in 
           meters; 0-1500 */
           horizontalAccuracy   : Option[Float]
-          /* Period in seconds for which the location will be updated 
-          (see Live Locations, should be between 60 and 86400. */
+          /* Period in seconds during which the location will be updated 
+          (see Live Locations, should be between 60 and 86400, or 
+          0x7FFFFFFF for live locations that can be edited 
+          indefinitely. */
           livePeriod           : Option[Int]
           /* For live locations, a direction in which the user is 
           moving, in degrees. Must be between 1 and 360 if specified. */
@@ -4649,9 +4802,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -4771,9 +4922,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -4973,8 +5122,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* A JSON-serialized object for an inline keyboard. If empty, 
           one 'Play game_title' button will be shown. If not empty, 
-          the first button must launch the game. Not supported for 
-          messages sent on behalf of a business account. */
+          the first button must launch the game. */
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Message]
       
@@ -5018,9 +5166,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -5161,6 +5307,14 @@ namespace telegramium {
           latitude             : Float
           /* Longitude of new location */
           longitude            : Float
+          /* New period in seconds during which the location can be 
+          updated, starting from the message send date. If 0x7FFFFFFF 
+          is specified, then the location can be updated forever. 
+          Otherwise, the new value must not exceed the current 
+          live_period by more than a day, and the live location 
+          expiration date must remain within the next 90 days. If not 
+          specified, then live_period remains unchanged */
+          livePeriod           : Option[Int]
           /* The radius of uncertainty for the location, measured in 
           meters; 0-1500 */
           horizontalAccuracy   : Option[Float]
@@ -5284,7 +5438,7 @@ namespace telegramium {
           replyParameters     : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup         : Option[KeyboardMarkup]
         } => Method[MessageId]
       
@@ -5330,9 +5484,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -5546,9 +5698,7 @@ namespace telegramium {
           replyParameters             : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup                 : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -5671,9 +5821,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -5806,9 +5954,10 @@ namespace telegramium {
       
         /* Use this method to send audio files, if you want Telegram clients to display 
           the file as a playable voice message. For this to work, your audio must be in an 
-          .OGG file encoded with OPUS (other formats may be sent as Audio or Document). On 
-          success, the sent Message is returned. Bots can currently send voice messages of 
-          up to 50 MB in size, this limit may be changed in the future.  */
+          .OGG file encoded with OPUS, or in .MP3 format, or in .M4A format (other formats 
+          may be sent as Audio or Document). On success, the sent Message is returned. 
+          Bots can currently send voice messages of up to 50 MB in size, this limit may be 
+          changed in the future.  */
         def sendVoice {
           /* Unique identifier of the business connection on behalf of 
           which the message will be sent */
@@ -5845,9 +5994,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -5902,7 +6049,8 @@ namespace telegramium {
           /* Pass True if the administrator can post stories to the chat */
           canPostStories      : Option[Boolean]
           /* Pass True if the administrator can edit stories posted by 
-          other users */
+          other users, post stories to the chat page, pin chat 
+          stories, and access the chat's story archive */
           canEditStories      : Option[Boolean]
           /* Pass True if the administrator can delete stories posted by 
           other users */
@@ -6134,9 +6282,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -6153,14 +6299,14 @@ namespace telegramium {
           stickerSetName : String
         } => Method[Boolean]
       
-        /* Use this method to get up to date information about the chat. Returns a Chat 
-          object on success.  */
+        /* Use this method to get up-to-date information about the chat. Returns a 
+          ChatFullInfo object on success.  */
         def getChat {
           /* Unique identifier for the target chat or username of the 
           target supergroup or channel (in the format 
           &#064;channelusername) */
           chatId : ChatId
-        } => Method[Chat]
+        } => Method[ChatFullInfo]
       
         /* Use this method to remove webhook integration if you decide to switch back to 
           getUpdates. Returns True on success.  */
@@ -6301,9 +6447,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -6436,8 +6580,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove reply keyboard or to force a reply from the user. Not 
-          supported for messages sent on behalf of a business account. */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
@@ -6553,9 +6696,7 @@ namespace telegramium {
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
-          remove a reply keyboard or to force a reply from the user. 
-          Not supported for messages sent on behalf of a business 
-          account */
+          remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
