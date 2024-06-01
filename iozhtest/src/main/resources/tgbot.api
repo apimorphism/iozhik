@@ -222,6 +222,9 @@ namespace telegramium {
         message, if it is a text message and link preview options 
         were changed */
         linkPreviewOptions            : Option[LinkPreviewOptions]
+        /* Optional. Unique identifier of the message effect added to 
+        the message */
+        effectId                      : Option[String]
         /* Optional. Message is an animation, information about the 
         animation. For backward compatibility, when this field is 
         set, the document field will also be set */
@@ -254,6 +257,9 @@ namespace telegramium {
         like usernames, URLs, bot commands, etc. that appear in the 
         caption */
         captionEntities               : List[MessageEntity]
+        /* Optional. True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia         : Option[Boolean]
         /* Optional. True, if the message media is covered by a 
         spoiler animation */
         hasMediaSpoiler               : Option[Boolean]
@@ -845,7 +851,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media           : String
+        media                 : String
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
@@ -855,25 +861,28 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail       : Option[IFile]
+        thumbnail             : Option[IFile]
         /* Optional. Caption of the animation to be sent, 0-1024 
         characters after entities parsing */
-        caption         : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the animation 
         caption. See formatting options for more details. */
-        parseMode       : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Animation width */
-        width           : Option[Int]
+        width                 : Option[Int]
         /* Optional. Animation height */
-        height          : Option[Int]
+        height                : Option[Int]
         /* Optional. Animation duration in seconds */
-        duration        : Option[Int]
+        duration              : Option[Int]
         /* Optional. Pass True if the animation needs to be covered 
         with a spoiler animation */
-        hasSpoiler      : Option[Boolean]
+        hasSpoiler            : Option[Boolean]
       }
              
       /* Represents a photo to be sent.  */
@@ -884,19 +893,22 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media           : String
+        media                 : String
         /* Optional. Caption of the photo to be sent, 0-1024 
         characters after entities parsing */
-        caption         : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the photo caption. 
         See formatting options for more details. */
-        parseMode       : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Pass True if the photo needs to be covered with a 
         spoiler animation */
-        hasSpoiler      : Option[Boolean]
+        hasSpoiler            : Option[Boolean]
       }
              
       /* Represents a video to be sent.  */
@@ -907,7 +919,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media             : String
+        media                 : String
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
@@ -917,28 +929,31 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail         : Option[IFile]
+        thumbnail             : Option[IFile]
         /* Optional. Caption of the video to be sent, 0-1024 
         characters after entities parsing */
-        caption           : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the video caption. 
         See formatting options for more details. */
-        parseMode         : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities   : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Video width */
-        width             : Option[Int]
+        width                 : Option[Int]
         /* Optional. Video height */
-        height            : Option[Int]
+        height                : Option[Int]
         /* Optional. Video duration in seconds */
-        duration          : Option[Int]
+        duration              : Option[Int]
         /* Optional. Pass True if the uploaded video is suitable for 
         streaming */
-        supportsStreaming : Option[Boolean]
+        supportsStreaming     : Option[Boolean]
         /* Optional. Pass True if the video needs to be covered with a 
         spoiler animation */
-        hasSpoiler        : Option[Boolean]
+        hasSpoiler            : Option[Boolean]
       }
              
       /* Represents a general file to be sent.  */
@@ -1022,38 +1037,41 @@ namespace telegramium {
       InlineQueryResultGif {
         type : "gif:0"
         /* Unique identifier for this result, 1-64 bytes */
-        id                  : String
+        id                    : String
         /* A valid URL for the GIF file. File size must not exceed 1MB */
-        gifUrl              : String
+        gifUrl                : String
         /* Optional. Width of the GIF */
-        gifWidth            : Option[Int]
+        gifWidth              : Option[Int]
         /* Optional. Height of the GIF */
-        gifHeight           : Option[Int]
+        gifHeight             : Option[Int]
         /* Optional. Duration of the GIF in seconds */
-        gifDuration         : Option[Int]
+        gifDuration           : Option[Int]
         /* URL of the static (JPEG or GIF) or animated (MPEG4) 
         thumbnail for the result */
-        thumbnailUrl        : String
+        thumbnailUrl          : String
         /* Optional. MIME type of the thumbnail, must be one of 
         “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to 
         “image/jpeg” */
-        thumbnailMimeType   : Option[String]
+        thumbnailMimeType     : Option[String]
         /* Optional. Title for the result */
-        title               : Option[String]
+        title                 : Option[String]
         /* Optional. Caption of the GIF file to be sent, 0-1024 
         characters after entities parsing */
-        caption             : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the caption. See 
         formatting options for more details. */
-        parseMode           : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities     : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Inline keyboard attached to the message */
-        replyMarkup         : Option[InlineKeyboardMarkup]
+        replyMarkup           : Option[InlineKeyboardMarkup]
         /* Optional. Content of the message to be sent instead of the 
         GIF animation */
-        inputMessageContent : Option[InputMessageContent]
+        inputMessageContent   : Option[InputMessageContent]
       }
              
       /* Represents a venue. By default, the venue will be sent by the user. 
@@ -1130,34 +1148,37 @@ namespace telegramium {
       InlineQueryResultPhoto {
         type : "photo:3"
         /* Unique identifier for this result, 1-64 bytes */
-        id                  : String
+        id                    : String
         /* A valid URL of the photo. Photo must be in JPEG format. 
         Photo size must not exceed 5MB */
-        photoUrl            : String
+        photoUrl              : String
         /* URL of the thumbnail for the photo */
-        thumbnailUrl        : String
+        thumbnailUrl          : String
         /* Optional. Width of the photo */
-        photoWidth          : Option[Int]
+        photoWidth            : Option[Int]
         /* Optional. Height of the photo */
-        photoHeight         : Option[Int]
+        photoHeight           : Option[Int]
         /* Optional. Title for the result */
-        title               : Option[String]
+        title                 : Option[String]
         /* Optional. Short description of the result */
-        description         : Option[String]
+        description           : Option[String]
         /* Optional. Caption of the photo to be sent, 0-1024 
         characters after entities parsing */
-        caption             : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the photo caption. 
         See formatting options for more details. */
-        parseMode           : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities     : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Inline keyboard attached to the message */
-        replyMarkup         : Option[InlineKeyboardMarkup]
+        replyMarkup           : Option[InlineKeyboardMarkup]
         /* Optional. Content of the message to be sent instead of the 
         photo */
-        inputMessageContent : Option[InputMessageContent]
+        inputMessageContent   : Option[InputMessageContent]
       }
              
       /* Represents a link to a file. By default, this file will be sent by the user 
@@ -1289,39 +1310,42 @@ namespace telegramium {
       InlineQueryResultMpeg4Gif {
         type : "mpeg4_gif:8"
         /* Unique identifier for this result, 1-64 bytes */
-        id                  : String
+        id                    : String
         /* A valid URL for the MPEG4 file. File size must not exceed 
         1MB */
-        mpeg4Url            : String
+        mpeg4Url              : String
         /* Optional. Video width */
-        mpeg4Width          : Option[Int]
+        mpeg4Width            : Option[Int]
         /* Optional. Video height */
-        mpeg4Height         : Option[Int]
+        mpeg4Height           : Option[Int]
         /* Optional. Video duration in seconds */
-        mpeg4Duration       : Option[Int]
+        mpeg4Duration         : Option[Int]
         /* URL of the static (JPEG or GIF) or animated (MPEG4) 
         thumbnail for the result */
-        thumbnailUrl        : String
+        thumbnailUrl          : String
         /* Optional. MIME type of the thumbnail, must be one of 
         “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to 
         “image/jpeg” */
-        thumbnailMimeType   : Option[String]
+        thumbnailMimeType     : Option[String]
         /* Optional. Title for the result */
-        title               : Option[String]
+        title                 : Option[String]
         /* Optional. Caption of the MPEG-4 file to be sent, 0-1024 
         characters after entities parsing */
-        caption             : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the caption. See 
         formatting options for more details. */
-        parseMode           : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities     : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Inline keyboard attached to the message */
-        replyMarkup         : Option[InlineKeyboardMarkup]
+        replyMarkup           : Option[InlineKeyboardMarkup]
         /* Optional. Content of the message to be sent instead of the 
         video animation */
-        inputMessageContent : Option[InputMessageContent]
+        inputMessageContent   : Option[InputMessageContent]
       }
              
       /* Represents a link to a video animation (H.264/MPEG-4 AVC video without sound) 
@@ -1332,25 +1356,28 @@ namespace telegramium {
       InlineQueryResultCachedMpeg4Gif {
         type : "mpeg4_gif:9"
         /* Unique identifier for this result, 1-64 bytes */
-        id                  : String
+        id                    : String
         /* A valid file identifier for the MPEG4 file */
-        mpeg4FileId         : String
+        mpeg4FileId           : String
         /* Optional. Title for the result */
-        title               : Option[String]
+        title                 : Option[String]
         /* Optional. Caption of the MPEG-4 file to be sent, 0-1024 
         characters after entities parsing */
-        caption             : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the caption. See 
         formatting options for more details. */
-        parseMode           : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities     : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Inline keyboard attached to the message */
-        replyMarkup         : Option[InlineKeyboardMarkup]
+        replyMarkup           : Option[InlineKeyboardMarkup]
         /* Optional. Content of the message to be sent instead of the 
         video animation */
-        inputMessageContent : Option[InputMessageContent]
+        inputMessageContent   : Option[InputMessageContent]
       }
              
       /* Represents a link to a file stored on the Telegram servers. By default, this 
@@ -1390,27 +1417,30 @@ namespace telegramium {
       InlineQueryResultCachedVideo {
         type : "video:11"
         /* Unique identifier for this result, 1-64 bytes */
-        id                  : String
+        id                    : String
         /* A valid file identifier for the video file */
-        videoFileId         : String
+        videoFileId           : String
         /* Title for the result */
-        title               : String
+        title                 : String
         /* Optional. Short description of the result */
-        description         : Option[String]
+        description           : Option[String]
         /* Optional. Caption of the video to be sent, 0-1024 
         characters after entities parsing */
-        caption             : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the video caption. 
         See formatting options for more details. */
-        parseMode           : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities     : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Inline keyboard attached to the message */
-        replyMarkup         : Option[InlineKeyboardMarkup]
+        replyMarkup           : Option[InlineKeyboardMarkup]
         /* Optional. Content of the message to be sent instead of the 
         video */
-        inputMessageContent : Option[InputMessageContent]
+        inputMessageContent   : Option[InputMessageContent]
       }
              
       /* Represents a Game.  */
@@ -1431,27 +1461,30 @@ namespace telegramium {
       InlineQueryResultCachedPhoto {
         type : "photo:13"
         /* Unique identifier for this result, 1-64 bytes */
-        id                  : String
+        id                    : String
         /* A valid file identifier of the photo */
-        photoFileId         : String
+        photoFileId           : String
         /* Optional. Title for the result */
-        title               : Option[String]
+        title                 : Option[String]
         /* Optional. Short description of the result */
-        description         : Option[String]
+        description           : Option[String]
         /* Optional. Caption of the photo to be sent, 0-1024 
         characters after entities parsing */
-        caption             : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the photo caption. 
         See formatting options for more details. */
-        parseMode           : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities     : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Inline keyboard attached to the message */
-        replyMarkup         : Option[InlineKeyboardMarkup]
+        replyMarkup           : Option[InlineKeyboardMarkup]
         /* Optional. Content of the message to be sent instead of the 
         photo */
-        inputMessageContent : Option[InputMessageContent]
+        inputMessageContent   : Option[InputMessageContent]
       }
              
       /* Represents a link to a sticker stored on the Telegram servers. By default, this 
@@ -1478,40 +1511,43 @@ namespace telegramium {
       InlineQueryResultVideo {
         type : "video:15"
         /* Unique identifier for this result, 1-64 bytes */
-        id                  : String
+        id                    : String
         /* A valid URL for the embedded video player or video file */
-        videoUrl            : String
+        videoUrl              : String
         /* MIME type of the content of the video URL, “text/html” or 
         “video/mp4” */
-        mimeType            : String
+        mimeType              : String
         /* URL of the thumbnail (JPEG only) for the video */
-        thumbnailUrl        : String
+        thumbnailUrl          : String
         /* Title for the result */
-        title               : String
+        title                 : String
         /* Optional. Caption of the video to be sent, 0-1024 
         characters after entities parsing */
-        caption             : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the video caption. 
         See formatting options for more details. */
-        parseMode           : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities     : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Video width */
-        videoWidth          : Option[Int]
+        videoWidth            : Option[Int]
         /* Optional. Video height */
-        videoHeight         : Option[Int]
+        videoHeight           : Option[Int]
         /* Optional. Video duration in seconds */
-        videoDuration       : Option[Int]
+        videoDuration         : Option[Int]
         /* Optional. Short description of the result */
-        description         : Option[String]
+        description           : Option[String]
         /* Optional. Inline keyboard attached to the message */
-        replyMarkup         : Option[InlineKeyboardMarkup]
+        replyMarkup           : Option[InlineKeyboardMarkup]
         /* Optional. Content of the message to be sent instead of the 
         video. This field is required if InlineQueryResultVideo is 
         used to send an HTML-page as a result (e.g., a YouTube 
         video). */
-        inputMessageContent : Option[InputMessageContent]
+        inputMessageContent   : Option[InputMessageContent]
       }
              
       /* Represents a link to an MP3 audio file stored on the Telegram servers. By 
@@ -1587,25 +1623,28 @@ namespace telegramium {
       InlineQueryResultCachedGif {
         type : "gif:18"
         /* Unique identifier for this result, 1-64 bytes */
-        id                  : String
+        id                    : String
         /* A valid file identifier for the GIF file */
-        gifFileId           : String
+        gifFileId             : String
         /* Optional. Title for the result */
-        title               : Option[String]
+        title                 : Option[String]
         /* Optional. Caption of the GIF file to be sent, 0-1024 
         characters after entities parsing */
-        caption             : Option[String]
+        caption               : Option[String]
         /* Optional. Mode for parsing entities in the caption. See 
         formatting options for more details. */
-        parseMode           : Option[ParseMode]
+        parseMode             : Option[ParseMode]
         /* Optional. List of special entities that appear in the 
         caption, which can be specified instead of parse_mode */
-        captionEntities     : List[MessageEntity]
+        captionEntities       : List[MessageEntity]
+        /* Optional. Pass True, if the caption must be shown above the 
+        message media */
+        showCaptionAboveMedia : Option[Boolean]
         /* Optional. Inline keyboard attached to the message */
-        replyMarkup         : Option[InlineKeyboardMarkup]
+        replyMarkup           : Option[InlineKeyboardMarkup]
         /* Optional. Content of the message to be sent instead of the 
         GIF animation */
-        inputMessageContent : Option[InputMessageContent]
+        inputMessageContent   : Option[InputMessageContent]
       }
              
       /* Represents a link to a voice recording in an .OGG container encoded with OPUS. 
@@ -1675,13 +1714,17 @@ namespace telegramium {
         /* Bot-defined invoice payload, 1-128 bytes. This will not be 
         displayed to the user, use for your internal processes. */
         payload                   : String
-        /* Payment provider token, obtained via &#064;BotFather */
-        providerToken             : String
-        /* Three-letter ISO 4217 currency code, see more on currencies */
+        /* Optional. Payment provider token, obtained via 
+        &#064;BotFather. Pass an empty string for payments in 
+        Telegram Stars. */
+        providerToken             : Option[String]
+        /* Three-letter ISO 4217 currency code, see more on 
+        currencies. Pass “XTR” for payments in Telegram Stars. */
         currency                  : String
         /* Price breakdown, a JSON-serialized list of components (e.g. 
         product price, tax, discount, delivery cost, delivery tax, 
-        bonus, etc.) */
+        bonus, etc.). Must contain exactly one item for payments in 
+        Telegram Stars. */
         prices                    : List[LabeledPrice]
         /* Optional. The maximum accepted amount for tips in the 
         smallest units of the currency (integer, not float/double). 
@@ -1689,7 +1732,8 @@ namespace telegramium {
         max_tip_amount = 145. See the exp parameter in 
         currencies.json, it shows the number of digits past the 
         decimal point for each currency (2 for the majority of 
-        currencies). Defaults to 0 */
+        currencies). Defaults to 0. Not supported for payments in 
+        Telegram Stars. */
         maxTipAmount              : Option[Int]
         /* Optional. A JSON-serialized array of suggested amounts of 
         tip in the smallest units of the currency (integer, not 
@@ -1713,25 +1757,30 @@ namespace telegramium {
         /* Optional. Photo height */
         photoHeight               : Option[Int]
         /* Optional. Pass True if you require the user's full name to 
-        complete the order */
+        complete the order. Ignored for payments in Telegram Stars. */
         needName                  : Option[Boolean]
         /* Optional. Pass True if you require the user's phone number 
-        to complete the order */
+        to complete the order. Ignored for payments in Telegram 
+        Stars. */
         needPhoneNumber           : Option[Boolean]
         /* Optional. Pass True if you require the user's email address 
-        to complete the order */
+        to complete the order. Ignored for payments in Telegram 
+        Stars. */
         needEmail                 : Option[Boolean]
         /* Optional. Pass True if you require the user's shipping 
-        address to complete the order */
+        address to complete the order. Ignored for payments in 
+        Telegram Stars. */
         needShippingAddress       : Option[Boolean]
         /* Optional. Pass True if the user's phone number should be 
-        sent to provider */
+        sent to the provider. Ignored for payments in Telegram 
+        Stars. */
         sendPhoneNumberToProvider : Option[Boolean]
         /* Optional. Pass True if the user's email address should be 
-        sent to provider */
+        sent to the provider. Ignored for payments in Telegram 
+        Stars. */
         sendEmailToProvider       : Option[Boolean]
         /* Optional. Pass True if the final price depends on the 
-        shipping method */
+        shipping method. Ignored for payments in Telegram Stars. */
         isFlexible                : Option[Boolean]
       }
              
@@ -1964,75 +2013,80 @@ namespace telegramium {
         customEmojiId : String
       }
              
+      /* expandable_blockquote  */
+      ExpandableBlockquoteMessageEntity {
+        type : "expandable_blockquote:5"
+      }
+             
       /* spoiler  */
       SpoilerMessageEntity {
-        type : "spoiler:5"
+        type : "spoiler:6"
       }
              
       /* email  */
       EmailMessageEntity {
-        type : "email:6"
+        type : "email:7"
       }
              
       /* blockquote  */
       BlockquoteMessageEntity {
-        type : "blockquote:7"
+        type : "blockquote:8"
       }
              
       /* bold  */
       BoldMessageEntity {
-        type : "bold:8"
+        type : "bold:9"
       }
              
       /* pre  */
       PreMessageEntity {
-        type : "pre:9"
+        type : "pre:10"
         /* Optional, the programming language of the entity text */
         language : Option[String]
       }
              
       /* italic  */
       ItalicMessageEntity {
-        type : "italic:10"
+        type : "italic:11"
       }
              
       /* strikethrough  */
       StrikethroughMessageEntity {
-        type : "strikethrough:11"
+        type : "strikethrough:12"
       }
              
       /* underline  */
       UnderlineMessageEntity {
-        type : "underline:12"
+        type : "underline:13"
       }
              
       /* hashtag  */
       HashtagMessageEntity {
-        type : "hashtag:13"
+        type : "hashtag:14"
       }
              
       /* text_mention  */
       TextMentionMessageEntity {
-        type : "text_mention:14"
+        type : "text_mention:15"
         /* the mentioned user */
         user : User
       }
              
       /* text_link  */
       TextLinkMessageEntity {
-        type : "text_link:15"
+        type : "text_link:16"
         /* URL that will be opened after user taps on the text */
         url  : String
       }
              
       /* url  */
       UrlMessageEntity {
-        type : "url:16"
+        type : "url:17"
       }
              
       /* phone_number  */
       PhoneNumberMessageEntity {
-        type : "phone_number:17"
+        type : "phone_number:18"
       }
              
     }
@@ -2433,8 +2487,7 @@ namespace telegramium {
       business account, or a user edited an existing connection 
       with the bot */
       businessConnection      : Option[BusinessConnection]
-      /* Optional. New non-service message from a connected business 
-      account */
+      /* Optional. New message from a connected business account */
       businessMessage         : Option[Message]
       /* Optional. New version of a message from a connected 
       business account */
@@ -2536,10 +2589,9 @@ namespace telegramium {
   
     }
            
-    /* This object represents one button of the reply keyboard. For simple text 
-      buttons, String can be used instead of this object to specify the button text. 
-      The optional fields web_app, request_users, request_chat, request_contact, 
-      request_location, and request_poll are mutually exclusive.  */
+    /* This object represents one button of the reply keyboard. At most one of the 
+      optional fields must be used to specify type of the button. For simple text 
+      buttons, String can be used instead of this object to specify the button text.  */
     KeyboardButton {
       /* Text of the button. If none of the optional fields are 
       used, it will be sent as a message when the button is 
@@ -2946,7 +2998,8 @@ namespace telegramium {
            
     /* This object contains basic information about a successful payment.  */
     SuccessfulPayment {
-      /* Three-letter ISO 4217 currency code */
+      /* Three-letter ISO 4217 currency code, or “XTR” for payments 
+      in Telegram Stars */
       currency                : String
       /* Total price in the smallest units of the currency (integer, 
       not float/double). For example, for a price of US$ 1.45 pass 
@@ -3021,7 +3074,8 @@ namespace telegramium {
       join the chat; for joining by invite link events only. */
       inviteLink              : Option[ChatInviteLink]
       /* Optional. True, if the user joined the chat after sending a 
-      direct join request and being approved by an administrator */
+      direct join request without using an invite link and being 
+      approved by an administrator */
       viaJoinRequest          : Option[Boolean]
       /* Optional. True, if the user joined the chat via a chat 
       folder invite link */
@@ -3352,7 +3406,8 @@ namespace telegramium {
       /* Unique bot deep-linking parameter that can be used to 
       generate this invoice */
       startParameter : String
-      /* Three-letter ISO 4217 currency code */
+      /* Three-letter ISO 4217 currency code, or “XTR” for payments 
+      in Telegram Stars */
       currency       : String
       /* Total price in the smallest units of the currency (integer, 
       not float/double). For example, for a price of US$ 1.45 pass 
@@ -3713,7 +3768,8 @@ namespace telegramium {
       id               : String
       /* User who sent the query */
       from             : User
-      /* Three-letter ISO 4217 currency code */
+      /* Three-letter ISO 4217 currency code, or “XTR” for payments 
+      in Telegram Stars */
       currency         : String
       /* Total price in the smallest units of the currency (integer, 
       not float/double). For example, for a price of US$ 1.45 pass 
@@ -3879,7 +3935,8 @@ namespace telegramium {
       they can send messages */
       joinToSendMessages                 : Option[Boolean]
       /* Optional. True, if all users directly joining the 
-      supergroup need to be approved by supergroup administrators */
+      supergroup without using an invite link need to be approved 
+      by supergroup administrators */
       joinByRequest                      : Option[Boolean]
       /* Optional. Description, for groups, supergroups and channel 
       chats */
@@ -3938,8 +3995,8 @@ namespace telegramium {
       location                           : Option[ChatLocation]
     }
            
-    /* This object represents one button of an inline keyboard. You must use exactly 
-      one of the optional fields.  */
+    /* This object represents one button of an inline keyboard. Exactly one of the 
+      optional fields must be used to specify type of the button.  */
     InlineKeyboardButton {
       /* Label text on the button */
       text                         : String
@@ -3989,9 +4046,11 @@ namespace telegramium {
       when the user presses the button. NOTE: This type of button 
       must always be the first button in the first row. */
       callbackGame                 : Option[CallbackGame]
-      /* Optional. Specify True, to send a Pay button. NOTE: This 
-      type of button must always be the first button in the first 
-      row and can only be used in invoice messages. */
+      /* Optional. Specify True, to send a Pay button. Substrings 
+      “⭐” and “XTR” in the buttons's text will be replaced with a 
+      Telegram Star icon. NOTE: This type of button must always be 
+      the first button in the first row and can only be used in 
+      invoice messages. */
       pay                          : Option[Boolean]
     }
            
@@ -4499,6 +4558,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -4582,6 +4644,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent        : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId       : Option[String]
           /* Description of the message to reply to */
           replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -4627,6 +4692,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -4798,6 +4866,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -4918,6 +4989,9 @@ namespace telegramium {
           disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -4975,20 +5049,24 @@ namespace telegramium {
           /* Bot-defined invoice payload, 1-128 bytes. This will not be 
           displayed to the user, use for your internal processes. */
           payload                   : String
-          /* Payment provider token, obtained via BotFather */
-          providerToken             : String
-          /* Three-letter ISO 4217 currency code, see more on currencies */
+          /* Payment provider token, obtained via &#064;BotFather. Pass 
+          an empty string for payments in Telegram Stars. */
+          providerToken             : Option[String]
+          /* Three-letter ISO 4217 currency code, see more on 
+          currencies. Pass “XTR” for payments in Telegram Stars. */
           currency                  : String
           /* Price breakdown, a JSON-serialized list of components (e.g. 
           product price, tax, discount, delivery cost, delivery tax, 
-          bonus, etc.) */
+          bonus, etc.). Must contain exactly one item for payments in 
+          Telegram Stars. */
           prices                    : List[LabeledPrice]
           /* The maximum accepted amount for tips in the smallest units 
           of the currency (integer, not float/double). For example, 
           for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See 
           the exp parameter in currencies.json, it shows the number of 
           digits past the decimal point for each currency (2 for the 
-          majority of currencies). Defaults to 0 */
+          majority of currencies). Defaults to 0. Not supported for 
+          payments in Telegram Stars. */
           maxTipAmount              : Option[Int]
           /* A JSON-serialized array of suggested amounts of tips in the 
           smallest units of the currency (integer, not float/double). 
@@ -5010,24 +5088,25 @@ namespace telegramium {
           /* Photo height */
           photoHeight               : Option[Int]
           /* Pass True if you require the user's full name to complete 
-          the order */
+          the order. Ignored for payments in Telegram Stars. */
           needName                  : Option[Boolean]
           /* Pass True if you require the user's phone number to 
-          complete the order */
+          complete the order. Ignored for payments in Telegram Stars. */
           needPhoneNumber           : Option[Boolean]
           /* Pass True if you require the user's email address to 
-          complete the order */
+          complete the order. Ignored for payments in Telegram Stars. */
           needEmail                 : Option[Boolean]
           /* Pass True if you require the user's shipping address to 
-          complete the order */
+          complete the order. Ignored for payments in Telegram Stars. */
           needShippingAddress       : Option[Boolean]
           /* Pass True if the user's phone number should be sent to the 
-          provider */
+          provider. Ignored for payments in Telegram Stars. */
           sendPhoneNumberToProvider : Option[Boolean]
           /* Pass True if the user's email address should be sent to the 
-          provider */
+          provider. Ignored for payments in Telegram Stars. */
           sendEmailToProvider       : Option[Boolean]
-          /* Pass True if the final price depends on the shipping method */
+          /* Pass True if the final price depends on the shipping 
+          method. Ignored for payments in Telegram Stars. */
           isFlexible                : Option[Boolean]
         } => Method[String]
       
@@ -5095,6 +5174,9 @@ namespace telegramium {
           /* Protects the contents of the sent messages from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
         } => Method[List[Message]]
@@ -5118,6 +5200,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* A JSON-serialized object for an inline keyboard. If empty, 
@@ -5162,6 +5247,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -5408,38 +5496,41 @@ namespace telegramium {
         def copyMessage {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId              : ChatId
+          chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId     : Option[Int]
+          messageThreadId       : Option[Int]
           /* Unique identifier for the chat where the original message 
           was sent (or channel username in the format 
           &#064;channelusername) */
-          fromChatId          : ChatId
+          fromChatId            : ChatId
           /* Message identifier in the chat specified in from_chat_id */
-          messageId           : Int
+          messageId             : Int
           /* New caption for media, 0-1024 characters after entities 
           parsing. If not specified, the original caption is kept */
-          caption             : Option[String]
+          caption               : Option[String]
           /* Mode for parsing entities in the new caption. See 
           formatting options for more details. */
-          parseMode           : Option[ParseMode]
+          parseMode             : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the new caption, which can be specified instead of 
           parse_mode */
-          captionEntities     : List[MessageEntity]
+          captionEntities       : List[MessageEntity]
+          /* Pass True, if the caption must be shown above the message 
+          media. Ignored if a new caption isn't specified. */
+          showCaptionAboveMedia : Option[Boolean]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification : Option[Boolean]
+          disableNotification   : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent      : Option[Boolean]
+          protectContent        : Option[Boolean]
           /* Description of the message to reply to */
-          replyParameters     : Option[ReplyParameters]
+          replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
           remove a reply keyboard or to force a reply from the user */
-          replyMarkup         : Option[KeyboardMarkup]
+          replyMarkup           : Option[KeyboardMarkup]
         } => Method[MessageId]
       
         /* As of v.4.0, Telegram clients support rounded square MPEG4 videos of up to 1 
@@ -5480,6 +5571,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -5562,20 +5656,24 @@ namespace telegramium {
           /* Bot-defined invoice payload, 1-128 bytes. This will not be 
           displayed to the user, use for your internal processes. */
           payload                   : String
-          /* Payment provider token, obtained via &#064;BotFather */
-          providerToken             : String
-          /* Three-letter ISO 4217 currency code, see more on currencies */
+          /* Payment provider token, obtained via &#064;BotFather. Pass 
+          an empty string for payments in Telegram Stars. */
+          providerToken             : Option[String]
+          /* Three-letter ISO 4217 currency code, see more on 
+          currencies. Pass “XTR” for payments in Telegram Stars. */
           currency                  : String
           /* Price breakdown, a JSON-serialized list of components (e.g. 
           product price, tax, discount, delivery cost, delivery tax, 
-          bonus, etc.) */
+          bonus, etc.). Must contain exactly one item for payments in 
+          Telegram Stars. */
           prices                    : List[LabeledPrice]
           /* The maximum accepted amount for tips in the smallest units 
           of the currency (integer, not float/double). For example, 
           for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See 
           the exp parameter in currencies.json, it shows the number of 
           digits past the decimal point for each currency (2 for the 
-          majority of currencies). Defaults to 0 */
+          majority of currencies). Defaults to 0. Not supported for 
+          payments in Telegram Stars. */
           maxTipAmount              : Option[Int]
           /* A JSON-serialized array of suggested amounts of tips in the 
           smallest units of the currency (integer, not float/double). 
@@ -5606,24 +5704,25 @@ namespace telegramium {
           /* Photo height */
           photoHeight               : Option[Int]
           /* Pass True if you require the user's full name to complete 
-          the order */
+          the order. Ignored for payments in Telegram Stars. */
           needName                  : Option[Boolean]
           /* Pass True if you require the user's phone number to 
-          complete the order */
+          complete the order. Ignored for payments in Telegram Stars. */
           needPhoneNumber           : Option[Boolean]
           /* Pass True if you require the user's email address to 
-          complete the order */
+          complete the order. Ignored for payments in Telegram Stars. */
           needEmail                 : Option[Boolean]
           /* Pass True if you require the user's shipping address to 
-          complete the order */
+          complete the order. Ignored for payments in Telegram Stars. */
           needShippingAddress       : Option[Boolean]
-          /* Pass True if the user's phone number should be sent to 
-          provider */
+          /* Pass True if the user's phone number should be sent to the 
+          provider. Ignored for payments in Telegram Stars. */
           sendPhoneNumberToProvider : Option[Boolean]
-          /* Pass True if the user's email address should be sent to 
-          provider */
+          /* Pass True if the user's email address should be sent to the 
+          provider. Ignored for payments in Telegram Stars. */
           sendEmailToProvider       : Option[Boolean]
-          /* Pass True if the final price depends on the shipping method */
+          /* Pass True if the final price depends on the shipping 
+          method. Ignored for payments in Telegram Stars. */
           isFlexible                : Option[Boolean]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
@@ -5631,6 +5730,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent            : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId           : Option[String]
           /* Description of the message to reply to */
           replyParameters           : Option[ReplyParameters]
           /* A JSON-serialized object for an inline keyboard. If empty, 
@@ -5694,6 +5796,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent              : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId             : Option[String]
           /* Description of the message to reply to */
           replyParameters             : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -5817,6 +5922,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -5990,6 +6098,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -6085,24 +6196,28 @@ namespace telegramium {
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
           channel (in the format &#064;channelusername) */
-          chatId          : Option[ChatId]
+          chatId                : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
-          messageId       : Option[Int]
+          messageId             : Option[Int]
           /* Required if chat_id and message_id are not specified. 
           Identifier of the inline message */
-          inlineMessageId : Option[String]
+          inlineMessageId       : Option[String]
           /* New caption of the message, 0-1024 characters after 
           entities parsing */
-          caption         : Option[String]
+          caption               : Option[String]
           /* Mode for parsing entities in the message caption. See 
           formatting options for more details. */
-          parseMode       : Option[ParseMode]
+          parseMode             : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities : List[MessageEntity]
+          captionEntities       : List[MessageEntity]
+          /* Pass True, if the caption must be shown above the message 
+          media. Supported only for animation, photo and video 
+          messages. */
+          showCaptionAboveMedia : Option[Boolean]
           /* A JSON-serialized object for an inline keyboard. */
-          replyMarkup     : Option[InlineKeyboardMarkup]
+          replyMarkup           : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
         /* Use this method to edit animation, audio, document, photo, or video messages. 
@@ -6230,24 +6345,24 @@ namespace telegramium {
         def sendVideo {
           /* Unique identifier of the business connection on behalf of 
           which the message will be sent */
-          businessConnectionId : Option[String]
+          businessConnectionId  : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId               : ChatId
+          chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId      : Option[Int]
+          messageThreadId       : Option[Int]
           /* Video to send. Pass a file_id as String to send a video 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a video from the 
           Internet, or upload a new video using multipart/form-data. */
-          video                : (file) IFile
+          video                 : (file) IFile
           /* Duration of sent video in seconds */
-          duration             : Option[Int]
+          duration              : Option[Int]
           /* Video width */
-          width                : Option[Int]
+          width                 : Option[Int]
           /* Video height */
-          height               : Option[Int]
+          height                : Option[Int]
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
@@ -6257,33 +6372,39 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail            : (file) Option[IFile]
+          thumbnail             : (file) Option[IFile]
           /* Video caption (may also be used when resending videos by 
           file_id), 0-1024 characters after entities parsing */
-          caption              : Option[String]
+          caption               : Option[String]
           /* Mode for parsing entities in the video caption. See 
           formatting options for more details. */
-          parseMode            : Option[ParseMode]
+          parseMode             : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities      : List[MessageEntity]
+          captionEntities       : List[MessageEntity]
+          /* Pass True, if the caption must be shown above the message 
+          media */
+          showCaptionAboveMedia : Option[Boolean]
           /* Pass True if the video needs to be covered with a spoiler 
           animation */
-          hasSpoiler           : Option[Boolean]
+          hasSpoiler            : Option[Boolean]
           /* Pass True if the uploaded video is suitable for streaming */
-          supportsStreaming    : Option[Boolean]
+          supportsStreaming     : Option[Boolean]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification  : Option[Boolean]
+          disableNotification   : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent       : Option[Boolean]
+          protectContent        : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId       : Option[String]
           /* Description of the message to reply to */
-          replyParameters      : Option[ReplyParameters]
+          replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
           remove a reply keyboard or to force a reply from the user */
-          replyMarkup          : Option[KeyboardMarkup]
+          replyMarkup           : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to set a new group sticker set for a supergroup. The bot must 
@@ -6389,31 +6510,39 @@ namespace telegramium {
           chatId : Option[Long]
         } => Method[MenuButton]
       
+        /* Refunds a successful payment in Telegram Stars. Returns True on success.  */
+        def refundStarPayment {
+          /* Identifier of the user whose payment will be refunded */
+          userId                  : Long
+          /* Telegram payment identifier */
+          telegramPaymentChargeId : String
+        } => Method[Boolean]
+      
         /* Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without 
           sound). On success, the sent Message is returned. Bots can currently send 
           animation files of up to 50 MB in size, this limit may be changed in the future.  */
         def sendAnimation {
           /* Unique identifier of the business connection on behalf of 
           which the message will be sent */
-          businessConnectionId : Option[String]
+          businessConnectionId  : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId               : ChatId
+          chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId      : Option[Int]
+          messageThreadId       : Option[Int]
           /* Animation to send. Pass a file_id as String to send an 
           animation that exists on the Telegram servers (recommended), 
           pass an HTTP URL as a String for Telegram to get an 
           animation from the Internet, or upload a new animation using 
           multipart/form-data. */
-          animation            : (file) IFile
+          animation             : (file) IFile
           /* Duration of sent animation in seconds */
-          duration             : Option[Int]
+          duration              : Option[Int]
           /* Animation width */
-          width                : Option[Int]
+          width                 : Option[Int]
           /* Animation height */
-          height               : Option[Int]
+          height                : Option[Int]
           /* Thumbnail of the file sent; can be ignored if thumbnail 
           generation for the file is supported server-side. The 
           thumbnail should be in JPEG format and less than 200 kB in 
@@ -6423,32 +6552,38 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail            : (file) Option[IFile]
+          thumbnail             : (file) Option[IFile]
           /* Animation caption (may also be used when resending 
           animation by file_id), 0-1024 characters after entities 
           parsing */
-          caption              : Option[String]
+          caption               : Option[String]
           /* Mode for parsing entities in the animation caption. See 
           formatting options for more details. */
-          parseMode            : Option[ParseMode]
+          parseMode             : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities      : List[MessageEntity]
+          captionEntities       : List[MessageEntity]
+          /* Pass True, if the caption must be shown above the message 
+          media */
+          showCaptionAboveMedia : Option[Boolean]
           /* Pass True if the animation needs to be covered with a 
           spoiler animation */
-          hasSpoiler           : Option[Boolean]
+          hasSpoiler            : Option[Boolean]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification  : Option[Boolean]
+          disableNotification   : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent       : Option[Boolean]
+          protectContent        : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId       : Option[String]
           /* Description of the message to reply to */
-          replyParameters      : Option[ReplyParameters]
+          replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
           remove a reply keyboard or to force a reply from the user */
-          replyMarkup          : Option[KeyboardMarkup]
+          replyMarkup           : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to change the bot's description, which is shown in the chat 
@@ -6576,6 +6711,9 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId      : Option[String]
           /* Description of the message to reply to */
           replyParameters      : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -6659,13 +6797,13 @@ namespace telegramium {
         def sendPhoto {
           /* Unique identifier of the business connection on behalf of 
           which the message will be sent */
-          businessConnectionId : Option[String]
+          businessConnectionId  : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId               : ChatId
+          chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
           the forum; for forum supergroups only */
-          messageThreadId      : Option[Int]
+          messageThreadId       : Option[Int]
           /* Photo to send. Pass a file_id as String to send a photo 
           that exists on the Telegram servers (recommended), pass an 
           HTTP URL as a String for Telegram to get a photo from the 
@@ -6673,31 +6811,37 @@ namespace telegramium {
           The photo must be at most 10 MB in size. The photo's width 
           and height must not exceed 10000 in total. Width and height 
           ratio must be at most 20. */
-          photo                : (file) IFile
+          photo                 : (file) IFile
           /* Photo caption (may also be used when resending photos by 
           file_id), 0-1024 characters after entities parsing */
-          caption              : Option[String]
+          caption               : Option[String]
           /* Mode for parsing entities in the photo caption. See 
           formatting options for more details. */
-          parseMode            : Option[ParseMode]
+          parseMode             : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of parse_mode */
-          captionEntities      : List[MessageEntity]
+          captionEntities       : List[MessageEntity]
+          /* Pass True, if the caption must be shown above the message 
+          media */
+          showCaptionAboveMedia : Option[Boolean]
           /* Pass True if the photo needs to be covered with a spoiler 
           animation */
-          hasSpoiler           : Option[Boolean]
+          hasSpoiler            : Option[Boolean]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification  : Option[Boolean]
+          disableNotification   : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent       : Option[Boolean]
+          protectContent        : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId       : Option[String]
           /* Description of the message to reply to */
-          replyParameters      : Option[ReplyParameters]
+          replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
           remove a reply keyboard or to force a reply from the user */
-          replyMarkup          : Option[KeyboardMarkup]
+          replyMarkup           : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to receive incoming updates using long polling (wiki). Returns 
