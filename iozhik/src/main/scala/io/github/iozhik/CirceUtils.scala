@@ -9,6 +9,7 @@ object CirceUtils {
   def genMergedCirceCodecs(parent: Struc, kind: String, typeTag: String, typet: Typet, leaves: List[Struc])(
     implicit symt: Symtable, space: Space
   ): Either[String, (String, String)] = {
+    val wrapEnumType = if (space.opts.contains("openEnums")) ".map(iozhik.OpenEnum.Known(_))" else ""
     leaves.traverse { leaf =>
       val postfix = if (leaf.fields.nonEmpty) "" else ".type"
       leaf
@@ -32,7 +33,7 @@ object CirceUtils {
         val (encs, decs) = codecs.unzip
         (
           encs.intercalate(delim),
-          "case \"" + typeTag + "\"" + s" => List[Decoder[$kind]](" + decs.map(_ + ".widen").intercalate(",") + ").reduceLeft(_ or _).map(iozhik.OpenEnum.Known(_))"
+          "case \"" + typeTag + "\"" + s" => List[Decoder[$kind]](" + decs.map(_ + ".widen").intercalate(",") + s").reduceLeft(_ or _)$wrapEnumType"
         )
       }
   }
@@ -41,6 +42,7 @@ object CirceUtils {
     implicit symt: Symtable, space: Space
   ): Either[String, (String, String)] = {
     val postfix = if (leaf.fields.nonEmpty) "" else ".type"
+    val wrapEnumType = if (space.opts.contains("openEnums")) ".map(iozhik.OpenEnum.Known(_))" else ""
     leaf
       .kind
       .map(_.name)
@@ -50,7 +52,7 @@ object CirceUtils {
           (
             s"case $typeTag: $kindName$postfix => $typeTag.asJson.mapObject(_.add(" +
               "\"" + typet.name + "\", Json.fromString(\"" + typeTag + "\")))",
-            "case \"" + typeTag + "\"" + s" => Decoder[$kindName$postfix].map(iozhik.OpenEnum.Known(_))"
+            "case \"" + typeTag + "\"" + s" => Decoder[$kindName$postfix]$wrapEnumType"
           )
         } else {
           val (enc, dec) = genEmbedsCodecs(parent, typet, leaf, kindName, typeTag, postfix)

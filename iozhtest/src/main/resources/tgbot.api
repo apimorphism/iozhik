@@ -1,6 +1,6 @@
 
 namespace telegramium {
-  namespace bots(snake circe http4s) {
+  namespace bots(snake circe http4s openEnums) {
 
     enum Emoji {
       item EmojiDice        = "🎲"

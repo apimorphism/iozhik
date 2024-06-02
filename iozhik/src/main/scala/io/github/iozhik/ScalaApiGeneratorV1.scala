@@ -127,6 +127,7 @@ class ScalaApiGeneratorV1 extends Generator {
   def genJsonCodecs(struc: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     val d = delimiter
     val useSnake = space.opts.contains("snake")
+    val useOpenEnums = space.opts.contains("openEnums")
     if (struc.isEnum) {
       if (struc.typets.nonEmpty) {
         for {
@@ -147,15 +148,18 @@ class ScalaApiGeneratorV1 extends Generator {
         } yield {
           val tag = "\"" + typet.name + "\""
           val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
+          val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
+          val unknownCase = if (useOpenEnums) s"Decoder.const(iozhik.OpenEnum.Unknown[$name](unknown))" 
+            else s"""throw iozhik.DecodingError(s"Unknown type for $name: $$unknown")"""
           val body = s"""
                         | implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
                         |   ${cases.map(_._1).intercalate(d)}
                         | }
-                        | implicit lazy val ${name.toLowerCase}Decoder: Decoder[iozhik.OpenEnum[$name]] = for {
+                        | implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = for {
                         |   fType <- Decoder[String].prepare(_.downField($tag))
                         |   value <- fType match {
                         |     ${cases.map(_._2).intercalate(d)}
-                        |     case unknown => Decoder.const(iozhik.OpenEnum.Unknown(unknown))
+                        |     case unknown => $unknownCase
                         |   }
                         | } yield value
         """.stripMargin
@@ -184,15 +188,17 @@ class ScalaApiGeneratorV1 extends Generator {
             }
         } yield {
           val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
+          val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
+          val wrapEnumType = if (useOpenEnums) ".map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(iozhik.OpenEnum.Unknown(_)))" else ""
           val body =
             s"""
               | implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
               |   ${cases.map(_._1).intercalate(d)}
               | }
-              | implicit lazy val ${name.toLowerCase}Decoder: Decoder[iozhik.OpenEnum[$name]] = {
+              | implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = {
               |   List[Decoder[$name]](
               |     ${cases.map(_._2).intercalate(",")}
-              |   ).reduceLeft(_ or _).map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(iozhik.OpenEnum.Unknown(_)))
+              |   ).reduceLeft(_ or _)$wrapEnumType
               | }
             """.stripMargin
           List(Code(
@@ -274,7 +280,7 @@ class ScalaApiGeneratorV1 extends Generator {
         } else {
           s"(_: $name.type) => ().asJson"
         }
-        val decoder = if (kind.endsWith("Req")) "" else s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
+        val decoder = if (kind.endsWith(DomPostfix)) "" else s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
         val encoder = s"implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name$postfix] = $encoderBody"
         val body = s"$encoder$delimiter$decoder"
         List(Code(

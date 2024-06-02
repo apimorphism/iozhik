@@ -19,13 +19,13 @@ object ScalaApiGeneratorUtils {
       items <- x.params.map(p => genKind(p, wrapEnumType)).sequence
       body = "[" + items.mkString(", ") + "]"
       ol = symt.resolve(x).collect {
-        case e: Struc if e.isEnum =>
+        case e: Struc if e.isEnum && space.opts.contains("openEnums") =>
           wrapEnumType(sanitize(x.name, keywords) + (if (x.params.nonEmpty) body else ""))
         }
         .getOrElse(sanitize(x.name, keywords) + (if (x.params.nonEmpty) body else ""))
     } yield ol
 
-  def wrapWithOpenEnum(tpe: String): String = "iozhik.OpenEnum[" + tpe + "]"   
+  def wrapWithOpenEnum(tpe: String): String = "iozhik.OpenEnum[" + tpe + "]"
 
   def genFieldType(x: Kind, wrapEnumType: String => String = wrapWithOpenEnum)(implicit symt: Symtable, space: Space): Either[String, String] =
     for {
@@ -35,7 +35,7 @@ object ScalaApiGeneratorUtils {
         case s: Struc
           if s.fields.isEmpty && s.usings.isEmpty && s.leaves.isEmpty && s.wrapps.isEmpty && s.leavesForBins.isEmpty =>
           sanitize(x.name, keywords) + ".type" + body
-        case e: Struc if e.isEnum =>
+        case e: Struc if e.isEnum && space.opts.contains("openEnums") =>
           wrapEnumType(sanitize(x.name, keywords) + body)
         }
         .getOrElse(sanitize(x.name, keywords) + body)
