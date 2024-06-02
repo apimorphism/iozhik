@@ -32,7 +32,7 @@ object CirceUtils {
         val (encs, decs) = codecs.unzip
         (
           encs.intercalate(delim),
-          "case \"" + typeTag + "\"" + s" => List[Decoder[$kind]](" + decs.map(_ + ".widen").intercalate(",") + ").reduceLeft(_ or _)"
+          "case \"" + typeTag + "\"" + s" => List[Decoder[$kind]](" + decs.map(_ + ".widen").intercalate(",") + ").reduceLeft(_ or _).map(iozhik.OpenEnum.Known(_))"
         )
       }
   }
@@ -50,7 +50,7 @@ object CirceUtils {
           (
             s"case $typeTag: $kindName$postfix => $typeTag.asJson.mapObject(_.add(" +
               "\"" + typet.name + "\", Json.fromString(\"" + typeTag + "\")))",
-            "case \"" + typeTag + "\"" + s" => Decoder[$kindName$postfix]"
+            "case \"" + typeTag + "\"" + s" => Decoder[$kindName$postfix].map(iozhik.OpenEnum.Known(_))"
           )
         } else {
           val (enc, dec) = genEmbedsCodecs(parent, typet, leaf, kindName, typeTag, postfix)

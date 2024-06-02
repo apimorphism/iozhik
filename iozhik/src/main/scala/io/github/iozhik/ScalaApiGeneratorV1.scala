@@ -38,9 +38,9 @@ class ScalaApiGeneratorV1 extends Generator {
 
   def sanitize(name: String): String = GeneratorUtils.sanitize(name, keywords)
 
-  def genField(x: Field, withDoc: Boolean = true, isDef: Boolean = false)(implicit symt: Symtable, space: Space): Either[String, String] = {
+  def genField(x: Field, withDoc: Boolean = true, isDef: Boolean = false, wrapEnumType: String => String = wrapWithOpenEnum)(implicit symt: Symtable, space: Space): Either[String, String] = {
     for {
-      kind <- genFieldType(x.kind)
+      kind <- genFieldType(x.kind, wrapEnumType)
     } yield {
       val d = delimiter
       val docsBody = if (withDoc) x.doc.split("\n").toList.map(_.trim).intercalate("\n* ") else ""
@@ -116,7 +116,7 @@ class ScalaApiGeneratorV1 extends Generator {
     } yield {
       val codecName = x.name.name.toLowerCase
       val encoderBody = s"""(_: $name.type) => "${x.target}".asJson"""
-      val decoderBody = s"Decoder[String].map(_ => $name)"
+      val decoderBody = s"""Decoder[String].emap(s => Either.cond(s == "${x.target}", $name, s"Expected ${x.target}"))"""
       val decoder = s"implicit lazy val ${codecName}Decoder: Decoder[$name.type] = $decoderBody"
       val encoder = s"implicit lazy val ${codecName}Encoder: Encoder[$name.type] = $encoderBody"
       val body = s"$encoder$delimiter$decoder"
@@ -151,11 +151,11 @@ class ScalaApiGeneratorV1 extends Generator {
                         | implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
                         |   ${cases.map(_._1).intercalate(d)}
                         | }
-                        | implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name] = for {
+                        | implicit lazy val ${name.toLowerCase}Decoder: Decoder[iozhik.OpenEnum[$name]] = for {
                         |   fType <- Decoder[String].prepare(_.downField($tag))
                         |   value <- fType match {
                         |     ${cases.map(_._2).intercalate(d)}
-                        |     case unknown => throw DecodingError(s"Unknown type for $name: $$unknown")
+                        |     case unknown => Decoder.const(iozhik.OpenEnum.Unknown(unknown))
                         |   }
                         | } yield value
         """.stripMargin
@@ -189,10 +189,10 @@ class ScalaApiGeneratorV1 extends Generator {
               | implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
               |   ${cases.map(_._1).intercalate(d)}
               | }
-              | implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name] = {
+              | implicit lazy val ${name.toLowerCase}Decoder: Decoder[iozhik.OpenEnum[$name]] = {
               |   List[Decoder[$name]](
               |     ${cases.map(_._2).intercalate(",")}
-              |   ).reduceLeft(_ or _)
+              |   ).reduceLeft(_ or _).map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(iozhik.OpenEnum.Unknown(_)))
               | }
             """.stripMargin
           List(Code(
@@ -274,7 +274,7 @@ class ScalaApiGeneratorV1 extends Generator {
         } else {
           s"(_: $name.type) => ().asJson"
         }
-        val decoder = s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
+        val decoder = if (kind.endsWith("Req")) "" else s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
         val encoder = s"implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name$postfix] = $encoderBody"
         val body = s"$encoder$delimiter$decoder"
         List(Code(
@@ -523,7 +523,7 @@ class ScalaApiGeneratorV1 extends Generator {
     if (docsText.nonEmpty) s"$delimiter/** $docsText */$delimiter" else ""
   }
 
-  def genStruc(x: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genStruc(x: Struc, wrapEnumType: String => String)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
     val abstractOrEnum = x.isAbstract || x.isEnum
     val usingf = x.usings
@@ -532,12 +532,12 @@ class ScalaApiGeneratorV1 extends Generator {
       .flatMap(_.fields)
     for {
       kind <- genKind(kindOrDefault)
-      fields <- requiredFieldsFirst(x.fields).traverse(genField(_, withDoc = abstractOrEnum, isDef = abstractOrEnum))
-      mixins <- x.mixins.traverse(genKind)
-      leaves <- x.leaves.traverse(genStruc)
+      fields <- requiredFieldsFirst(x.fields).traverse(genField(_, withDoc = abstractOrEnum, isDef = abstractOrEnum, wrapEnumType = wrapEnumType))
+      mixins <- x.mixins.traverse(m => genKind(m))
+      leaves <- x.leaves.traverse(genStruc(_, wrapEnumType))
       wrapps <- x.wrapps.traverse(genWrapp(kindOrDefault, _))
       enumstrs <- x.enumstrs.traverse(genEnumStr(kindOrDefault, _))
-      usings <- usingf.traverse(genField(_, isDef = abstractOrEnum))
+      usings <- usingf.traverse(genField(_, isDef = abstractOrEnum, wrapEnumType = wrapEnumType))
       upickles <- if (space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
       jsonCodecs <- if (space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
       scodecs <- if (space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
@@ -599,12 +599,12 @@ class ScalaApiGeneratorV1 extends Generator {
         imports = importKind(kind),
         packageObject = "__this_trait__",
       ))),
-      struc => genStruc(struc.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))))
+      struc => genStruc(struc.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))), wrapEnumType = wrapWithOpenEnum)
     )
 
   private def genDefunCodName(x: Defun)(implicit symt: Symtable, space: Space) =
     x.cod.fold(
-      kind => genKind(kind),
+      kind => genKind(kind, wrapWithOpenEnum),
       struc => struc.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$CodPostfix")))
     )
 
@@ -634,7 +634,7 @@ class ScalaApiGeneratorV1 extends Generator {
           imports = importKind(y),
           packageObject = "__this_trait__",
         ))),
-        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))))
+        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))), wrapEnumType = identity)
       )
       cod <- genDefunCod(x)
       domName <- x.dom.fold(
@@ -671,7 +671,7 @@ class ScalaApiGeneratorV1 extends Generator {
       kind <- genKind(x.kind)
       params <- x.dom.fold(
         _ => Right(List.empty),
-        struc => requiredFieldsFirst(struc.fields).traverse(genField(_, withDoc = false))
+        struc => requiredFieldsFirst(struc.fields).traverse(genField(_, withDoc = false, wrapEnumType = identity))
       )
       reqName = x.kind.name.capitalize + DomPostfix
       dom <- x.dom.fold(
@@ -682,7 +682,7 @@ class ScalaApiGeneratorV1 extends Generator {
         struc => genStruc(struc.copy(
           kind = Option(Kind(reqName)),
           typets = Typet("", "method", List.empty, x.kind.name, None) :: struc.typets
-        ))
+        ), wrapEnumType = identity)
       )
       cod <- genDefunCod(x)
       codName <- genDefunCodName(x)
@@ -698,7 +698,7 @@ class ScalaApiGeneratorV1 extends Generator {
       val fieldNames = reqFields.map(f => sanitize(f.name))
       val reqArgs = if (fieldNames.isEmpty) "" else fieldNames.mkString("(", ",", ")")
       val returnTypeParams = x.cod.fold(
-        kind => kind.params.map(genKind).sequence.map(_.mkString("[", ", ", "]")),
+        kind => kind.params.map(p => genKind(p, wrapWithOpenEnum)).sequence.map(_.mkString("[", ", ", "]")),
         _ => Right("")
       ).merge
       val fileFields = x.dom.fold(
@@ -1098,7 +1098,7 @@ class ScalaApiGeneratorV1 extends Generator {
       impors <- x.impors.traverse(genImpor(_)(symt, x))
       exters <- x.exters.traverse(genExter)
       aliass <- x.aliass.traverse(genAlias(_)(symt, x))
-      strucs <- x.strucs.traverse(genStruc(_)(symt, x))
+      strucs <- x.strucs.traverse(genStruc(_, wrapEnumType = wrapWithOpenEnum)(symt, x))
       servcs <- x.servcs.traverse(genServc(_)(symt, x))
       spaces <- x.spaces.traverse(genSpace(_)(symt))
     } yield {
