@@ -2,10 +2,11 @@ package io.github.iozhik
 
 import cats.implicits._
 import io.github.iozhik.Generator.Model._
-import io.github.iozhik.scalagen.UpickleUtils._
 import io.github.iozhik.scalagen.CirceUtils._
-import io.github.iozhik.GeneratorUtils._
+import io.github.iozhik.scalagen.PredefGenerator._
 import io.github.iozhik.scalagen.ScalaApiGeneratorUtils._
+import io.github.iozhik.scalagen.UpickleUtils._
+import io.github.iozhik.GeneratorUtils._
 
 import java.io.File
 
@@ -589,16 +590,6 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def importKind(k: Kind)(implicit symt: Symtable): List[String] = {
-    val result = symt.resolve(k)
-      .collect {
-        case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
-      }
-      .map { case (path, name) => s"import $path.$name" }
-      .toList
-    result ++ k.params.flatMap(importKind)
-  }
-
   private def genDefunCod(x: Defun)(implicit symt: Symtable, space: Space) =
     x.cod.fold(
       kind => Right(List(Code(
@@ -937,66 +928,6 @@ class ScalaApiGeneratorV1 extends Generator {
       genHttp4sServer(kind, items.filter(_.packageObject == "__this_server_defs__"))
     } else { List.empty[Code] })
   }
-
-  private def genMethodsFactory(x: Servc, defuns: String, kind: String, items: List[Code])(
-    implicit symt: Symtable
-  ): List[Code] = {
-    val methodReq =
-      """
-        |trait Method[Res] {
-        |  def payload: MethodPayload
-        |  def decoder: Decoder[Res]
-        |}
-        |
-        |final case class MethodReq[Res] private (
-        |  payload: MethodPayload,
-        |  decoder: Decoder[Res]
-        |) extends Method[Res]
-        |
-        |final case class MethodPayload(
-        |  name: String,
-        |  json: Json,
-        |  files: Map[String, IFile]
-        |)
-        |
-        |object MethodReq {
-        |
-        |  def apply[Res](
-        |    name: String,
-        |    json: Json,
-        |    files: Map[String, IFile] = Map.empty
-        |  )(implicit decoder: Decoder[Res]): MethodReq[Res] =
-        |    new MethodReq(MethodPayload(name, json, files), decoder)
-        |
-        |}
-        """.stripMargin
-    val methodReqCode = Code(
-      body = methodReq,
-      name = "Method",
-      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path))
-    )
-    val body =
-      s"""
-         |trait $kind {
-         |
-         |  import io.circe.Decoder
-         |  private implicit def decodeEither[A, B](
-         |    implicit decoderA: Decoder[A], decoderB: Decoder[B]
-         |  ): Decoder[Either[A, B]] = decoderA.either(decoderB)
-         |$defuns
-         |}
-         """.stripMargin
-    List(
-      Code(
-        body = body,
-        name = x.kind.name,
-        imports = "import io.circe.syntax._" :: "import CirceImplicits._" ::
-          items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
-      ),
-      methodReqCode
-    )
-  }
-
 
   def genHttp4sClient(name: String, defuns: List[Code]): List[Code] = {
     val defs = defuns.map(_.body).intercalate(delimiter)
