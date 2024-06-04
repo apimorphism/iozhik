@@ -1,4 +1,4 @@
-package io.github.iozhik
+package io.github.iozhik.scalagen
 
 import cats.implicits._
 import io.github.iozhik.Generator.Model.Struc

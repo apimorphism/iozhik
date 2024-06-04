@@ -2,10 +2,10 @@ package io.github.iozhik
 
 import cats.implicits._
 import io.github.iozhik.Generator.Model._
-import io.github.iozhik.UpickleUtils._
-import io.github.iozhik.CirceUtils._
+import io.github.iozhik.scalagen.UpickleUtils._
+import io.github.iozhik.scalagen.CirceUtils._
 import io.github.iozhik.GeneratorUtils._
-import io.github.iozhik.ScalaApiGeneratorUtils._
+import io.github.iozhik.scalagen.ScalaApiGeneratorUtils._
 
 import java.io.File
 

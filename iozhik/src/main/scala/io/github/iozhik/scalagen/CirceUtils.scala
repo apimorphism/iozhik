@@ -1,9 +1,9 @@
-package io.github.iozhik
+package io.github.iozhik.scalagen
 
 import cats.implicits._
 import io.github.iozhik.Generator.Model.{Field, Space, Struc, Symtable, Typet}
 import io.github.iozhik.GeneratorUtils.delim
-import io.github.iozhik.ScalaApiGeneratorUtils.genKind
+import io.github.iozhik.scalagen.ScalaApiGeneratorUtils.genKind
 
 object CirceUtils {
   def genMergedCirceCodecs(parent: Struc, kind: String, typeTag: String, typet: Typet, leaves: List[Struc])(

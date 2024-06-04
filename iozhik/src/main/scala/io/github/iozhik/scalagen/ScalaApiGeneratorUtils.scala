@@ -1,4 +1,4 @@
-package io.github.iozhik
+package io.github.iozhik.scalagen
 
 import io.github.iozhik.Generator.Model._
 import cats.implicits._
