@@ -7,13 +7,14 @@ import cats.mtl.MonadState
 import cats.implicits._
 import cats.mtl.implicits._
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 case class MState(value: Int)
 
-class MtlSpec extends FlatSpec with Matchers {
+class MtlSpec extends AnyFlatSpec with Matchers {
 
-  "boo" must "foo" in {
+  "boo" should "foo" in {
 
     def createProgram[F[_]: Monad](implicit S: MonadState[F, MState], E: MonadError[F, String]): F[Int] = {
       for {
@@ -24,7 +25,7 @@ class MtlSpec extends FlatSpec with Matchers {
       }
     }
 
-    val program = createProgram[StateT[Either[String, ?], MState, ?]]
+    val program = createProgram[StateT[Either[String, *], MState, *]]
 
     for {
       res <- program.run(MState(2))

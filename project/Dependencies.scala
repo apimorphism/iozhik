@@ -3,34 +3,29 @@ import sbt._
 object Dependencies {
 
   object V {
-    val monix      = "3.0.0-RC2"
-    val monixNio   = "0.0.3"
-    val catsCore   = "1.4.0"
-    val catsEffect = "1.2.0"
-    val catsMtl    = "0.4.0"
-    val circe      = "0.10.0"
+    val catsCore   = "2.12.0"
+    val catsEffect = "3.5.4"
+    val catsMtl    = "0.7.1"
+    val circe      = "0.14.7"
     val shapeless  = "2.3.3"
-    val atto       = "0.6.4"
-    val scalaTest  = "3.0.5"
-    val fs2Core    = "1.0.0"
-    val fs2IO      = "1.0.0"
+    val atto       = "0.9.5"
+    val scalaTest  = "3.2.18"
+    val fs2Core    = "3.10.2"
+    val fs2IO      = "3.10.2"
     val scalaFmt   = "3.0.6"
-    val scodecCore = "1.10.3"
-    val scodecBits = "1.1.6"
-    val http4s     = "0.20.0"
+    val scodecCore = "1.11.10"
+    val scodecBits = "1.2.0"
+    val http4s     = "0.23.27"
     val slf4j      = "1.7.26"
     val logback    = "1.2.3"
     val scraper    = "3.0.0"
-    val msgPack    = "0.8.13"
-    val uPickle    = "0.7.1"
+    val uPickle    = "3.3.1"
     val javaFmt    = "1.7"
     val junit      = "4.12"
     val jackson    = "2.9.8"
     val unirest    = "1.4.9"
   }
 
-  val monix      = "io.monix" %% "monix" % V.monix
-  val monixNio   = "io.monix" %% "monix-nio" % V.monixNio
   val fs2Core    = "co.fs2" %% "fs2-core" % V.fs2Core
   val fs2IO      = "co.fs2" %% "fs2-io" % V.fs2IO
   val catsCore   = "org.typelevel" %% "cats-core" % V.catsCore
@@ -52,7 +47,7 @@ object Dependencies {
     "io.circe" %% "circe-core"           % V.circe,
     "io.circe" %% "circe-parser"         % V.circe,
     "io.circe" %% "circe-generic"        % V.circe,
-    "io.circe" %% "circe-generic-extras" % V.circe,
+    "io.circe" %% "circe-generic-extras" % "0.14.3",
   )
 
   val scodec = Seq(
@@ -63,8 +58,8 @@ object Dependencies {
   val http4s = Seq(
     "org.http4s" %% "http4s-dsl"          % V.http4s,
     "org.http4s" %% "http4s-circe"        % V.http4s,
-    "org.http4s" %% "http4s-blaze-server" % V.http4s,
-    "org.http4s" %% "http4s-blaze-client" % V.http4s,
+    "org.http4s" %% "http4s-blaze-server" % "0.23.16",
+    "org.http4s" %% "http4s-blaze-client" % "0.23.16",
   )
 
   val unirest = Seq(
@@ -80,10 +75,6 @@ object Dependencies {
     "net.ruippeixotog" %% "scala-scraper" % V.scraper
   )
 
-  val msgPack = Seq(
-    "org.msgpack" %% "msgpack-scala" % V.msgPack
-  )
-
   val uPickle = Seq(
     "com.lihaoyi" %% "upickle" % V.uPickle,
     "com.lihaoyi" %% "upack" % V.uPickle,
@@ -96,8 +87,6 @@ object Dependencies {
   )
 
   val common = circe ++ jackson ++ Seq(
-    monix,
-    monixNio,
     fs2Core,
     fs2IO,
     catsCore,
@@ -111,7 +100,7 @@ object Dependencies {
   )
 
   val iozhik: Seq[ModuleID]   = common ++ atto
-  val iozhtest: Seq[ModuleID] = common ++ circe ++ scodec ++ http4s ++ msgPack ++ uPickle ++ logger
+  val iozhtest: Seq[ModuleID] = common ++ circe ++ scodec ++ http4s ++ uPickle ++ logger
   val javatest: Seq[ModuleID] = common ++ jackson ++ unirest
   val iozhApiScraper: Seq[ModuleID] = common ++ scraper
 }

@@ -278,13 +278,13 @@ object TgBotApiScrapper extends IOApp {
     })
   }
 
-  def write[F[_]: ContextShift : Sync](content: String, file: Path): F[Unit] = {
+  def write[F[_]: Async](content: String, file: Path): F[Unit] = {
     Stream.resource(mkPool)
       .flatMap { implicit ec =>
         Stream
           .emit(content)
           .through(fs2.text.utf8Encode)
-          .to(fs2.io.file.writeAll(file, ec))
+          .through(fs2.io.file.writeAll(file))
       }
       .compile
       .drain
@@ -464,7 +464,7 @@ object TgBotApiScrapper extends IOApp {
       }.flatMap { iozhDir =>
         val dst = Paths.get(iozhDir + "/iozhtest/src/main/resources/tgbot.api")
         dst.toFile.delete()
-        write(content, dst).as(ExitCode.Success)
+        write[IO](content, dst).as(ExitCode.Success)
       }
     }
 

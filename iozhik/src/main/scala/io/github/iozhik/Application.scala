@@ -17,7 +17,7 @@ import scala.concurrent.ExecutionContext
 
 object Application extends IOApp {
 
-  def generate[F[_]: RaiseThrowable : ContextShift](apiDir: Path, dstDir: Path)(implicit sync: Sync[F]): F[Unit] = {
+  def generate[F[_]: RaiseThrowable](apiDir: Path, dstDir: Path)(implicit async: Async[F]): F[Unit] = {
 
     val generator = new ScalaApiGeneratorV1
     val formatter = Scalafmt.create(this.getClass.getClassLoader)
@@ -36,7 +36,7 @@ object Application extends IOApp {
           .map(_.left.map(new RuntimeException(_)))
           .flatMap(Stream.fromEither(_))
           .flatMap(Stream.emits(_))
-          .evalMap(code => sync.delay{
+          .evalMap(code => async.delay{
             val path = dstDir.resolve(code.path)
             val file = path.resolve(code.name)
             path.toFile.mkdirs()
@@ -47,15 +47,15 @@ object Application extends IOApp {
             Stream
               .emit(body)
               .through(fs2.text.utf8Encode)
-              .to(fs2.io.file.writeAll(file, ec))
+              .through(fs2.io.file.writeAll(file))
           }
-          .handleErrorWith(e => Stream.eval(sync.delay(e.printStackTrace())))
+          .handleErrorWith(e => Stream.eval(async.delay(e.printStackTrace())))
       }
       .compile
       .drain
   }
 
-  private def readAll[F[_]: RaiseThrowable : ContextShift](dir: Path)(
+  private def readAll[F[_]: RaiseThrowable : Async](dir: Path)(
     implicit
     ec: ExecutionContext,
     sync: Sync[F]
@@ -72,7 +72,7 @@ object Application extends IOApp {
       .filter(_.toString.endsWith(".api"))
       .flatMap { f =>
         fs2.io.file
-          .readAll[F](f, ec, 4096)
+          .readAll[F](f, 4096)
           .through(fs2.text.utf8Decode)
           .reduce(_ + _)
       }
@@ -106,13 +106,11 @@ object Application extends IOApp {
   }
 
   def run(args: List[String]): IO[ExitCode] = {
-    IO.suspend {
       val apiDir = Paths.get(args.head)
       val dstDir = Paths.get(args.tail.head)
       cleanDir[IO](dstDir).flatMap { _ =>
         generate[IO](apiDir, dstDir)
           .as(ExitCode.Success)
       }
-    }
   }
 }

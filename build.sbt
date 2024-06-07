@@ -33,3 +33,5 @@ lazy val root = (project in file("."))
     javatest,
     `iozh-api-scraper`,
   )
+
+Global / onChangedBuildSource := ReloadOnSourceChanges

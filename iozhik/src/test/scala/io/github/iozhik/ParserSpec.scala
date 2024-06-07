@@ -1,15 +1,15 @@
 package io.github.iozhik
 
-import atto._
-import Atto._
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ParserSpec extends FlatSpec with Matchers {
+class ParserSpec extends AnyFlatSpec with Matchers {
 
   import Parser.Model._
 
-  def parserFor[A](p: Parser.Grammar.type => Parser[A])(checks: (String => Either[String, A]) => Assertion): Unit = {
-    checks(txt => p(Parser.Grammar).parse(txt).done.either)
+  def parserFor[A](p: Parser.Grammar.type => atto.Parser[A])(checks: (String => Either[String, A]) => Assertion): Unit = {
+    checks(txt => atto.Parser.parse(p(Parser.Grammar), txt).done.either)
     ()
   }
 

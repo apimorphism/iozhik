@@ -432,7 +432,7 @@ object Generator {
           )
         }
       }
-      trSpace[Either[String, ?]](x, List())
+      trSpace[Either[String, *]](x, List())
     }
 
   }
