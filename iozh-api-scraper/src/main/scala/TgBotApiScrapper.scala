@@ -192,6 +192,7 @@ object TgBotApiScrapper extends IOApp {
     val inlines = Set("InlineKeyboardMarkup", "ReplyKeyboardMarkup", "ReplyKeyboardRemove", "ForceReply")
     val leaves = (items.collect{ case e: Sumtyp => e.items } ++ messageEntityParent.map(_.items)).flatten.toSet ++ inlines
     val sumTypes = (items.collect{ case e: Sumtyp => e } ++ messageEntityParent)
+      .sortBy(_.name)
       .map { e =>
         val fields = genFields(e.table)
         val children = emap.filterKeys{ k =>
@@ -209,9 +210,9 @@ object TgBotApiScrapper extends IOApp {
           |  }
         """.stripMargin
       }
-    val body = sumTypes.intercalate("") + emap.filterKeys(k => !leaves.contains(k)).values.toList.intercalate("")
+    val body = sumTypes.intercalate("") + emap.filterKeys(k => !leaves.contains(k)).toList.sortBy(_._1).map(_._2).intercalate("")
     val entities = body.split("\n").map("  " + _).toList.intercalate("\n")
-    val methods = mmap.values.toList.flatMap(_.split("\n")).map("      " + _).intercalate("\n")
+    val methods = mmap.toList.sortBy(_._1).map(_._2).flatMap(_.split("\n")).map("      " + _).intercalate("\n")
     val markups = emap.filterKeys(inlines.contains).values.toList
       .flatMap(_.split("\n")).map("    " + _).intercalate("\n")
     s"""
