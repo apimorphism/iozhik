@@ -24,6 +24,7 @@ object Dependencies {
     val junit      = "4.12"
     val jackson    = "2.9.8"
     val unirest    = "1.4.9"
+    val pureconfig = "0.17.6"
   }
 
   val fs2Core    = "co.fs2" %% "fs2-core" % V.fs2Core
@@ -86,6 +87,10 @@ object Dependencies {
     "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % V.jackson
   )
 
+  val pureconfig = Seq(
+    "com.github.pureconfig" %% "pureconfig" % V.pureconfig
+  )
+
   val common = circe ++ jackson ++ Seq(
     fs2Core,
     fs2IO,
@@ -99,7 +104,7 @@ object Dependencies {
     javaFmt
   )
 
-  val iozhik: Seq[ModuleID]   = common ++ atto
+  val iozhik: Seq[ModuleID]   = common ++ atto ++ pureconfig
   val iozhtest: Seq[ModuleID] = common ++ circe ++ scodec ++ http4s ++ uPickle ++ logger
   val javatest: Seq[ModuleID] = common ++ jackson ++ unirest
   val iozhApiScraper: Seq[ModuleID] = common ++ scraper

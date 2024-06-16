@@ -1,15 +1,15 @@
 package io.github.iozhik.scalagen
 
 import cats.implicits._
-import io.github.iozhik.Generator.Model.{Field, Space, Struc, Symtable, Typet}
+import io.github.iozhik.Generator.Model.{Field, Struc, Typet}
 import io.github.iozhik.GeneratorUtils.delim
-import io.github.iozhik.scalagen.ScalaApiGeneratorUtils.genKind
+import io.github.iozhik.scalagen.ScalaApiGeneratorUtils._
 
 object CirceUtils {
   def genMergedCirceCodecs(parent: Struc, kind: String, typeTag: String, typet: Typet, leaves: List[Struc])(
-    implicit symt: Symtable, space: Space
+    implicit meta: GeneratorMeta
   ): Either[String, (String, String)] = {
-    val wrapEnumType = if (space.opts.contains("openEnums")) ".map(iozhik.OpenEnum.Known(_))" else ""
+    val wrapEnumType = if (parent.kind.exists(useOpenEnum)) ".map(iozhik.OpenEnum.Known(_))" else ""
     leaves.traverse { leaf =>
       val postfix = if (leaf.fields.nonEmpty) "" else ".type"
       leaf
@@ -39,10 +39,10 @@ object CirceUtils {
   }
 
   def genCirceCodecCases(parent: Struc, typeTag: String, typet: Typet, leaf: Struc)(
-    implicit symt: Symtable, space: Space
+    implicit meta: GeneratorMeta
   ): Either[String, (String, String)] = {
     val postfix = if (leaf.fields.nonEmpty) "" else ".type"
-    val wrapEnumType = if (space.opts.contains("openEnums")) ".map(iozhik.OpenEnum.Known(_))" else ""
+    val wrapEnumType = if (parent.kind.exists(useOpenEnum)) ".map(iozhik.OpenEnum.Known(_))" else ""
     leaf
       .kind
       .map(_.name)
@@ -62,12 +62,12 @@ object CirceUtils {
   }
 
   private def genEmbedsCodecs(parent: Struc, typet: Typet, child: Struc, nn: String, tt: String, postfix: String)(
-    implicit symt: Symtable, space: Space
+    implicit meta: GeneratorMeta
   ): (String, String) = {
     val ownFields = for {
       (name, f) <- child.embeds.flatMap { e =>
         val usingf: Seq[Field] = e.struc.usings
-          .flatMap(y => symt.find(y.kind, parent.kind))
+          .flatMap(y => meta.symt.find(y.kind, parent.kind))
           .collect { case s: Struc => s }
           .flatMap(_.fields)
         (e.struc.fields ++ usingf).map(e.name -> _)

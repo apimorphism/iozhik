@@ -2,15 +2,17 @@ package io.github.iozhik
 
 import cats.implicits._
 import io.github.iozhik.Generator.Model._
+import io.github.iozhik.GeneratorUtils._
 import io.github.iozhik.scalagen.CirceUtils._
+import io.github.iozhik.scalagen.GeneratorConfig
+import io.github.iozhik.scalagen.GeneratorMeta
 import io.github.iozhik.scalagen.PredefGenerator._
 import io.github.iozhik.scalagen.ScalaApiGeneratorUtils._
 import io.github.iozhik.scalagen.UpickleUtils._
-import io.github.iozhik.GeneratorUtils._
 
 import java.io.File
 
-class ScalaApiGeneratorV1 extends Generator {
+class ScalaApiGeneratorV1 {
 
   def delimiter = "\n"
   def pathDelim: String = File.separator
@@ -39,7 +41,9 @@ class ScalaApiGeneratorV1 extends Generator {
 
   def sanitize(name: String): String = GeneratorUtils.sanitize(name, keywords)
 
-  def genField(x: Field, withDoc: Boolean = true, isDef: Boolean = false, wrapEnumType: String => String = wrapWithOpenEnum)(implicit symt: Symtable, space: Space): Either[String, String] = {
+  def genField(x: Field, withDoc: Boolean = true, isDef: Boolean = false, wrapEnumType: String => String = wrapWithOpenEnum)(
+    implicit meta: GeneratorMeta
+  ): Either[String, String] = {
     for {
       kind <- genFieldType(x.kind, wrapEnumType)
     } yield {
@@ -53,21 +57,21 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  private def createStrucImports(kinds: List[Kind])(implicit symt: Symtable, space: Space) =
+  private def createStrucImports(kinds: List[Kind])(implicit meta: GeneratorMeta) =
     kinds
-      .flatMap(_.unresolvedIn(space.symbol).flatMap(_.unresolvedIn(space.symbol)))
+      .flatMap(_.unresolvedIn(meta.space.symbol).flatMap(_.unresolvedIn(meta.space.symbol)))
       .filter(y => !predefined.contains(y.name))
-      .flatMap(symt.resolve)
+      .flatMap(meta.symt.resolve)
       .collect {
         case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
       }
 
-  private def genStrucImportsWithCodecs(kinds: List[Kind])(implicit symt: Symtable, space: Space) =
+  private def genStrucImportsWithCodecs(kinds: List[Kind])(implicit meta: GeneratorMeta) =
     createStrucImports(kinds).flatMap {
       case (path, _) => List(s"import $path._", s"import $path.CirceImplicits._")
     }
 
-  def genImpor(x: Impor)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genImpor(x: Impor)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       name <- genKind(x.name)
     } yield {
@@ -79,7 +83,7 @@ class ScalaApiGeneratorV1 extends Generator {
     Right(List(Code(s"// External type: ${x.name}")))
   }
 
-  def genAlias(x: Alias)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genAlias(x: Alias)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       alias <- genKind(x.alias)
       name <- genKind(x.name)
@@ -88,7 +92,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genJsonCodecs(x: Wrapp)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genJsonCodecs(x: Wrapp)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       name <- genKind(x.name)
       target <- genKind(x.target)
@@ -111,7 +115,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genJsonCodecs(x: EnumStr)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genJsonCodecs(x: EnumStr)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       name <- genKind(x.name)
     } yield {
@@ -125,10 +129,10 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genJsonCodecs(struc: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genJsonCodecs(struc: Struc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val d = delimiter
-    val useSnake = space.opts.contains("snake")
-    val useOpenEnums = space.opts.contains("openEnums")
+    val useSnake = meta.space.opts.contains("snake")
+    val useOpenEnums = struc.kind.exists(useOpenEnum)
     if (struc.isEnum) {
       if (struc.typets.nonEmpty) {
         for {
@@ -211,13 +215,13 @@ class ScalaApiGeneratorV1 extends Generator {
       }
     } else {
       val usingf = struc.usings
-        .flatMap{ y => symt.find(y.kind, struc.kind) }
+        .flatMap{ y => meta.symt.find(y.kind, struc.kind) }
         .collect{ case s: Struc => s}
         .flatMap(_.fields)
       val impPacks = (usingf ++ struc.fields)
-        .flatMap(_.kind.unresolvedIn(space.symbol))
+        .flatMap(_.kind.unresolvedIn(meta.space.symbol))
         .filter(y => !predefined.contains(y.name))
-        .flatMap(symt.resolve)
+        .flatMap(meta.symt.resolve)
         .collect{
           case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
         }
@@ -295,7 +299,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genSCodecs(x: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genSCodecs(x: Struc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val d = delimiter
     if (x.isEnum) {
       if (x.typets.isEmpty) {
@@ -332,7 +336,7 @@ class ScalaApiGeneratorV1 extends Generator {
       }
     } else {
       val usingf = x.usings
-        .flatMap{ y => symt.find(y.kind, x.kind) }
+        .flatMap{ y => meta.symt.find(y.kind, x.kind) }
         .collect{ case s: Struc => s}
         .flatMap(_.fields)
       for {
@@ -366,7 +370,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genuPickle(x: Wrapp)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genuPickle(x: Wrapp)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       name <- genKind(x.name)
       target <- genKind(x.target)
@@ -389,7 +393,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  def genuPickle(struc: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genuPickle(struc: Struc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val d = delimiter
     if (struc.isEnum) {
       if (struc.typetForBins.isEmpty) {
@@ -417,13 +421,13 @@ class ScalaApiGeneratorV1 extends Generator {
       }
     } else {
       val usingf = struc.usings
-        .flatMap{ y => symt.find(y.kind, struc.kind) }
+        .flatMap{ y => meta.symt.find(y.kind, struc.kind) }
         .collect{ case s: Struc => s}
         .flatMap(_.fields)
       val impPacks = (usingf ++ struc.fields)
-        .flatMap(_.kind.unresolvedIn(space.symbol))
+        .flatMap(_.kind.unresolvedIn(meta.space.symbol))
         .filter(y => !predefined.contains(y.name))
-        .flatMap(symt.resolve)
+        .flatMap(meta.symt.resolve)
         .collect{
           case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
         }
@@ -482,7 +486,7 @@ class ScalaApiGeneratorV1 extends Generator {
   }
 
   def genWrapp(parentKind: Kind, x: Wrapp)
-              (implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+              (implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       parent <- genKind(parentKind)
       name <- genKind(x.name)
@@ -496,7 +500,7 @@ class ScalaApiGeneratorV1 extends Generator {
   }
 
   def genEnumStr(parentKind: Kind, x: EnumStr)
-              (implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+              (implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       parent <- genKind(parentKind)
       name <- genKind(x.name)
@@ -530,11 +534,11 @@ class ScalaApiGeneratorV1 extends Generator {
     if (docsText.nonEmpty) s"$delimiter/** $docsText */$delimiter" else ""
   }
 
-  def genStruc(x: Struc, wrapEnumType: String => String)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genStruc(x: Struc, wrapEnumType: String => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
     val abstractOrEnum = x.isAbstract || x.isEnum
     val usingf = x.usings
-      .flatMap{ y => symt.find(y.kind, x.kind) }
+      .flatMap{ y => meta.symt.find(y.kind, x.kind) }
       .collect{ case s: Struc => s}
       .flatMap(_.fields)
     for {
@@ -545,15 +549,15 @@ class ScalaApiGeneratorV1 extends Generator {
       wrapps <- x.wrapps.traverse(genWrapp(kindOrDefault, _))
       enumstrs <- x.enumstrs.traverse(genEnumStr(kindOrDefault, _))
       usings <- usingf.traverse(genField(_, isDef = abstractOrEnum, wrapEnumType = wrapEnumType))
-      upickles <- if (space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
-      jsonCodecs <- if (space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
-      scodecs <- if (space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
+      upickles <- if (meta.space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
+      jsonCodecs <- if (meta.space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
+      scodecs <- if (meta.space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
       ms = mixins.toNel.map(_.intercalate(" with ")).fold("")(" extends " + _)
     } yield {
       val imps = ((usingf ++ x.fields).map(_.kind) ++ x.mixins)
-        .flatMap(_.unresolvedIn(space.symbol).flatMap(_.unresolvedIn(space.symbol)))
+        .flatMap(_.unresolvedIn(meta.space.symbol).flatMap(_.unresolvedIn(meta.space.symbol)))
         .filter(y => !predefined.contains(y.name))
-        .flatMap(symt.resolve)
+        .flatMap(meta.symt.resolve)
         .collect{
           case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
         }
@@ -590,7 +594,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  private def genDefunCod(x: Defun)(implicit symt: Symtable, space: Space) =
+  private def genDefunCod(x: Defun)(implicit meta: GeneratorMeta) =
     x.cod.fold(
       kind => Right(List(Code(
         imports = importKind(kind),
@@ -599,7 +603,7 @@ class ScalaApiGeneratorV1 extends Generator {
       struc => genStruc(struc.copy(kind = Option(Kind(x.kind.name.capitalize + CodPostfix))), wrapEnumType = wrapWithOpenEnum)
     )
 
-  private def genDefunCodName(x: Defun)(implicit symt: Symtable, space: Space) =
+  private def genDefunCodName(x: Defun)(implicit meta: GeneratorMeta) =
     x.cod.fold(
       kind => genKind(kind, wrapWithOpenEnum),
       struc => struc.kind.map(genKind(_)).getOrElse(Right(sanitize(s"${x.kind.name.capitalize}$CodPostfix")))
@@ -623,7 +627,7 @@ class ScalaApiGeneratorV1 extends Generator {
     if (docsBody.nonEmpty) s"$d/** $docsBody$paramDocs */$d" else ""
   }
 
-  def genDefun(x: Defun)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genDefun(x: Defun)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       kind <- genKind(x.kind)
       dom <- x.dom.fold(
@@ -645,12 +649,12 @@ class ScalaApiGeneratorV1 extends Generator {
         .fold(_ => domName, identity)
       val codomain = genDefunCodomain(x, codName)
       val docs = genDefunDocs(x)
-      val http4sClientDefun = if (space.opts.contains("http4s")) {
+      val http4sClientDefun = if (meta.space.opts.contains("http4s")) {
         genHttp4sClientDefun(x, kind, domain, codomain)
       } else {
         List.empty[Code]
       }
-      val http4sServerDefun = if (space.opts.contains("http4s")) {
+      val http4sServerDefun = if (meta.space.opts.contains("http4s")) {
         genHttp4sServerDefun(x, kind, domName, domain, codomain)
       } else {
         List.empty[Code]
@@ -663,7 +667,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  private def genMethodsFactoryDefun(x: Defun)(implicit symt: Symtable, space: Space) =
+  private def genMethodsFactoryDefun(x: Defun)(implicit meta: GeneratorMeta) =
     for {
       kind <- genKind(x.kind)
       params <- x.dom.fold(
@@ -703,7 +707,7 @@ class ScalaApiGeneratorV1 extends Generator {
         struc => struc.fields.filter(_.opts.contains("file"))
       )
         .map { f =>
-          val fieldName = if (space.opts.contains("snake")) camel2snake(f.name) else f.name
+          val fieldName = if (meta.space.opts.contains("snake")) camel2snake(f.name) else f.name
           val domFieldName = if (f.kind.name == "Option") f.name else s"Option(${f.name})"
           s""""$fieldName" -> $domFieldName"""
         }
@@ -726,7 +730,7 @@ class ScalaApiGeneratorV1 extends Generator {
     }
 
   def genHttp4sClientDefun(x: Defun, name: String, dom: String, rawCod: String)
-                    (implicit symt: Symtable, space: Space): List[Code] = {
+                    (implicit meta: GeneratorMeta): List[Code] = {
     // TODO: we need generic mechanism for this (resolving name conflicts with library entities)
     val cod = rawCod.replace("Message", "telegramium.bots.Message")
     val withEntity = if (dom.isEmpty) { "" } else { ".withEntity(x.asJson)" }
@@ -761,24 +765,24 @@ class ScalaApiGeneratorV1 extends Generator {
           val otherFields = (dd.fields
             .filter(!_.opts.contains("file"))
             .map{ f =>
-              val fname = if (space.opts.contains("snake")) { camel2snake(f.name) } else { f.name }
+              val fname = if (meta.space.opts.contains("snake")) { camel2snake(f.name) } else { f.name }
               s"""("$fname", x.${sanitize(f.name)}.asJson)"""
             } ++ dd.fields.filter(_.opts.contains("file")).map { f =>
               s"""("${f.name}", if (${f.name}Part.isEmpty) { x.${f.name}.asJson } else { Json.Null } )"""
             }).intercalate(",")
           val ff = fileFields.map{ y =>
               if (y.kind.name == "Option") {
-                (y.name, symt.find(y.kind.params.head), true)
+                (y.name, meta.symt.find(y.kind.params.head), true)
               } else {
-                (y.name, symt.find(y.kind), false)
+                (y.name, meta.symt.find(y.kind), false)
               }
             }
             .collect {
               case (fname, Some(s: Struc), isOpt) if s.wrapps.exists(_.target.name == "java.io.File") && s.kind.nonEmpty =>
                 val imps = s.kind.toList
-                  .flatMap(_.unresolvedIn(space.symbol))
+                  .flatMap(_.unresolvedIn(meta.space.symbol))
                   .filter(y => !predefined.contains(y.name))
-                  .flatMap(symt.resolve)
+                  .flatMap(meta.symt.resolve)
                   .collect{
                     case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
                   }
@@ -789,7 +793,7 @@ class ScalaApiGeneratorV1 extends Generator {
                     )
                   }
                 val fileC = s.wrapps.head.name.name
-                val fn = if (space.opts.contains("snake")) { camel2snake(fname) } else { fname }
+                val fn = if (meta.space.opts.contains("snake")) { camel2snake(fname) } else { fname }
                 (
                   s"""${fname}Part""",
                   s"""${fname}Part <- ${fname}PartF""",
@@ -894,7 +898,7 @@ class ScalaApiGeneratorV1 extends Generator {
     ))
   }
 
-  def genServc(x: Servc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+  def genServc(x: Servc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     for {
       kind <- genKind(x.kind)
       defs = x.items.collect{ case a: Defun => a }
@@ -915,16 +919,16 @@ class ScalaApiGeneratorV1 extends Generator {
   }
 
   private def genServcDefault(x: Servc, defuns: String, kind: String, items: List[Code])(
-    implicit space: Space
+    implicit meta: GeneratorMeta
   ): List[Code] = {
     val d = delimiter
     List(Code(
       body = s"trait $kind[F[_]]$d{$d$defuns$d}",
       name = x.kind.name,
       imports = items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
-    )) ++ (if (space.opts.contains("http4s") && x.opts.contains("client")) {
+    )) ++ (if (meta.space.opts.contains("http4s") && x.opts.contains("client")) {
       genHttp4sClient(kind, items.filter(_.packageObject == "__this_impl__"))
-    } else { List.empty[Code] }) ++ (if (space.opts.contains("http4s") && x.opts.contains("server")) {
+    } else { List.empty[Code] }) ++ (if (meta.space.opts.contains("http4s") && x.opts.contains("server")) {
       genHttp4sServer(kind, items.filter(_.packageObject == "__this_server_defs__"))
     } else { List.empty[Code] })
   }
@@ -1030,14 +1034,15 @@ class ScalaApiGeneratorV1 extends Generator {
     ))
   }
 
-  def genSpace(x: Space)(implicit symt: Symtable): Either[String, List[Code]] = {
+  def genSpace(x: Space, cfg: GeneratorConfig, symt: Symtable): Either[String, List[Code]] = {
+    val meta = GeneratorMeta(x, symt, cfg, collectCodKinds(x)(x.symbol))
     for {
-      impors <- x.impors.traverse(genImpor(_)(symt, x))
+      impors <- x.impors.traverse(genImpor(_)(meta))
       exters <- x.exters.traverse(genExter)
-      aliass <- x.aliass.traverse(genAlias(_)(symt, x))
-      strucs <- x.strucs.traverse(genStruc(_, wrapEnumType = wrapWithOpenEnum)(symt, x))
-      servcs <- x.servcs.traverse(genServc(_)(symt, x))
-      spaces <- x.spaces.traverse(genSpace(_)(symt))
+      aliass <- x.aliass.traverse(genAlias(_)(meta))
+      strucs <- x.strucs.traverse(genStruc(_, wrapEnumType = wrapWithOpenEnum)(meta))
+      servcs <- x.servcs.traverse(genServc(_)(meta))
+      spaces <- x.spaces.traverse(s => genSpace(s, cfg, symt))
     } yield {
       List(impors, exters, aliass, strucs, servcs)
         .flatten
@@ -1054,9 +1059,9 @@ class ScalaApiGeneratorV1 extends Generator {
     }
   }
 
-  override def gen(x: Generator.Model.Space): Either[String, List[Code]] = {
+  def gen(x: Generator.Model.Space, cfg: GeneratorConfig): Either[String, List[Code]] = {
     val d = delimiter
-    genSpace(x)(x.symbol).map{ list =>
+    genSpace(x, cfg, x.symbol).map{ list =>
       val commons = list.filter(_.name.isEmpty)
         .groupBy(_.path)
         .filter(_._2.nonEmpty)

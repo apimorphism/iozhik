@@ -37,7 +37,7 @@ object PredefGenerator {
     )
 
   def genMethodsFactory(x: Servc, defuns: String, kind: String, items: List[Code])(
-    implicit symt: Symtable
+    implicit meta: GeneratorMeta
   ): List[Code] = {
     val methodReq =
       """
