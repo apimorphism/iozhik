@@ -156,18 +156,21 @@ class ScalaApiGeneratorV1 {
           val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
           val unknownCase = if (useOpenEnums) s"Decoder.const(iozhik.OpenEnum.Unknown[$name](unknown))" 
             else s"""throw iozhik.DecodingError(s"Unknown type for $name: $$unknown")"""
-          val body = s"""
-                        | implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
-                        |   ${cases.map(_._1).intercalate(d)}
-                        | }
-                        | implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = for {
-                        |   fType <- Decoder[String].prepare(_.downField($tag))
-                        |   value <- fType match {
-                        |     ${cases.map(_._2).intercalate(d)}
-                        |     case unknown => $unknownCase
-                        |   }
-                        | } yield value
-        """.stripMargin
+          val encoder = s"""
+            |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
+            |  ${cases.map(_._1).intercalate(d)}
+            |}
+          """.stripMargin
+          val decoder = meta.cfg.customDecoders.get(kind).getOrElse(s"""
+            |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = for {
+            |  fType <- Decoder[String].prepare(_.downField($tag))
+            |  value <- fType match {
+            |    ${cases.map(_._2).intercalate(d)}
+            |    case unknown => $unknownCase
+            |  }
+            |} yield value
+          """.stripMargin)
+          val body = encoder + d + decoder
           List(Code(body = body, packageObject = "CirceImplicits")) ++ items
         }
       } else {
@@ -195,17 +198,19 @@ class ScalaApiGeneratorV1 {
           val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
           val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
           val wrapEnumType = if (useOpenEnums) ".map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(iozhik.OpenEnum.Unknown(_)))" else ""
-          val body =
-            s"""
-              | implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
-              |   ${cases.map(_._1).intercalate(d)}
-              | }
-              | implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = {
-              |   List[Decoder[$name]](
-              |     ${cases.map(_._2).intercalate(",")}
-              |   ).reduceLeft(_ or _)$wrapEnumType
-              | }
-            """.stripMargin
+          val encoder = s"""
+            |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
+            |  ${cases.map(_._1).intercalate(d)}
+            |}
+          """.stripMargin
+          val decoder = meta.cfg.customDecoders.get(kind).getOrElse(s"""
+            |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = {
+            |  List[Decoder[$name]](
+            |    ${cases.map(_._2).intercalate(",")}
+            |  ).reduceLeft(_ or _)$wrapEnumType
+            |}
+          """.stripMargin)
+          val body = encoder + d + decoder
           List(Code(
             body = body,
             packageObject = "CirceImplicits",
