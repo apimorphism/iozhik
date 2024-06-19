@@ -18,6 +18,9 @@ object PredefGenerator {
         
         import io.circe.Encoder
         
+        /**
+          * Indicates that the enumeration is open and can accept values beyond those already specified.
+          */
         sealed trait OpenEnum[+T]
         
         object OpenEnum {
