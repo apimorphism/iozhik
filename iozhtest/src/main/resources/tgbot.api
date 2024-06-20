@@ -2091,6 +2091,53 @@ namespace telegramium {
              
     }
           
+    enum RevenueWithdrawalState {
+    
+      /* The withdrawal is in progress.  */
+      RevenueWithdrawalStatePending {
+        type : "pending:0"
+      }
+             
+      /* The withdrawal succeeded.  */
+      RevenueWithdrawalStateSucceeded {
+        type : "succeeded:1"
+        /* Date the withdrawal was completed in Unix time */
+        date : Int
+        /* An HTTPS URL that can be used to see transaction details */
+        url  : String
+      }
+             
+      /* The withdrawal failed and the transaction was refunded.  */
+      RevenueWithdrawalStateFailed {
+        type : "failed:2"
+      }
+             
+    }
+          
+    enum TransactionPartner {
+    
+      /* Describes a transaction with an unknown source or recipient.  */
+      TransactionPartnerOther {
+        type : "other:0"
+      }
+             
+      /* Describes a transaction with a user.  */
+      TransactionPartnerUser {
+        type : "user:1"
+        /* Information about the user */
+        user : User
+      }
+             
+      /* Describes a withdrawal transaction with Fragment.  */
+      TransactionPartnerFragment {
+        type : "fragment:2"
+        /* Optional. State of the transaction if the transaction is 
+        outgoing */
+        withdrawalState : Option[RevenueWithdrawalState]
+      }
+             
+    }
+          
     /* This object represents an animation file (GIF or H.264/MPEG-4 AVC video without 
       sound).  */
     Animation {
@@ -3164,8 +3211,7 @@ namespace telegramium {
       is allowed by their privacy settings. */
       url                          : Option[String]
       /* Optional. Data to be sent in a callback query to the bot 
-      when button is pressed, 1-64 bytes. Not supported for 
-      messages sent on behalf of a Telegram Business account. */
+      when the button is pressed, 1-64 bytes */
       callbackData                 : Option[String]
       /* Optional. Description of the Web App that will be launched 
       when the user presses the button. The Web App will be able 
@@ -3882,6 +3928,34 @@ namespace telegramium {
       invoicePayload  : String
       /* User specified shipping address */
       shippingAddress : ShippingAddress
+    }
+           
+    /* Describes a Telegram Star transaction.  */
+    StarTransaction {
+      /* Unique identifier of the transaction. Coincides with the 
+      identifer of the original transaction for refund 
+      transactions. Coincides with 
+      SuccessfulPayment.telegram_payment_charge_id for successful 
+      incoming payments from users. */
+      id       : String
+      /* Number of Telegram Stars transferred by the transaction */
+      amount   : Int
+      /* Date the transaction was created in Unix time */
+      date     : Int
+      /* Optional. Source of an incoming transaction (e.g., a user 
+      purchasing goods or services, Fragment refunding a failed 
+      withdrawal). Only for incoming transactions */
+      source   : Option[TransactionPartner]
+      /* Optional. Receiver of an outgoing transaction (e.g., a user 
+      for a purchase refund, Fragment for a withdrawal). Only for 
+      outgoing transactions */
+      receiver : Option[TransactionPartner]
+    }
+           
+    /* Contains a list of Telegram Star transactions.  */
+    StarTransactions {
+      /* The list of transactions */
+      transactions : List[StarTransaction]
     }
            
     /* This object represents a sticker.  */
@@ -4954,8 +5028,13 @@ namespace telegramium {
       
         /* Use this method to edit captions of messages. On success, if the edited message 
           is not an inline message, the edited Message is returned, otherwise True is 
-          returned.  */
+          returned. Note that business messages that were not sent by the bot and do not 
+          contain an inline keyboard can only be edited within 48 hours from the time they 
+          were sent.  */
         def editMessageCaption {
+          /* Unique identifier of the business connection on behalf of 
+          which the message to be edited was sent */
+          businessConnectionId  : Option[String]
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
           channel (in the format &#064;channelusername) */
@@ -4988,6 +5067,9 @@ namespace telegramium {
           stopMessageLiveLocation. On success, if the edited message is not an inline 
           message, the edited Message is returned, otherwise True is returned.  */
         def editMessageLiveLocation {
+          /* Unique identifier of the business connection on behalf of 
+          which the message to be edited was sent */
+          businessConnectionId : Option[String]
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
           channel (in the format &#064;channelusername) */
@@ -5030,70 +5112,85 @@ namespace telegramium {
           video otherwise. When an inline message is edited, a new file can't be uploaded; 
           use a previously uploaded file via its file_id or specify a URL. On success, if 
           the edited message is not an inline message, the edited Message is returned, 
-          otherwise True is returned.  */
+          otherwise True is returned. Note that business messages that were not sent by 
+          the bot and do not contain an inline keyboard can only be edited within 48 hours 
+          from the time they were sent.  */
         def editMessageMedia {
+          /* Unique identifier of the business connection on behalf of 
+          which the message to be edited was sent */
+          businessConnectionId : Option[String]
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
           channel (in the format &#064;channelusername) */
-          chatId          : Option[ChatId]
+          chatId               : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
-          messageId       : Option[Int]
+          messageId            : Option[Int]
           /* Required if chat_id and message_id are not specified. 
           Identifier of the inline message */
-          inlineMessageId : Option[String]
+          inlineMessageId      : Option[String]
           /* A JSON-serialized object for a new media content of the 
           message */
-          media           : InputMedia
+          media                : InputMedia
           /* A JSON-serialized object for a new inline keyboard. */
-          replyMarkup     : Option[InlineKeyboardMarkup]
+          replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
         /* Use this method to edit only the reply markup of messages. On success, if the 
           edited message is not an inline message, the edited Message is returned, 
-          otherwise True is returned.  */
+          otherwise True is returned. Note that business messages that were not sent by 
+          the bot and do not contain an inline keyboard can only be edited within 48 hours 
+          from the time they were sent.  */
         def editMessageReplyMarkup {
+          /* Unique identifier of the business connection on behalf of 
+          which the message to be edited was sent */
+          businessConnectionId : Option[String]
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
           channel (in the format &#064;channelusername) */
-          chatId          : Option[ChatId]
+          chatId               : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
-          messageId       : Option[Int]
+          messageId            : Option[Int]
           /* Required if chat_id and message_id are not specified. 
           Identifier of the inline message */
-          inlineMessageId : Option[String]
+          inlineMessageId      : Option[String]
           /* A JSON-serialized object for an inline keyboard. */
-          replyMarkup     : Option[InlineKeyboardMarkup]
+          replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
         /* Use this method to edit text and game messages. On success, if the edited 
           message is not an inline message, the edited Message is returned, otherwise True 
-          is returned.  */
+          is returned. Note that business messages that were not sent by the bot and do 
+          not contain an inline keyboard can only be edited within 48 hours from the time 
+          they were sent.  */
         def editMessageText {
+          /* Unique identifier of the business connection on behalf of 
+          which the message to be edited was sent */
+          businessConnectionId : Option[String]
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
           channel (in the format &#064;channelusername) */
-          chatId             : Option[ChatId]
+          chatId               : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message to edit */
-          messageId          : Option[Int]
+          messageId            : Option[Int]
           /* Required if chat_id and message_id are not specified. 
           Identifier of the inline message */
-          inlineMessageId    : Option[String]
+          inlineMessageId      : Option[String]
           /* New text of the message, 1-4096 characters after entities 
           parsing */
-          text               : String
+          text                 : String
           /* Mode for parsing entities in the message text. See 
           formatting options for more details. */
-          parseMode          : Option[ParseMode]
+          parseMode            : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           message text, which can be specified instead of parse_mode */
-          entities           : List[MessageEntity]
+          entities             : List[MessageEntity]
           /* Link preview generation options for the message */
-          linkPreviewOptions : Option[LinkPreviewOptions]
+          linkPreviewOptions   : Option[LinkPreviewOptions]
           /* A JSON-serialized object for an inline keyboard. */
-          replyMarkup        : Option[InlineKeyboardMarkup]
+          replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
         /* Use this method to generate a new primary invite link for a chat; any 
@@ -5301,6 +5398,16 @@ namespace telegramium {
           /* A two-letter ISO 639-1 language code or an empty string */
           languageCode : Option[String]
         } => Method[BotShortDescription]
+      
+        /* Returns the bot's Telegram Star transactions in chronological order. On 
+          success, returns a StarTransactions object.  */
+        def getStarTransactions {
+          /* Number of transactions to skip in the response */
+          offset : Option[Int]
+          /* The maximum number of transactions to be retrieved. Values 
+          between 1-100 are accepted. Defaults to 100. */
+          limit  : Option[Int]
+        } => Method[StarTransactions]
       
         /* Use this method to get a sticker set. On success, a StickerSet object is 
           returned.  */
@@ -6840,30 +6947,36 @@ namespace telegramium {
           expires. On success, if the message is not an inline message, the edited Message 
           is returned, otherwise True is returned.  */
         def stopMessageLiveLocation {
+          /* Unique identifier of the business connection on behalf of 
+          which the message to be edited was sent */
+          businessConnectionId : Option[String]
           /* Required if inline_message_id is not specified. Unique 
           identifier for the target chat or username of the target 
           channel (in the format &#064;channelusername) */
-          chatId          : Option[ChatId]
+          chatId               : Option[ChatId]
           /* Required if inline_message_id is not specified. Identifier 
           of the message with live location to stop */
-          messageId       : Option[Int]
+          messageId            : Option[Int]
           /* Required if chat_id and message_id are not specified. 
           Identifier of the inline message */
-          inlineMessageId : Option[String]
+          inlineMessageId      : Option[String]
           /* A JSON-serialized object for a new inline keyboard. */
-          replyMarkup     : Option[InlineKeyboardMarkup]
+          replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
         /* Use this method to stop a poll which was sent by the bot. On success, the 
           stopped Poll is returned.  */
         def stopPoll {
+          /* Unique identifier of the business connection on behalf of 
+          which the message to be edited was sent */
+          businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
-          chatId      : ChatId
+          chatId               : ChatId
           /* Identifier of the original message with the poll */
-          messageId   : Int
+          messageId            : Int
           /* A JSON-serialized object for a new message inline keyboard. */
-          replyMarkup : Option[InlineKeyboardMarkup]
+          replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Poll]
       
         /* Use this method to unban a previously banned user in a supergroup or channel. 
