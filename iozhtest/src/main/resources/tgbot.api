@@ -1462,6 +1462,51 @@ namespace telegramium {
              
     }
           
+    enum InputPaidMedia {
+    
+      /* The paid media to send is a photo.  */
+      InputPaidMediaPhoto {
+        type : "photo:0"
+        /* File to send. Pass a file_id to send a file that exists on 
+        the Telegram servers (recommended), pass an HTTP URL for 
+        Telegram to get a file from the Internet, or pass 
+        “attach://<file_attach_name>” to upload a new one using 
+        multipart/form-data under <file_attach_name> name. */
+        media : String
+      }
+             
+      /* The paid media to send is a video.  */
+      InputPaidMediaVideo {
+        type : "video:1"
+        /* File to send. Pass a file_id to send a file that exists on 
+        the Telegram servers (recommended), pass an HTTP URL for 
+        Telegram to get a file from the Internet, or pass 
+        “attach://<file_attach_name>” to upload a new one using 
+        multipart/form-data under <file_attach_name> name. */
+        media             : String
+        /* Optional. Thumbnail of the file sent; can be ignored if 
+        thumbnail generation for the file is supported server-side. 
+        The thumbnail should be in JPEG format and less than 200 kB 
+        in size. A thumbnail's width and height should not exceed 
+        320. Ignored if the file is not uploaded using 
+        multipart/form-data. Thumbnails can't be reused and can be 
+        only uploaded as a new file, so you can pass 
+        “attach://<file_attach_name>” if the thumbnail was uploaded 
+        using multipart/form-data under <file_attach_name>. */
+        thumbnail         : Option[IFile]
+        /* Optional. Video width */
+        width             : Option[Int]
+        /* Optional. Video height */
+        height            : Option[Int]
+        /* Optional. Video duration in seconds */
+        duration          : Option[Int]
+        /* Optional. Pass True if the uploaded video is suitable for 
+        streaming */
+        supportsStreaming : Option[Boolean]
+      }
+             
+    }
+          
     enum MaybeInaccessibleMessage {
     
       /* This object represents a message.  */
@@ -1564,6 +1609,9 @@ namespace telegramium {
         /* Optional. Message is a general file, information about the 
         file */
         document                      : Option[Document]
+        /* Optional. Message contains paid media; information about 
+        the paid media */
+        paidMedia                     : Option[PaidMediaInfo]
         /* Optional. Message is a photo, available sizes of the photo */
         photo                         : List[PhotoSize]
         /* Optional. Message is a sticker, information about the 
@@ -1579,8 +1627,8 @@ namespace telegramium {
         /* Optional. Message is a voice message, information about the 
         file */
         voice                         : Option[Voice]
-        /* Optional. Caption for the animation, audio, document, 
-        photo, video or voice */
+        /* Optional. Caption for the animation, audio, document, paid 
+        media, photo, video or voice */
         caption                       : Option[String]
         /* Optional. For messages with a caption, special entities 
         like usernames, URLs, bot commands, etc. that appear in the 
@@ -1755,7 +1803,10 @@ namespace telegramium {
         /* Description of the Web App that will be launched when the 
         user presses the button. The Web App will be able to send an 
         arbitrary message on behalf of the user using the method 
-        answerWebAppQuery. */
+        answerWebAppQuery. Alternatively, a t.me link to a Web App 
+        of the bot can be specified in the object instead of the Web 
+        App's URL, in which case the Web App will be opened as if 
+        the user pressed the link. */
         webApp : WebAppInfo
       }
              
@@ -1922,6 +1973,36 @@ namespace telegramium {
         /* Optional. For messages originally sent by an anonymous chat 
         administrator, original message author signature */
         authorSignature : Option[String]
+      }
+             
+    }
+          
+    enum PaidMedia {
+    
+      /* The paid media is a video.  */
+      PaidMediaVideo {
+        type : "video:0"
+        /* The video */
+        video : Video
+      }
+             
+      /* The paid media is a photo.  */
+      PaidMediaPhoto {
+        type : "photo:1"
+        /* The photo */
+        photo : List[PhotoSize]
+      }
+             
+      /* The paid media isn't available before the payment.  */
+      PaidMediaPreview {
+        type : "preview:2"
+        /* Optional. Media width as defined by the sender */
+        width    : Option[Int]
+        /* Optional. Media height as defined by the sender */
+        height   : Option[Int]
+        /* Optional. Duration of the media in seconds as defined by 
+        the sender */
+        duration : Option[Int]
       }
              
     }
@@ -2121,16 +2202,23 @@ namespace telegramium {
         type : "other:0"
       }
              
+      /* Describes a withdrawal transaction to the Telegram Ads platform.  */
+      TransactionPartnerTelegramAds {
+        type : "telegram_ads:1"
+      }
+             
       /* Describes a transaction with a user.  */
       TransactionPartnerUser {
-        type : "user:1"
+        type : "user:2"
         /* Information about the user */
-        user : User
+        user           : User
+        /* Optional. Bot-specified invoice payload */
+        invoicePayload : Option[String]
       }
              
       /* Describes a withdrawal transaction with Fragment.  */
       TransactionPartnerFragment {
-        type : "fragment:2"
+        type : "fragment:3"
         /* Optional. State of the transaction if the transaction is 
         outgoing */
         withdrawalState : Option[RevenueWithdrawalState]
@@ -2148,17 +2236,18 @@ namespace telegramium {
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
       fileUniqueId : String
-      /* Video width as defined by sender */
+      /* Video width as defined by the sender */
       width        : Int
-      /* Video height as defined by sender */
+      /* Video height as defined by the sender */
       height       : Int
-      /* Duration of the video in seconds as defined by sender */
+      /* Duration of the video in seconds as defined by the sender */
       duration     : Int
-      /* Optional. Animation thumbnail as defined by sender */
+      /* Optional. Animation thumbnail as defined by the sender */
       thumbnail    : Option[PhotoSize]
-      /* Optional. Original animation filename as defined by sender */
+      /* Optional. Original animation filename as defined by the 
+      sender */
       fileName     : Option[String]
-      /* Optional. MIME type of the file as defined by sender */
+      /* Optional. MIME type of the file as defined by the sender */
       mimeType     : Option[String]
       /* Optional. File size in bytes. It can be bigger than 
       2&#94;31 and some programming languages may have 
@@ -2178,17 +2267,17 @@ namespace telegramium {
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
       fileUniqueId : String
-      /* Duration of the audio in seconds as defined by sender */
+      /* Duration of the audio in seconds as defined by the sender */
       duration     : Int
-      /* Optional. Performer of the audio as defined by sender or by 
-      audio tags */
+      /* Optional. Performer of the audio as defined by the sender 
+      or by audio tags */
       performer    : Option[String]
-      /* Optional. Title of the audio as defined by sender or by 
+      /* Optional. Title of the audio as defined by the sender or by 
       audio tags */
       title        : Option[String]
-      /* Optional. Original filename as defined by sender */
+      /* Optional. Original filename as defined by the sender */
       fileName     : Option[String]
-      /* Optional. MIME type of the file as defined by sender */
+      /* Optional. MIME type of the file as defined by the sender */
       mimeType     : Option[String]
       /* Optional. File size in bytes. It can be bigger than 
       2&#94;31 and some programming languages may have 
@@ -2570,6 +2659,10 @@ namespace telegramium {
       /* Optional. Default chat member permissions, for groups and 
       supergroups */
       permissions                        : Option[ChatPermissions]
+      /* Optional. True, if paid media messages can be sent or 
+      forwarded to the channel chat. The field is available only 
+      for channel chats. */
+      canSendPaidMedia                   : Option[Boolean]
       /* Optional. For supergroups, the minimum allowed delay 
       between consecutive messages sent by each unprivileged user; 
       in seconds */
@@ -2848,11 +2941,11 @@ namespace telegramium {
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
       fileUniqueId : String
-      /* Optional. Document thumbnail as defined by sender */
+      /* Optional. Document thumbnail as defined by the sender */
       thumbnail    : Option[PhotoSize]
-      /* Optional. Original filename as defined by sender */
+      /* Optional. Original filename as defined by the sender */
       fileName     : Option[String]
-      /* Optional. MIME type of the file as defined by sender */
+      /* Optional. MIME type of the file as defined by the sender */
       mimeType     : Option[String]
       /* Optional. File size in bytes. It can be bigger than 
       2&#94;31 and some programming languages may have 
@@ -2961,6 +3054,9 @@ namespace telegramium {
       /* Optional. Message is a general file, information about the 
       file */
       document           : Option[Document]
+      /* Optional. Message contains paid media; information about 
+      the paid media */
+      paidMedia          : Option[PaidMediaInfo]
       /* Optional. Message is a photo, available sizes of the photo */
       photo              : List[PhotoSize]
       /* Optional. Message is a sticker, information about the 
@@ -3315,7 +3411,7 @@ namespace telegramium {
   
     }
            
-    /* This object contains information about one answer option in a poll to send.  */
+    /* This object contains information about one answer option in a poll to be sent.  */
     InputPollOption {
       /* Option text, 1-100 characters */
       text          : String
@@ -3531,9 +3627,9 @@ namespace telegramium {
            
     /* This object represents a point on the map.  */
     Location {
-      /* Latitude as defined by sender */
+      /* Latitude as defined by the sender */
       latitude             : Float
-      /* Longitude as defined by sender */
+      /* Longitude as defined by the sender */
       longitude            : Float
       /* Optional. The radius of uncertainty for the location, 
       measured in meters; 0-1500 */
@@ -3653,6 +3749,15 @@ namespace telegramium {
       email           : Option[String]
       /* Optional. User shipping address */
       shippingAddress : Option[ShippingAddress]
+    }
+           
+    /* Describes the paid media added to a message.  */
+    PaidMediaInfo {
+      /* The number of Telegram Stars that must be paid to buy 
+      access to the media */
+      starCount : Int
+      /* Information about the paid media */
+      paidMedia : List[PaidMedia]
     }
            
     /* Describes Telegram Passport data shared with the bot by the user.  */
@@ -3781,7 +3886,7 @@ namespace telegramium {
       shows the number of digits past the decimal point for each 
       currency (2 for the majority of currencies). */
       totalAmount      : Int
-      /* Bot specified invoice payload */
+      /* Bot-specified invoice payload */
       invoicePayload   : String
       /* Optional. Identifier of the shipping option chosen by the 
       user */
@@ -3924,7 +4029,7 @@ namespace telegramium {
       id              : String
       /* User who sent the query */
       from            : User
-      /* Bot specified invoice payload */
+      /* Bot-specified invoice payload */
       invoicePayload  : String
       /* User specified shipping address */
       shippingAddress : ShippingAddress
@@ -4040,7 +4145,7 @@ namespace telegramium {
       shows the number of digits past the decimal point for each 
       currency (2 for the majority of currencies). */
       totalAmount             : Int
-      /* Bot specified invoice payload */
+      /* Bot-specified invoice payload */
       invoicePayload          : String
       /* Optional. Identifier of the shipping option chosen by the 
       user */
@@ -4277,17 +4382,17 @@ namespace telegramium {
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
       fileUniqueId : String
-      /* Video width as defined by sender */
+      /* Video width as defined by the sender */
       width        : Int
-      /* Video height as defined by sender */
+      /* Video height as defined by the sender */
       height       : Int
-      /* Duration of the video in seconds as defined by sender */
+      /* Duration of the video in seconds as defined by the sender */
       duration     : Int
       /* Optional. Video thumbnail */
       thumbnail    : Option[PhotoSize]
-      /* Optional. Original filename as defined by sender */
+      /* Optional. Original filename as defined by the sender */
       fileName     : Option[String]
-      /* Optional. MIME type of the file as defined by sender */
+      /* Optional. MIME type of the file as defined by the sender */
       mimeType     : Option[String]
       /* Optional. File size in bytes. It can be bigger than 
       2&#94;31 and some programming languages may have 
@@ -4335,9 +4440,9 @@ namespace telegramium {
       download or reuse the file. */
       fileUniqueId : String
       /* Video width and height (diameter of the video message) as 
-      defined by sender */
+      defined by the sender */
       length       : Int
-      /* Duration of the video in seconds as defined by sender */
+      /* Duration of the video in seconds as defined by the sender */
       duration     : Int
       /* Optional. Video thumbnail */
       thumbnail    : Option[PhotoSize]
@@ -4354,9 +4459,9 @@ namespace telegramium {
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
       fileUniqueId : String
-      /* Duration of the audio in seconds as defined by sender */
+      /* Duration of the audio in seconds as defined by the sender */
       duration     : Int
-      /* Optional. MIME type of the file as defined by sender */
+      /* Optional. MIME type of the file as defined by the sender */
       mimeType     : Option[String]
       /* Optional. File size in bytes. It can be bigger than 
       2&#94;31 and some programming languages may have 
@@ -4639,12 +4744,12 @@ namespace telegramium {
           chatId : ChatId
         } => Method[Boolean]
       
-        /* Use this method to copy messages of any kind. Service messages, giveaway 
-          messages, giveaway winners messages, and invoice messages can't be copied. A 
-          quiz poll can be copied only if the value of the field correct_option_id is 
-          known to the bot. The method is analogous to the method forwardMessage, but the 
-          copied message doesn't have a link to the original message. Returns the 
-          MessageId of the sent message on success.  */
+        /* Use this method to copy messages of any kind. Service messages, paid media 
+          messages, giveaway messages, giveaway winners messages, and invoice messages 
+          can't be copied. A quiz poll can be copied only if the value of the field 
+          correct_option_id is known to the bot. The method is analogous to the method 
+          forwardMessage, but the copied message doesn't have a link to the original 
+          message. Returns the MessageId of the sent message on success.  */
         def copyMessage {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -4686,12 +4791,13 @@ namespace telegramium {
         } => Method[MessageId]
       
         /* Use this method to copy messages of any kind. If some of the specified messages 
-          can't be found or copied, they are skipped. Service messages, giveaway messages, 
-          giveaway winners messages, and invoice messages can't be copied. A quiz poll can 
-          be copied only if the value of the field correct_option_id is known to the bot. 
-          The method is analogous to the method forwardMessages, but the copied messages 
-          don't have a link to the original message. Album grouping is kept for copied 
-          messages. On success, an array of MessageId of the sent messages is returned.  */
+          can't be found or copied, they are skipped. Service messages, paid media 
+          messages, giveaway messages, giveaway winners messages, and invoice messages 
+          can't be copied. A quiz poll can be copied only if the value of the field 
+          correct_option_id is known to the bot. The method is analogous to the method 
+          forwardMessages, but the copied messages don't have a link to the original 
+          message. Album grouping is kept for copied messages. On success, an array of 
+          MessageId of the sent messages is returned.  */
         def copyMessages {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -6202,6 +6308,43 @@ namespace telegramium {
           an inline keyboard, custom reply keyboard, instructions to 
           remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
+        } => Method[Message]
+      
+        /* Use this method to send paid media to channel chats. On success, the sent 
+          Message is returned.  */
+        def sendPaidMedia {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId                : ChatId
+          /* The number of Telegram Stars that must be paid to buy 
+          access to the media */
+          starCount             : Int
+          /* A JSON-serialized array describing the media to be sent; up 
+          to 10 items */
+          media                 : List[InputPaidMedia]
+          /* Media caption, 0-1024 characters after entities parsing */
+          caption               : Option[String]
+          /* Mode for parsing entities in the media caption. See 
+          formatting options for more details. */
+          parseMode             : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
+          captionEntities       : List[MessageEntity]
+          /* Pass True, if the caption must be shown above the message 
+          media */
+          showCaptionAboveMedia : Option[Boolean]
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification   : Option[Boolean]
+          /* Protects the contents of the sent message from forwarding 
+          and saving */
+          protectContent        : Option[Boolean]
+          /* Description of the message to reply to */
+          replyParameters       : Option[ReplyParameters]
+          /* Additional interface options. A JSON-serialized object for 
+          an inline keyboard, custom reply keyboard, instructions to 
+          remove a reply keyboard or to force a reply from the user */
+          replyMarkup           : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to send photos. On success, the sent Message is returned.  */
