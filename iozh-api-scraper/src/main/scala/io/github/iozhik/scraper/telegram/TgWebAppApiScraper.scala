@@ -44,7 +44,7 @@ object TgWebAppApiScraper extends IOApp {
       .sliding(4)
       .map(_.toList)
       .collect {
-        case H4(x1) :: P(x2) :: Table(x3) :: _ if (x1.text != "Events Available for Mini Apps") => Item(name = x1, desc = List(x2), table = x3)
+        case H4(x1) :: P(x2) :: Table(x3) :: _ if x1.text != "Events Available for Mini Apps" => Item(name = x1, desc = List(x2), table = x3)
       }
       .toList
 
