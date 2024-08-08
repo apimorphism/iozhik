@@ -86,8 +86,7 @@ object TgWebAppApiScraper extends IOApp {
     val body = entityMap.toList.sortBy(_._1).map(_._2).intercalate("")
     val entities = body.split("\n").map("  " + _).toList.intercalate("\n")
 
-    s"""
-      |namespace telegramium {
+    s"""namespace telegramium {
       |  namespace webapps(snake circe http4s) {
       |    $entities
       |  }
