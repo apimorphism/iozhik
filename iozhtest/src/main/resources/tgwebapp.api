@@ -1,0 +1,324 @@
+
+namespace telegramium {
+  namespace webapps(snake circe http4s) {
+      
+    /* This object controls the back button, which can be displayed in the header of 
+      the Mini App in the Telegram interface.  */
+    BackButton {
+      /* Shows whether the button is visible. Set to false by 
+      default. */
+      isVisible : Boolean
+    }
+          
+    /* This object describes the native popup for authenticating the user using 
+      biometrics.  */
+    BiometricAuthenticateParams {
+      /* Optional. The text to be displayed to a user in the popup 
+      describing why you are asking them to authenticate and what 
+      action you will be taking based on that authentication, 
+      0-128 characters. */
+      reason : Option[String]
+    }
+          
+    /* This object controls biometrics on the device. Before the first use of this 
+      object, it needs to be initialized using the init method.  */
+    BiometricManager {
+      /* Bot API 7.2+ Shows whether biometrics object is 
+      initialized. */
+      isInited              : Boolean
+      /* Bot API 7.2+ Shows whether biometrics is available on the 
+      current device. */
+      isBiometricAvailable  : Boolean
+      /* Bot API 7.2+ The type of biometrics currently available on 
+      the device. Can be one of these values: - finger, 
+      fingerprint-based biometrics, - face, face-based biometrics, 
+      - unknown, biometrics of an unknown type. */
+      biometricType         : String
+      /* Bot API 7.2+ Shows whether permission to use biometrics has 
+      been requested. */
+      isAccessRequested     : Boolean
+      /* Bot API 7.2+ Shows whether permission to use biometrics has 
+      been granted. */
+      isAccessGranted       : Boolean
+      /* Bot API 7.2+ Shows whether the token is saved in secure 
+      storage on the device. */
+      isBiometricTokenSaved : Boolean
+      /* Bot API 7.2+ A unique device identifier that can be used to 
+      match the token to the device. */
+      deviceId              : String
+    }
+          
+    /* This object describes the native popup for requesting permission to use 
+      biometrics.  */
+    BiometricRequestAccessParams {
+      /* Optional. The text to be displayed to a user in the popup 
+      describing why the bot needs access to biometrics, 0-128 
+      characters. */
+      reason : Option[String]
+    }
+          
+    /* This object controls the cloud storage. Each bot can store up to 1024 items per 
+      user in the cloud storage.  */
+    CloudStorage {
+  
+    }
+          
+    /* This object controls haptic feedback.  */
+    HapticFeedback {
+  
+    }
+          
+    /* This object controls the main button, which is displayed at the bottom of the 
+      Mini App in the Telegram interface.  */
+    MainButton {
+      /* Current button text. Set to CONTINUE by default. */
+      text              : String
+      /* Current button color. Set to themeParams.button_color by 
+      default. */
+      color             : String
+      /* Current button text color. Set to 
+      themeParams.button_text_color by default. */
+      textColor         : String
+      /* Shows whether the button is visible. Set to false by 
+      default. */
+      isVisible         : Boolean
+      /* Shows whether the button is active. Set to true by default. */
+      isActive          : Boolean
+      /* Readonly. Shows whether the button is displaying a loading 
+      indicator. */
+      isProgressVisible : Boolean
+    }
+          
+    /* This object describes the native popup button.  */
+    PopupButton {
+      /* Optional. Identifier of the button, 0-64 characters. Set to 
+      empty string by default. If the button is pressed, its id is 
+      returned in the callback and the popupClosed event. */
+      id   : Option[String]
+      /* Optional. Type of the button. Set to default by default. 
+      Can be one of these values: - default, a button with the 
+      default style, - ok, a button with the localized text “OK”, 
+      - close, a button with the localized text “Close”, - cancel, 
+      a button with the localized text “Cancel”, - destructive, a 
+      button with a style that indicates a destructive action 
+      (e.g. “Remove”, “Delete”, etc.). */
+      type : Option[String]
+      /* Optional. The text to be displayed on the button, 0-64 
+      characters. Required if type is default or destructive. 
+      Irrelevant for other types. */
+      text : Option[String]
+    }
+          
+    /* This object describes the native popup.  */
+    PopupParams {
+      /* Optional. The text to be displayed in the popup title, 0-64 
+      characters. */
+      title   : Option[String]
+      /* The message to be displayed in the body of the popup, 1-256 
+      characters. */
+      message : String
+      /* Optional. List of buttons to be displayed in the popup, 1-3 
+      buttons. Set to [{“type”:“close”}] by default. */
+      buttons : List[PopupButton]
+    }
+          
+    /* This object describes the native popup for scanning QR codes.  */
+    ScanQrPopupParams {
+      /* Optional. The text to be displayed under the 'Scan QR' 
+      heading, 0-64 characters. */
+      text : Option[String]
+    }
+          
+    /* This object controls the Settings item in the context menu of the Mini App in 
+      the Telegram interface.  */
+    SettingsButton {
+      /* Shows whether the context menu item is visible. Set to 
+      false by default. */
+      isVisible : Boolean
+    }
+          
+    /* This object describes additional sharing settings for the native story editor.  */
+    StoryShareParams {
+      /* Optional. The caption to be added to the media, 0-200 
+      characters for regular users and 0-2048 characters for 
+      premium subscribers. */
+      text       : Option[String]
+      /* Optional. An object that describes a widget link to be 
+      included in the story. Note that only premium subscribers 
+      can post stories with links. */
+      widgetLink : Option[StoryWidgetLink]
+    }
+          
+    /* This object describes a widget link to be included in the story.  */
+    StoryWidgetLink {
+      /* The URL to be included in the story. */
+      url  : String
+      /* Optional. The name to be displayed for the widget link, 
+      0-48 characters. */
+      name : Option[String]
+    }
+          
+    /* Mini Apps can adjust the appearance of the interface to match the Telegram 
+      user's app in real time. This object contains the user's current theme settings:  */
+    ThemeParams {
+      /* Optional. Background color in the #RRGGBB format. Also 
+      available as the CSS variable var(--tg-theme-bg-color). */
+      bgColor                : Option[String]
+      /* Optional. Main text color in the #RRGGBB format. Also 
+      available as the CSS variable var(--tg-theme-text-color). */
+      textColor              : Option[String]
+      /* Optional. Hint text color in the #RRGGBB format. Also 
+      available as the CSS variable var(--tg-theme-hint-color). */
+      hintColor              : Option[String]
+      /* Optional. Link color in the #RRGGBB format. Also available 
+      as the CSS variable var(--tg-theme-link-color). */
+      linkColor              : Option[String]
+      /* Optional. Button color in the #RRGGBB format. Also 
+      available as the CSS variable var(--tg-theme-button-color). */
+      buttonColor            : Option[String]
+      /* Optional. Button text color in the #RRGGBB format. Also 
+      available as the CSS variable 
+      var(--tg-theme-button-text-color). */
+      buttonTextColor        : Option[String]
+      /* Optional. Bot API 6.1+ Secondary background color in the 
+      #RRGGBB format. Also available as the CSS variable 
+      var(--tg-theme-secondary-bg-color). */
+      secondaryBgColor       : Option[String]
+      /* Optional. Bot API 7.0+ Header background color in the 
+      #RRGGBB format. Also available as the CSS variable 
+      var(--tg-theme-header-bg-color). */
+      headerBgColor          : Option[String]
+      /* Optional. Bot API 7.0+ Accent text color in the #RRGGBB 
+      format. Also available as the CSS variable 
+      var(--tg-theme-accent-text-color). */
+      accentTextColor        : Option[String]
+      /* Optional. Bot API 7.0+ Background color for the section in 
+      the #RRGGBB format. It is recommended to use this in 
+      conjunction with secondary_bg_color. Also available as the 
+      CSS variable var(--tg-theme-section-bg-color). */
+      sectionBgColor         : Option[String]
+      /* Optional. Bot API 7.0+ Header text color for the section in 
+      the #RRGGBB format. Also available as the CSS variable 
+      var(--tg-theme-section-header-text-color). */
+      sectionHeaderTextColor : Option[String]
+      /* Optional. Bot API 7.6+ Section separator color in the 
+      #RRGGBB format. Also available as the CSS variable 
+      var(--tg-theme-section-separator-color). */
+      sectionSeparatorColor  : Option[String]
+      /* Optional. Bot API 7.0+ Subtitle text color in the #RRGGBB 
+      format. Also available as the CSS variable 
+      var(--tg-theme-subtitle-text-color). */
+      subtitleTextColor      : Option[String]
+      /* Optional. Bot API 7.0+ Text color for destructive actions 
+      in the #RRGGBB format. Also available as the CSS variable 
+      var(--tg-theme-destructive-text-color). */
+      destructiveTextColor   : Option[String]
+    }
+          
+    /* This object represents a chat.  */
+    WebAppChat {
+      /* Unique identifier for this chat. This number may have more 
+      than 32 significant bits and some programming languages may 
+      have difficulty/silent defects in interpreting it. But it 
+      has at most 52 significant bits, so a signed 64-bit integer 
+      or double-precision float type are safe for storing this 
+      identifier. */
+      id       : Long
+      /* Type of chat, can be either “group”, “supergroup” or 
+      “channel” */
+      type     : String
+      /* Title of the chat */
+      title    : String
+      /* Optional. Username of the chat */
+      username : Option[String]
+      /* Optional. URL of the chat’s photo. The photo can be in 
+      .jpeg or .svg formats. Only returned for Mini Apps launched 
+      from the attachment menu. */
+      photoUrl : Option[String]
+    }
+          
+    /* This object contains data that is transferred to the Mini App when it is 
+      opened. It is empty if the Mini App was launched from a keyboard button or from 
+      inline mode.  */
+    WebAppInitData {
+      /* Optional. A unique identifier for the Mini App session, 
+      required for sending messages via the answerWebAppQuery 
+      method. */
+      queryId      : Option[String]
+      /* Optional. An object containing data about the current user. */
+      user         : Option[WebAppUser]
+      /* Optional. An object containing data about the chat partner 
+      of the current user in the chat where the bot was launched 
+      via the attachment menu. Returned only for private chats and 
+      only for Mini Apps launched via the attachment menu. */
+      receiver     : Option[WebAppUser]
+      /* Optional. An object containing data about the chat where 
+      the bot was launched via the attachment menu. Returned for 
+      supergroups, channels and group chats – only for Mini Apps 
+      launched via the attachment menu. */
+      chat         : Option[WebAppChat]
+      /* Optional. Type of the chat from which the Mini App was 
+      opened. Can be either “sender” for a private chat with the 
+      user opening the link, “private”, “group”, “supergroup”, or 
+      “channel”. Returned only for Mini Apps launched from direct 
+      links. */
+      chatType     : Option[String]
+      /* Optional. Global identifier, uniquely corresponding to the 
+      chat from which the Mini App was opened. Returned only for 
+      Mini Apps launched from a direct link. */
+      chatInstance : Option[String]
+      /* Optional. The value of the startattach parameter, passed 
+      via link. Only returned for Mini Apps when launched from the 
+      attachment menu via link. The value of the start_param 
+      parameter will also be passed in the GET-parameter 
+      tgWebAppStartParam, so the Mini App can load the correct 
+      interface right away. */
+      startParam   : Option[String]
+      /* Optional. Time in seconds, after which a message can be 
+      sent via the answerWebAppQuery method. */
+      canSendAfter : Option[Int]
+      /* Unix time when the form was opened. */
+      authDate     : Int
+      /* A hash of all passed parameters, which the bot server can 
+      use to check their validity. */
+      hash         : String
+    }
+          
+    /* This object contains the data of the Mini App user.  */
+    WebAppUser {
+      /* A unique identifier for the user or bot. This number may 
+      have more than 32 significant bits and some programming 
+      languages may have difficulty/silent defects in interpreting 
+      it. It has at most 52 significant bits, so a 64-bit integer 
+      or a double-precision float type is safe for storing this 
+      identifier. */
+      id                    : Long
+      /* Optional. True, if this user is a bot. Returns in the 
+      receiver field only. */
+      isBot                 : Option[Boolean]
+      /* First name of the user or bot. */
+      firstName             : String
+      /* Optional. Last name of the user or bot. */
+      lastName              : Option[String]
+      /* Optional. Username of the user or bot. */
+      username              : Option[String]
+      /* Optional. IETF language tag of the user's language. Returns 
+      in user field only. */
+      languageCode          : Option[String]
+      /* Optional. True, if this user is a Telegram Premium user. */
+      isPremium             : Option[Boolean]
+      /* Optional. True, if this user added the bot to the 
+      attachment menu. */
+      addedToAttachmentMenu : Option[Boolean]
+      /* Optional. True, if this user allowed the bot to message 
+      them. */
+      allowsWriteToPm       : Option[Boolean]
+      /* Optional. URL of the user’s profile photo. The photo can be 
+      in .jpeg or .svg formats. Only returned for Mini Apps 
+      launched from the attachment menu. */
+      photoUrl              : Option[String]
+    }
+          
+  }
+}
+    
