@@ -1115,7 +1115,6 @@ class ScalaApiGeneratorV1 {
     "CirceImplicits" -> """
         | import io.circe.syntax._
         | import io.circe.{Encoder, Decoder, Json}
-        | import iozhik._
       """.stripMargin,
     "ScodecImplicits" ->
       """
