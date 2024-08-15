@@ -399,7 +399,10 @@ namespace telegramium {
       ChatMemberMember {
         status : "member:3"
         /* Information about the user */
-        user   : User
+        user      : User
+        /* Optional. Date when the user's subscription will expire; 
+        Unix time */
+        untilDate : Option[Int]
       }
              
       /* Represents a chat member that was banned in the chat and can't return to the 
@@ -1516,19 +1519,18 @@ namespace telegramium {
         /* Optional. Unique identifier of a message thread to which 
         the message belongs; for supergroups only */
         messageThreadId               : Option[Int]
-        /* Optional. Sender of the message; empty for messages sent to 
-        channels. For backward compatibility, the field contains a 
-        fake sender user in non-channel chats, if the message was 
-        sent on behalf of a chat. */
+        /* Optional. Sender of the message; may be empty for messages 
+        sent to channels. For backward compatibility, if the message 
+        was sent on behalf of a chat, the field contains a fake 
+        sender user in non-channel chats */
         from                          : Option[User]
-        /* Optional. Sender of the message, sent on behalf of a chat. 
-        For example, the channel itself for channel posts, the 
-        supergroup itself for messages from anonymous group 
-        administrators, the linked channel for messages 
-        automatically forwarded to the discussion group. For 
-        backward compatibility, the field from contains a fake 
-        sender user in non-channel chats, if the message was sent on 
-        behalf of a chat. */
+        /* Optional. Sender of the message when sent on behalf of a 
+        chat. For example, the supergroup itself for messages sent 
+        by its anonymous administrators or a linked channel for 
+        messages automatically forwarded to the channel's discussion 
+        group. For backward compatibility, if the message was sent 
+        on behalf of a chat, the field from contains a fake sender 
+        user in non-channel chats. */
         senderChat                    : Option[Chat]
         /* Optional. If the sender of the message boosted the chat, 
         the number of boosts added by the user */
@@ -2151,9 +2153,14 @@ namespace telegramium {
           
     enum ReactionType {
     
+      /* The reaction is paid.  */
+      ReactionTypePaid {
+        type : "paid:0"
+      }
+             
       /* The reaction is based on an emoji.  */
       ReactionTypeEmoji {
-        type : "emoji:0"
+        type : "emoji:1"
         /* Reaction emoji. Currently, it can be one of "👍", "👎", 
         "❤", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", 
         "🎉", "🤩", "🤮", "💩", "🙏", "👌", "🕊", "🤡", "🥱", "🥴", 
@@ -2168,7 +2175,7 @@ namespace telegramium {
              
       /* The reaction is based on a custom emoji.  */
       ReactionTypeCustomEmoji {
-        type : "custom_emoji:1"
+        type : "custom_emoji:2"
         /* Custom emoji identifier */
         customEmojiId : String
       }
@@ -2217,6 +2224,9 @@ namespace telegramium {
         user           : User
         /* Optional. Bot-specified invoice payload */
         invoicePayload : Option[String]
+        /* Optional. Information about the paid media bought by the 
+        user */
+        paidMedia      : List[PaidMedia]
       }
              
       /* Describes a withdrawal transaction with Fragment.  */
@@ -4871,6 +4881,26 @@ namespace telegramium {
           createsJoinRequest : Option[Boolean]
         } => Method[ChatInviteLink]
       
+        /* Use this method to create a subscription invite link for a channel chat. The 
+          bot must have the can_invite_users administrator rights. The link can be edited 
+          using the method editChatSubscriptionInviteLink or revoked using the method 
+          revokeChatInviteLink. Returns the new invite link as a ChatInviteLink object.  */
+        def createChatSubscriptionInviteLink {
+          /* Unique identifier for the target channel chat or username 
+          of the target channel (in the format &#064;channelusername) */
+          chatId             : ChatId
+          /* Invite link name; 0-32 characters */
+          name               : Option[String]
+          /* The number of seconds the subscription will be active for 
+          before the next payment. Currently, it must always be 
+          2592000 (30 days). */
+          subscriptionPeriod : Int
+          /* The amount of Telegram Stars a user must pay initially and 
+          after each subsequent subscription period to be a member of 
+          the chat; 1-2500 */
+          subscriptionPrice  : Int
+        } => Method[ChatInviteLink]
+      
         /* Use this method to create a topic in a forum supergroup chat. The bot must be 
           an administrator in the chat for this to work and must have the 
           can_manage_topics administrator rights. Returns information about the created 
@@ -5126,8 +5156,21 @@ namespace telegramium {
           createsJoinRequest : Option[Boolean]
         } => Method[ChatInviteLink]
       
+        /* Use this method to edit a subscription invite link created by the bot. The bot 
+          must have the can_invite_users administrator rights. Returns the edited invite 
+          link as a ChatInviteLink object.  */
+        def editChatSubscriptionInviteLink {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId     : ChatId
+          /* The invite link to edit */
+          inviteLink : String
+          /* Invite link name; 0-32 characters */
+          name       : Option[String]
+        } => Method[ChatInviteLink]
+      
         /* Use this method to edit name and icon of a topic in a forum supergroup chat. 
-          The bot must be an administrator in the chat for this to work and must have 
+          The bot must be an administrator in the chat for this to work and must have the 
           can_manage_topics administrator rights, unless it is the creator of the topic. 
           Returns True on success.  */
         def editForumTopic {
@@ -5149,7 +5192,7 @@ namespace telegramium {
       
         /* Use this method to edit the name of the 'General' topic in a forum supergroup 
           chat. The bot must be an administrator in the chat for this to work and must 
-          have can_manage_topics administrator rights. Returns True on success.  */
+          have the can_manage_topics administrator rights. Returns True on success.  */
         def editGeneralForumTopic {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
@@ -6339,11 +6382,16 @@ namespace telegramium {
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
       
-        /* Use this method to send paid media to channel chats. On success, the sent 
-          Message is returned.  */
+        /* Use this method to send paid media. On success, the sent Message is returned.  */
         def sendPaidMedia {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId  : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format &#064;channelusername) */
+          target channel (in the format &#064;channelusername). If the 
+          chat is a channel, all Telegram Star proceeds from this 
+          media will be credited to the chat's balance. Otherwise, 
+          they will be credited to the bot's balance. */
           chatId                : ChatId
           /* The number of Telegram Stars that must be paid to buy 
           access to the media */
@@ -6883,7 +6931,7 @@ namespace telegramium {
         /* Use this method to change the chosen reactions on a message. Service messages 
           can't be reacted to. Automatically forwarded messages from a channel to its 
           discussion group have the same available reactions as messages in the channel. 
-          Returns True on success.  */
+          Bots can't use paid reactions. Returns True on success.  */
         def setMessageReaction {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
@@ -6896,7 +6944,8 @@ namespace telegramium {
           message. Currently, as non-premium users, bots can set up to 
           one reaction per message. A custom emoji reaction can be 
           used if it is either already present on the message or 
-          explicitly allowed by chat administrators. */
+          explicitly allowed by chat administrators. Paid reactions 
+          can't be used by bots. */
           reaction  : List[ReactionType]
           /* Pass True to set the reaction with a big animation */
           isBig     : Option[Boolean]
