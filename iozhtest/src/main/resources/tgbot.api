@@ -288,17 +288,22 @@ namespace telegramium {
         user   : User
       }
              
-      /* The boost was obtained by the creation of a Telegram Premium giveaway. This 
-        boosts the chat 4 times for the duration of the corresponding Telegram Premium 
-        subscription.  */
+      /* The boost was obtained by the creation of a Telegram Premium or a Telegram Star 
+        giveaway. This boosts the chat 4 times for the duration of the corresponding 
+        Telegram Premium subscription for Telegram Premium giveaways and 
+        prize_star_count / 500 times for one year for Telegram Star giveaways.  */
       ChatBoostSourceGiveaway {
         source : "giveaway:1"
         /* Identifier of a message in the chat with the giveaway; the 
         message could have been deleted already. May be 0 if the 
         message isn't sent yet. */
         giveawayMessageId : Int
-        /* Optional. User that won the prize in the giveaway if any */
+        /* Optional. User that won the prize in the giveaway if any; 
+        for Telegram Premium giveaways only */
         user              : Option[User]
+        /* Optional. The number of Telegram Stars to be split between 
+        giveaway winners; for Telegram Star giveaways only */
+        prizeStarCount    : Option[Int]
         /* Optional. True, if the giveaway was completed, but there 
         was no user to win the prize */
         isUnclaimed       : Option[Boolean]
@@ -1338,7 +1343,7 @@ namespace telegramium {
         /* Product description, 1-255 characters */
         description               : String
         /* Bot-defined invoice payload, 1-128 bytes. This will not be 
-        displayed to the user, use for your internal processes. */
+        displayed to the user, use it for your internal processes. */
         payload                   : String
         /* Optional. Payment provider token, obtained via 
         &#064;BotFather. Pass an empty string for payments in 
@@ -2221,12 +2226,14 @@ namespace telegramium {
       TransactionPartnerUser {
         type : "user:2"
         /* Information about the user */
-        user           : User
+        user             : User
         /* Optional. Bot-specified invoice payload */
-        invoicePayload : Option[String]
+        invoicePayload   : Option[String]
         /* Optional. Information about the paid media bought by the 
         user */
-        paidMedia      : List[PaidMedia]
+        paidMedia        : List[PaidMedia]
+        /* Optional. Bot-specified paid media payload */
+        paidMediaPayload : Option[String]
       }
              
       /* Describes a withdrawal transaction with Fragment.  */
@@ -2749,6 +2756,13 @@ namespace telegramium {
       /* Optional. Number of pending join requests created using 
       this link */
       pendingJoinRequestCount : Option[Int]
+      /* Optional. The number of seconds the subscription will be 
+      active for before the next payment */
+      subscriptionPeriod      : Option[Int]
+      /* Optional. The amount of Telegram Stars a user must pay 
+      initially and after each subsequent subscription period to 
+      be a member of the chat using the link */
+      subscriptionPrice       : Option[Int]
     }
            
     /* Represents a join request sent to a chat.  */
@@ -3254,8 +3268,12 @@ namespace telegramium {
       participate in the giveaway. Users with a phone number that 
       was bought on Fragment can always participate in giveaways. */
       countryCodes                  : List[String]
+      /* Optional. The number of Telegram Stars to be split between 
+      giveaway winners; for Telegram Star giveaways only */
+      prizeStarCount                : Option[Int]
       /* Optional. The number of months the Telegram Premium 
-      subscription won from the giveaway will be active for */
+      subscription won from the giveaway will be active for; for 
+      Telegram Premium giveaways only */
       premiumSubscriptionMonthCount : Option[Int]
     }
            
@@ -3269,12 +3287,18 @@ namespace telegramium {
       /* Optional. Message with the giveaway that was completed, if 
       it wasn't deleted */
       giveawayMessage     : Option[Message]
+      /* Optional. True, if the giveaway is a Telegram Star 
+      giveaway. Otherwise, currently, the giveaway is a Telegram 
+      Premium giveaway. */
+      isStarGiveaway      : Option[Boolean]
     }
            
     /* This object represents a service message about the creation of a scheduled 
-      giveaway. Currently holds no information.  */
+      giveaway.  */
     GiveawayCreated {
-  
+      /* Optional. The number of Telegram Stars to be split between 
+      giveaway winners; for Telegram Star giveaways only */
+      prizeStarCount : Option[Int]
     }
            
     /* This object represents a message about the completion of a giveaway with public 
@@ -3294,8 +3318,12 @@ namespace telegramium {
       /* Optional. The number of other chats the user had to join in 
       order to be eligible for the giveaway */
       additionalChatCount           : Option[Int]
+      /* Optional. The number of Telegram Stars that were split 
+      between giveaway winners; for Telegram Star giveaways only */
+      prizeStarCount                : Option[Int]
       /* Optional. The number of months the Telegram Premium 
-      subscription won from the giveaway will be active for */
+      subscription won from the giveaway will be active for; for 
+      Telegram Premium giveaways only */
       premiumSubscriptionMonthCount : Option[Int]
       /* Optional. Number of undistributed prizes */
       unclaimedPrizeCount           : Option[Int]
@@ -3771,6 +3799,14 @@ namespace telegramium {
       starCount : Int
       /* Information about the paid media */
       paidMedia : List[PaidMedia]
+    }
+           
+    /* This object contains information about a paid media purchase.  */
+    PaidMediaPurchased {
+      /* User who purchased the media */
+      from             : User
+      /* Bot-specified paid media payload */
+      paidMediaPayload : String
     }
            
     /* Describes Telegram Passport data shared with the bot by the user.  */
@@ -4295,6 +4331,9 @@ namespace telegramium {
       /* Optional. New incoming pre-checkout query. Contains full 
       information about checkout */
       preCheckoutQuery        : Option[PreCheckoutQuery]
+      /* Optional. A user purchased paid media with a non-empty 
+      payload sent by the bot in a non-channel chat */
+      purchasedPaidMedia      : Option[PaidMediaPurchased]
       /* Optional. New poll state. Bots receive only updates about 
       manually stopped polls and polls, which are sent by the bot */
       poll                    : Option[Poll]
@@ -4930,7 +4969,7 @@ namespace telegramium {
           /* Product description, 1-255 characters */
           description               : String
           /* Bot-defined invoice payload, 1-128 bytes. This will not be 
-          displayed to the user, use for your internal processes. */
+          displayed to the user, use it for your internal processes. */
           payload                   : String
           /* Payment provider token, obtained via &#064;BotFather. Pass 
           an empty string for payments in Telegram Stars. */
@@ -6178,7 +6217,7 @@ namespace telegramium {
           /* Product description, 1-255 characters */
           description               : String
           /* Bot-defined invoice payload, 1-128 bytes. This will not be 
-          displayed to the user, use for your internal processes. */
+          displayed to the user, use it for your internal processes. */
           payload                   : String
           /* Payment provider token, obtained via &#064;BotFather. Pass 
           an empty string for payments in Telegram Stars. */
@@ -6394,11 +6433,15 @@ namespace telegramium {
           they will be credited to the bot's balance. */
           chatId                : ChatId
           /* The number of Telegram Stars that must be paid to buy 
-          access to the media */
+          access to the media; 1-2500 */
           starCount             : Int
           /* A JSON-serialized array describing the media to be sent; up 
           to 10 items */
           media                 : List[InputPaidMedia]
+          /* Bot-defined paid media payload, 0-128 bytes. This will not 
+          be displayed to the user, use it for your internal 
+          processes. */
+          payload               : Option[String]
           /* Media caption, 0-1024 characters after entities parsing */
           caption               : Option[String]
           /* Mode for parsing entities in the media caption. See 
