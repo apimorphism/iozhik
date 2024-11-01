@@ -1519,7 +1519,12 @@ namespace telegramium {
     
       /* This object represents a message.  */
       Message {
-        /* Unique message identifier inside this chat */
+        /* Unique message identifier inside this chat. In specific 
+        instances (e.g., message containing a video sent to a big 
+        chat), the server might automatically schedule a message 
+        instead of sending it immediately. In such cases, this field 
+        will be 0 and the relevant message will be unusable until it 
+        is actually sent */
         messageId                     : Int
         /* Optional. Unique identifier of a message thread to which 
         the message belongs; for supergroups only */
@@ -2236,9 +2241,17 @@ namespace telegramium {
         paidMediaPayload : Option[String]
       }
              
+      /* Describes a transaction with payment for paid broadcasting.  */
+      TransactionPartnerTelegramApi {
+        type : "telegram_api:3"
+        /* The number of successful requests that exceeded regular 
+        limits and were therefore billed */
+        requestCount : Int
+      }
+             
       /* Describes a withdrawal transaction with Fragment.  */
       TransactionPartnerFragment {
-        type : "fragment:3"
+        type : "fragment:4"
         /* Optional. State of the transaction if the transaction is 
         outgoing */
         withdrawalState : Option[RevenueWithdrawalState]
@@ -2949,6 +2962,13 @@ namespace telegramium {
       vcard       : Option[String]
     }
            
+    /* This object represents an inline keyboard button that copies specified text to 
+      the clipboard.  */
+    CopyTextButton {
+      /* The text to be copied to the clipboard; 1-256 characters */
+      text : String
+    }
+           
     /* This object represents an animated emoji that displays a random value.  */
     Dice {
       /* Emoji on which the dice throw animation is based */
@@ -3383,6 +3403,9 @@ namespace telegramium {
       inline query in the input field. Not supported for messages 
       sent on behalf of a Telegram Business account. */
       switchInlineQueryChosenChat  : Option[SwitchInlineQueryChosenChat]
+      /* Optional. Description of the button that copies the 
+      specified text to the clipboard. */
+      copyText                     : Option[CopyTextButton]
       /* Optional. Description of the game that will be launched 
       when the user presses the button. NOTE: This type of button 
       must always be the first button in the first row. */
@@ -3744,7 +3767,11 @@ namespace telegramium {
            
     /* This object represents a unique message identifier.  */
     MessageId {
-      /* Unique message identifier */
+      /* Unique message identifier. In specific instances (e.g., 
+      message containing a video sent to a big chat), the server 
+      might automatically schedule a message instead of sending it 
+      immediately. In such cases, this field will be 0 and the 
+      relevant message will be unusable until it is actually sent */
       messageId : Int
     }
            
@@ -4107,7 +4134,7 @@ namespace telegramium {
     /* Describes a Telegram Star transaction.  */
     StarTransaction {
       /* Unique identifier of the transaction. Coincides with the 
-      identifer of the original transaction for refund 
+      identifier of the original transaction for refund 
       transactions. Coincides with 
       SuccessfulPayment.telegram_payment_charge_id for successful 
       incoming payments from users. */
@@ -4857,6 +4884,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent        : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast    : Option[Boolean]
           /* Description of the message to reply to */
           replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -5320,15 +5352,15 @@ namespace telegramium {
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
-        /* Use this method to edit animation, audio, document, photo, or video messages. 
-          If a message is part of a message album, then it can be edited only to an audio 
-          for audio albums, only to a document for document albums and to a photo or a 
-          video otherwise. When an inline message is edited, a new file can't be uploaded; 
-          use a previously uploaded file via its file_id or specify a URL. On success, if 
-          the edited message is not an inline message, the edited Message is returned, 
-          otherwise True is returned. Note that business messages that were not sent by 
-          the bot and do not contain an inline keyboard can only be edited within 48 hours 
-          from the time they were sent.  */
+        /* Use this method to edit animation, audio, document, photo, or video messages, 
+          or to add media to text messages. If a message is part of a message album, then 
+          it can be edited only to an audio for audio albums, only to a document for 
+          document albums and to a photo or a video otherwise. When an inline message is 
+          edited, a new file can't be uploaded; use a previously uploaded file via its 
+          file_id or specify a URL. On success, if the edited message is not an inline 
+          message, the edited Message is returned, otherwise True is returned. Note that 
+          business messages that were not sent by the bot and do not contain an inline 
+          keyboard can only be edited within 48 hours from the time they were sent.  */
         def editMessageMedia {
           /* Unique identifier of the business connection on behalf of 
           which the message to be edited was sent */
@@ -5947,6 +5979,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent        : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast    : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId       : Option[String]
@@ -6009,6 +6046,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6072,6 +6114,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6106,6 +6153,11 @@ namespace telegramium {
           disableNotification  : Option[Boolean]
           /* Protects the contents of the sent message from forwarding */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6163,6 +6215,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent              : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast          : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId             : Option[String]
@@ -6193,6 +6250,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6293,6 +6355,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent            : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast        : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId           : Option[String]
@@ -6341,6 +6408,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6374,6 +6446,11 @@ namespace telegramium {
           /* Protects the contents of the sent messages from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6410,6 +6487,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6459,6 +6541,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent        : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast    : Option[Boolean]
           /* Description of the message to reply to */
           replyParameters       : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
@@ -6507,6 +6594,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent        : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast    : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId       : Option[String]
@@ -6580,6 +6672,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent        : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast    : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId       : Option[String]
@@ -6619,6 +6716,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6666,6 +6768,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6735,6 +6842,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent        : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast    : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId       : Option[String]
@@ -6784,6 +6896,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
@@ -6833,6 +6950,11 @@ namespace telegramium {
           /* Protects the contents of the sent message from forwarding 
           and saving */
           protectContent       : Option[Boolean]
+          /* Pass True to allow up to 1000 messages per second, ignoring 
+          broadcasting limits for a fee of 0.1 Telegram Stars per 
+          message. The relevant Stars will be withdrawn from the bot's 
+          balance */
+          allowPaidBroadcast   : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
           messageEffectId      : Option[String]
