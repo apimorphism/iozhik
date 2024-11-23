@@ -2231,14 +2231,18 @@ namespace telegramium {
       TransactionPartnerUser {
         type : "user:2"
         /* Information about the user */
-        user             : User
+        user               : User
         /* Optional. Bot-specified invoice payload */
-        invoicePayload   : Option[String]
+        invoicePayload     : Option[String]
+        /* Optional. The duration of the paid subscription */
+        subscriptionPeriod : Option[Int]
         /* Optional. Information about the paid media bought by the 
         user */
-        paidMedia        : List[PaidMedia]
+        paidMedia          : List[PaidMedia]
         /* Optional. Bot-specified paid media payload */
-        paidMediaPayload : Option[String]
+        paidMediaPayload   : Option[String]
+        /* Optional. The gift sent to the user by the bot */
+        gift               : Option[Gift]
       }
              
       /* Describes a transaction with payment for paid broadcasting.  */
@@ -3263,6 +3267,29 @@ namespace telegramium {
   
     }
            
+    /* This object represents a gift that can be sent by the bot.  */
+    Gift {
+      /* Unique identifier of the gift */
+      id             : String
+      /* The sticker that represents the gift */
+      sticker        : Sticker
+      /* The number of Telegram Stars that must be paid to send the 
+      sticker */
+      starCount      : Int
+      /* Optional. The total number of the gifts of this type that 
+      can be sent; for limited gifts only */
+      totalCount     : Option[Int]
+      /* Optional. The number of remaining gifts of this type that 
+      can be sent; for limited gifts only */
+      remainingCount : Option[Int]
+    }
+           
+    /* This object represent a list of gifts.  */
+    Gifts {
+      /* The list of gifts */
+      gifts : List[Gift]
+    }
+           
     /* This object represents a message about a scheduled giveaway.  */
     Giveaway {
       /* The list of chats which the user must join to participate 
@@ -3482,7 +3509,7 @@ namespace telegramium {
       /* Optional. Mode for parsing entities in the text. See 
       formatting options for more details. Currently, only custom 
       emoji entities are allowed */
-      textParseMode : Option[String]
+      textParseMode : Option[ParseMode]
       /* Optional. A JSON-serialized list of special entities that 
       appear in the poll option text. It can be specified instead 
       of text_parse_mode */
@@ -3971,6 +3998,15 @@ namespace telegramium {
       orderInfo        : Option[OrderInfo]
     }
            
+    /* Describes an inline message to be sent by a user of a Mini App.  */
+    PreparedInlineMessage {
+      /* Unique identifier of the prepared message */
+      id             : String
+      /* Expiration date of the prepared message, in Unix time. 
+      Expired prepared messages can no longer be used */
+      expirationDate : Int
+    }
+           
     /* This object represents the content of a service message, sent whenever a user 
       in the chat triggers a proximity alert set by another user.  */
     ProximityAlertTriggered {
@@ -4234,24 +4270,33 @@ namespace telegramium {
     SuccessfulPayment {
       /* Three-letter ISO 4217 currency code, or “XTR” for payments 
       in Telegram Stars */
-      currency                : String
+      currency                   : String
       /* Total price in the smallest units of the currency (integer, 
       not float/double). For example, for a price of US$ 1.45 pass 
       amount = 145. See the exp parameter in currencies.json, it 
       shows the number of digits past the decimal point for each 
       currency (2 for the majority of currencies). */
-      totalAmount             : Int
+      totalAmount                : Int
       /* Bot-specified invoice payload */
-      invoicePayload          : String
+      invoicePayload             : String
+      /* Optional. Expiration date of the subscription, in Unix 
+      time; for recurring payments only */
+      subscriptionExpirationDate : Option[Int]
+      /* Optional. True, if the payment is a recurring payment for a 
+      subscription */
+      isRecurring                : Option[Boolean]
+      /* Optional. True, if the payment is the first payment for a 
+      subscription */
+      isFirstRecurring           : Option[Boolean]
       /* Optional. Identifier of the shipping option chosen by the 
       user */
-      shippingOptionId        : Option[String]
+      shippingOptionId           : Option[String]
       /* Optional. Order information provided by the user */
-      orderInfo               : Option[OrderInfo]
+      orderInfo                  : Option[OrderInfo]
       /* Telegram payment identifier */
-      telegramPaymentChargeId : String
+      telegramPaymentChargeId    : String
       /* Provider payment identifier */
-      providerPaymentChargeId : String
+      providerPaymentChargeId    : String
     }
            
     /* This object represents an inline button that switches the current user to 
@@ -4996,6 +5041,10 @@ namespace telegramium {
         /* Use this method to create a link for an invoice. Returns the created invoice 
           link as String on success.  */
         def createInvoiceLink {
+          /* Unique identifier of the business connection on behalf of 
+          which the link will be created. For payments in Telegram 
+          Stars only. */
+          businessConnectionId      : Option[String]
           /* Product name, 1-32 characters */
           title                     : String
           /* Product description, 1-255 characters */
@@ -5014,6 +5063,14 @@ namespace telegramium {
           bonus, etc.). Must contain exactly one item for payments in 
           Telegram Stars. */
           prices                    : List[LabeledPrice]
+          /* The number of seconds the subscription will be active for 
+          before the next payment. The currency must be set to “XTR” 
+          (Telegram Stars) if the parameter is used. Currently, it 
+          must always be 2592000 (30 days) if specified. Any number of 
+          subscriptions can be active for a given bot at the same 
+          time, including multiple concurrent subscriptions from the 
+          same user. */
+          subscriptionPeriod        : Option[Int]
           /* The maximum accepted amount for tips in the smallest units 
           of the currency (integer, not float/double). For example, 
           for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See 
@@ -5439,6 +5496,21 @@ namespace telegramium {
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
+        /* Allows the bot to cancel or re-enable extension of a subscription paid in 
+          Telegram Stars. Returns True on success.  */
+        def editUserStarSubscription {
+          /* Identifier of the user whose subscription will be edited */
+          userId                  : Long
+          /* Telegram payment identifier for the subscription */
+          telegramPaymentChargeId : String
+          /* Pass True to cancel extension of the user subscription; the 
+          subscription must be active up to the end of the current 
+          subscription period. Pass False to allow the user to 
+          re-enable a subscription that was previously canceled by the 
+          bot. */
+          isCanceled              : Boolean
+        } => Method[Boolean]
+      
         /* Use this method to generate a new primary invite link for a chat; any 
           previously generated primary link is revoked. The bot must be an administrator 
           in the chat for this to work and must have the appropriate administrator rights. 
@@ -5500,6 +5572,12 @@ namespace telegramium {
           forwarding and saving */
           protectContent      : Option[Boolean]
         } => Method[List[MessageId]]
+      
+        /* Returns the list of gifts that can be sent by the bot to users. Requires no 
+          parameters. Returns a Gifts object.  */
+        def getAvailableGifts {
+      
+        } => Method[Gifts]
       
         /* Use this method to get information about the connection of the bot with a 
           business account. Returns a BusinessConnection object on success.  */
@@ -5922,6 +6000,27 @@ namespace telegramium {
           inviteLink : String
         } => Method[ChatInviteLink]
       
+        /* Stores a message that can be sent by a user of a Mini App. Returns a 
+          PreparedInlineMessage object.  */
+        def savePreparedInlineMessage {
+          /* Unique identifier of the target user that can use the 
+          prepared message */
+          userId            : Long
+          /* A JSON-serialized object describing the message to be sent */
+          result            : InlineQueryResult
+          /* Pass True if the message can be sent to private chats with 
+          users */
+          allowUserChats    : Option[Boolean]
+          /* Pass True if the message can be sent to private chats with 
+          bots */
+          allowBotChats     : Option[Boolean]
+          /* Pass True if the message can be sent to group and 
+          supergroup chats */
+          allowGroupChats   : Option[Boolean]
+          /* Pass True if the message can be sent to channel chats */
+          allowChannelChats : Option[Boolean]
+        } => Method[PreparedInlineMessage]
+      
         /* Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without 
           sound). On success, the sent Message is returned. Bots can currently send 
           animation files of up to 50 MB in size, this limit may be changed in the future.  */
@@ -6265,6 +6364,30 @@ namespace telegramium {
           the first button must launch the game. */
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Message]
+      
+        /* Sends a gift to the given user. The gift can't be converted to Telegram Stars 
+          by the user. Returns True on success.  */
+        def sendGift {
+          /* Unique identifier of the target user that will receive the 
+          gift */
+          userId        : Long
+          /* Identifier of the gift */
+          giftId        : String
+          /* Text that will be shown along with the gift; 0-255 
+          characters */
+          text          : Option[String]
+          /* Mode for parsing entities in the text. See formatting 
+          options for more details. Entities other than “bold”, 
+          “italic”, “underline”, “strikethrough”, “spoiler”, and 
+          “custom_emoji” are ignored. */
+          textParseMode : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the gift text. It can be specified instead of 
+          text_parse_mode. Entities other than “bold”, “italic”, 
+          “underline”, “strikethrough”, “spoiler”, and “custom_emoji” 
+          are ignored. */
+          textEntities  : List[MessageEntity]
+        } => Method[Boolean]
       
         /* Use this method to send invoices. On success, the sent Message is returned.  */
         def sendInvoice {
@@ -7280,6 +7403,19 @@ namespace telegramium {
           name  : String
           /* Sticker set title, 1-64 characters */
           title : String
+        } => Method[Boolean]
+      
+        /* Changes the emoji status for a given user that previously allowed the bot to 
+          manage their emoji status via the Mini App method requestEmojiStatusAccess. 
+          Returns True on success.  */
+        def setUserEmojiStatus {
+          /* Unique identifier of the target user */
+          userId                    : Long
+          /* Custom emoji identifier of the emoji status to set. Pass an 
+          empty string to remove the status. */
+          emojiStatusCustomEmojiId  : Option[String]
+          /* Expiration date of the emoji status, if any */
+          emojiStatusExpirationDate : Option[Int]
         } => Method[Boolean]
       
         /* Use this method to specify a URL and receive incoming updates via an outgoing 

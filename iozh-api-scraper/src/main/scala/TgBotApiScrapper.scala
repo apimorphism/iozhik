@@ -75,7 +75,7 @@ object TgBotApiScrapper extends IOApp {
       }
     }
 
-    def isParseMode(name: String) = name == "parse_mode" || name == "quote_parse_mode" || name == "explanation_parse_mode"
+    def isParseMode(name: String) = name == "parse_mode" || name == "quote_parse_mode" || name == "explanation_parse_mode" || name == "text_parse_mode"
 
     def genFields(params: List[EntityParam]) = {
       val maxLen = params.map(p => camelify(p.name).length).maximumOption.getOrElse(0)
