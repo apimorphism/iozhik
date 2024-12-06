@@ -2217,21 +2217,37 @@ namespace telegramium {
           
     enum TransactionPartner {
     
+      /* Describes the affiliate program that issued the affiliate commission received 
+        via this transaction.  */
+      TransactionPartnerAffiliateProgram {
+        type : "affiliate_program:0"
+        /* Optional. Information about the bot that sponsored the 
+        affiliate program */
+        sponsorUser        : Option[User]
+        /* The number of Telegram Stars received by the bot for each 
+        1000 Telegram Stars received by the affiliate program 
+        sponsor from referred users */
+        commissionPerMille : Int
+      }
+             
       /* Describes a transaction with an unknown source or recipient.  */
       TransactionPartnerOther {
-        type : "other:0"
+        type : "other:1"
       }
              
       /* Describes a withdrawal transaction to the Telegram Ads platform.  */
       TransactionPartnerTelegramAds {
-        type : "telegram_ads:1"
+        type : "telegram_ads:2"
       }
              
       /* Describes a transaction with a user.  */
       TransactionPartnerUser {
-        type : "user:2"
+        type : "user:3"
         /* Information about the user */
         user               : User
+        /* Optional. Information about the affiliate that received a 
+        commission via this transaction */
+        affiliate          : Option[AffiliateInfo]
         /* Optional. Bot-specified invoice payload */
         invoicePayload     : Option[String]
         /* Optional. The duration of the paid subscription */
@@ -2247,7 +2263,7 @@ namespace telegramium {
              
       /* Describes a transaction with payment for paid broadcasting.  */
       TransactionPartnerTelegramApi {
-        type : "telegram_api:3"
+        type : "telegram_api:4"
         /* The number of successful requests that exceeded regular 
         limits and were therefore billed */
         requestCount : Int
@@ -2255,7 +2271,7 @@ namespace telegramium {
              
       /* Describes a withdrawal transaction with Fragment.  */
       TransactionPartnerFragment {
-        type : "fragment:4"
+        type : "fragment:5"
         /* Optional. State of the transaction if the transaction is 
         outgoing */
         withdrawalState : Option[RevenueWithdrawalState]
@@ -2263,6 +2279,29 @@ namespace telegramium {
              
     }
           
+    /* Contains information about the affiliate that received a commission via this 
+      transaction.  */
+    AffiliateInfo {
+      /* Optional. The bot or the user that received an affiliate 
+      commission if it was received by a bot or a user */
+      affiliateUser      : Option[User]
+      /* Optional. The chat that received an affiliate commission if 
+      it was received by a chat */
+      affiliateChat      : Option[Chat]
+      /* The number of Telegram Stars received by the affiliate for 
+      each 1000 Telegram Stars received by the bot from referred 
+      users */
+      commissionPerMille : Int
+      /* Integer amount of Telegram Stars received by the affiliate 
+      from the transaction, rounded to 0; can be negative for 
+      refunds */
+      amount             : Int
+      /* Optional. The number of 1/1000000000 shares of Telegram 
+      Stars received by the affiliate; from -999999999 to 
+      999999999; can be negative for refunds */
+      nanostarAmount     : Option[Int]
+    }
+           
     /* This object represents an animation file (GIF or H.264/MPEG-4 AVC video without 
       sound).  */
     Animation {
@@ -4174,19 +4213,23 @@ namespace telegramium {
       transactions. Coincides with 
       SuccessfulPayment.telegram_payment_charge_id for successful 
       incoming payments from users. */
-      id       : String
-      /* Number of Telegram Stars transferred by the transaction */
-      amount   : Int
+      id             : String
+      /* Integer amount of Telegram Stars transferred by the 
+      transaction */
+      amount         : Int
+      /* Optional. The number of 1/1000000000 shares of Telegram 
+      Stars transferred by the transaction; from 0 to 999999999 */
+      nanostarAmount : Option[Int]
       /* Date the transaction was created in Unix time */
-      date     : Int
+      date           : Int
       /* Optional. Source of an incoming transaction (e.g., a user 
       purchasing goods or services, Fragment refunding a failed 
       withdrawal). Only for incoming transactions */
-      source   : Option[TransactionPartner]
+      source         : Option[TransactionPartner]
       /* Optional. Receiver of an outgoing transaction (e.g., a user 
       for a purchase refund, Fragment for a withdrawal). Only for 
       outgoing transactions */
-      receiver : Option[TransactionPartner]
+      receiver       : Option[TransactionPartner]
     }
            
     /* Contains a list of Telegram Star transactions.  */
@@ -5069,7 +5112,8 @@ namespace telegramium {
           must always be 2592000 (30 days) if specified. Any number of 
           subscriptions can be active for a given bot at the same 
           time, including multiple concurrent subscriptions from the 
-          same user. */
+          same user. Subscription price must no exceed 2500 Telegram 
+          Stars. */
           subscriptionPeriod        : Option[Int]
           /* The maximum accepted amount for tips in the smallest units 
           of the currency (integer, not float/double). For example, 
