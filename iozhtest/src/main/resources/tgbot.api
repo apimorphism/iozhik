@@ -183,7 +183,7 @@ namespace telegramium {
         isMoving         : Option[Boolean]
       }
              
-      /* The background is a PNG or TGV (gzipped subset of SVG with MIME type 
+      /* The background is a .PNG or .TGV (gzipped subset of SVG with MIME type 
         “application/x-tgwallpattern”) pattern to be combined with the background fill 
         chosen by the user.  */
       BackgroundTypePattern {
@@ -481,7 +481,7 @@ namespace telegramium {
         type : "gif:0"
         /* Unique identifier for this result, 1-64 bytes */
         id                    : String
-        /* A valid URL for the GIF file. File size must not exceed 1MB */
+        /* A valid URL for the GIF file */
         gifUrl                : String
         /* Optional. Width of the GIF */
         gifWidth              : Option[Int]
@@ -703,9 +703,6 @@ namespace telegramium {
         replyMarkup         : Option[InlineKeyboardMarkup]
         /* Optional. URL of the result */
         url                 : Option[String]
-        /* Optional. Pass True if you don't want the URL to be shown 
-        in the message */
-        hideUrl             : Option[Boolean]
         /* Optional. Short description of the result */
         description         : Option[String]
         /* Optional. Url of the thumbnail for the result */
@@ -754,8 +751,7 @@ namespace telegramium {
         type : "mpeg4_gif:8"
         /* Unique identifier for this result, 1-64 bytes */
         id                    : String
-        /* A valid URL for the MPEG4 file. File size must not exceed 
-        1MB */
+        /* A valid URL for the MPEG4 file */
         mpeg4Url              : String
         /* Optional. Video width */
         mpeg4Width            : Option[Int]
@@ -3309,18 +3305,21 @@ namespace telegramium {
     /* This object represents a gift that can be sent by the bot.  */
     Gift {
       /* Unique identifier of the gift */
-      id             : String
+      id               : String
       /* The sticker that represents the gift */
-      sticker        : Sticker
+      sticker          : Sticker
       /* The number of Telegram Stars that must be paid to send the 
       sticker */
-      starCount      : Int
+      starCount        : Int
+      /* Optional. The number of Telegram Stars that must be paid to 
+      upgrade the gift to a unique one */
+      upgradeStarCount : Option[Int]
       /* Optional. The total number of the gifts of this type that 
       can be sent; for limited gifts only */
-      totalCount     : Option[Int]
+      totalCount       : Option[Int]
       /* Optional. The number of remaining gifts of this type that 
       can be sent; for limited gifts only */
-      remainingCount : Option[Int]
+      remainingCount   : Option[Int]
     }
            
     /* This object represent a list of gifts.  */
@@ -3567,7 +3566,7 @@ namespace telegramium {
       sticker      : IFile
       /* Format of the added sticker, must be one of “static” for a 
       .WEBP or .PNG image, “animated” for a .TGS animation, 
-      “video” for a WEBM video */
+      “video” for a .WEBM video */
       format       : String
       /* List of 1-20 emoji associated with the sticker */
       emojiList    : List[String]
@@ -5813,8 +5812,8 @@ namespace telegramium {
           message_reaction_count (default). If not specified, the 
           previous setting will be used. Please note that this 
           parameter doesn't affect updates created before the call to 
-          the getUpdates, so unwanted updates may be received for a 
-          short period of time. */
+          getUpdates, so unwanted updates may be received for a short 
+          period of time. */
           allowedUpdates : List[String]
         } => Method[List[Update]]
       
@@ -5964,6 +5963,21 @@ namespace telegramium {
           userId                  : Long
           /* Telegram payment identifier */
           telegramPaymentChargeId : String
+        } => Method[Boolean]
+      
+        /* Removes verification from a chat that is currently verified on behalf of the 
+          organization represented by the bot. Returns True on success.  */
+        def removeChatVerification {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId : ChatId
+        } => Method[Boolean]
+      
+        /* Removes verification from a user who is currently verified on behalf of the 
+          organization represented by the bot. Returns True on success.  */
+        def removeUserVerification {
+          /* Unique identifier of the target user */
+          userId : Long
         } => Method[Boolean]
       
         /* Use this method to reopen a closed topic in a forum supergroup chat. The bot 
@@ -6417,6 +6431,9 @@ namespace telegramium {
           userId        : Long
           /* Identifier of the gift */
           giftId        : String
+          /* Pass True to pay for the gift upgrade from the bot's 
+          balance, thereby making the upgrade free for the receiver */
+          payForUpgrade : Option[Boolean]
           /* Text that will be shown along with the gift; 0-255 
           characters */
           text          : Option[String]
@@ -7422,7 +7439,7 @@ namespace telegramium {
           100px, or a .TGS animation with a thumbnail up to 32 
           kilobytes in size (see 
           https://core.telegram.org/stickers#animation-requirements 
-          for animated sticker technical requirements), or a WEBM 
+          for animated sticker technical requirements), or a .WEBM 
           video with the thumbnail up to 32 kilobytes in size; see 
           https://core.telegram.org/stickers#video-requirements for 
           video sticker technical requirements. Pass a file_id as a 
@@ -7436,7 +7453,7 @@ namespace telegramium {
           thumbnail : (file) Option[IFile]
           /* Format of the thumbnail, must be one of “static” for a 
           .WEBP or .PNG image, “animated” for a .TGS animation, or 
-          “video” for a WEBM video */
+          “video” for a .WEBM video */
           format    : String
         } => Method[Boolean]
       
@@ -7465,11 +7482,12 @@ namespace telegramium {
         /* Use this method to specify a URL and receive incoming updates via an outgoing 
           webhook. Whenever there is an update for the bot, we will send an HTTPS POST 
           request to the specified URL, containing a JSON-serialized Update. In case of an 
-          unsuccessful request, we will give up after a reasonable amount of attempts. 
-          Returns True on success. If you'd like to make sure that the webhook was set by 
-          you, you can specify secret data in the parameter secret_token. If specified, 
-          the request will contain a header “X-Telegram-Bot-Api-Secret-Token” with the 
-          secret token as content.  */
+          unsuccessful request (a request with response HTTP status code different from 
+          2XY), we will repeat the request and give up after a reasonable amount of 
+          attempts. Returns True on success. If you'd like to make sure that the webhook 
+          was set by you, you can specify secret data in the parameter secret_token. If 
+          specified, the request will contain a header “X-Telegram-Bot-Api-Secret-Token” 
+          with the secret token as content.  */
         def setWebhook {
           /* HTTPS URL to send updates to. Use an empty string to remove 
           webhook integration */
@@ -7647,6 +7665,29 @@ namespace telegramium {
           “video” */
           stickerFormat : String
         } => Method[File]
+      
+        /* Verifies a chat on behalf of the organization which is represented by the bot. 
+          Returns True on success.  */
+        def verifyChat {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId            : ChatId
+          /* Custom description for the verification; 0-70 characters. 
+          Must be empty if the organization isn't allowed to provide a 
+          custom verification description. */
+          customDescription : Option[String]
+        } => Method[Boolean]
+      
+        /* Verifies a user on behalf of the organization which is represented by the bot. 
+          Returns True on success.  */
+        def verifyUser {
+          /* Unique identifier of the target user */
+          userId            : Long
+          /* Custom description for the verification; 0-70 characters. 
+          Must be empty if the organization isn't allowed to provide a 
+          custom verification description. */
+          customDescription : Option[String]
+        } => Method[Boolean]
       }
     }
   }
