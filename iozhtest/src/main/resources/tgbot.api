@@ -1128,7 +1128,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media                 : String
+        media                 : IFile
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
@@ -1170,7 +1170,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media                 : String
+        media                 : IFile
         /* Optional. Caption of the photo to be sent, 0-1024 
         characters after entities parsing */
         caption               : Option[String]
@@ -1196,7 +1196,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media                 : String
+        media                 : IFile
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
@@ -1207,6 +1207,15 @@ namespace telegramium {
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
         thumbnail             : Option[IFile]
+        /* Optional. Cover for the video in the message. Pass a 
+        file_id to send a file that exists on the Telegram servers 
+        (recommended), pass an HTTP URL for Telegram to get a file 
+        from the Internet, or pass “attach://<file_attach_name>” to 
+        upload a new one using multipart/form-data under 
+        <file_attach_name> name. */
+        cover                 : Option[IFile]
+        /* Optional. Start timestamp for the video in the message */
+        startTimestamp        : Option[Int]
         /* Optional. Caption of the video to be sent, 0-1024 
         characters after entities parsing */
         caption               : Option[String]
@@ -1241,7 +1250,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media                       : String
+        media                       : IFile
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
@@ -1275,7 +1284,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media           : String
+        media           : IFile
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
@@ -1476,7 +1485,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media : String
+        media : IFile
       }
              
       /* The paid media to send is a video.  */
@@ -1487,7 +1496,7 @@ namespace telegramium {
         Telegram to get a file from the Internet, or pass 
         “attach://<file_attach_name>” to upload a new one using 
         multipart/form-data under <file_attach_name> name. */
-        media             : String
+        media             : IFile
         /* Optional. Thumbnail of the file sent; can be ignored if 
         thumbnail generation for the file is supported server-side. 
         The thumbnail should be in JPEG format and less than 200 kB 
@@ -1498,6 +1507,15 @@ namespace telegramium {
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
         thumbnail         : Option[IFile]
+        /* Optional. Cover for the video in the message. Pass a 
+        file_id to send a file that exists on the Telegram servers 
+        (recommended), pass an HTTP URL for Telegram to get a file 
+        from the Internet, or pass “attach://<file_attach_name>” to 
+        upload a new one using multipart/form-data under 
+        <file_attach_name> name. */
+        cover             : Option[IFile]
+        /* Optional. Start timestamp for the video in the message */
+        startTimestamp    : Option[Int]
         /* Optional. Video width */
         width             : Option[Int]
         /* Optional. Video height */
@@ -2213,10 +2231,19 @@ namespace telegramium {
           
     enum TransactionPartner {
     
+      /* Describes a transaction with a chat.  */
+      TransactionPartnerChat {
+        type : "chat:0"
+        /* Information about the chat */
+        chat : Chat
+        /* Optional. The gift sent to the chat by the bot */
+        gift : Option[Gift]
+      }
+             
       /* Describes the affiliate program that issued the affiliate commission received 
         via this transaction.  */
       TransactionPartnerAffiliateProgram {
-        type : "affiliate_program:0"
+        type : "affiliate_program:1"
         /* Optional. Information about the bot that sponsored the 
         affiliate program */
         sponsorUser        : Option[User]
@@ -2228,17 +2255,17 @@ namespace telegramium {
              
       /* Describes a transaction with an unknown source or recipient.  */
       TransactionPartnerOther {
-        type : "other:1"
+        type : "other:2"
       }
              
       /* Describes a withdrawal transaction to the Telegram Ads platform.  */
       TransactionPartnerTelegramAds {
-        type : "telegram_ads:2"
+        type : "telegram_ads:3"
       }
              
       /* Describes a transaction with a user.  */
       TransactionPartnerUser {
-        type : "user:3"
+        type : "user:4"
         /* Information about the user */
         user               : User
         /* Optional. Information about the affiliate that received a 
@@ -2259,7 +2286,7 @@ namespace telegramium {
              
       /* Describes a transaction with payment for paid broadcasting.  */
       TransactionPartnerTelegramApi {
-        type : "telegram_api:4"
+        type : "telegram_api:5"
         /* The number of successful requests that exceeded regular 
         limits and were therefore billed */
         requestCount : Int
@@ -2267,7 +2294,7 @@ namespace telegramium {
              
       /* Describes a withdrawal transaction with Fragment.  */
       TransactionPartnerFragment {
-        type : "fragment:5"
+        type : "fragment:6"
         /* Optional. State of the transaction if the transaction is 
         outgoing */
         withdrawalState : Option[RevenueWithdrawalState]
@@ -2731,6 +2758,8 @@ namespace telegramium {
       /* Optional. Default chat member permissions, for groups and 
       supergroups */
       permissions                        : Option[ChatPermissions]
+      /* Optional. True, if gifts can be sent to the chat */
+      canSendGift                        : Option[Boolean]
       /* Optional. True, if paid media messages can be sent or 
       forwarded to the channel chat. The field is available only 
       for channel chats. */
@@ -4205,7 +4234,10 @@ namespace telegramium {
       shippingAddress : ShippingAddress
     }
            
-    /* Describes a Telegram Star transaction.  */
+    /* Describes a Telegram Star transaction. Note that if the buyer initiates a 
+      chargeback with the payment provider from whom they acquired Stars (e.g., Apple, 
+      Google) following this transaction, the refunded Stars will be deducted from the 
+      bot's balance. This is outside of Telegram's control.  */
     StarTransaction {
       /* Unique identifier of the transaction. Coincides with the 
       identifier of the original transaction for refund 
@@ -4308,7 +4340,10 @@ namespace telegramium {
       id   : Int
     }
            
-    /* This object contains basic information about a successful payment.  */
+    /* This object contains basic information about a successful payment. Note that if 
+      the buyer initiates a chargeback with the relevant payment provider following 
+      this transaction, the funds may be debited from your balance. This is outside of 
+      Telegram's control.  */
     SuccessfulPayment {
       /* Three-letter ISO 4217 currency code, or “XTR” for payments 
       in Telegram Stars */
@@ -4566,29 +4601,35 @@ namespace telegramium {
     Video {
       /* Identifier for this file, which can be used to download or 
       reuse the file */
-      fileId       : String
+      fileId         : String
       /* Unique identifier for this file, which is supposed to be 
       the same over time and for different bots. Can't be used to 
       download or reuse the file. */
-      fileUniqueId : String
+      fileUniqueId   : String
       /* Video width as defined by the sender */
-      width        : Int
+      width          : Int
       /* Video height as defined by the sender */
-      height       : Int
+      height         : Int
       /* Duration of the video in seconds as defined by the sender */
-      duration     : Int
+      duration       : Int
       /* Optional. Video thumbnail */
-      thumbnail    : Option[PhotoSize]
+      thumbnail      : Option[PhotoSize]
+      /* Optional. Available sizes of the cover of the video in the 
+      message */
+      cover          : List[PhotoSize]
+      /* Optional. Timestamp in seconds from which the video will 
+      play in the message */
+      startTimestamp : Option[Int]
       /* Optional. Original filename as defined by the sender */
-      fileName     : Option[String]
+      fileName       : Option[String]
       /* Optional. MIME type of the file as defined by the sender */
-      mimeType     : Option[String]
+      mimeType       : Option[String]
       /* Optional. File size in bytes. It can be bigger than 
       2&#94;31 and some programming languages may have 
       difficulty/silent defects in interpreting it. But it has at 
       most 52 significant bits, so a signed 64-bit integer or 
       double-precision float type are safe for storing this value. */
-      fileSize     : Option[Long]
+      fileSize       : Option[Long]
     }
            
     /* This object represents a service message about a video chat ended in the chat.  */
@@ -4838,8 +4879,8 @@ namespace telegramium {
           shippingOptions : List[ShippingOption]
           /* Required if ok is False. Error message in human readable 
           form that explains why it is impossible to complete the 
-          order (e.g. "Sorry, delivery to your desired address is 
-          unavailable'). Telegram will display this message to the 
+          order (e.g. “Sorry, delivery to your desired address is 
+          unavailable”). Telegram will display this message to the 
           user. */
           errorMessage    : Option[String]
         } => Method[Boolean]
@@ -4952,6 +4993,8 @@ namespace telegramium {
           fromChatId            : ChatId
           /* Message identifier in the chat specified in from_chat_id */
           messageId             : Int
+          /* New start timestamp for the copied video in the message */
+          videoStartTimestamp   : Option[Int]
           /* New caption for media, 0-1024 characters after entities 
           parsing. If not specified, the original caption is kept */
           caption               : Option[String]
@@ -5578,6 +5621,8 @@ namespace telegramium {
           was sent (or channel username in the format 
           &#064;channelusername) */
           fromChatId          : ChatId
+          /* New start timestamp for the forwarded video in the message */
+          videoStartTimestamp : Option[Int]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification : Option[Boolean]
@@ -5616,8 +5661,8 @@ namespace telegramium {
           protectContent      : Option[Boolean]
         } => Method[List[MessageId]]
       
-        /* Returns the list of gifts that can be sent by the bot to users. Requires no 
-          parameters. Returns a Gifts object.  */
+        /* Returns the list of gifts that can be sent by the bot to users and channel 
+          chats. Requires no parameters. Returns a Gifts object.  */
         def getAvailableGifts {
       
         } => Method[Gifts]
@@ -6423,18 +6468,22 @@ namespace telegramium {
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Message]
       
-        /* Sends a gift to the given user. The gift can't be converted to Telegram Stars 
-          by the user. Returns True on success.  */
+        /* Sends a gift to the given user or channel chat. The gift can't be converted to 
+          Telegram Stars by the receiver. Returns True on success.  */
         def sendGift {
-          /* Unique identifier of the target user that will receive the 
-          gift */
-          userId        : Long
+          /* Required if chat_id is not specified. Unique identifier of 
+          the target user who will receive the gift. */
+          userId        : Option[Long]
+          /* Required if user_id is not specified. Unique identifier for 
+          the chat or username of the channel (in the format 
+          &#064;channelusername) that will receive the gift. */
+          chatId        : Option[ChatId]
           /* Identifier of the gift */
           giftId        : String
           /* Pass True to pay for the gift upgrade from the bot's 
           balance, thereby making the upgrade free for the receiver */
           payForUpgrade : Option[Boolean]
-          /* Text that will be shown along with the gift; 0-255 
+          /* Text that will be shown along with the gift; 0-128 
           characters */
           text          : Option[String]
           /* Mode for parsing entities in the text. See formatting 
@@ -7003,6 +7052,15 @@ namespace telegramium {
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
           thumbnail             : (file) Option[IFile]
+          /* Cover for the video in the message. Pass a file_id to send 
+          a file that exists on the Telegram servers (recommended), 
+          pass an HTTP URL for Telegram to get a file from the 
+          Internet, or pass “attach://<file_attach_name>” to upload a 
+          new one using multipart/form-data under <file_attach_name> 
+          name. */
+          cover                 : (file) Option[IFile]
+          /* Start timestamp for the video in the message */
+          startTimestamp        : Option[Int]
           /* Video caption (may also be used when resending videos by 
           file_id), 0-1024 characters after entities parsing */
           caption               : Option[String]
@@ -7278,9 +7336,9 @@ namespace telegramium {
         } => Method[Either[Boolean, Message]]
       
         /* Use this method to change the chosen reactions on a message. Service messages 
-          can't be reacted to. Automatically forwarded messages from a channel to its 
-          discussion group have the same available reactions as messages in the channel. 
-          Bots can't use paid reactions. Returns True on success.  */
+          of some types can't be reacted to. Automatically forwarded messages from a 
+          channel to its discussion group have the same available reactions as messages in 
+          the channel. Bots can't use paid reactions. Returns True on success.  */
         def setMessageReaction {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
