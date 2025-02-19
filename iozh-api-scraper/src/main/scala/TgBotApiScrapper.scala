@@ -28,6 +28,30 @@ object TgBotApiScrapper extends IOApp {
   case class Method(name: String, desc: String, table: List[MethodParam], returns: String) extends ApiItem
   case class Sumtyp(name: String, desc: String, items: List[String], table: List[EntityParam] = List.empty) extends ApiItem
 
+  private case class Link(text: String, href: String)
+  private case class Desc(source: List[Element], text: String, links: List[Link])
+  private object Desc {
+    def apply(source: List[Element]): Desc = {
+      val text = source.map(_.text).intercalate("\n")
+      val links = source.flatMap(_ >> elements("a")).map(e => Link(e.text, e.attr("href")))
+      val cleanedText = removeLearnMoreLinks(text, links)
+        .replace("@", "&#064;")
+        .replace("^", "&#94;")
+      Desc(source, cleanedText, links)
+    }
+
+    def apply(source: Element): Desc = Desc(List(source))
+
+    def empty: Desc = Desc(List.empty, "", List.empty)
+
+    private def removeLearnMoreLinks(text: String, links: List[Link]): String = {
+      val learnMoreLinks = links.filter(_.text.contains("»"))
+      learnMoreLinks.foldLeft(text) { (txt, link) =>
+        txt.replaceAll(s"${link.text}\\.?", "")
+      }
+    }
+  }
+
   def wrap(text: String, LineWidth: Int): String = {
     val buf = StringBuilder.newBuilder
     val spaceWidth = 1
@@ -301,40 +325,30 @@ object TgBotApiScrapper extends IOApp {
       case class Item(name: Element, desc: List[Element], table: Element)
       case class Sumt(name: Element, desc: Element, items: Element)
 
-      def mkType(name: String, desc: String, s: String): String = {
-        val mustBeLong = desc.contains("greater than 32 bits") ||
-          desc.contains("more than 32 significant bits") ||
-          desc.contains("bigger than 2^31") ||
-          desc.contains("size in bytes") ||
+      def mkType(name: String, desc: Desc, s: String): String = {
+        val descText = desc.text
+        val mustBeLong = descText.contains("greater than 32 bits") ||
+          descText.contains("more than 32 significant bits") ||
+          descText.contains("bigger than 2^31") ||
+          descText.contains("size in bytes") ||
           name == "user_id" ||
           name == "chat_id" ||
           name == "sender_chat_id"
-        val result = if (s == "List[Messages]") "List[Message]" else s
-        result
-          .replace(" number", "") // Float number => Float
-          .replace("True", "Boolean")
-          .replace("False", "Boolean")
-          .replace("Integer or String", "ChatId")
-          .replace("Integer", if (mustBeLong) "Long" else "Int")
-          .replace("InputFile or String", "IFile")
-          .replace("InputFile", "IFile")
-          .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
-          .replace("InputMediaAudio, InputMediaDocument, InputMediaPhoto and InputMediaVideo", "InputMedia")
-      }
-
-      def fixDesc(desc: String): String = {
-        desc
-          .replace("@", "&#064;")
-          .replace("^", "&#94;")
-      }
-
-      def removeMoreLinks(desc: Element) = {
-        val moreLinks =
-          (desc >> elements("a"))
-            .map(_.text)
-            .filter(_.contains("»"))
-        moreLinks.foldLeft(desc.text) { (txt, link) =>
-          txt.replaceAll(s"$link\\.?", "")
+        val isFile = desc.links.exists(_.href == "#sending-files")
+        if (isFile)
+          "IFile"
+        else {
+          val result = if (s == "List[Messages]") "List[Message]" else s
+          result
+            .replace(" number", "") // Float number => Float
+            .replace("True", "Boolean")
+            .replace("False", "Boolean")
+            .replace("Integer or String", "ChatId")
+            .replace("Integer", if (mustBeLong) "Long" else "Int")
+            .replace("InputFile or String", "IFile")
+            .replace("InputFile", "IFile")
+            .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
+            .replace("InputMediaAudio, InputMediaDocument, InputMediaPhoto and InputMediaVideo", "InputMedia")
         }
       }
 
@@ -400,31 +414,32 @@ object TgBotApiScrapper extends IOApp {
               table = params.map { y =>
                 val k = y.children.toList(1).text
                 val name = y.children.toList.head.text
-                val desc = removeMoreLinks(y.children.toList(3))
+                val desc = Desc(y.children.toList(3))
                 MethodParam(
                   name = name,
                   kind = mkType(name, desc, k),
                   required = y.children.toList(2).text,
-                  desc = fixDesc(desc),
+                  desc = desc.text,
                 )
               }.toList,
-              returns = mkType("", "", returns)
+              returns = mkType("", Desc.empty, returns)
             )
           case x: Item if x.name.text.head.isUpper =>
             val params = x.table >> elements("tbody > tr")
             val itemName = x.name.text
             Entity(
               name = itemName,
-              desc = x.desc.map(removeMoreLinks).intercalate("\n"),
+              desc = Desc(x.desc).text,
               table = params.map { y =>
                 val name = y.children.toList.head.text
                 val kind = y.children.toList(1).text
-                val desc = removeMoreLinks(y.children.toList(2))
+                val desc = Desc(y.children.toList(2))
+                val descText = desc.text
                 if (
                   (name == "type" || name == "source" || name == "status") && 
-                    (desc.contains(", must be ") || desc.contains(", always ") || itemName == "MessageEntity")
+                    (descText.contains(", must be ") || descText.contains(", always ") || itemName == "MessageEntity")
                 ) {
-                  val cleanedDesc = desc.replaceAll(".*must be ", "")
+                  val cleanedDesc = descText.replaceAll(".*must be ", "")
                   val typeDesc = discriminatorPattern.findFirstMatchIn(cleanedDesc).map(_.group(1)).getOrElse(cleanedDesc)
                   EntityParam(
                     name = name,
@@ -435,7 +450,7 @@ object TgBotApiScrapper extends IOApp {
                   EntityParam(
                     name = name,
                     kind = mkType(name, desc, kind),
-                    desc = fixDesc(desc),
+                    desc = descText,
                   )
                 }
               }.toList
