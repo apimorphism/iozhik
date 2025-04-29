@@ -20,7 +20,7 @@ object ScalaApiGeneratorUtils {
       body = "[" + items.mkString(", ") + "]"
       sanitizedName = sanitize(x.name, keywords)
       kind = meta.symt.resolve(x).collect {
-        case e: Struc if e.isEnum && useOpenEnum(x) =>
+        case e: Struc if e.isEnum && useOpenEnum(x, struc = None) =>
           wrapEnumType(sanitizedName + (if (x.params.nonEmpty) body else ""))
         }
         .getOrElse(sanitizedName + (if (x.params.nonEmpty) body else ""))
@@ -28,15 +28,15 @@ object ScalaApiGeneratorUtils {
 
   def wrapWithOpenEnum(tpe: String): String = "iozhik.OpenEnum[" + tpe + "]"
 
-  def genFieldType(x: Kind, wrapEnumType: String => String = wrapWithOpenEnum)(implicit meta: GeneratorMeta): Either[String, String] =
+  def genFieldType(x: Kind, struc: Option[Kind], wrapEnumType: String => String = wrapWithOpenEnum)(implicit meta: GeneratorMeta): Either[String, String] =
     for {
-      items <- x.params.map(p => genFieldType(p, wrapEnumType)).sequence
+      items <- x.params.map(p => genFieldType(p, struc, wrapEnumType)).sequence
       body = if (x.params.nonEmpty) "[" + items.mkString(", ") + "]" else ""
       fieldType = meta.symt.resolve(x).collect {
         case s: Struc
           if s.fields.isEmpty && s.usings.isEmpty && s.leaves.isEmpty && s.wrapps.isEmpty && s.leavesForBins.isEmpty =>
           sanitize(x.name, keywords) + ".type" + body
-        case e: Struc if e.isEnum && useOpenEnum(x) =>
+        case e: Struc if e.isEnum && useOpenEnum(x, struc) =>
           wrapEnumType(sanitize(x.name, keywords) + body)
         }
         .getOrElse(sanitize(x.name, keywords) + body)
@@ -57,8 +57,12 @@ object ScalaApiGeneratorUtils {
     result ++ k.params.flatMap(importKind)
   }
 
-  def useOpenEnum(k: Kind)(implicit meta: GeneratorMeta): Boolean =
-    meta.cfg.openEnum.enabled && meta.codKinds.contains(k) && !meta.cfg.openEnum.excludeTypes.contains(k.name)
+  def useOpenEnum(k: Kind, struc: Option[Kind])(implicit meta: GeneratorMeta): Boolean =
+    meta.cfg.openEnum.enabled && 
+      !meta.cfg.openEnum.excludeTypes.contains(k.name) && 
+      struc.forall(meta.codKinds.contains) && meta.codKinds.contains(k)
+
+  def isCodKind(struc: Struc)(implicit meta: GeneratorMeta): Boolean = struc.kind.exists(meta.codKinds.contains)
 
   def collectCodKinds(space: Space)(implicit symt: Symtable): Set[Kind] = {
     val resultSet = collection.mutable.Set[Kind]()

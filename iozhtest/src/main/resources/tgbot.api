@@ -333,9 +333,17 @@ namespace telegramium {
         customTitle : Option[String]
       }
              
+      /* Represents a chat member that isn't currently a member of the chat, but may 
+        join it themselves.  */
+      ChatMemberLeft {
+        status : "left:1"
+        /* Information about the user */
+        user   : User
+      }
+             
       /* Represents a chat member that has some additional privileges.  */
       ChatMemberAdministrator {
-        status : "administrator:1"
+        status : "administrator:2"
         /* Information about the user */
         user                : User
         /* True, if the bot is allowed to edit administrator 
@@ -390,14 +398,6 @@ namespace telegramium {
         canManageTopics     : Option[Boolean]
         /* Optional. Custom title for this user */
         customTitle         : Option[String]
-      }
-             
-      /* Represents a chat member that isn't currently a member of the chat, but may 
-        join it themselves.  */
-      ChatMemberLeft {
-        status : "left:2"
-        /* Information about the user */
-        user   : User
       }
              
       /* Represents a chat member that has no additional privileges or restrictions.  */
@@ -1138,7 +1138,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail             : Option[IFile]
+        thumbnail             : Option[InputPartFile]
         /* Optional. Caption of the animation to be sent, 0-1024 
         characters after entities parsing */
         caption               : Option[String]
@@ -1206,7 +1206,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail             : Option[IFile]
+        thumbnail             : Option[InputPartFile]
         /* Optional. Cover for the video in the message. Pass a 
         file_id to send a file that exists on the Telegram servers 
         (recommended), pass an HTTP URL for Telegram to get a file 
@@ -1260,7 +1260,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail                   : Option[IFile]
+        thumbnail                   : Option[InputPartFile]
         /* Optional. Caption of the document to be sent, 0-1024 
         characters after entities parsing */
         caption                     : Option[String]
@@ -1294,7 +1294,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail       : Option[IFile]
+        thumbnail       : Option[InputPartFile]
         /* Optional. Caption of the audio to be sent, 0-1024 
         characters after entities parsing */
         caption         : Option[String]
@@ -1506,7 +1506,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail         : Option[IFile]
+        thumbnail         : Option[InputPartFile]
         /* Optional. Cover for the video in the message. Pass a 
         file_id to send a file that exists on the Telegram servers 
         (recommended), pass an HTTP URL for Telegram to get a file 
@@ -1525,6 +1525,68 @@ namespace telegramium {
         /* Optional. Pass True if the uploaded video is suitable for 
         streaming */
         supportsStreaming : Option[Boolean]
+      }
+             
+    }
+          
+    enum InputProfilePhoto {
+    
+      /* An animated profile photo in the MPEG4 format.  */
+      InputProfilePhotoAnimated {
+        type : "animated:0"
+        /* The animated profile photo. Profile photos can't be reused 
+        and can only be uploaded as a new file, so you can pass 
+        “attach://<file_attach_name>” if the photo was uploaded 
+        using multipart/form-data under <file_attach_name>. */
+        animation          : InputPartFile
+        /* Optional. Timestamp in seconds of the frame that will be 
+        used as the static profile photo. Defaults to 0.0. */
+        mainFrameTimestamp : Option[Float]
+      }
+             
+      /* A static profile photo in the .JPG format.  */
+      InputProfilePhotoStatic {
+        type : "static:1"
+        /* The static profile photo. Profile photos can't be reused 
+        and can only be uploaded as a new file, so you can pass 
+        “attach://<file_attach_name>” if the photo was uploaded 
+        using multipart/form-data under <file_attach_name>. */
+        photo : InputPartFile
+      }
+             
+    }
+          
+    enum InputStoryContent {
+    
+      /* Describes a photo to post as a story.  */
+      InputStoryContentPhoto {
+        type : "photo:0"
+        /* The photo to post as a story. The photo must be of the size 
+        1080x1920 and must not exceed 10 MB. The photo can't be 
+        reused and can only be uploaded as a new file, so you can 
+        pass “attach://<file_attach_name>” if the photo was uploaded 
+        using multipart/form-data under <file_attach_name>. */
+        photo : InputPartFile
+      }
+             
+      /* Describes a video to post as a story.  */
+      InputStoryContentVideo {
+        type : "video:1"
+        /* The video to post as a story. The video must be of the size 
+        720x1280, streamable, encoded with H.265 codec, with key 
+        frames added each second in the MPEG4 format, and must not 
+        exceed 30 MB. The video can't be reused and can only be 
+        uploaded as a new file, so you can pass 
+        “attach://<file_attach_name>” if the video was uploaded 
+        using multipart/form-data under <file_attach_name>. */
+        video               : InputPartFile
+        /* Optional. Precise duration of the video in seconds; 0-60 */
+        duration            : Option[Float]
+        /* Optional. Timestamp in seconds of the frame that will be 
+        used as the static cover for the story. Defaults to 0.0. */
+        coverFrameTimestamp : Option[Float]
+        /* Optional. Pass True if the video has no sound */
+        isAnimation         : Option[Boolean]
       }
              
     }
@@ -1612,6 +1674,9 @@ namespace telegramium {
         channels, or the custom title of an anonymous group 
         administrator */
         authorSignature               : Option[String]
+        /* Optional. The number of Telegram Stars that were paid by 
+        the sender of the message to send it */
+        paidStarCount                 : Option[Int]
         /* Optional. For text messages, the actual UTF-8 text of the 
         message */
         text                          : Option[String]
@@ -1747,6 +1812,12 @@ namespace telegramium {
         usersShared                   : Option[UsersShared]
         /* Optional. Service message: a chat was shared with the bot */
         chatShared                    : Option[ChatShared]
+        /* Optional. Service message: a regular gift was sent or 
+        received */
+        gift                          : Option[GiftInfo]
+        /* Optional. Service message: a unique gift was sent or 
+        received */
+        uniqueGift                    : Option[UniqueGiftInfo]
         /* Optional. The domain name of the website on which the user 
         has logged in. */
         connectedWebsite              : Option[String]
@@ -1787,6 +1858,9 @@ namespace telegramium {
         /* Optional. Service message: a giveaway without public 
         winners was completed */
         giveawayCompleted             : Option[GiveawayCompleted]
+        /* Optional. Service message: the price for paid messages has 
+        changed in the chat */
+        paidMessagePriceChanged       : Option[PaidMessagePriceChanged]
         /* Optional. Service message: video chat scheduled */
         videoChatScheduled            : Option[VideoChatScheduled]
         /* Optional. Service message: video chat started */
@@ -1940,16 +2014,16 @@ namespace telegramium {
         user : User
       }
              
-      /* text_link  */
-      TextLinkMessageEntity {
-        type : "text_link:16"
-        /* URL that will be opened after user taps on the text */
-        url  : String
-      }
-             
       /* url  */
       UrlMessageEntity {
-        type : "url:17"
+        type : "url:16"
+      }
+             
+      /* text_link  */
+      TextLinkMessageEntity {
+        type : "text_link:17"
+        /* URL that will be opened after user taps on the text */
+        url  : String
       }
              
       /* phone_number  */
@@ -2002,6 +2076,75 @@ namespace telegramium {
         /* Optional. For messages originally sent by an anonymous chat 
         administrator, original message author signature */
         authorSignature : Option[String]
+      }
+             
+    }
+          
+    enum OwnedGift {
+    
+      /* Describes a unique gift received and owned by a user or a chat.  */
+      OwnedGiftUnique {
+        type : "unique:0"
+        /* Information about the unique gift */
+        gift              : UniqueGift
+        /* Optional. Unique identifier of the received gift for the 
+        bot; for gifts received on behalf of business accounts only */
+        ownedGiftId       : Option[String]
+        /* Optional. Sender of the gift if it is a known user */
+        senderUser        : Option[User]
+        /* Date the gift was sent in Unix time */
+        sendDate          : Int
+        /* Optional. True, if the gift is displayed on the account's 
+        profile page; for gifts received on behalf of business 
+        accounts only */
+        isSaved           : Option[Boolean]
+        /* Optional. True, if the gift can be transferred to another 
+        owner; for gifts received on behalf of business accounts 
+        only */
+        canBeTransferred  : Option[Boolean]
+        /* Optional. Number of Telegram Stars that must be paid to 
+        transfer the gift; omitted if the bot cannot transfer the 
+        gift */
+        transferStarCount : Option[Int]
+      }
+             
+      /* Describes a regular gift owned by a user or a chat.  */
+      OwnedGiftRegular {
+        type : "regular:1"
+        /* Information about the regular gift */
+        gift                    : Gift
+        /* Optional. Unique identifier of the gift for the bot; for 
+        gifts received on behalf of business accounts only */
+        ownedGiftId             : Option[String]
+        /* Optional. Sender of the gift if it is a known user */
+        senderUser              : Option[User]
+        /* Date the gift was sent in Unix time */
+        sendDate                : Int
+        /* Optional. Text of the message that was added to the gift */
+        text                    : Option[String]
+        /* Optional. Special entities that appear in the text */
+        entities                : List[MessageEntity]
+        /* Optional. True, if the sender and gift text are shown only 
+        to the gift receiver; otherwise, everyone will be able to 
+        see them */
+        isPrivate               : Option[Boolean]
+        /* Optional. True, if the gift is displayed on the account's 
+        profile page; for gifts received on behalf of business 
+        accounts only */
+        isSaved                 : Option[Boolean]
+        /* Optional. True, if the gift can be upgraded to a unique 
+        gift; for gifts received on behalf of business accounts only */
+        canBeUpgraded           : Option[Boolean]
+        /* Optional. True, if the gift was refunded and isn't 
+        available anymore */
+        wasRefunded             : Option[Boolean]
+        /* Optional. Number of Telegram Stars that can be claimed by 
+        the receiver instead of the gift; omitted if the gift cannot 
+        be converted to Telegram Stars */
+        convertStarCount        : Option[Int]
+        /* Optional. Number of Telegram Stars that were paid by the 
+        sender for the ability to upgrade the gift */
+        prepaidUpgradeStarCount : Option[Int]
       }
              
     }
@@ -2229,6 +2372,63 @@ namespace telegramium {
              
     }
           
+    enum StoryAreaType {
+    
+      /* Describes a story area pointing to an HTTP or tg:// link. Currently, a story 
+        can have up to 3 link areas.  */
+      StoryAreaTypeLink {
+        type : "link:0"
+        /* HTTP or tg:// URL to be opened when the area is clicked */
+        url  : String
+      }
+             
+      /* Describes a story area pointing to a location. Currently, a story can have up 
+        to 10 location areas.  */
+      StoryAreaTypeLocation {
+        type : "location:1"
+        /* Location latitude in degrees */
+        latitude  : Float
+        /* Location longitude in degrees */
+        longitude : Float
+        /* Optional. Address of the location */
+        address   : Option[LocationAddress]
+      }
+             
+      /* Describes a story area containing weather information. Currently, a story can 
+        have up to 3 weather areas.  */
+      StoryAreaTypeWeather {
+        type : "weather:2"
+        /* Temperature, in degree Celsius */
+        temperature     : Float
+        /* Emoji representing the weather */
+        emoji           : String
+        /* A color of the area background in the ARGB format */
+        backgroundColor : Int
+      }
+             
+      /* Describes a story area pointing to a unique gift. Currently, a story can have 
+        at most 1 unique gift area.  */
+      StoryAreaTypeUniqueGift {
+        type : "unique_gift:3"
+        /* Unique name of the gift */
+        name : String
+      }
+             
+      /* Describes a story area pointing to a suggested reaction. Currently, a story can 
+        have up to 5 suggested reaction areas.  */
+      StoryAreaTypeSuggestedReaction {
+        type : "suggested_reaction:4"
+        /* Type of the reaction */
+        reactionType : ReactionType
+        /* Optional. Pass True if the reaction area has a dark 
+        background */
+        isDark       : Option[Boolean]
+        /* Optional. Pass True if reaction area corner is flipped */
+        isFlipped    : Option[Boolean]
+      }
+             
+    }
+          
     enum TransactionPartner {
     
       /* Describes a transaction with a chat.  */
@@ -2266,22 +2466,38 @@ namespace telegramium {
       /* Describes a transaction with a user.  */
       TransactionPartnerUser {
         type : "user:4"
+        /* Type of the transaction, currently one of “invoice_payment” 
+        for payments via invoices, “paid_media_payment” for payments 
+        for paid media, “gift_purchase” for gifts sent by the bot, 
+        “premium_purchase” for Telegram Premium subscriptions gifted 
+        by the bot, “business_account_transfer” for direct transfers 
+        from managed business accounts */
+        transactionType             : String
         /* Information about the user */
-        user               : User
+        user                        : User
         /* Optional. Information about the affiliate that received a 
-        commission via this transaction */
-        affiliate          : Option[AffiliateInfo]
-        /* Optional. Bot-specified invoice payload */
-        invoicePayload     : Option[String]
-        /* Optional. The duration of the paid subscription */
-        subscriptionPeriod : Option[Int]
+        commission via this transaction. Can be available only for 
+        “invoice_payment” and “paid_media_payment” transactions. */
+        affiliate                   : Option[AffiliateInfo]
+        /* Optional. Bot-specified invoice payload. Can be available 
+        only for “invoice_payment” transactions. */
+        invoicePayload              : Option[String]
+        /* Optional. The duration of the paid subscription. Can be 
+        available only for “invoice_payment” transactions. */
+        subscriptionPeriod          : Option[Int]
         /* Optional. Information about the paid media bought by the 
-        user */
-        paidMedia          : List[PaidMedia]
-        /* Optional. Bot-specified paid media payload */
-        paidMediaPayload   : Option[String]
-        /* Optional. The gift sent to the user by the bot */
-        gift               : Option[Gift]
+        user; for “paid_media_payment” transactions only */
+        paidMedia                   : List[PaidMedia]
+        /* Optional. Bot-specified paid media payload. Can be 
+        available only for “paid_media_payment” transactions. */
+        paidMediaPayload            : Option[String]
+        /* Optional. The gift sent to the user by the bot; for 
+        “gift_purchase” transactions only */
+        gift                        : Option[Gift]
+        /* Optional. Number of months the gifted Telegram Premium 
+        subscription will be active for; for “premium_purchase” 
+        transactions only */
+        premiumSubscriptionDuration : Option[Int]
       }
              
       /* Describes a transaction with payment for paid broadcasting.  */
@@ -2302,6 +2518,20 @@ namespace telegramium {
              
     }
           
+    /* This object describes the types of gifts that can be gifted to a user or a 
+      chat.  */
+    AcceptedGiftTypes {
+      /* True, if unlimited regular gifts are accepted */
+      unlimitedGifts      : Boolean
+      /* True, if limited regular gifts are accepted */
+      limitedGifts        : Boolean
+      /* True, if unique gifts or gifts that can be upgraded to 
+      unique for free are accepted */
+      uniqueGifts         : Boolean
+      /* True, if a Telegram Premium subscription is accepted */
+      premiumSubscription : Boolean
+    }
+           
     /* Contains information about the affiliate that received a commission via this 
       transaction.  */
     AffiliateInfo {
@@ -2426,6 +2656,54 @@ namespace telegramium {
       shortDescription : String
     }
            
+    /* Represents the rights of a business bot.  */
+    BusinessBotRights {
+      /* Optional. True, if the bot can send and edit messages in 
+      the private chats that had incoming messages in the last 24 
+      hours */
+      canReply                   : Option[Boolean]
+      /* Optional. True, if the bot can mark incoming private 
+      messages as read */
+      canReadMessages            : Option[Boolean]
+      /* Optional. True, if the bot can delete messages sent by the 
+      bot */
+      canDeleteSentMessages      : Option[Boolean]
+      /* Optional. True, if the bot can delete all private messages 
+      in managed chats */
+      canDeleteAllMessages       : Option[Boolean]
+      /* Optional. True, if the bot can edit the first and last name 
+      of the business account */
+      canEditName                : Option[Boolean]
+      /* Optional. True, if the bot can edit the bio of the business 
+      account */
+      canEditBio                 : Option[Boolean]
+      /* Optional. True, if the bot can edit the profile photo of 
+      the business account */
+      canEditProfilePhoto        : Option[Boolean]
+      /* Optional. True, if the bot can edit the username of the 
+      business account */
+      canEditUsername            : Option[Boolean]
+      /* Optional. True, if the bot can change the privacy settings 
+      pertaining to gifts for the business account */
+      canChangeGiftSettings      : Option[Boolean]
+      /* Optional. True, if the bot can view gifts and the amount of 
+      Telegram Stars owned by the business account */
+      canViewGiftsAndStars       : Option[Boolean]
+      /* Optional. True, if the bot can convert regular gifts owned 
+      by the business account to Telegram Stars */
+      canConvertGiftsToStars     : Option[Boolean]
+      /* Optional. True, if the bot can transfer and upgrade gifts 
+      owned by the business account */
+      canTransferAndUpgradeGifts : Option[Boolean]
+      /* Optional. True, if the bot can transfer Telegram Stars 
+      received by the business account to its own account, or use 
+      them to upgrade and transfer gifts */
+      canTransferStars           : Option[Boolean]
+      /* Optional. True, if the bot can post, edit and delete 
+      stories on behalf of the business account */
+      canManageStories           : Option[Boolean]
+    }
+           
     /* Describes the connection of the bot with a business account.  */
     BusinessConnection {
       /* Unique identifier of the business connection */
@@ -2442,9 +2720,8 @@ namespace telegramium {
       userChatId : Long
       /* Date the connection was established in Unix time */
       date       : Int
-      /* True, if the bot can act on behalf of the business account 
-      in chats that were active in the last 24 hours */
-      canReply   : Boolean
+      /* Optional. Rights of the business bot */
+      rights     : Option[BusinessBotRights]
       /* True, if the connection is active */
       isEnabled  : Boolean
     }
@@ -2758,8 +3035,9 @@ namespace telegramium {
       /* Optional. Default chat member permissions, for groups and 
       supergroups */
       permissions                        : Option[ChatPermissions]
-      /* Optional. True, if gifts can be sent to the chat */
-      canSendGift                        : Option[Boolean]
+      /* Information about types of gifts that are accepted by the 
+      chat or by the corresponding user for private chats */
+      acceptedGiftTypes                  : AcceptedGiftTypes
       /* Optional. True, if paid media messages can be sent or 
       forwarded to the channel chat. The field is available only 
       for channel chats. */
@@ -3351,6 +3629,34 @@ namespace telegramium {
       remainingCount   : Option[Int]
     }
            
+    /* Describes a service message about a regular gift that was sent or received.  */
+    GiftInfo {
+      /* Information about the gift */
+      gift                    : Gift
+      /* Optional. Unique identifier of the received gift for the 
+      bot; only present for gifts received on behalf of business 
+      accounts */
+      ownedGiftId             : Option[String]
+      /* Optional. Number of Telegram Stars that can be claimed by 
+      the receiver by converting the gift; omitted if conversion 
+      to Telegram Stars is impossible */
+      convertStarCount        : Option[Int]
+      /* Optional. Number of Telegram Stars that were prepaid by the 
+      sender for the ability to upgrade the gift */
+      prepaidUpgradeStarCount : Option[Int]
+      /* Optional. True, if the gift can be upgraded to a unique 
+      gift */
+      canBeUpgraded           : Option[Boolean]
+      /* Optional. Text of the message that was added to the gift */
+      text                    : Option[String]
+      /* Optional. Special entities that appear in the text */
+      entities                : List[MessageEntity]
+      /* Optional. True, if the sender and gift text are shown only 
+      to the gift receiver; otherwise, everyone will be able to 
+      see them */
+      isPrivate               : Option[Boolean]
+    }
+           
     /* This object represent a list of gifts.  */
     Gifts {
       /* The list of gifts */
@@ -3588,10 +3894,10 @@ namespace telegramium {
       /* The added sticker. Pass a file_id as a String to send a 
       file that already exists on the Telegram servers, pass an 
       HTTP URL as a String for Telegram to get a file from the 
-      Internet, upload a new one using multipart/form-data, or 
-      pass “attach://<file_attach_name>” to upload a new one using 
-      multipart/form-data under <file_attach_name> name. Animated 
-      and video stickers can't be uploaded via HTTP URL. */
+      Internet, or pass “attach://<file_attach_name>” to upload a 
+      new file using multipart/form-data under <file_attach_name> 
+      name. Animated and video stickers can't be uploaded via HTTP 
+      URL. */
       sticker      : IFile
       /* Format of the added sticker, must be one of “static” for a 
       .WEBP or .PNG image, “animated” for a .TGS animation, 
@@ -3805,6 +4111,19 @@ namespace telegramium {
       proximityAlertRadius : Option[Int]
     }
            
+    /* Describes the physical address of a location.  */
+    LocationAddress {
+      /* The two-letter ISO 3166-1 alpha-2 country code of the 
+      country where the location is located */
+      countryCode : String
+      /* Optional. State of the location */
+      state       : Option[String]
+      /* Optional. City of the location */
+      city        : Option[String]
+      /* Optional. Street address of the location */
+      street      : Option[String]
+    }
+           
     /* This object represents a parameter of the inline keyboard button used to 
       automatically authorize a user. Serves as a great replacement for the Telegram 
       Login Widget when the user is coming from Telegram. All the user needs to do is 
@@ -3913,6 +4232,17 @@ namespace telegramium {
       shippingAddress : Option[ShippingAddress]
     }
            
+    /* Contains the list of gifts received and owned by a user or a chat.  */
+    OwnedGifts {
+      /* The total number of gifts owned by the user or the chat */
+      totalCount : Int
+      /* The list of gifts */
+      gifts      : List[OwnedGift]
+      /* Optional. Offset for the next request. If empty, then there 
+      are no more results */
+      nextOffset : Option[String]
+    }
+           
     /* Describes the paid media added to a message.  */
     PaidMediaInfo {
       /* The number of Telegram Stars that must be paid to buy 
@@ -3928,6 +4258,15 @@ namespace telegramium {
       from             : User
       /* Bot-specified paid media payload */
       paidMediaPayload : String
+    }
+           
+    /* Describes a service message about a change in the price of paid messages within 
+      a chat.  */
+    PaidMessagePriceChanged {
+      /* The new number of Telegram Stars that must be paid by 
+      non-administrator users of the supergroup chat for each sent 
+      message */
+      paidMessageStarCount : Int
     }
            
     /* Describes Telegram Passport data shared with the bot by the user.  */
@@ -4234,6 +4573,17 @@ namespace telegramium {
       shippingAddress : ShippingAddress
     }
            
+    /* Describes an amount of Telegram Stars.  */
+    StarAmount {
+      /* Integer amount of Telegram Stars, rounded to 0; can be 
+      negative */
+      amount         : Int
+      /* Optional. The number of 1/1000000000 shares of Telegram 
+      Stars; from -999999999 to 999999999; can be negative if and 
+      only if amount is non-positive */
+      nanostarAmount : Option[Int]
+    }
+           
     /* Describes a Telegram Star transaction. Note that if the buyer initiates a 
       chargeback with the payment provider from whom they acquired Stars (e.g., Apple, 
       Google) following this transaction, the refunded Stars will be deducted from the 
@@ -4340,6 +4690,36 @@ namespace telegramium {
       id   : Int
     }
            
+    /* Describes a clickable area on a story media.  */
+    StoryArea {
+      /* Position of the area */
+      position : StoryAreaPosition
+      /* Type of the area */
+      type     : StoryAreaType
+    }
+           
+    /* Describes the position of a clickable area within a story.  */
+    StoryAreaPosition {
+      /* The abscissa of the area's center, as a percentage of the 
+      media width */
+      xPercentage            : Float
+      /* The ordinate of the area's center, as a percentage of the 
+      media height */
+      yPercentage            : Float
+      /* The width of the area's rectangle, as a percentage of the 
+      media width */
+      widthPercentage        : Float
+      /* The height of the area's rectangle, as a percentage of the 
+      media height */
+      heightPercentage       : Float
+      /* The clockwise rotation angle of the rectangle, in degrees; 
+      0-360 */
+      rotationAngle          : Float
+      /* The radius of the rectangle corner rounding, as a 
+      percentage of the media width */
+      cornerRadiusPercentage : Float
+    }
+           
     /* This object contains basic information about a successful payment. Note that if 
       the buyer initiates a chargeback with the relevant payment provider following 
       this transaction, the funds may be debited from your balance. This is outside of 
@@ -4410,6 +4790,87 @@ namespace telegramium {
       message sender. Otherwise, the quote was added automatically 
       by the server. */
       isManual : Option[Boolean]
+    }
+           
+    /* This object describes a unique gift that was upgraded from a regular gift.  */
+    UniqueGift {
+      /* Human-readable name of the regular gift from which this 
+      unique gift was upgraded */
+      baseName : String
+      /* Unique name of the gift. This name can be used in 
+      https://t.me/nft/... links and story areas */
+      name     : String
+      /* Unique number of the upgraded gift among gifts upgraded 
+      from the same regular gift */
+      number   : Int
+      /* Model of the gift */
+      model    : UniqueGiftModel
+      /* Symbol of the gift */
+      symbol   : UniqueGiftSymbol
+      /* Backdrop of the gift */
+      backdrop : UniqueGiftBackdrop
+    }
+           
+    /* This object describes the backdrop of a unique gift.  */
+    UniqueGiftBackdrop {
+      /* Name of the backdrop */
+      name           : String
+      /* Colors of the backdrop */
+      colors         : UniqueGiftBackdropColors
+      /* The number of unique gifts that receive this backdrop for 
+      every 1000 gifts upgraded */
+      rarityPerMille : Int
+    }
+           
+    /* This object describes the colors of the backdrop of a unique gift.  */
+    UniqueGiftBackdropColors {
+      /* The color in the center of the backdrop in RGB format */
+      centerColor : Int
+      /* The color on the edges of the backdrop in RGB format */
+      edgeColor   : Int
+      /* The color to be applied to the symbol in RGB format */
+      symbolColor : Int
+      /* The color for the text on the backdrop in RGB format */
+      textColor   : Int
+    }
+           
+    /* Describes a service message about a unique gift that was sent or received.  */
+    UniqueGiftInfo {
+      /* Information about the gift */
+      gift              : UniqueGift
+      /* Origin of the gift. Currently, either “upgrade” or 
+      “transfer” */
+      origin            : String
+      /* Optional. Unique identifier of the received gift for the 
+      bot; only present for gifts received on behalf of business 
+      accounts */
+      ownedGiftId       : Option[String]
+      /* Optional. Number of Telegram Stars that must be paid to 
+      transfer the gift; omitted if the bot cannot transfer the 
+      gift */
+      transferStarCount : Option[Int]
+    }
+           
+    /* This object describes the model of a unique gift.  */
+    UniqueGiftModel {
+      /* Name of the model */
+      name           : String
+      /* The sticker that represents the unique gift */
+      sticker        : Sticker
+      /* The number of unique gifts that receive this model for 
+      every 1000 gifts upgraded */
+      rarityPerMille : Int
+    }
+           
+    /* This object describes the symbol shown on the pattern of a unique gift.  */
+    UniqueGiftSymbol {
+      /* Name of the symbol */
+      name           : String
+      /* The sticker that represents the unique gift */
+      sticker        : Sticker
+      /* The number of unique gifts that receive this model for 
+      every 1000 gifts upgraded */
+      rarityPerMille : Int
     }
            
     /* This object represents an incoming update. At most one of the optional 
@@ -4768,11 +5229,6 @@ namespace telegramium {
            
 
     namespace client {
-      Response {
-        ok          : Boolean
-        description : Option[String]
-      }
-
       Methods (methodsFactory) {
               
         /* Use this method to add a new sticker to a set created by the bot. Emoji sticker 
@@ -4974,6 +5430,16 @@ namespace telegramium {
           chatId : ChatId
         } => Method[Boolean]
       
+        /* Converts a given regular gift to Telegram Stars. Requires the 
+          can_convert_gifts_to_stars business bot right. Returns True on success.  */
+        def convertGiftToStars {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Unique identifier of the regular gift that should be 
+          converted to Telegram Stars */
+          ownedGiftId          : String
+        } => Method[Boolean]
+      
         /* Use this method to copy messages of any kind. Service messages, paid media 
           messages, giveaway messages, giveaway winners messages, and invoice messages 
           can't be copied. A quiz poll can be copied only if the value of the field 
@@ -5098,7 +5564,7 @@ namespace telegramium {
           subscriptionPeriod : Int
           /* The amount of Telegram Stars a user must pay initially and 
           after each subsequent subscription period to be a member of 
-          the chat; 1-2500 */
+          the chat; 1-10000 */
           subscriptionPrice  : Int
         } => Method[ChatInviteLink]
       
@@ -5154,7 +5620,7 @@ namespace telegramium {
           must always be 2592000 (30 days) if specified. Any number of 
           subscriptions can be active for a given bot at the same 
           time, including multiple concurrent subscriptions from the 
-          same user. Subscription price must no exceed 2500 Telegram 
+          same user. Subscription price must no exceed 10000 Telegram 
           Stars. */
           subscriptionPeriod        : Option[Int]
           /* The maximum accepted amount for tips in the smallest units 
@@ -5247,6 +5713,21 @@ namespace telegramium {
           userId : Long
         } => Method[Boolean]
       
+        /* Delete messages on behalf of a business account. Requires the 
+          can_delete_sent_messages business bot right to delete messages sent by the bot 
+          itself, or the can_delete_all_messages business bot right to delete any message. 
+          Returns True on success.  */
+        def deleteBusinessMessages {
+          /* Unique identifier of the business connection on behalf of 
+          which to delete the messages */
+          businessConnectionId : String
+          /* A JSON-serialized list of 1-100 identifiers of messages to 
+          delete. All messages must be from the same chat. See 
+          deleteMessage for limitations on which messages can be 
+          deleted */
+          messageIds           : List[Int]
+        } => Method[Boolean]
+      
         /* Use this method to delete a chat photo. Photos can't be changed for private 
           chats. The bot must be an administrator in the chat for this to work and must 
           have the appropriate administrator rights. Returns True on success.  */
@@ -5337,6 +5818,16 @@ namespace telegramium {
         def deleteStickerSet {
           /* Sticker set name */
           name : String
+        } => Method[Boolean]
+      
+        /* Deletes a story previously posted by the bot on behalf of a managed business 
+          account. Requires the can_manage_stories business bot right. Returns True on 
+          success.  */
+        def deleteStory {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Unique identifier of the story to delete */
+          storyId              : Int
         } => Method[Boolean]
       
         /* Use this method to remove webhook integration if you decide to switch back to 
@@ -5582,6 +6073,30 @@ namespace telegramium {
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
+        /* Edits a story previously posted by the bot on behalf of a managed business 
+          account. Requires the can_manage_stories business bot right. Returns Story on 
+          success.  */
+        def editStory {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Unique identifier of the story to edit */
+          storyId              : Int
+          /* Content of the story */
+          content              : InputStoryContent
+          /* Caption of the story, 0-2048 characters after entities 
+          parsing */
+          caption              : Option[String]
+          /* Mode for parsing entities in the story caption. See 
+          formatting options for more details. */
+          parseMode            : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
+          captionEntities      : List[MessageEntity]
+          /* A JSON-serialized list of clickable areas to be shown on 
+          the story */
+          areas                : List[StoryArea]
+        } => Method[Story]
+      
         /* Allows the bot to cancel or re-enable extension of a subscription paid in 
           Telegram Stars. Returns True on success.  */
         def editUserStarSubscription {
@@ -5666,6 +6181,45 @@ namespace telegramium {
         def getAvailableGifts {
       
         } => Method[Gifts]
+      
+        /* Returns the gifts received and owned by a managed business account. Requires 
+          the can_view_gifts_and_stars business bot right. Returns OwnedGifts on success.  */
+        def getBusinessAccountGifts {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Pass True to exclude gifts that aren't saved to the 
+          account's profile page */
+          excludeUnsaved       : Option[Boolean]
+          /* Pass True to exclude gifts that are saved to the account's 
+          profile page */
+          excludeSaved         : Option[Boolean]
+          /* Pass True to exclude gifts that can be purchased an 
+          unlimited number of times */
+          excludeUnlimited     : Option[Boolean]
+          /* Pass True to exclude gifts that can be purchased a limited 
+          number of times */
+          excludeLimited       : Option[Boolean]
+          /* Pass True to exclude unique gifts */
+          excludeUnique        : Option[Boolean]
+          /* Pass True to sort results by gift price instead of send 
+          date. Sorting is applied before pagination. */
+          sortByPrice          : Option[Boolean]
+          /* Offset of the first entry to return as received from the 
+          previous request; use empty string to get the first chunk of 
+          results */
+          offset               : Option[String]
+          /* The maximum number of gifts to be returned; 1-100. Defaults 
+          to 100 */
+          limit                : Option[Int]
+        } => Method[OwnedGifts]
+      
+        /* Returns the amount of Telegram Stars owned by a managed business account. 
+          Requires the can_view_gifts_and_stars business bot right. Returns StarAmount on 
+          success.  */
+        def getBusinessAccountStarBalance {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+        } => Method[StarAmount]
       
         /* Use this method to get information about the connection of the bot with a 
           business account. Returns a BusinessConnection object on success.  */
@@ -5892,6 +6446,35 @@ namespace telegramium {
       
         } => Method[WebhookInfo]
       
+        /* Gifts a Telegram Premium subscription to the given user. Returns True on 
+          success.  */
+        def giftPremiumSubscription {
+          /* Unique identifier of the target user who will receive a 
+          Telegram Premium subscription */
+          userId        : Long
+          /* Number of months the Telegram Premium subscription will be 
+          active for the user; must be one of 3, 6, or 12 */
+          monthCount    : Int
+          /* Number of Telegram Stars to pay for the Telegram Premium 
+          subscription; must be 1000 for 3 months, 1500 for 6 months, 
+          and 2500 for 12 months */
+          starCount     : Int
+          /* Text that will be shown along with the service message 
+          about the subscription; 0-128 characters */
+          text          : Option[String]
+          /* Mode for parsing entities in the text. See formatting 
+          options for more details. Entities other than “bold”, 
+          “italic”, “underline”, “strikethrough”, “spoiler”, and 
+          “custom_emoji” are ignored. */
+          textParseMode : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the gift text. It can be specified instead of 
+          text_parse_mode. Entities other than “bold”, “italic”, 
+          “underline”, “strikethrough”, “spoiler”, and “custom_emoji” 
+          are ignored. */
+          textEntities  : List[MessageEntity]
+        } => Method[Boolean]
+      
         /* Use this method to hide the 'General' topic in a forum supergroup chat. The bot 
           must be an administrator in the chat for this to work and must have the 
           can_manage_topics administrator rights. The topic will be automatically closed 
@@ -5940,6 +6523,36 @@ namespace telegramium {
           are always disabled in channels and private chats. */
           disableNotification  : Option[Boolean]
         } => Method[Boolean]
+      
+        /* Posts a story on behalf of a managed business account. Requires the 
+          can_manage_stories business bot right. Returns Story on success.  */
+        def postStory {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Content of the story */
+          content              : InputStoryContent
+          /* Period after which the story is moved to the archive, in 
+          seconds; must be one of 6 * 3600, 12 * 3600, 86400, or 2 * 
+          86400 */
+          activePeriod         : Int
+          /* Caption of the story, 0-2048 characters after entities 
+          parsing */
+          caption              : Option[String]
+          /* Mode for parsing entities in the story caption. See 
+          formatting options for more details. */
+          parseMode            : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of parse_mode */
+          captionEntities      : List[MessageEntity]
+          /* A JSON-serialized list of clickable areas to be shown on 
+          the story */
+          areas                : List[StoryArea]
+          /* Pass True to keep the story accessible after it expires */
+          postToChatPage       : Option[Boolean]
+          /* Pass True if the content of the story must be protected 
+          from forwarding and screenshotting */
+          protectContent       : Option[Boolean]
+        } => Method[Story]
       
         /* Use this method to promote or demote a user in a supergroup or a channel. The 
           bot must be an administrator in the chat for this to work and must have the 
@@ -6002,12 +6615,38 @@ namespace telegramium {
           canManageTopics     : Option[Boolean]
         } => Method[Boolean]
       
+        /* Marks incoming message as read on behalf of a business account. Requires the 
+          can_read_messages business bot right. Returns True on success.  */
+        def readBusinessMessage {
+          /* Unique identifier of the business connection on behalf of 
+          which to read the message */
+          businessConnectionId : String
+          /* Unique identifier of the chat in which the message was 
+          received. The chat must have been active in the last 24 
+          hours. */
+          chatId               : Long
+          /* Unique identifier of the message to mark as read */
+          messageId            : Int
+        } => Method[Boolean]
+      
         /* Refunds a successful payment in Telegram Stars. Returns True on success.  */
         def refundStarPayment {
           /* Identifier of the user whose payment will be refunded */
           userId                  : Long
           /* Telegram payment identifier */
           telegramPaymentChargeId : String
+        } => Method[Boolean]
+      
+        /* Removes the current profile photo of a managed business account. Requires the 
+          can_edit_profile_photo business bot right. Returns True on success.  */
+        def removeBusinessAccountProfilePhoto {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Pass True to remove the public photo, which is visible even 
+          if the main photo is hidden by the business account's 
+          privacy settings. After the main photo is removed, the 
+          previous profile photo (if present) becomes the main photo. */
+          isPublic             : Option[Boolean]
         } => Method[Boolean]
       
         /* Removes verification from a chat that is currently verified on behalf of the 
@@ -6158,7 +6797,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail             : (file) Option[IFile]
+          thumbnail             : Option[InputPartFile]
           /* Animation caption (may also be used when resending 
           animation by file_id), 0-1024 characters after entities 
           parsing */
@@ -6241,7 +6880,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail            : (file) Option[IFile]
+          thumbnail            : Option[InputPartFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification  : Option[Boolean]
@@ -6398,7 +7037,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail                   : (file) Option[IFile]
+          thumbnail                   : Option[InputPartFile]
           /* Document caption (may also be used when resending documents 
           by file_id), 0-1024 characters after entities parsing */
           caption                     : Option[String]
@@ -6748,7 +7387,7 @@ namespace telegramium {
           they will be credited to the bot's balance. */
           chatId                : ChatId
           /* The number of Telegram Stars that must be paid to buy 
-          access to the media; 1-2500 */
+          access to the media; 1-10000 */
           starCount             : Int
           /* A JSON-serialized array describing the media to be sent; up 
           to 10 items */
@@ -7051,7 +7690,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail             : (file) Option[IFile]
+          thumbnail             : Option[InputPartFile]
           /* Cover for the video in the message. Pass a file_id to send 
           a file that exists on the Telegram servers (recommended), 
           pass an HTTP URL for Telegram to get a file from the 
@@ -7131,7 +7770,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail            : (file) Option[IFile]
+          thumbnail            : Option[InputPartFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification  : Option[Boolean]
@@ -7207,6 +7846,65 @@ namespace telegramium {
           remove a reply keyboard or to force a reply from the user */
           replyMarkup          : Option[KeyboardMarkup]
         } => Method[Message]
+      
+        /* Changes the bio of a managed business account. Requires the can_change_bio 
+          business bot right. Returns True on success.  */
+        def setBusinessAccountBio {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* The new value of the bio for the business account; 0-140 
+          characters */
+          bio                  : Option[String]
+        } => Method[Boolean]
+      
+        /* Changes the privacy settings pertaining to incoming gifts in a managed business 
+          account. Requires the can_change_gift_settings business bot right. Returns True 
+          on success.  */
+        def setBusinessAccountGiftSettings {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Pass True, if a button for sending a gift to the user or by 
+          the business account must always be shown in the input field */
+          showGiftButton       : Boolean
+          /* Types of gifts accepted by the business account */
+          acceptedGiftTypes    : AcceptedGiftTypes
+        } => Method[Boolean]
+      
+        /* Changes the first and last name of a managed business account. Requires the 
+          can_change_name business bot right. Returns True on success.  */
+        def setBusinessAccountName {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* The new value of the first name for the business account; 
+          1-64 characters */
+          firstName            : String
+          /* The new value of the last name for the business account; 
+          0-64 characters */
+          lastName             : Option[String]
+        } => Method[Boolean]
+      
+        /* Changes the profile photo of a managed business account. Requires the 
+          can_edit_profile_photo business bot right. Returns True on success.  */
+        def setBusinessAccountProfilePhoto {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* The new profile photo to set */
+          photo                : InputProfilePhoto
+          /* Pass True to set the public photo, which will be visible 
+          even if the main photo is hidden by the business account's 
+          privacy settings. An account can have only one public photo. */
+          isPublic             : Option[Boolean]
+        } => Method[Boolean]
+      
+        /* Changes the username of a managed business account. Requires the 
+          can_change_username business bot right. Returns True on success.  */
+        def setBusinessAccountUsername {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* The new value of the username for the business account; 
+          0-32 characters */
+          username             : Option[String]
+        } => Method[Boolean]
       
         /* Use this method to set a custom title for an administrator in a supergroup 
           promoted by the bot. Returns True on success.  */
@@ -7621,6 +8319,34 @@ namespace telegramium {
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Poll]
       
+        /* Transfers Telegram Stars from the business account balance to the bot's 
+          balance. Requires the can_transfer_stars business bot right. Returns True on 
+          success.  */
+        def transferBusinessAccountStars {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Number of Telegram Stars to transfer; 1-10000 */
+          starCount            : Int
+        } => Method[Boolean]
+      
+        /* Transfers an owned unique gift to another user. Requires the 
+          can_transfer_and_upgrade_gifts business bot right. Requires can_transfer_stars 
+          business bot right if the transfer is paid. Returns True on success.  */
+        def transferGift {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Unique identifier of the regular gift that should be 
+          transferred */
+          ownedGiftId          : String
+          /* Unique identifier of the chat which will own the gift. The 
+          chat must be active in the last 24 hours. */
+          newOwnerChatId       : Long
+          /* The amount of Telegram Stars that will be paid for the 
+          transfer from the business account balance. If positive, 
+          then the can_transfer_stars business bot right is required. */
+          starCount            : Option[Int]
+        } => Method[Boolean]
+      
         /* Use this method to unban a previously banned user in a supergroup or channel. 
           The user will not return to the group or channel automatically, but will be able 
           to join via link, etc. The bot must be an administrator for this to work. By 
@@ -7707,6 +8433,27 @@ namespace telegramium {
           most recent pinned message (by sending date) will be 
           unpinned. */
           messageId            : Option[Int]
+        } => Method[Boolean]
+      
+        /* Upgrades a given regular gift to a unique gift. Requires the 
+          can_transfer_and_upgrade_gifts business bot right. Additionally requires the 
+          can_transfer_stars business bot right if the upgrade is paid. Returns True on 
+          success.  */
+        def upgradeGift {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Unique identifier of the regular gift that should be 
+          upgraded to a unique one */
+          ownedGiftId          : String
+          /* Pass True to keep the original gift text, sender and 
+          receiver in the upgraded gift */
+          keepOriginalDetails  : Option[Boolean]
+          /* The amount of Telegram Stars that will be paid for the 
+          upgrade from the business account balance. If 
+          gift.prepaid_upgrade_star_count > 0, then pass 0, otherwise, 
+          the can_transfer_stars business bot right is required and 
+          gift.upgrade_star_count must be passed. */
+          starCount            : Option[Int]
         } => Method[Boolean]
       
         /* Use this method to upload a file with a sticker for later use in the 

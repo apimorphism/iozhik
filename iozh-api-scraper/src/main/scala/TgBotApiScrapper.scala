@@ -7,7 +7,6 @@ import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.model.Element
 import cats.effect._
 import cats.instances.list._
-import cats.syntax.functor._
 import cats.syntax.foldable._
 import cats.instances.string._
 import cats.instances.int._
@@ -281,11 +280,6 @@ object TgBotApiScrapper extends IOApp {
        |    $entities
        |
        |    namespace client {
-       |      Response {
-       |        ok          : Boolean
-       |        description : Option[String]
-       |      }
-       |
        |      Methods (methodsFactory) {
        |        $methods
        |      }
@@ -333,10 +327,11 @@ object TgBotApiScrapper extends IOApp {
           descText.contains("size in bytes") ||
           name == "user_id" ||
           name == "chat_id" ||
-          name == "sender_chat_id"
+          name == "sender_chat_id" ||
+          name == "new_owner_chat_id"
         val isFile = desc.links.exists(_.href == "#sending-files")
         if (isFile)
-          "IFile"
+            "IFile"  
         else {
           val result = if (s == "List[Messages]") "List[Message]" else s
           result
@@ -440,7 +435,14 @@ object TgBotApiScrapper extends IOApp {
                     (descText.contains(", must be ") || descText.contains(", always ") || itemName == "MessageEntity")
                 ) {
                   val cleanedDesc = descText.replaceAll(".*must be ", "")
-                  val typeDesc = discriminatorPattern.findFirstMatchIn(cleanedDesc).map(_.group(1)).getOrElse(cleanedDesc)
+                  val typeDesc = discriminatorPattern
+                    .findFirstMatchIn(cleanedDesc)
+                    .map(_.group(1))
+                    .getOrElse(cleanedDesc)
+                    .stripPrefix("“")
+                    .stripSuffix("”")
+                    .stripPrefix("<em>")
+                    .stripSuffix("</em>")
                   EntityParam(
                     name = name,
                     kind = "__type_tag__",
