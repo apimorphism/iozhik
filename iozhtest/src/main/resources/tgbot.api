@@ -353,8 +353,9 @@ namespace telegramium {
         isAnonymous         : Boolean
         /* True, if the administrator can access the chat event log, 
         get boost list, see hidden supergroup and channel members, 
-        report spam messages and ignore slow mode. Implied by any 
-        other administrator privilege. */
+        report spam messages, ignore slow mode, and send messages to 
+        the chat without paying Telegram Stars. Implied by any other 
+        administrator privilege. */
         canManageChat       : Boolean
         /* True, if the administrator can delete messages of other 
         users */
@@ -385,7 +386,8 @@ namespace telegramium {
         other users */
         canDeleteStories    : Boolean
         /* Optional. True, if the administrator can post messages in 
-        the channel, or access channel statistics; for channels only */
+        the channel, approve suggested posts, or access channel 
+        statistics; for channels only */
         canPostMessages     : Option[Boolean]
         /* Optional. True, if the administrator can edit messages of 
         other users and can pin messages; for channels only */
@@ -446,7 +448,7 @@ namespace telegramium {
         canSendVideoNotes     : Boolean
         /* True, if the user is allowed to send voice notes */
         canSendVoiceNotes     : Boolean
-        /* True, if the user is allowed to send polls */
+        /* True, if the user is allowed to send polls and checklists */
         canSendPolls          : Boolean
         /* True, if the user is allowed to send animations, games, 
         stickers and use inline bots */
@@ -1138,7 +1140,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail             : Option[InputPartFile]
+        thumbnail             : Option[IFile]
         /* Optional. Caption of the animation to be sent, 0-1024 
         characters after entities parsing */
         caption               : Option[String]
@@ -1206,7 +1208,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail             : Option[InputPartFile]
+        thumbnail             : Option[IFile]
         /* Optional. Cover for the video in the message. Pass a 
         file_id to send a file that exists on the Telegram servers 
         (recommended), pass an HTTP URL for Telegram to get a file 
@@ -1260,7 +1262,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail                   : Option[InputPartFile]
+        thumbnail                   : Option[IFile]
         /* Optional. Caption of the document to be sent, 0-1024 
         characters after entities parsing */
         caption                     : Option[String]
@@ -1294,7 +1296,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail       : Option[InputPartFile]
+        thumbnail       : Option[IFile]
         /* Optional. Caption of the audio to be sent, 0-1024 
         characters after entities parsing */
         caption         : Option[String]
@@ -1506,7 +1508,7 @@ namespace telegramium {
         only uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the thumbnail was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        thumbnail         : Option[InputPartFile]
+        thumbnail         : Option[IFile]
         /* Optional. Cover for the video in the message. Pass a 
         file_id to send a file that exists on the Telegram servers 
         (recommended), pass an HTTP URL for Telegram to get a file 
@@ -1538,7 +1540,7 @@ namespace telegramium {
         and can only be uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the photo was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        animation          : InputPartFile
+        animation          : IFile
         /* Optional. Timestamp in seconds of the frame that will be 
         used as the static profile photo. Defaults to 0.0. */
         mainFrameTimestamp : Option[Float]
@@ -1551,7 +1553,7 @@ namespace telegramium {
         and can only be uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the photo was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        photo : InputPartFile
+        photo : IFile
       }
              
     }
@@ -1566,7 +1568,7 @@ namespace telegramium {
         reused and can only be uploaded as a new file, so you can 
         pass “attach://<file_attach_name>” if the photo was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        photo : InputPartFile
+        photo : IFile
       }
              
       /* Describes a video to post as a story.  */
@@ -1579,7 +1581,7 @@ namespace telegramium {
         uploaded as a new file, so you can pass 
         “attach://<file_attach_name>” if the video was uploaded 
         using multipart/form-data under <file_attach_name>. */
-        video               : InputPartFile
+        video               : IFile
         /* Optional. Precise duration of the video in seconds; 0-60 */
         duration            : Option[Float]
         /* Optional. Timestamp in seconds of the frame that will be 
@@ -1731,6 +1733,8 @@ namespace telegramium {
         /* Optional. True, if the message media is covered by a 
         spoiler animation */
         hasMediaSpoiler               : Option[Boolean]
+        /* Optional. Message is a checklist */
+        checklist                     : Option[Checklist]
         /* Optional. Message is a shared contact, information about 
         the contact */
         contact                       : Option[Contact]
@@ -1836,6 +1840,15 @@ namespace telegramium {
         boostAdded                    : Option[ChatBoostAdded]
         /* Optional. Service message: chat background set */
         chatBackgroundSet             : Option[ChatBackground]
+        /* Optional. Service message: some tasks in a checklist were 
+        marked as done or not done */
+        checklistTasksDone            : Option[ChecklistTasksDone]
+        /* Optional. Service message: tasks were added to a checklist */
+        checklistTasksAdded           : Option[ChecklistTasksAdded]
+        /* Optional. Service message: the price for paid messages in 
+        the corresponding direct messages chat of a channel has 
+        changed */
+        directMessagePriceChanged     : Option[DirectMessagePriceChanged]
         /* Optional. Service message: forum topic created */
         forumTopicCreated             : Option[ForumTopicCreated]
         /* Optional. Service message: forum topic edited */
@@ -2106,6 +2119,10 @@ namespace telegramium {
         transfer the gift; omitted if the bot cannot transfer the 
         gift */
         transferStarCount : Option[Int]
+        /* Optional. Point in time (Unix timestamp) when the gift can 
+        be transferred. If it is in the past, then the gift can be 
+        transferred now */
+        nextTransferDate  : Option[Int]
       }
              
       /* Describes a regular gift owned by a user or a chat.  */
@@ -2328,8 +2345,8 @@ namespace telegramium {
       /* The reaction is based on an emoji.  */
       ReactionTypeEmoji {
         type : "emoji:1"
-        /* Reaction emoji. Currently, it can be one of "👍", "👎", 
-        "❤", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", 
+        /* Reaction emoji. Currently, it can be one of "❤", "👍", 
+        "👎", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", 
         "🎉", "🤩", "🤮", "💩", "🙏", "👌", "🕊", "🤡", "🥱", "🥴", 
         "😍", "🐳", "❤‍🔥", "🌚", "🌭", "💯", "🤣", "⚡", "🍌", "🏆", 
         "💔", "🤨", "😐", "🍓", "🍾", "💋", "🖕", "😈", "😴", "😭", 
@@ -2847,8 +2864,9 @@ namespace telegramium {
       isAnonymous         : Boolean
       /* True, if the administrator can access the chat event log, 
       get boost list, see hidden supergroup and channel members, 
-      report spam messages and ignore slow mode. Implied by any 
-      other administrator privilege. */
+      report spam messages, ignore slow mode, and send messages to 
+      the chat without paying Telegram Stars. Implied by any other 
+      administrator privilege. */
       canManageChat       : Boolean
       /* True, if the administrator can delete messages of other 
       users */
@@ -2879,7 +2897,8 @@ namespace telegramium {
       other users */
       canDeleteStories    : Boolean
       /* Optional. True, if the administrator can post messages in 
-      the channel, or access channel statistics; for channels only */
+      the channel, approve suggested posts, or access channel 
+      statistics; for channels only */
       canPostMessages     : Option[Boolean]
       /* Optional. True, if the administrator can edit messages of 
       other users and can pin messages; for channels only */
@@ -3201,7 +3220,8 @@ namespace telegramium {
       canSendVideoNotes     : Option[Boolean]
       /* Optional. True, if the user is allowed to send voice notes */
       canSendVoiceNotes     : Option[Boolean]
-      /* Optional. True, if the user is allowed to send polls */
+      /* Optional. True, if the user is allowed to send polls and 
+      checklists */
       canSendPolls          : Option[Boolean]
       /* Optional. True, if the user is allowed to send animations, 
       games, stickers and use inline bots */
@@ -3269,6 +3289,64 @@ namespace telegramium {
       photo     : List[PhotoSize]
     }
            
+    /* Describes a checklist.  */
+    Checklist {
+      /* Title of the checklist */
+      title                    : String
+      /* Optional. Special entities that appear in the checklist 
+      title */
+      titleEntities            : List[MessageEntity]
+      /* List of tasks in the checklist */
+      tasks                    : List[ChecklistTask]
+      /* Optional. True, if users other than the creator of the list 
+      can add tasks to the list */
+      othersCanAddTasks        : Option[Boolean]
+      /* Optional. True, if users other than the creator of the list 
+      can mark tasks as done or not done */
+      othersCanMarkTasksAsDone : Option[Boolean]
+    }
+           
+    /* Describes a task in a checklist.  */
+    ChecklistTask {
+      /* Unique identifier of the task */
+      id              : Int
+      /* Text of the task */
+      text            : String
+      /* Optional. Special entities that appear in the task text */
+      textEntities    : List[MessageEntity]
+      /* Optional. User that completed the task; omitted if the task 
+      wasn't completed */
+      completedByUser : Option[User]
+      /* Optional. Point in time (Unix timestamp) when the task was 
+      completed; 0 if the task wasn't completed */
+      completionDate  : Option[Int]
+    }
+           
+    /* Describes a service message about tasks added to a checklist.  */
+    ChecklistTasksAdded {
+      /* Optional. Message containing the checklist to which the 
+      tasks were added. Note that the Message object in this field 
+      will not contain the reply_to_message field even if it 
+      itself is a reply. */
+      checklistMessage : Option[Message]
+      /* List of tasks added to the checklist */
+      tasks            : List[ChecklistTask]
+    }
+           
+    /* Describes a service message about checklist tasks marked as done or not done.  */
+    ChecklistTasksDone {
+      /* Optional. Message containing the checklist whose tasks were 
+      marked as done or not done. Note that the Message object in 
+      this field will not contain the reply_to_message field even 
+      if it itself is a reply. */
+      checklistMessage       : Option[Message]
+      /* Optional. Identifiers of the tasks that were marked as done */
+      markedAsDoneTaskIds    : List[Int]
+      /* Optional. Identifiers of the tasks that were marked as not 
+      done */
+      markedAsNotDoneTaskIds : List[Int]
+    }
+           
     /* Represents a result of an inline query that was chosen by the user and sent to 
       their chat partner.  */
     ChosenInlineResult {
@@ -3322,6 +3400,19 @@ namespace telegramium {
       /* Value of the dice, 1-6 for “🎲”, “🎯” and “🎳” base emoji, 
       1-5 for “🏀” and “⚽” base emoji, 1-64 for “🎰” base emoji */
       value : Int
+    }
+           
+    /* Describes a service message about a change in the price of direct messages sent 
+      to a channel chat.  */
+    DirectMessagePriceChanged {
+      /* True, if direct messages are enabled for the channel chat; 
+      false otherwise */
+      areDirectMessagesEnabled : Boolean
+      /* Optional. The new number of Telegram Stars that must be 
+      paid by users for each direct message sent to the channel. 
+      Does not apply to users who have been exempted by 
+      administrators. Defaults to 0. */
+      directMessageStarCount   : Option[Int]
     }
            
     /* This object represents a general file (as opposed to photos, voice messages and 
@@ -3468,6 +3559,8 @@ namespace telegramium {
       /* Optional. True, if the message media is covered by a 
       spoiler animation */
       hasMediaSpoiler    : Option[Boolean]
+      /* Optional. Message is a checklist */
+      checklist          : Option[Checklist]
       /* Optional. Message is a shared contact, information about 
       the contact */
       contact            : Option[Contact]
@@ -3866,6 +3959,47 @@ namespace telegramium {
       button so that the user can easily return to the chat where 
       they wanted to use the bot's inline capabilities. */
       startParameter : Option[String]
+    }
+           
+    /* Describes a checklist to create.  */
+    InputChecklist {
+      /* Title of the checklist; 1-255 characters after entities 
+      parsing */
+      title                    : String
+      /* Optional. Mode for parsing entities in the title. See 
+      formatting options for more details. */
+      parseMode                : Option[ParseMode]
+      /* Optional. List of special entities that appear in the 
+      title, which can be specified instead of parse_mode. 
+      Currently, only bold, italic, underline, strikethrough, 
+      spoiler, and custom_emoji entities are allowed. */
+      titleEntities            : List[MessageEntity]
+      /* List of 1-30 tasks in the checklist */
+      tasks                    : List[InputChecklistTask]
+      /* Optional. Pass True if other users can add tasks to the 
+      checklist */
+      othersCanAddTasks        : Option[Boolean]
+      /* Optional. Pass True if other users can mark tasks as done 
+      or not done in the checklist */
+      othersCanMarkTasksAsDone : Option[Boolean]
+    }
+           
+    /* Describes a task to add to a checklist.  */
+    InputChecklistTask {
+      /* Unique identifier of the task; must be positive and unique 
+      among all task identifiers currently present in the 
+      checklist */
+      id           : Int
+      /* Text of the task; 1-100 characters after entities parsing */
+      text         : String
+      /* Optional. Mode for parsing entities in the text. See 
+      formatting options for more details. */
+      parseMode    : Option[ParseMode]
+      /* Optional. List of special entities that appear in the text, 
+      which can be specified instead of parse_mode. Currently, 
+      only bold, italic, underline, strikethrough, spoiler, and 
+      custom_emoji entities are allowed. */
+      textEntities : List[MessageEntity]
     }
            
     /* This object represents the contents of a file to be uploaded. Must be posted 
@@ -4837,18 +4971,27 @@ namespace telegramium {
     /* Describes a service message about a unique gift that was sent or received.  */
     UniqueGiftInfo {
       /* Information about the gift */
-      gift              : UniqueGift
-      /* Origin of the gift. Currently, either “upgrade” or 
-      “transfer” */
-      origin            : String
+      gift                : UniqueGift
+      /* Origin of the gift. Currently, either “upgrade” for gifts 
+      upgraded from regular gifts, “transfer” for gifts 
+      transferred from other users or channels, or “resale” for 
+      gifts bought from other users */
+      origin              : String
+      /* Optional. For gifts bought from other users, the price paid 
+      for the gift */
+      lastResaleStarCount : Option[Int]
       /* Optional. Unique identifier of the received gift for the 
       bot; only present for gifts received on behalf of business 
       accounts */
-      ownedGiftId       : Option[String]
+      ownedGiftId         : Option[String]
       /* Optional. Number of Telegram Stars that must be paid to 
       transfer the gift; omitted if the bot cannot transfer the 
       gift */
-      transferStarCount : Option[Int]
+      transferStarCount   : Option[Int]
+      /* Optional. Point in time (Unix timestamp) when the gift can 
+      be transferred. If it is in the past, then the gift can be 
+      transferred now */
+      nextTransferDate    : Option[Int]
     }
            
     /* This object describes the model of a unique gift.  */
@@ -5942,6 +6085,23 @@ namespace telegramium {
           replyMarkup           : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
       
+        /* Use this method to edit a checklist on behalf of a connected business account. 
+          On success, the edited Message is returned.  */
+        def editMessageChecklist {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : String
+          /* Unique identifier for the target chat */
+          chatId               : Long
+          /* Unique identifier for the target message */
+          messageId            : Int
+          /* A JSON-serialized object for the new checklist */
+          checklist            : InputChecklist
+          /* A JSON-serialized object for the new inline keyboard for 
+          the message */
+          replyMarkup          : Option[InlineKeyboardMarkup]
+        } => Method[Message]
+      
         /* Use this method to edit live location messages. A location can be edited until 
           its live_period expires or editing is explicitly disabled by a call to 
           stopMessageLiveLocation. On success, if the edited message is not an inline 
@@ -6365,6 +6525,12 @@ namespace telegramium {
           languageCode : Option[String]
         } => Method[BotShortDescription]
       
+        /* A method to get the current Telegram Stars balance of the bot. Requires no 
+          parameters. On success, returns a StarAmount object.  */
+        def getMyStarBalance {
+      
+        } => Method[StarAmount]
+      
         /* Returns the bot's Telegram Star transactions in chronological order. On 
           success, returns a StarTransactions object.  */
         def getStarTransactions {
@@ -6569,7 +6735,8 @@ namespace telegramium {
           isAnonymous         : Option[Boolean]
           /* Pass True if the administrator can access the chat event 
           log, get boost list, see hidden supergroup and channel 
-          members, report spam messages and ignore slow mode. Implied 
+          members, report spam messages, ignore slow mode, and send 
+          messages to the chat without paying Telegram Stars. Implied 
           by any other administrator privilege. */
           canManageChat       : Option[Boolean]
           /* Pass True if the administrator can delete messages of other 
@@ -6602,7 +6769,8 @@ namespace telegramium {
           other users */
           canDeleteStories    : Option[Boolean]
           /* Pass True if the administrator can post messages in the 
-          channel, or access channel statistics; for channels only */
+          channel, approve suggested posts, or access channel 
+          statistics; for channels only */
           canPostMessages     : Option[Boolean]
           /* Pass True if the administrator can edit messages of other 
           users and can pin messages; for channels only */
@@ -6797,7 +6965,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail             : Option[InputPartFile]
+          thumbnail             : (file) Option[IFile]
           /* Animation caption (may also be used when resending 
           animation by file_id), 0-1024 characters after entities 
           parsing */
@@ -6880,7 +7048,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail            : Option[InputPartFile]
+          thumbnail            : (file) Option[IFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification  : Option[Boolean]
@@ -6927,6 +7095,32 @@ namespace telegramium {
           or upload_video_note for video notes. */
           action               : String
         } => Method[Boolean]
+      
+        /* Use this method to send a checklist on behalf of a connected business account. 
+          On success, the sent Message is returned.  */
+        def sendChecklist {
+          /* Unique identifier of the business connection on behalf of 
+          which the message will be sent */
+          businessConnectionId : String
+          /* Unique identifier for the target chat */
+          chatId               : Long
+          /* A JSON-serialized object for the checklist to send */
+          checklist            : InputChecklist
+          /* Sends the message silently. Users will receive a 
+          notification with no sound. */
+          disableNotification  : Option[Boolean]
+          /* Protects the contents of the sent message from forwarding 
+          and saving */
+          protectContent       : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message */
+          messageEffectId      : Option[String]
+          /* A JSON-serialized object for description of the message to 
+          reply to */
+          replyParameters      : Option[ReplyParameters]
+          /* A JSON-serialized object for an inline keyboard */
+          replyMarkup          : Option[InlineKeyboardMarkup]
+        } => Method[Message]
       
         /* Use this method to send phone contacts. On success, the sent Message is 
           returned.  */
@@ -7037,7 +7231,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail                   : Option[InputPartFile]
+          thumbnail                   : (file) Option[IFile]
           /* Document caption (may also be used when resending documents 
           by file_id), 0-1024 characters after entities parsing */
           caption                     : Option[String]
@@ -7504,7 +7698,7 @@ namespace telegramium {
           the poll question. It can be specified instead of 
           question_parse_mode */
           questionEntities      : List[MessageEntity]
-          /* A JSON-serialized list of 2-10 answer options */
+          /* A JSON-serialized list of 2-12 answer options */
           options               : List[InputPollOption]
           /* True, if the poll needs to be anonymous, defaults to True */
           isAnonymous           : Option[Boolean]
@@ -7690,7 +7884,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail             : Option[InputPartFile]
+          thumbnail             : (file) Option[IFile]
           /* Cover for the video in the message. Pass a file_id to send 
           a file that exists on the Telegram servers (recommended), 
           pass an HTTP URL for Telegram to get a file from the 
@@ -7770,7 +7964,7 @@ namespace telegramium {
           only uploaded as a new file, so you can pass 
           “attach://<file_attach_name>” if the thumbnail was uploaded 
           using multipart/form-data under <file_attach_name>. */
-          thumbnail            : Option[InputPartFile]
+          thumbnail            : (file) Option[IFile]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
           disableNotification  : Option[Boolean]
