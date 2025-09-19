@@ -325,10 +325,14 @@ object TgBotApiScrapper extends IOApp {
           descText.contains("more than 32 significant bits") ||
           descText.contains("bigger than 2^31") ||
           descText.contains("size in bytes") ||
+          descText.contains("Unix time") ||
           name == "user_id" ||
           name == "chat_id" ||
           name == "sender_chat_id" ||
-          name == "new_owner_chat_id"
+          name == "new_owner_chat_id" ||
+          name == "amount" ||
+          name == "send_date" ||
+          name == "direct_messages_topic_id"
         val isFile = desc.links.exists(_.href == "#sending-files")
         if (isFile)
             "IFile"  
