@@ -1382,14 +1382,14 @@ namespace telegramium {
         decimal point for each currency (2 for the majority of 
         currencies). Defaults to 0. Not supported for payments in 
         Telegram Stars. */
-        maxTipAmount              : Option[Int]
+        maxTipAmount              : Option[Long]
         /* Optional. A JSON-serialized array of suggested amounts of 
         tip in the smallest units of the currency (integer, not 
         float/double). At most 4 suggested tip amounts can be 
         specified. The suggested tip amounts must be positive, 
         passed in a strictly increased order and must not exceed 
         max_tip_amount. */
-        suggestedTipAmounts       : List[Int]
+        suggestedTipAmounts       : List[Long]
         /* Optional. A JSON-serialized object for data about the 
         invoice, which will be shared with the payment provider. A 
         detailed description of the required fields should be 
@@ -1614,8 +1614,9 @@ namespace telegramium {
         will be 0 and the relevant message will be unusable until it 
         is actually sent */
         messageId                     : Int
-        /* Optional. Unique identifier of a message thread to which 
-        the message belongs; for supergroups only */
+        /* Optional. Unique identifier of a message thread or forum 
+        topic to which the message belongs; for supergroups and 
+        private chats only */
         messageThreadId               : Option[Int]
         /* Optional. Information about the direct messages chat topic 
         that contains the message */
@@ -1654,7 +1655,8 @@ namespace telegramium {
         /* Optional. Information about the original message for 
         forwarded messages */
         forwardOrigin                 : Option[MessageOrigin]
-        /* Optional. True, if the message is sent to a forum topic */
+        /* Optional. True, if the message is sent to a topic in a 
+        forum supergroup or a private chat with the bot */
         isTopicMessage                : Option[Boolean]
         /* Optional. True, if the message is a channel post that was 
         automatically forwarded to the connected discussion group */
@@ -1847,6 +1849,9 @@ namespace telegramium {
         /* Optional. Service message: a unique gift was sent or 
         received */
         uniqueGift                    : Option[UniqueGiftInfo]
+        /* Optional. Service message: upgrade of a gift was purchased 
+        after the gift was sent */
+        giftUpgradeSent               : Option[GiftInfo]
         /* Optional. The domain name of the website on which the user 
         has logged in. */
         connectedWebsite              : Option[String]
@@ -2195,11 +2200,19 @@ namespace telegramium {
         wasRefunded             : Option[Boolean]
         /* Optional. Number of Telegram Stars that can be claimed by 
         the receiver instead of the gift; omitted if the gift cannot 
-        be converted to Telegram Stars */
+        be converted to Telegram Stars; for gifts received on behalf 
+        of business accounts only */
         convertStarCount        : Option[Int]
-        /* Optional. Number of Telegram Stars that were paid by the 
-        sender for the ability to upgrade the gift */
+        /* Optional. Number of Telegram Stars that were paid for the 
+        ability to upgrade the gift */
         prepaidUpgradeStarCount : Option[Int]
+        /* Optional. True, if the gift's upgrade was purchased after 
+        the gift was sent; for gifts received on behalf of business 
+        accounts only */
+        isUpgradeSeparate       : Option[Boolean]
+        /* Optional. Unique number reserved for this gift when 
+        upgraded. See the number field in UniqueGift */
+        uniqueGiftNumber        : Option[Int]
       }
              
     }
@@ -2585,6 +2598,9 @@ namespace telegramium {
       uniqueGifts         : Boolean
       /* True, if a Telegram Premium subscription is accepted */
       premiumSubscription : Boolean
+      /* True, if transfers of unique gifts from channels are 
+      accepted */
+      giftsFromChannels   : Boolean
     }
            
     /* Contains information about the affiliate that received a commission via this 
@@ -2607,7 +2623,7 @@ namespace telegramium {
       /* Optional. The number of 1/1000000000 shares of Telegram 
       Stars received by the affiliate; from -999999999 to 
       999999999; can be negative for refunds */
-      nanostarAmount     : Option[Int]
+      nanostarAmount     : Option[Long]
     }
            
     /* This object represents an animation file (GIF or H.264/MPEG-4 AVC video without 
@@ -3156,6 +3172,15 @@ namespace telegramium {
       /* Optional. For supergroups, the location to which the 
       supergroup is connected */
       location                           : Option[ChatLocation]
+      /* Optional. For private chats, the rating of the user if any */
+      rating                             : Option[UserRating]
+      /* Optional. The color scheme based on a unique gift that must 
+      be used for the chat's name, message replies and link 
+      previews */
+      uniqueGiftColors                   : Option[UniqueGiftColors]
+      /* Optional. The number of Telegram Stars a general user have 
+      to pay to send a message to the chat */
+      paidMessageStarCount               : Option[Int]
     }
            
     /* Represents an invite link for a chat.  */
@@ -3366,8 +3391,11 @@ namespace telegramium {
       /* Optional. Special entities that appear in the task text */
       textEntities    : List[MessageEntity]
       /* Optional. User that completed the task; omitted if the task 
-      wasn't completed */
+      wasn't completed by a user */
       completedByUser : Option[User]
+      /* Optional. Chat that completed the task; omitted if the task 
+      wasn't completed by a chat */
+      completedByChat : Option[Chat]
       /* Optional. Point in time (Unix timestamp) when the task was 
       completed; 0 if the task wasn't completed */
       completionDate  : Option[Long]
@@ -3686,6 +3714,10 @@ namespace telegramium {
       /* Optional. Unique identifier of the custom emoji shown as 
       the topic icon */
       iconCustomEmojiId : Option[String]
+      /* Optional. True, if the name of the topic wasn't specified 
+      explicitly by its creator and likely needs to be changed by 
+      the bot */
+      isNameImplicit    : Option[Boolean]
     }
            
     /* This object represents a service message about a forum topic closed in the 
@@ -3704,6 +3736,10 @@ namespace telegramium {
       /* Optional. Unique identifier of the custom emoji shown as 
       the topic icon */
       iconCustomEmojiId : Option[String]
+      /* Optional. True, if the name of the topic wasn't specified 
+      explicitly by its creator and likely needs to be changed by 
+      the bot */
+      isNameImplicit    : Option[Boolean]
     }
            
     /* This object represents a service message about an edited forum topic.  */
@@ -3770,24 +3806,51 @@ namespace telegramium {
     /* This object represents a gift that can be sent by the bot.  */
     Gift {
       /* Unique identifier of the gift */
-      id               : String
+      id                     : String
       /* The sticker that represents the gift */
-      sticker          : Sticker
+      sticker                : Sticker
       /* The number of Telegram Stars that must be paid to send the 
       sticker */
-      starCount        : Int
+      starCount              : Int
       /* Optional. The number of Telegram Stars that must be paid to 
       upgrade the gift to a unique one */
-      upgradeStarCount : Option[Int]
-      /* Optional. The total number of the gifts of this type that 
-      can be sent; for limited gifts only */
-      totalCount       : Option[Int]
+      upgradeStarCount       : Option[Int]
+      /* Optional. True, if the gift can only be purchased by 
+      Telegram Premium subscribers */
+      isPremium              : Option[Boolean]
+      /* Optional. True, if the gift can be used (after being 
+      upgraded) to customize a user's appearance */
+      hasColors              : Option[Boolean]
+      /* Optional. The total number of gifts of this type that can 
+      be sent by all users; for limited gifts only */
+      totalCount             : Option[Int]
       /* Optional. The number of remaining gifts of this type that 
-      can be sent; for limited gifts only */
-      remainingCount   : Option[Int]
+      can be sent by all users; for limited gifts only */
+      remainingCount         : Option[Int]
+      /* Optional. The total number of gifts of this type that can 
+      be sent by the bot; for limited gifts only */
+      personalTotalCount     : Option[Int]
+      /* Optional. The number of remaining gifts of this type that 
+      can be sent by the bot; for limited gifts only */
+      personalRemainingCount : Option[Int]
+      /* Optional. Background of the gift */
+      background             : Option[GiftBackground]
+      /* Optional. The total number of different unique gifts that 
+      can be obtained by upgrading the gift */
+      uniqueGiftVariantCount : Option[Int]
       /* Optional. Information about the chat that published the 
       gift */
-      publisherChat    : Option[Chat]
+      publisherChat          : Option[Chat]
+    }
+           
+    /* This object describes the background of a gift.  */
+    GiftBackground {
+      /* Center color of the background in RGB format */
+      centerColor : Int
+      /* Edge color of the background in RGB format */
+      edgeColor   : Int
+      /* Text color of the background in RGB format */
+      textColor   : Int
     }
            
     /* Describes a service message about a regular gift that was sent or received.  */
@@ -3802,9 +3865,12 @@ namespace telegramium {
       the receiver by converting the gift; omitted if conversion 
       to Telegram Stars is impossible */
       convertStarCount        : Option[Int]
-      /* Optional. Number of Telegram Stars that were prepaid by the 
-      sender for the ability to upgrade the gift */
+      /* Optional. Number of Telegram Stars that were prepaid for 
+      the ability to upgrade the gift */
       prepaidUpgradeStarCount : Option[Int]
+      /* Optional. True, if the gift's upgrade was purchased after 
+      the gift was sent */
+      isUpgradeSeparate       : Option[Boolean]
       /* Optional. True, if the gift can be upgraded to a unique 
       gift */
       canBeUpgraded           : Option[Boolean]
@@ -3816,6 +3882,9 @@ namespace telegramium {
       to the gift receiver; otherwise, everyone will be able to 
       see them */
       isPrivate               : Option[Boolean]
+      /* Optional. Unique number reserved for this gift when 
+      upgraded. See the number field in UniqueGift */
+      uniqueGiftNumber        : Option[Int]
     }
            
     /* This object represent a list of gifts.  */
@@ -4136,7 +4205,7 @@ namespace telegramium {
       amount = 145. See the exp parameter in currencies.json, it 
       shows the number of digits past the decimal point for each 
       currency (2 for the majority of currencies). */
-      totalAmount    : Int
+      totalAmount    : Long
     }
            
     /* This object represents one button of the reply keyboard. At most one of the 
@@ -4599,7 +4668,7 @@ namespace telegramium {
       amount = 145. See the exp parameter in currencies.json, it 
       shows the number of digits past the decimal point for each 
       currency (2 for the majority of currencies). */
-      totalAmount      : Int
+      totalAmount      : Long
       /* Bot-specified invoice payload */
       invoicePayload   : String
       /* Optional. Identifier of the shipping option chosen by the 
@@ -4649,7 +4718,7 @@ namespace telegramium {
       currencies.json, it shows the number of digits past the 
       decimal point for each currency (2 for the majority of 
       currencies). */
-      totalAmount             : Int
+      totalAmount             : Long
       /* Bot-specified invoice payload */
       invoicePayload          : String
       /* Telegram payment identifier */
@@ -4790,7 +4859,7 @@ namespace telegramium {
       /* Optional. The number of 1/1000000000 shares of Telegram 
       Stars; from -999999999 to 999999999; can be negative if and 
       only if amount is non-positive */
-      nanostarAmount : Option[Int]
+      nanostarAmount : Option[Long]
     }
            
     /* Describes a Telegram Star transaction. Note that if the buyer initiates a 
@@ -4809,7 +4878,7 @@ namespace telegramium {
       amount         : Long
       /* Optional. The number of 1/1000000000 shares of Telegram 
       Stars transferred by the transaction; from 0 to 999999999 */
-      nanostarAmount : Option[Int]
+      nanostarAmount : Option[Long]
       /* Date the transaction was created in Unix time */
       date           : Long
       /* Optional. Source of an incoming transaction (e.g., a user 
@@ -4942,7 +5011,7 @@ namespace telegramium {
       amount = 145. See the exp parameter in currencies.json, it 
       shows the number of digits past the decimal point for each 
       currency (2 for the majority of currencies). */
-      totalAmount                : Int
+      totalAmount                : Long
       /* Bot-specified invoice payload */
       invoicePayload             : String
       /* Optional. Expiration date of the subscription, in Unix 
@@ -5108,24 +5177,38 @@ namespace telegramium {
            
     /* This object describes a unique gift that was upgraded from a regular gift.  */
     UniqueGift {
+      /* Identifier of the regular gift from which the gift was 
+      upgraded */
+      giftId           : String
       /* Human-readable name of the regular gift from which this 
       unique gift was upgraded */
-      baseName      : String
+      baseName         : String
       /* Unique name of the gift. This name can be used in 
       https://t.me/nft/... links and story areas */
-      name          : String
+      name             : String
       /* Unique number of the upgraded gift among gifts upgraded 
       from the same regular gift */
-      number        : Int
+      number           : Int
       /* Model of the gift */
-      model         : UniqueGiftModel
+      model            : UniqueGiftModel
       /* Symbol of the gift */
-      symbol        : UniqueGiftSymbol
+      symbol           : UniqueGiftSymbol
       /* Backdrop of the gift */
-      backdrop      : UniqueGiftBackdrop
+      backdrop         : UniqueGiftBackdrop
+      /* Optional. True, if the original regular gift was 
+      exclusively purchaseable by Telegram Premium subscribers */
+      isPremium        : Option[Boolean]
+      /* Optional. True, if the gift is assigned from the TON 
+      blockchain and can't be resold or transferred in Telegram */
+      isFromBlockchain : Option[Boolean]
+      /* Optional. The color scheme that can be used by the gift's 
+      owner for the chat's name, replies to messages and link 
+      previews; for business account gifts and gifts that are 
+      currently on sale only */
+      colors           : Option[UniqueGiftColors]
       /* Optional. Information about the chat that published the 
       gift */
-      publisherChat : Option[Chat]
+      publisherChat    : Option[Chat]
     }
            
     /* This object describes the backdrop of a unique gift.  */
@@ -5151,30 +5234,55 @@ namespace telegramium {
       textColor   : Int
     }
            
+    /* This object contains information about the color scheme for a user's name, 
+      message replies and link previews based on a unique gift.  */
+    UniqueGiftColors {
+      /* Custom emoji identifier of the unique gift's model */
+      modelCustomEmojiId    : String
+      /* Custom emoji identifier of the unique gift's symbol */
+      symbolCustomEmojiId   : String
+      /* Main color used in light themes; RGB format */
+      lightThemeMainColor   : Int
+      /* List of 1-3 additional colors used in light themes; RGB 
+      format */
+      lightThemeOtherColors : List[Int]
+      /* Main color used in dark themes; RGB format */
+      darkThemeMainColor    : Int
+      /* List of 1-3 additional colors used in dark themes; RGB 
+      format */
+      darkThemeOtherColors  : List[Int]
+    }
+           
     /* Describes a service message about a unique gift that was sent or received.  */
     UniqueGiftInfo {
       /* Information about the gift */
-      gift                : UniqueGift
+      gift               : UniqueGift
       /* Origin of the gift. Currently, either “upgrade” for gifts 
       upgraded from regular gifts, “transfer” for gifts 
-      transferred from other users or channels, or “resale” for 
-      gifts bought from other users */
-      origin              : String
+      transferred from other users or channels, “resale” for gifts 
+      bought from other users, “gifted_upgrade” for upgrades 
+      purchased after the gift was sent, or “offer” for gifts 
+      bought or sold through gift purchase offers */
+      origin             : String
+      /* Optional. For gifts bought from other users, the currency 
+      in which the payment for the gift was done. Currently, one 
+      of “XTR” for Telegram Stars or “TON” for toncoins. */
+      lastResaleCurrency : Option[String]
       /* Optional. For gifts bought from other users, the price paid 
-      for the gift */
-      lastResaleStarCount : Option[Int]
+      for the gift in either Telegram Stars or nanotoncoins */
+      lastResaleAmount   : Option[Long]
       /* Optional. Unique identifier of the received gift for the 
       bot; only present for gifts received on behalf of business 
       accounts */
-      ownedGiftId         : Option[String]
+      ownedGiftId        : Option[String]
       /* Optional. Number of Telegram Stars that must be paid to 
       transfer the gift; omitted if the bot cannot transfer the 
       gift */
-      transferStarCount   : Option[Int]
+      transferStarCount  : Option[Int]
       /* Optional. Point in time (Unix timestamp) when the gift can 
       be transferred. If it is in the past, then the gift can be 
       transferred now */
-      nextTransferDate    : Option[Long]
+      nextTransferDate   : Option[Long]
     }
            
     /* This object describes the model of a unique gift.  */
@@ -5338,6 +5446,9 @@ namespace telegramium {
       /* Optional. True, if the bot has a main Web App. Returned 
       only in getMe. */
       hasMainWebApp           : Option[Boolean]
+      /* Optional. True, if the bot has forum topic mode enabled in 
+      private chats. Returned only in getMe. */
+      hasTopicsEnabled        : Option[Boolean]
     }
            
     /* This object represents a list of boosts added to a chat by a user.  */
@@ -5352,6 +5463,24 @@ namespace telegramium {
       totalCount : Int
       /* Requested profile pictures (in up to 4 sizes each) */
       photos     : List[List[PhotoSize]]
+    }
+           
+    /* This object describes the rating of a user based on their Telegram Star 
+      spendings.  */
+    UserRating {
+      /* Current level of the user, indicating their reliability 
+      when purchasing digital goods and services. A higher level 
+      suggests a more trustworthy customer; a negative level is 
+      likely reason for concern. */
+      level              : Int
+      /* Numerical value of the user's rating; the higher the 
+      rating, the better */
+      rating             : Int
+      /* The rating value required to get the current level */
+      currentLevelRating : Int
+      /* Optional. The rating value required to get to the next 
+      level; omitted if the maximum level was reached */
+      nextLevelRating    : Option[Int]
     }
            
     /* This object contains information about the users whose identifiers were shared 
@@ -5793,7 +5922,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -5831,6 +5961,9 @@ namespace telegramium {
           message. The relevant Stars will be withdrawn from the bot's 
           balance */
           allowPaidBroadcast      : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; only available when copying to private chats */
+          messageEffectId         : Option[String]
           /* A JSON-serialized object containing the parameters of the 
           suggested post to send; for direct messages chats only. If 
           the message is sent as a reply to another suggested post, 
@@ -5857,7 +5990,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId       : Option[Int]
           /* Identifier of the direct messages topic to which the 
           messages will be sent; required if the messages are sent to 
@@ -5985,13 +6119,13 @@ namespace telegramium {
           digits past the decimal point for each currency (2 for the 
           majority of currencies). Defaults to 0. Not supported for 
           payments in Telegram Stars. */
-          maxTipAmount              : Option[Int]
+          maxTipAmount              : Option[Long]
           /* A JSON-serialized array of suggested amounts of tips in the 
           smallest units of the currency (integer, not float/double). 
           At most 4 suggested tip amounts can be specified. The 
           suggested tip amounts must be positive, passed in a strictly 
           increased order and must not exceed max_tip_amount. */
-          suggestedTipAmounts       : List[Int]
+          suggestedTipAmounts       : List[Long]
           /* JSON-serialized data about the invoice, which will be 
           shared with the payment provider. A detailed description of 
           required fields should be provided by the payment provider. */
@@ -6117,9 +6251,9 @@ namespace telegramium {
         } => Method[Boolean]
       
         /* Use this method to delete a forum topic along with all its messages in a forum 
-          supergroup chat. The bot must be an administrator in the chat for this to work 
-          and must have the can_delete_messages administrator rights. Returns True on 
-          success.  */
+          supergroup chat or a private chat with a user. In the case of a supergroup chat 
+          the bot must be an administrator in the chat for this to work and must have the 
+          can_delete_messages administrator rights. Returns True on success.  */
         def deleteForumTopic {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
@@ -6244,10 +6378,11 @@ namespace telegramium {
           name       : Option[String]
         } => Method[ChatInviteLink]
       
-        /* Use this method to edit name and icon of a topic in a forum supergroup chat. 
-          The bot must be an administrator in the chat for this to work and must have the 
-          can_manage_topics administrator rights, unless it is the creator of the topic. 
-          Returns True on success.  */
+        /* Use this method to edit name and icon of a topic in a forum supergroup chat or 
+          a private chat with a user. In the case of a supergroup chat the bot must be an 
+          administrator in the chat for this to work and must have the can_manage_topics 
+          administrator rights, unless it is the creator of the topic. Returns True on 
+          success.  */
         def editForumTopic {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
@@ -6517,7 +6652,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be forwarded; required if the message is 
@@ -6535,6 +6671,9 @@ namespace telegramium {
           /* Protects the contents of the forwarded message from 
           forwarding and saving */
           protectContent          : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; only available when forwarding to private chats */
+          messageEffectId         : Option[String]
           /* A JSON-serialized object containing the parameters of the 
           suggested post to send; for direct messages chats only */
           suggestedPostParameters : Option[SuggestedPostParameters]
@@ -6552,7 +6691,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId       : Option[Int]
           /* Identifier of the direct messages topic to which the 
           messages will be forwarded; required if the messages are 
@@ -6584,31 +6724,37 @@ namespace telegramium {
           the can_view_gifts_and_stars business bot right. Returns OwnedGifts on success.  */
         def getBusinessAccountGifts {
           /* Unique identifier of the business connection */
-          businessConnectionId : String
+          businessConnectionId        : String
           /* Pass True to exclude gifts that aren't saved to the 
           account's profile page */
-          excludeUnsaved       : Option[Boolean]
+          excludeUnsaved              : Option[Boolean]
           /* Pass True to exclude gifts that are saved to the account's 
           profile page */
-          excludeSaved         : Option[Boolean]
+          excludeSaved                : Option[Boolean]
           /* Pass True to exclude gifts that can be purchased an 
           unlimited number of times */
-          excludeUnlimited     : Option[Boolean]
+          excludeUnlimited            : Option[Boolean]
           /* Pass True to exclude gifts that can be purchased a limited 
-          number of times */
-          excludeLimited       : Option[Boolean]
+          number of times and can be upgraded to unique */
+          excludeLimitedUpgradable    : Option[Boolean]
+          /* Pass True to exclude gifts that can be purchased a limited 
+          number of times and can't be upgraded to unique */
+          excludeLimitedNonUpgradable : Option[Boolean]
           /* Pass True to exclude unique gifts */
-          excludeUnique        : Option[Boolean]
+          excludeUnique               : Option[Boolean]
+          /* Pass True to exclude gifts that were assigned from the TON 
+          blockchain and can't be resold or transferred in Telegram */
+          excludeFromBlockchain       : Option[Boolean]
           /* Pass True to sort results by gift price instead of send 
           date. Sorting is applied before pagination. */
-          sortByPrice          : Option[Boolean]
+          sortByPrice                 : Option[Boolean]
           /* Offset of the first entry to return as received from the 
           previous request; use empty string to get the first chunk of 
           results */
-          offset               : Option[String]
+          offset                      : Option[String]
           /* The maximum number of gifts to be returned; 1-100. Defaults 
           to 100 */
-          limit                : Option[Int]
+          limit                       : Option[Int]
         } => Method[OwnedGifts]
       
         /* Returns the amount of Telegram Stars owned by a managed business account. 
@@ -6643,6 +6789,45 @@ namespace telegramium {
           &#064;channelusername) */
           chatId : ChatId
         } => Method[List[ChatMember]]
+      
+        /* Returns the gifts owned by a chat. Returns OwnedGifts on success.  */
+        def getChatGifts {
+          /* Unique identifier for the target chat or username of the 
+          target channel (in the format &#064;channelusername) */
+          chatId                      : ChatId
+          /* Pass True to exclude gifts that aren't saved to the chat's 
+          profile page. Always True, unless the bot has the 
+          can_post_messages administrator right in the channel. */
+          excludeUnsaved              : Option[Boolean]
+          /* Pass True to exclude gifts that are saved to the chat's 
+          profile page. Always False, unless the bot has the 
+          can_post_messages administrator right in the channel. */
+          excludeSaved                : Option[Boolean]
+          /* Pass True to exclude gifts that can be purchased an 
+          unlimited number of times */
+          excludeUnlimited            : Option[Boolean]
+          /* Pass True to exclude gifts that can be purchased a limited 
+          number of times and can be upgraded to unique */
+          excludeLimitedUpgradable    : Option[Boolean]
+          /* Pass True to exclude gifts that can be purchased a limited 
+          number of times and can't be upgraded to unique */
+          excludeLimitedNonUpgradable : Option[Boolean]
+          /* Pass True to exclude gifts that were assigned from the TON 
+          blockchain and can't be resold or transferred in Telegram */
+          excludeFromBlockchain       : Option[Boolean]
+          /* Pass True to exclude unique gifts */
+          excludeUnique               : Option[Boolean]
+          /* Pass True to sort results by gift price instead of send 
+          date. Sorting is applied before pagination. */
+          sortByPrice                 : Option[Boolean]
+          /* Offset of the first entry to return as received from the 
+          previous request; use an empty string to get the first chunk 
+          of results */
+          offset                      : Option[String]
+          /* The maximum number of gifts to be returned; 1-100. Defaults 
+          to 100 */
+          limit                       : Option[Int]
+        } => Method[OwnedGifts]
       
         /* Use this method to get information about a member of a chat. The method is only 
           guaranteed to work for other users if the bot is an administrator in the chat. 
@@ -6830,6 +7015,36 @@ namespace telegramium {
           userId : Long
         } => Method[UserChatBoosts]
       
+        /* Returns the gifts owned and hosted by a user. Returns OwnedGifts on success.  */
+        def getUserGifts {
+          /* Unique identifier of the user */
+          userId                      : Long
+          /* Pass True to exclude gifts that can be purchased an 
+          unlimited number of times */
+          excludeUnlimited            : Option[Boolean]
+          /* Pass True to exclude gifts that can be purchased a limited 
+          number of times and can be upgraded to unique */
+          excludeLimitedUpgradable    : Option[Boolean]
+          /* Pass True to exclude gifts that can be purchased a limited 
+          number of times and can't be upgraded to unique */
+          excludeLimitedNonUpgradable : Option[Boolean]
+          /* Pass True to exclude gifts that were assigned from the TON 
+          blockchain and can't be resold or transferred in Telegram */
+          excludeFromBlockchain       : Option[Boolean]
+          /* Pass True to exclude unique gifts */
+          excludeUnique               : Option[Boolean]
+          /* Pass True to sort results by gift price instead of send 
+          date. Sorting is applied before pagination. */
+          sortByPrice                 : Option[Boolean]
+          /* Offset of the first entry to return as received from the 
+          previous request; use an empty string to get the first chunk 
+          of results */
+          offset                      : Option[String]
+          /* The maximum number of gifts to be returned; 1-100. Defaults 
+          to 100 */
+          limit                       : Option[Int]
+        } => Method[OwnedGifts]
+      
         /* Use this method to get a list of profile pictures for a user. Returns a 
           UserProfilePhotos object.  */
         def getUserProfilePhotos {
@@ -6984,7 +7199,9 @@ namespace telegramium {
           /* Pass True if the administrator can manage video chats */
           canManageVideoChats     : Option[Boolean]
           /* Pass True if the administrator can restrict, ban or unban 
-          chat members, or access supergroup statistics */
+          chat members, or access supergroup statistics. For backward 
+          compatibility, defaults to True for promotions of channel 
+          administrators */
           canRestrictMembers      : Option[Boolean]
           /* Pass True if the administrator can add new administrators 
           with a subset of their own privileges or demote 
@@ -7114,6 +7331,30 @@ namespace telegramium {
           sticker    : InputSticker
         } => Method[Boolean]
       
+        /* Reposts a story on behalf of a business account from another business account. 
+          Both business accounts must be managed by the same bot, and the story on the 
+          source account must have been posted (or reposted) by the bot. Requires the 
+          can_manage_stories business bot right for both business accounts. Returns Story 
+          on success.  */
+        def repostStory {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Unique identifier of the chat which posted the story that 
+          should be reposted */
+          fromChatId           : Int
+          /* Unique identifier of the story that should be reposted */
+          fromStoryId          : Int
+          /* Period after which the story is moved to the archive, in 
+          seconds; must be one of 6 * 3600, 12 * 3600, 86400, or 2 * 
+          86400 */
+          activePeriod         : Int
+          /* Pass True to keep the story accessible after it expires */
+          postToChatPage       : Option[Boolean]
+          /* Pass True if the content of the story must be protected 
+          from forwarding and screenshotting */
+          protectContent       : Option[Boolean]
+        } => Method[Story]
+      
         /* Use this method to restrict a user in a supergroup. The bot must be an 
           administrator in the supergroup for this to work and must have the appropriate 
           administrator rights. Pass True for all permissions to lift restrictions from a 
@@ -7185,7 +7426,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -7269,7 +7511,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -7346,8 +7589,9 @@ namespace telegramium {
           Channel chats and channel direct messages chats aren't 
           supported. */
           chatId               : ChatId
-          /* Unique identifier for the target message thread; for 
-          supergroups only */
+          /* Unique identifier for the target message thread or topic of 
+          a forum; for supergroups and private chats of bots with 
+          forum topic mode enabled only */
           messageThreadId      : Option[Int]
           /* Type of action to broadcast. Choose one, depending on what 
           the user is about to receive: typing for text messages, 
@@ -7395,7 +7639,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -7447,7 +7692,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -7496,7 +7742,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                      : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId             : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -7565,7 +7812,8 @@ namespace telegramium {
           to channel direct messages chats and channel chats. */
           chatId               : Long
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId      : Option[Int]
           /* Short name of the game, serves as the unique identifier for 
           the game. Set up your games via &#064;BotFather. */
@@ -7602,7 +7850,8 @@ namespace telegramium {
           the chat or username of the channel (in the format 
           &#064;channelusername) that will receive the gift. */
           chatId        : Option[ChatId]
-          /* Identifier of the gift */
+          /* Identifier of the gift; limited gifts can't be sent to 
+          channel chats */
           giftId        : String
           /* Pass True to pay for the gift upgrade from the bot's 
           balance, thereby making the upgrade free for the receiver */
@@ -7629,7 +7878,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                    : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId           : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -7660,13 +7910,13 @@ namespace telegramium {
           digits past the decimal point for each currency (2 for the 
           majority of currencies). Defaults to 0. Not supported for 
           payments in Telegram Stars. */
-          maxTipAmount              : Option[Int]
+          maxTipAmount              : Option[Long]
           /* A JSON-serialized array of suggested amounts of tips in the 
           smallest units of the currency (integer, not float/double). 
           At most 4 suggested tip amounts can be specified. The 
           suggested tip amounts must be positive, passed in a strictly 
           increased order and must not exceed max_tip_amount. */
-          suggestedTipAmounts       : List[Int]
+          suggestedTipAmounts       : List[Long]
           /* Unique deep-linking parameter. If left empty, forwarded 
           copies of the sent message will have a Pay button, allowing 
           multiple users to pay directly from the forwarded message, 
@@ -7747,7 +7997,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -7811,7 +8062,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId       : Option[Int]
           /* Identifier of the direct messages topic to which the 
           messages will be sent; required if the messages are sent to 
@@ -7848,7 +8100,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -7892,6 +8145,28 @@ namespace telegramium {
           replyMarkup             : Option[KeyboardMarkup]
         } => Method[Message]
       
+        /* Use this method to stream a partial message to a user while the message is 
+          being generated; supported only for bots with forum topic mode enabled. Returns 
+          True on success.  */
+        def sendMessageDraft {
+          /* Unique identifier for the target private chat */
+          chatId          : Long
+          /* Unique identifier for the target message thread */
+          messageThreadId : Option[Int]
+          /* Unique identifier of the message draft; must be non-zero. 
+          Changes of drafts with the same identifier are animated */
+          draftId         : Int
+          /* Text of the message to be sent, 1-4096 characters after 
+          entities parsing */
+          text            : String
+          /* Mode for parsing entities in the message text. See 
+          formatting options for more details. */
+          parseMode       : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          message text, which can be specified instead of parse_mode */
+          entities        : List[MessageEntity]
+        } => Method[Boolean]
+      
         /* Use this method to send paid media. On success, the sent Message is returned.  */
         def sendPaidMedia {
           /* Unique identifier of the business connection on behalf of 
@@ -7904,14 +8179,15 @@ namespace telegramium {
           they will be credited to the bot's balance. */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
           direct messages chat */
           directMessagesTopicId   : Option[Long]
           /* The number of Telegram Stars that must be paid to buy 
-          access to the media; 1-10000 */
+          access to the media; 1-25000 */
           starCount               : Int
           /* A JSON-serialized array describing the media to be sent; up 
           to 10 items */
@@ -7964,7 +8240,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -8031,7 +8308,8 @@ namespace telegramium {
           can't be sent to channel direct messages chats. */
           chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId       : Option[Int]
           /* Poll question, 1-300 characters */
           question              : String
@@ -8109,7 +8387,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -8162,7 +8441,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -8225,7 +8505,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -8316,7 +8597,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -8382,7 +8664,8 @@ namespace telegramium {
           target channel (in the format &#064;channelusername) */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
-          the forum; for forum supergroups only */
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
           messageThreadId         : Option[Int]
           /* Identifier of the direct messages topic to which the 
           message will be sent; required if the message is sent to a 
@@ -8980,9 +9263,11 @@ namespace telegramium {
           chatId : ChatId
         } => Method[Boolean]
       
-        /* Use this method to clear the list of pinned messages in a forum topic. The bot 
-          must be an administrator in the chat for this to work and must have the 
-          can_pin_messages administrator right in the supergroup. Returns True on success.  */
+        /* Use this method to clear the list of pinned messages in a forum topic in a 
+          forum supergroup chat or a private chat with a user. In the case of a supergroup 
+          chat the bot must be an administrator in the chat for this to work and must have 
+          the can_pin_messages administrator right in the supergroup. Returns True on 
+          success.  */
         def unpinAllForumTopicMessages {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */

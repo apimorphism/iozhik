@@ -330,7 +330,7 @@ object TgBotApiScrapper extends IOApp {
           name == "chat_id" ||
           name == "sender_chat_id" ||
           name == "new_owner_chat_id" ||
-          name == "amount" ||
+          name == "amount" || name.toLowerCase().contains("amount") ||
           name == "send_date" ||
           name == "direct_messages_topic_id"
         val isFile = desc.links.exists(_.href == "#sending-files")
