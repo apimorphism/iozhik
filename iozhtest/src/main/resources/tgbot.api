@@ -1786,6 +1786,10 @@ namespace telegramium {
         /* Optional. A member was removed from the group, information 
         about them (this member may be the bot itself) */
         leftChatMember                : Option[User]
+        /* Optional. Service message: chat owner has left */
+        chatOwnerLeft                 : Option[ChatOwnerLeft]
+        /* Optional. Service message: chat owner has changed */
+        chatOwnerChanged              : Option[ChatOwnerChanged]
         /* Optional. A chat title was changed to this value */
         newChatTitle                  : Option[String]
         /* Optional. A chat photo was change to this value */
@@ -3174,6 +3178,9 @@ namespace telegramium {
       location                           : Option[ChatLocation]
       /* Optional. For private chats, the rating of the user if any */
       rating                             : Option[UserRating]
+      /* Optional. For private chats, the first audio added to the 
+      profile of the user */
+      firstProfileAudio                  : Option[Audio]
       /* Optional. The color scheme based on a unique gift that must 
       be used for the chat's name, message replies and link 
       previews */
@@ -3276,6 +3283,19 @@ namespace telegramium {
       /* Optional. True, if the user joined the chat via a chat 
       folder invite link */
       viaChatFolderInviteLink : Option[Boolean]
+    }
+           
+    /* Describes a service message about an ownership change in the chat.  */
+    ChatOwnerChanged {
+      /* The new owner of the chat */
+      newOwner : User
+    }
+           
+    /* Describes a service message about the chat owner leaving the chat.  */
+    ChatOwnerLeft {
+      /* Optional. The user which will be the new owner of the chat 
+      if the previous owner does not return to the chat */
+      newOwner : Option[User]
     }
            
     /* Describes actions that a non-administrator user is allowed to take in a chat.  */
@@ -3988,10 +4008,22 @@ namespace telegramium {
     }
            
     /* This object represents one button of an inline keyboard. Exactly one of the 
-      optional fields must be used to specify type of the button.  */
+      fields other than text, icon_custom_emoji_id, and style must be used to specify 
+      the type of the button.  */
     InlineKeyboardButton {
       /* Label text on the button */
       text                         : String
+      /* Optional. Unique identifier of the custom emoji shown 
+      before the text of the button. Can only be used by bots that 
+      purchased additional usernames on Fragment or in the 
+      messages directly sent by the bot to private, group and 
+      supergroup chats if the owner of the bot has a Telegram 
+      Premium subscription. */
+      iconCustomEmojiId            : Option[String]
+      /* Optional. Style of the button. Must be one of “danger” 
+      (red), “success” (green) or “primary” (blue). If omitted, 
+      then an app-specific style is used. */
+      style                        : Option[String]
       /* Optional. HTTP or tg:// URL to be opened when the button is 
       pressed. Links tg://user?id=<user_id> can be used to mention 
       a user by their identifier without using a username, if this 
@@ -4209,39 +4241,51 @@ namespace telegramium {
     }
            
     /* This object represents one button of the reply keyboard. At most one of the 
-      optional fields must be used to specify type of the button. For simple text 
-      buttons, String can be used instead of this object to specify the button text.  */
+      fields other than text, icon_custom_emoji_id, and style must be used to specify 
+      the type of the button. For simple text buttons, String can be used instead of 
+      this object to specify the button text.  */
     KeyboardButton {
-      /* Text of the button. If none of the optional fields are 
-      used, it will be sent as a message when the button is 
-      pressed */
-      text            : String
+      /* Text of the button. If none of the fields other than text, 
+      icon_custom_emoji_id, and style are used, it will be sent as 
+      a message when the button is pressed */
+      text              : String
+      /* Optional. Unique identifier of the custom emoji shown 
+      before the text of the button. Can only be used by bots that 
+      purchased additional usernames on Fragment or in the 
+      messages directly sent by the bot to private, group and 
+      supergroup chats if the owner of the bot has a Telegram 
+      Premium subscription. */
+      iconCustomEmojiId : Option[String]
+      /* Optional. Style of the button. Must be one of “danger” 
+      (red), “success” (green) or “primary” (blue). If omitted, 
+      then an app-specific style is used. */
+      style             : Option[String]
       /* Optional. If specified, pressing the button will open a 
       list of suitable users. Identifiers of selected users will 
       be sent to the bot in a “users_shared” service message. 
       Available in private chats only. */
-      requestUsers    : Option[KeyboardButtonRequestUsers]
+      requestUsers      : Option[KeyboardButtonRequestUsers]
       /* Optional. If specified, pressing the button will open a 
       list of suitable chats. Tapping on a chat will send its 
       identifier to the bot in a “chat_shared” service message. 
       Available in private chats only. */
-      requestChat     : Option[KeyboardButtonRequestChat]
+      requestChat       : Option[KeyboardButtonRequestChat]
       /* Optional. If True, the user's phone number will be sent as 
       a contact when the button is pressed. Available in private 
       chats only. */
-      requestContact  : Option[Boolean]
+      requestContact    : Option[Boolean]
       /* Optional. If True, the user's current location will be sent 
       when the button is pressed. Available in private chats only. */
-      requestLocation : Option[Boolean]
+      requestLocation   : Option[Boolean]
       /* Optional. If specified, the user will be asked to create a 
       poll and send it to the bot when the button is pressed. 
       Available in private chats only. */
-      requestPoll     : Option[KeyboardButtonPollType]
+      requestPoll       : Option[KeyboardButtonPollType]
       /* Optional. If specified, the described Web App will be 
       launched when the button is pressed. The Web App will be 
       able to send a “web_app_data” service message. Available in 
       private chats only. */
-      webApp          : Option[WebAppInfo]
+      webApp            : Option[WebAppInfo]
     }
            
     /* This object represents type of a poll, which is allowed to be created and sent 
@@ -5198,6 +5242,9 @@ namespace telegramium {
       /* Optional. True, if the original regular gift was 
       exclusively purchaseable by Telegram Premium subscribers */
       isPremium        : Option[Boolean]
+      /* Optional. True, if the gift was used to craft another gift 
+      and isn't available anymore */
+      isBurned         : Option[Boolean]
       /* Optional. True, if the gift is assigned from the TON 
       blockchain and can't be resold or transferred in Telegram */
       isFromBlockchain : Option[Boolean]
@@ -5292,8 +5339,12 @@ namespace telegramium {
       /* The sticker that represents the unique gift */
       sticker        : Sticker
       /* The number of unique gifts that receive this model for 
-      every 1000 gifts upgraded */
+      every 1000 gift upgrades. Always 0 for crafted gifts. */
       rarityPerMille : Int
+      /* Optional. Rarity of the model if it is a crafted model. 
+      Currently, can be “uncommon”, “rare”, “epic”, or 
+      “legendary”. */
+      rarity         : Option[String]
     }
            
     /* This object describes the symbol shown on the pattern of a unique gift.  */
@@ -5414,47 +5465,58 @@ namespace telegramium {
       it. But it has at most 52 significant bits, so a 64-bit 
       integer or double-precision float type are safe for storing 
       this identifier. */
-      id                      : Long
+      id                        : Long
       /* True, if this user is a bot */
-      isBot                   : Boolean
+      isBot                     : Boolean
       /* User's or bot's first name */
-      firstName               : String
+      firstName                 : String
       /* Optional. User's or bot's last name */
-      lastName                : Option[String]
+      lastName                  : Option[String]
       /* Optional. User's or bot's username */
-      username                : Option[String]
+      username                  : Option[String]
       /* Optional. IETF language tag of the user's language */
-      languageCode            : Option[String]
+      languageCode              : Option[String]
       /* Optional. True, if this user is a Telegram Premium user */
-      isPremium               : Option[Boolean]
+      isPremium                 : Option[Boolean]
       /* Optional. True, if this user added the bot to the 
       attachment menu */
-      addedToAttachmentMenu   : Option[Boolean]
+      addedToAttachmentMenu     : Option[Boolean]
       /* Optional. True, if the bot can be invited to groups. 
       Returned only in getMe. */
-      canJoinGroups           : Option[Boolean]
+      canJoinGroups             : Option[Boolean]
       /* Optional. True, if privacy mode is disabled for the bot. 
       Returned only in getMe. */
-      canReadAllGroupMessages : Option[Boolean]
+      canReadAllGroupMessages   : Option[Boolean]
       /* Optional. True, if the bot supports inline queries. 
       Returned only in getMe. */
-      supportsInlineQueries   : Option[Boolean]
+      supportsInlineQueries     : Option[Boolean]
       /* Optional. True, if the bot can be connected to a Telegram 
       Business account to receive its messages. Returned only in 
       getMe. */
-      canConnectToBusiness    : Option[Boolean]
+      canConnectToBusiness      : Option[Boolean]
       /* Optional. True, if the bot has a main Web App. Returned 
       only in getMe. */
-      hasMainWebApp           : Option[Boolean]
+      hasMainWebApp             : Option[Boolean]
       /* Optional. True, if the bot has forum topic mode enabled in 
       private chats. Returned only in getMe. */
-      hasTopicsEnabled        : Option[Boolean]
+      hasTopicsEnabled          : Option[Boolean]
+      /* Optional. True, if the bot allows users to create and 
+      delete topics in private chats. Returned only in getMe. */
+      allowsUsersToCreateTopics : Option[Boolean]
     }
            
     /* This object represents a list of boosts added to a chat by a user.  */
     UserChatBoosts {
       /* The list of boosts added to the chat by the user */
       boosts : List[ChatBoost]
+    }
+           
+    /* This object represents the audios displayed on a user's profile.  */
+    UserProfileAudios {
+      /* Total number of profile audios for the target user */
+      totalCount : Int
+      /* Requested profile audios */
+      audios     : List[Audio]
     }
            
     /* This object represent a user's profile pictures.  */
@@ -5536,6 +5598,8 @@ namespace telegramium {
       /* Optional. Timestamp in seconds from which the video will 
       play in the message */
       startTimestamp : Option[Int]
+      /* Optional. List of available qualities of the video */
+      qualities      : List[VideoQuality]
       /* Optional. Original filename as defined by the sender */
       fileName       : Option[String]
       /* Optional. MIME type of the file as defined by the sender */
@@ -5593,6 +5657,30 @@ namespace telegramium {
       /* Optional. Video thumbnail */
       thumbnail    : Option[PhotoSize]
       /* Optional. File size in bytes */
+      fileSize     : Option[Long]
+    }
+           
+    /* This object represents a video file of a specific quality.  */
+    VideoQuality {
+      /* Identifier for this file, which can be used to download or 
+      reuse the file */
+      fileId       : String
+      /* Unique identifier for this file, which is supposed to be 
+      the same over time and for different bots. Can't be used to 
+      download or reuse the file. */
+      fileUniqueId : String
+      /* Video width */
+      width        : Int
+      /* Video height */
+      height       : Int
+      /* Codec that was used to encode the video, for example, 
+      “h264”, “h265”, or “av01” */
+      codec        : String
+      /* Optional. File size in bytes. It can be bigger than 
+      2&#94;31 and some programming languages may have 
+      difficulty/silent defects in interpreting it. But it has at 
+      most 52 significant bits, so a signed 64-bit integer or 
+      double-precision float type are safe for storing this value. */
       fileSize     : Option[Long]
     }
            
@@ -6057,10 +6145,10 @@ namespace telegramium {
           subscriptionPrice  : Int
         } => Method[ChatInviteLink]
       
-        /* Use this method to create a topic in a forum supergroup chat. The bot must be 
-          an administrator in the chat for this to work and must have the 
-          can_manage_topics administrator rights. Returns information about the created 
-          topic as a ForumTopic object.  */
+        /* Use this method to create a topic in a forum supergroup chat or a private chat 
+          with a user. In the case of a supergroup chat the bot must be an administrator 
+          in the chat for this to work and must have the can_manage_topics administrator 
+          right. Returns information about the created topic as a ForumTopic object.  */
         def createForumTopic {
           /* Unique identifier for the target chat or username of the 
           target supergroup (in the format &#064;supergroupusername) */
@@ -7045,6 +7133,19 @@ namespace telegramium {
           limit                       : Option[Int]
         } => Method[OwnedGifts]
       
+        /* Use this method to get a list of profile audios for a user. Returns a 
+          UserProfileAudios object.  */
+        def getUserProfileAudios {
+          /* Unique identifier of the target user */
+          userId : Long
+          /* Sequential number of the first audio to be returned. By 
+          default, all audios are returned. */
+          offset : Option[Int]
+          /* Limits the number of audios to be retrieved. Values between 
+          1-100 are accepted. Defaults to 100. */
+          limit  : Option[Int]
+        } => Method[UserProfileAudios]
+      
         /* Use this method to get a list of profile pictures for a user. Returns a 
           UserProfilePhotos object.  */
         def getUserProfilePhotos {
@@ -7283,6 +7384,12 @@ namespace telegramium {
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername) */
           chatId : ChatId
+        } => Method[Boolean]
+      
+        /* Removes the profile photo of the bot. Requires no parameters. Returns True on 
+          success.  */
+        def removeMyProfilePhoto {
+      
         } => Method[Boolean]
       
         /* Removes verification from a user who is currently verified on behalf of the 
@@ -8976,6 +9083,12 @@ namespace telegramium {
           will be shown to all users for whose language there is no 
           dedicated name. */
           languageCode : Option[String]
+        } => Method[Boolean]
+      
+        /* Changes the profile photo of the bot. Returns True on success.  */
+        def setMyProfilePhoto {
+          /* The new profile photo to set */
+          photo : InputProfilePhoto
         } => Method[Boolean]
       
         /* Use this method to change the bot's short description, which is shown on the 
