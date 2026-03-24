@@ -408,6 +408,10 @@ namespace telegramium {
         messages of the channel and decline suggested posts; for 
         channels only */
         canManageDirectMessages : Option[Boolean]
+        /* Optional. True, if the administrator can edit the tags of 
+        regular members; for groups and supergroups only. If omitted 
+        defaults to the value of can_pin_messages. */
+        canManageTags           : Option[Boolean]
         /* Optional. Custom title for this user */
         customTitle             : Option[String]
       }
@@ -415,6 +419,8 @@ namespace telegramium {
       /* Represents a chat member that has no additional privileges or restrictions.  */
       ChatMemberMember {
         status : "member:3"
+        /* Optional. Tag of the member */
+        tag       : Option[String]
         /* Information about the user */
         user      : User
         /* Optional. Date when the user's subscription will expire; 
@@ -437,6 +443,8 @@ namespace telegramium {
         Supergroups only.  */
       ChatMemberRestricted {
         status : "restricted:5"
+        /* Optional. Tag of the member */
+        tag                   : Option[String]
         /* Information about the user */
         user                  : User
         /* True, if the user is a member of the chat at the moment of 
@@ -466,6 +474,8 @@ namespace telegramium {
         /* True, if the user is allowed to add web page previews to 
         their messages */
         canAddWebPagePreviews : Boolean
+        /* True, if the user is allowed to edit their own tag */
+        canEditTag            : Boolean
         /* True, if the user is allowed to change the chat title, 
         photo and other settings */
         canChangeInfo         : Boolean
@@ -1641,6 +1651,9 @@ namespace telegramium {
         of the business account. Available only for outgoing 
         messages sent on behalf of the connected business account. */
         senderBusinessBot             : Option[User]
+        /* Optional. Tag or custom title of the sender of the message; 
+        for supergroups only */
+        senderTag                     : Option[String]
         /* Date the message was sent in Unix time. It is always a 
         positive number, representing a valid date. */
         date                          : Long
@@ -1691,8 +1704,8 @@ namespace telegramium {
         such posts must not be deleted for 24 hours to receive the 
         payment and can't be edited. */
         isPaidPost                    : Option[Boolean]
-        /* Optional. The unique identifier of a media message group 
-        this message belongs to */
+        /* Optional. The unique identifier inside this chat of a media 
+        message group this message belongs to */
         mediaGroupId                  : Option[String]
         /* Optional. Signature of the post author for messages in 
         channels, or the custom title of an anonymous group 
@@ -2052,43 +2065,53 @@ namespace telegramium {
         type : "italic:11"
       }
              
+      /* date_time  */
+      DateTimeMessageEntity {
+        type : "date_time:12"
+        /* the Unix time associated with the entity */
+        unixTime       : Long
+        /* the string that defines the formatting of the date and 
+        time. See date-time entity formatting for more details. */
+        dateTimeFormat : String
+      }
+             
       /* strikethrough  */
       StrikethroughMessageEntity {
-        type : "strikethrough:12"
+        type : "strikethrough:13"
       }
              
       /* underline  */
       UnderlineMessageEntity {
-        type : "underline:13"
+        type : "underline:14"
       }
              
       /* hashtag  */
       HashtagMessageEntity {
-        type : "hashtag:14"
+        type : "hashtag:15"
       }
              
       /* text_mention  */
       TextMentionMessageEntity {
-        type : "text_mention:15"
+        type : "text_mention:16"
         /* the mentioned user */
         user : User
       }
              
       /* url  */
       UrlMessageEntity {
-        type : "url:16"
+        type : "url:17"
       }
              
       /* text_link  */
       TextLinkMessageEntity {
-        type : "text_link:17"
+        type : "text_link:18"
         /* URL that will be opened after user taps on the text */
         url  : String
       }
              
       /* phone_number  */
       PhoneNumberMessageEntity {
-        type : "phone_number:18"
+        type : "phone_number:19"
       }
              
     }
@@ -2974,6 +2997,10 @@ namespace telegramium {
       messages of the channel and decline suggested posts; for 
       channels only */
       canManageDirectMessages : Option[Boolean]
+      /* Optional. True, if the administrator can edit the tags of 
+      regular members; for groups and supergroups only. If omitted 
+      defaults to the value of can_pin_messages. */
+      canManageTags           : Option[Boolean]
     }
            
     /* This object represents a chat background.  */
@@ -3325,6 +3352,9 @@ namespace telegramium {
       /* Optional. True, if the user is allowed to add web page 
       previews to their messages */
       canAddWebPagePreviews : Option[Boolean]
+      /* Optional. True, if the user is allowed to edit their own 
+      tag */
+      canEditTag            : Option[Boolean]
       /* Optional. True, if the user is allowed to change the chat 
       title, photo and other settings. Ignored in public 
       supergroups */
@@ -7342,6 +7372,9 @@ namespace telegramium {
           within the channel and decline suggested posts; for channels 
           only */
           canManageDirectMessages : Option[Boolean]
+          /* Pass True if the administrator can edit the tags of regular 
+          members; for groups and supergroups only */
+          canManageTags           : Option[Boolean]
         } => Method[Boolean]
       
         /* Marks incoming message as read on behalf of a business account. Requires the 
@@ -8253,8 +8286,7 @@ namespace telegramium {
         } => Method[Message]
       
         /* Use this method to stream a partial message to a user while the message is 
-          being generated; supported only for bots with forum topic mode enabled. Returns 
-          True on success.  */
+          being generated. Returns True on success.  */
         def sendMessageDraft {
           /* Unique identifier for the target private chat */
           chatId          : Long
@@ -8902,6 +8934,20 @@ namespace telegramium {
           chatId      : ChatId
           /* New chat description, 0-255 characters */
           description : Option[String]
+        } => Method[Boolean]
+      
+        /* Use this method to set a tag for a regular member in a group or a supergroup. 
+          The bot must be an administrator in the chat for this to work and must have the 
+          can_manage_tags administrator right. Returns True on success.  */
+        def setChatMemberTag {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup (in the format &#064;supergroupusername) */
+          chatId : ChatId
+          /* Unique identifier of the target user */
+          userId : Long
+          /* New tag for the member; 0-16 characters, emoji are not 
+          allowed */
+          tag    : Option[String]
         } => Method[Boolean]
       
         /* Use this method to change the bot's menu button in a private chat, or the 
