@@ -1690,6 +1690,9 @@ namespace telegramium {
         /* Optional. Identifier of the specific checklist task that is 
         being replied to */
         replyToChecklistTaskId        : Option[Int]
+        /* Optional. Persistent identifier of the specific poll option 
+        that is being replied to */
+        replyToPollOptionId           : Option[String]
         /* Optional. Bot through which the message was sent */
         viaBot                        : Option[User]
         /* Optional. Date the message was last edited in Unix time */
@@ -1918,9 +1921,18 @@ namespace telegramium {
         /* Optional. Service message: a giveaway without public 
         winners was completed */
         giveawayCompleted             : Option[GiveawayCompleted]
+        /* Optional. Service message: user created a bot that will be 
+        managed by the current bot */
+        managedBotCreated             : Option[ManagedBotCreated]
         /* Optional. Service message: the price for paid messages has 
         changed in the chat */
         paidMessagePriceChanged       : Option[PaidMessagePriceChanged]
+        /* Optional. Service message: answer option was added to a 
+        poll */
+        pollOptionAdded               : Option[PollOptionAdded]
+        /* Optional. Service message: answer option was deleted from a 
+        poll */
+        pollOptionDeleted             : Option[PollOptionDeleted]
         /* Optional. Service message: a suggested post was approved */
         suggestedPostApproved         : Option[SuggestedPostApproved]
         /* Optional. Service message: approval of a suggested post has 
@@ -4174,7 +4186,7 @@ namespace telegramium {
       /* Optional. List of special entities that appear in the 
       title, which can be specified instead of parse_mode. 
       Currently, only bold, italic, underline, strikethrough, 
-      spoiler, and custom_emoji entities are allowed. */
+      spoiler, custom_emoji, and date_time entities are allowed. */
       titleEntities            : List[MessageEntity]
       /* List of 1-30 tasks in the checklist */
       tasks                    : List[InputChecklistTask]
@@ -4199,8 +4211,8 @@ namespace telegramium {
       parseMode    : Option[ParseMode]
       /* Optional. List of special entities that appear in the text, 
       which can be specified instead of parse_mode. Currently, 
-      only bold, italic, underline, strikethrough, spoiler, and 
-      custom_emoji entities are allowed. */
+      only bold, italic, underline, strikethrough, spoiler, 
+      custom_emoji, and date_time entities are allowed. */
       textEntities : List[MessageEntity]
     }
            
@@ -4300,6 +4312,12 @@ namespace telegramium {
       identifier to the bot in a “chat_shared” service message. 
       Available in private chats only. */
       requestChat       : Option[KeyboardButtonRequestChat]
+      /* Optional. If specified, pressing the button will ask the 
+      user to create and share a bot that will be managed by the 
+      current bot. Available for bots that enabled management of 
+      other bots in the &#064;BotFather Mini App. Available in 
+      private chats only. */
+      requestManagedBot : Option[KeyboardButtonRequestManagedBot]
       /* Optional. If True, the user's phone number will be sent as 
       a contact when the button is pressed. Available in private 
       chats only. */
@@ -4371,6 +4389,19 @@ namespace telegramium {
       requestUsername         : Option[Boolean]
       /* Optional. Pass True to request the chat's photo */
       requestPhoto            : Option[Boolean]
+    }
+           
+    /* This object defines the parameters for the creation of a managed bot. 
+      Information about the created bot will be shared with the bot using the update 
+      managed_bot and a Message with the field managed_bot_created.  */
+    KeyboardButtonRequestManagedBot {
+      /* Signed 32-bit identifier of the request. Must be unique 
+      within the message */
+      requestId         : Int
+      /* Optional. Suggested name for the bot */
+      suggestedName     : Option[String]
+      /* Optional. Suggested username for the bot */
+      suggestedUsername : Option[String]
     }
            
     /* This object defines the criteria used to request suitable users. Information 
@@ -4497,6 +4528,24 @@ namespace telegramium {
       /* Optional. Pass True to request the permission for your bot 
       to send messages to the user. */
       requestWriteAccess : Option[Boolean]
+    }
+           
+    /* This object contains information about the bot that was created to be managed 
+      by the current bot.  */
+    ManagedBotCreated {
+      /* Information about the bot. The bot's token can be fetched 
+      using the method getManagedBotToken. */
+      bot : User
+    }
+           
+    /* This object contains information about the creation, token update, or owner 
+      update of a bot that is managed by the current bot.  */
+    ManagedBotUpdated {
+      /* User that created the bot */
+      user : User
+      /* Information about the bot. Token of the bot can be fetched 
+      using the method getManagedBotToken. */
+      bot  : User
     }
            
     /* This object describes the position on faces where a mask should be placed by 
@@ -4681,11 +4730,14 @@ namespace telegramium {
       type                  : String
       /* True, if the poll allows multiple answers */
       allowsMultipleAnswers : Boolean
-      /* Optional. 0-based identifier of the correct answer option. 
-      Available only for polls in the quiz mode, which are closed, 
-      or was sent (not forwarded) by the bot or to the private 
-      chat with the bot. */
-      correctOptionId       : Option[Int]
+      /* True, if the poll allows to change the chosen answer 
+      options */
+      allowsRevoting        : Boolean
+      /* Optional. Array of 0-based identifiers of the correct 
+      answer options. Available only for polls in quiz mode which 
+      are closed or were sent (not forwarded) by the bot or to the 
+      private chat with the bot. */
+      correctOptionIds      : List[Int]
       /* Optional. Text that is shown when a user chooses an 
       incorrect answer or taps on the lamp icon in a quiz-style 
       poll, 0-200 characters */
@@ -4699,33 +4751,86 @@ namespace telegramium {
       /* Optional. Point in time (Unix timestamp) when the poll will 
       be automatically closed */
       closeDate             : Option[Long]
+      /* Optional. Description of the poll; for polls inside the 
+      Message object only */
+      description           : Option[String]
+      /* Optional. Special entities like usernames, URLs, bot 
+      commands, etc. that appear in the description */
+      descriptionEntities   : List[MessageEntity]
     }
            
     /* This object represents an answer of a user in a non-anonymous poll.  */
     PollAnswer {
       /* Unique poll identifier */
-      pollId    : String
+      pollId              : String
       /* Optional. The chat that changed the answer to the poll, if 
       the voter is anonymous */
-      voterChat : Option[Chat]
+      voterChat           : Option[Chat]
       /* Optional. The user that changed the answer to the poll, if 
       the voter isn't anonymous */
-      user      : Option[User]
+      user                : Option[User]
       /* 0-based identifiers of chosen answer options. May be empty 
       if the vote was retracted. */
-      optionIds : List[Int]
+      optionIds           : List[Int]
+      /* Persistent identifiers of the chosen answer options. May be 
+      empty if the vote was retracted. */
+      optionPersistentIds : List[String]
     }
            
     /* This object contains information about one answer option in a poll.  */
     PollOption {
+      /* Unique identifier of the option, persistent on option 
+      addition and deletion */
+      persistentId : String
       /* Option text, 1-100 characters */
       text         : String
       /* Optional. Special entities that appear in the option text. 
       Currently, only custom emoji entities are allowed in poll 
       option texts */
       textEntities : List[MessageEntity]
-      /* Number of users that voted for this option */
+      /* Number of users who voted for this option; may be 0 if 
+      unknown */
       voterCount   : Int
+      /* Optional. User who added the option; omitted if the option 
+      wasn't added by a user after poll creation */
+      addedByUser  : Option[User]
+      /* Optional. Chat that added the option; omitted if the option 
+      wasn't added by a chat after poll creation */
+      addedByChat  : Option[Chat]
+      /* Optional. Point in time (Unix timestamp) when the option 
+      was added; omitted if the option existed in the original 
+      poll */
+      additionDate : Option[Long]
+    }
+           
+    /* Describes a service message about an option added to a poll.  */
+    PollOptionAdded {
+      /* Optional. Message containing the poll to which the option 
+      was added, if known. Note that the Message object in this 
+      field will not contain the reply_to_message field even if it 
+      itself is a reply. */
+      pollMessage        : Option[MaybeInaccessibleMessage]
+      /* Unique identifier of the added option */
+      optionPersistentId : String
+      /* Option text */
+      optionText         : String
+      /* Optional. Special entities that appear in the option_text */
+      optionTextEntities : List[MessageEntity]
+    }
+           
+    /* Describes a service message about an option deleted from a poll.  */
+    PollOptionDeleted {
+      /* Optional. Message containing the poll from which the option 
+      was deleted, if known. Note that the Message object in this 
+      field will not contain the reply_to_message field even if it 
+      itself is a reply. */
+      pollMessage        : Option[MaybeInaccessibleMessage]
+      /* Unique identifier of the deleted option */
+      optionPersistentId : String
+      /* Option text */
+      optionText         : String
+      /* Optional. Special entities that appear in the option_text */
+      optionTextEntities : List[MessageEntity]
     }
            
     /* This object contains information about an incoming pre-checkout query.  */
@@ -4759,6 +4864,12 @@ namespace telegramium {
       /* Expiration date of the prepared message, in Unix time. 
       Expired prepared messages can no longer be used */
       expirationDate : Long
+    }
+           
+    /* Describes a keyboard button to be used by a user of a Mini App.  */
+    PreparedKeyboardButton {
+      /* Unique identifier of the keyboard button */
+      id : String
     }
            
     /* This object represents the content of a service message, sent whenever a user 
@@ -4821,8 +4932,8 @@ namespace telegramium {
       0-1024 characters after entities parsing. The quote must be 
       an exact substring of the message to be replied to, 
       including bold, italic, underline, strikethrough, spoiler, 
-      and custom_emoji entities. The message will fail to send if 
-      the quote isn't found in the original message. */
+      custom_emoji, and date_time entities. The message will fail 
+      to send if the quote isn't found in the original message. */
       quote                    : Option[String]
       /* Optional. Mode for parsing entities in the quote. See 
       formatting options for more details. */
@@ -4837,6 +4948,9 @@ namespace telegramium {
       /* Optional. Identifier of the specific checklist task to be 
       replied to */
       checklistTaskId          : Option[Int]
+      /* Optional. Persistent identifier of the specific poll option 
+      to be replied to */
+      pollOptionId             : Option[String]
     }
            
     /* Describes why a request was unsuccessful.  */
@@ -5238,7 +5352,8 @@ namespace telegramium {
       text     : String
       /* Optional. Special entities that appear in the quote. 
       Currently, only bold, italic, underline, strikethrough, 
-      spoiler, and custom_emoji entities are kept in quotes. */
+      spoiler, custom_emoji, and date_time entities are kept in 
+      quotes. */
       entities : List[MessageEntity]
       /* Approximate quote position in the original message in 
       UTF-16 code units as specified by the sender */
@@ -5485,6 +5600,9 @@ namespace telegramium {
       /* Optional. A boost was removed from a chat. The bot must be 
       an administrator in the chat to receive these updates. */
       removedChatBoost        : Option[ChatBoostRemoved]
+      /* Optional. A new bot was created to be managed by the bot, 
+      or token or owner of a managed bot was changed */
+      managedBot              : Option[ManagedBotUpdated]
     }
            
     /* This object represents a Telegram user or bot.  */
@@ -5533,6 +5651,9 @@ namespace telegramium {
       /* Optional. True, if the bot allows users to create and 
       delete topics in private chats. Returned only in getMe. */
       allowsUsersToCreateTopics : Option[Boolean]
+      /* Optional. True, if other bots can be created to be 
+      controlled by the bot. Returned only in getMe. */
+      canManageBots             : Option[Boolean]
     }
            
     /* This object represents a list of boosts added to a chat by a user.  */
@@ -7019,6 +7140,14 @@ namespace telegramium {
           inlineMessageId : Option[String]
         } => Method[List[GameHighScore]]
       
+        /* Use this method to get the token of a managed bot. Returns the token as String 
+          on success.  */
+        def getManagedBotToken {
+          /* User identifier of the managed bot whose token will be 
+          returned */
+          userId : Long
+        } => Method[String]
+      
         /* A simple method for testing your bot's authentication token. Requires no 
           parameters. Returns basic information about the bot in form of a User object.  */
         def getMe {
@@ -7214,14 +7343,14 @@ namespace telegramium {
           text          : Option[String]
           /* Mode for parsing entities in the text. See formatting 
           options for more details. Entities other than “bold”, 
-          “italic”, “underline”, “strikethrough”, “spoiler”, and 
-          “custom_emoji” are ignored. */
+          “italic”, “underline”, “strikethrough”, “spoiler”, 
+          “custom_emoji”, and “date_time” are ignored. */
           textParseMode : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the gift text. It can be specified instead of 
           text_parse_mode. Entities other than “bold”, “italic”, 
-          “underline”, “strikethrough”, “spoiler”, and “custom_emoji” 
-          are ignored. */
+          “underline”, “strikethrough”, “spoiler”, “custom_emoji”, and 
+          “date_time” are ignored. */
           textEntities  : List[MessageEntity]
         } => Method[Boolean]
       
@@ -7455,6 +7584,14 @@ namespace telegramium {
           chatId : ChatId
         } => Method[Boolean]
       
+        /* Use this method to revoke the current token of a managed bot and generate a new 
+          one. Returns the new token as String on success.  */
+        def replaceManagedBotToken {
+          /* User identifier of the managed bot whose token will be 
+          replaced */
+          userId : Long
+        } => Method[String]
+      
         /* Use this method to replace an existing sticker in a sticker set with a new one. 
           The method is equivalent to calling deleteStickerFromSet, then addStickerToSet, 
           then setStickerPositionInSet. Returns True on success.  */
@@ -7554,6 +7691,18 @@ namespace telegramium {
           /* Pass True if the message can be sent to channel chats */
           allowChannelChats : Option[Boolean]
         } => Method[PreparedInlineMessage]
+      
+        /* Stores a keyboard button that can be used by a user within a Mini App. Returns 
+          a PreparedKeyboardButton object.  */
+        def savePreparedKeyboardButton {
+          /* Unique identifier of the target user that can use the 
+          button */
+          userId : Long
+          /* A JSON-serialized object describing the button to be saved. 
+          The button must be of the type request_users, request_chat, 
+          or request_managed_bot */
+          button : KeyboardButton
+        } => Method[PreparedKeyboardButton]
       
         /* Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without 
           sound). On success, the sent Message is returned. Bots can currently send 
@@ -8001,14 +8150,14 @@ namespace telegramium {
           text          : Option[String]
           /* Mode for parsing entities in the text. See formatting 
           options for more details. Entities other than “bold”, 
-          “italic”, “underline”, “strikethrough”, “spoiler”, and 
-          “custom_emoji” are ignored. */
+          “italic”, “underline”, “strikethrough”, “spoiler”, 
+          “custom_emoji”, and “date_time” are ignored. */
           textParseMode : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the gift text. It can be specified instead of 
           text_parse_mode. Entities other than “bold”, “italic”, 
-          “underline”, “strikethrough”, “spoiler”, and “custom_emoji” 
-          are ignored. */
+          “underline”, “strikethrough”, “spoiler”, “custom_emoji”, and 
+          “date_time” are ignored. */
           textEntities  : List[MessageEntity]
         } => Method[Boolean]
       
@@ -8441,79 +8590,103 @@ namespace telegramium {
         def sendPoll {
           /* Unique identifier of the business connection on behalf of 
           which the message will be sent */
-          businessConnectionId  : Option[String]
+          businessConnectionId   : Option[String]
           /* Unique identifier for the target chat or username of the 
           target channel (in the format &#064;channelusername). Polls 
           can't be sent to channel direct messages chats. */
-          chatId                : ChatId
+          chatId                 : ChatId
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
-          messageThreadId       : Option[Int]
+          messageThreadId        : Option[Int]
           /* Poll question, 1-300 characters */
-          question              : String
+          question               : String
           /* Mode for parsing entities in the question. See formatting 
           options for more details. Currently, only custom emoji 
           entities are allowed */
-          questionParseMode     : Option[String]
+          questionParseMode      : Option[String]
           /* A JSON-serialized list of special entities that appear in 
           the poll question. It can be specified instead of 
           question_parse_mode */
-          questionEntities      : List[MessageEntity]
+          questionEntities       : List[MessageEntity]
           /* A JSON-serialized list of 2-12 answer options */
-          options               : List[InputPollOption]
+          options                : List[InputPollOption]
           /* True, if the poll needs to be anonymous, defaults to True */
-          isAnonymous           : Option[Boolean]
+          isAnonymous            : Option[Boolean]
           /* Poll type, “quiz” or “regular”, defaults to “regular” */
-          type                  : Option[String]
-          /* True, if the poll allows multiple answers, ignored for 
-          polls in quiz mode, defaults to False */
-          allowsMultipleAnswers : Option[Boolean]
-          /* 0-based identifier of the correct answer option, required 
-          for polls in quiz mode */
-          correctOptionId       : Option[Int]
+          type                   : Option[String]
+          /* Pass True, if the poll allows multiple answers, defaults to 
+          False */
+          allowsMultipleAnswers  : Option[Boolean]
+          /* Pass True, if the poll allows to change chosen answer 
+          options, defaults to False for quizzes and to True for 
+          regular polls */
+          allowsRevoting         : Option[Boolean]
+          /* Pass True, if the poll options must be shown in random 
+          order */
+          shuffleOptions         : Option[Boolean]
+          /* Pass True, if answer options can be added to the poll after 
+          creation; not supported for anonymous polls and quizzes */
+          allowAddingOptions     : Option[Boolean]
+          /* Pass True, if poll results must be shown only after the 
+          poll closes */
+          hideResultsUntilCloses : Option[Boolean]
+          /* A JSON-serialized list of monotonically increasing 0-based 
+          identifiers of the correct answer options, required for 
+          polls in quiz mode */
+          correctOptionIds       : List[Int]
           /* Text that is shown when a user chooses an incorrect answer 
           or taps on the lamp icon in a quiz-style poll, 0-200 
           characters with at most 2 line feeds after entities parsing */
-          explanation           : Option[String]
+          explanation            : Option[String]
           /* Mode for parsing entities in the explanation. See 
           formatting options for more details. */
-          explanationParseMode  : Option[ParseMode]
+          explanationParseMode   : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the poll explanation. It can be specified instead of 
           explanation_parse_mode */
-          explanationEntities   : List[MessageEntity]
+          explanationEntities    : List[MessageEntity]
           /* Amount of time in seconds the poll will be active after 
-          creation, 5-600. Can't be used together with close_date. */
-          openPeriod            : Option[Int]
+          creation, 5-2628000. Can't be used together with close_date. */
+          openPeriod             : Option[Int]
           /* Point in time (Unix timestamp) when the poll will be 
           automatically closed. Must be at least 5 and no more than 
-          600 seconds in the future. Can't be used together with 
+          2628000 seconds in the future. Can't be used together with 
           open_period. */
-          closeDate             : Option[Long]
+          closeDate              : Option[Long]
           /* Pass True if the poll needs to be immediately closed. This 
           can be useful for poll preview. */
-          isClosed              : Option[Boolean]
+          isClosed               : Option[Boolean]
+          /* Description of the poll to be sent, 0-1024 characters after 
+          entities parsing */
+          description            : Option[String]
+          /* Mode for parsing entities in the poll description. See 
+          formatting options for more details. */
+          descriptionParseMode   : Option[String]
+          /* A JSON-serialized list of special entities that appear in 
+          the poll description, which can be specified instead of 
+          description_parse_mode */
+          descriptionEntities    : List[MessageEntity]
           /* Sends the message silently. Users will receive a 
           notification with no sound. */
-          disableNotification   : Option[Boolean]
+          disableNotification    : Option[Boolean]
           /* Protects the contents of the sent message from forwarding 
           and saving */
-          protectContent        : Option[Boolean]
+          protectContent         : Option[Boolean]
           /* Pass True to allow up to 1000 messages per second, ignoring 
           broadcasting limits for a fee of 0.1 Telegram Stars per 
           message. The relevant Stars will be withdrawn from the bot's 
           balance */
-          allowPaidBroadcast    : Option[Boolean]
+          allowPaidBroadcast     : Option[Boolean]
           /* Unique identifier of the message effect to be added to the 
           message; for private chats only */
-          messageEffectId       : Option[String]
+          messageEffectId        : Option[String]
           /* Description of the message to reply to */
-          replyParameters       : Option[ReplyParameters]
+          replyParameters        : Option[ReplyParameters]
           /* Additional interface options. A JSON-serialized object for 
           an inline keyboard, custom reply keyboard, instructions to 
           remove a reply keyboard or to force a reply from the user */
-          replyMarkup           : Option[KeyboardMarkup]
+          replyMarkup            : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Use this method to send static .WEBP, animated .TGS, or video .WEBM stickers. 
