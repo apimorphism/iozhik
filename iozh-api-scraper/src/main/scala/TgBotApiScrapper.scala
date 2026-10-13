@@ -374,6 +374,7 @@ object TgBotApiScrapper extends IOApp {
           descText.contains("size in bytes") ||
           descText.contains("Unix time") ||
           name == "user_id" ||
+          name == "receiver_user_id" ||
           name == "chat_id" ||
           name == "sender_chat_id" ||
           name == "new_owner_chat_id" ||
@@ -401,6 +402,7 @@ object TgBotApiScrapper extends IOApp {
             .replace("InputPollOptionMedia", "InputMedia")
             .replace("InputPollMedia", "InputMedia")
             .replace("InputMediaAnimation or InputMediaAudio or InputMediaPhoto or InputMediaVideo or InputMediaVoiceNote", "InputMedia")
+            .replace("InputMediaAnimation or InputMediaAudio or InputMediaDocument or InputMediaPhoto or InputMediaVideo or InputMediaVoiceNote", "InputMedia")
         }
       }
 
@@ -419,6 +421,8 @@ object TgBotApiScrapper extends IOApp {
           case x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: Nil if isH4(x1) && isP(x2) &&
             isDiv(x3) && isP(x4) && isBQ(x5) && isTable(x6) =>
             Item(name = x1, desc = List(x2), table = x6)
+          case x1 :: x2 :: x3 :: x4 :: x5 :: _ if isH4(x1) && isP(x2) && isDiv(x3) && isBQ(x4) && isTable(x5) =>
+            Item(name = x1, desc = List(x2), table = x5)
           case x1 :: x2 :: x3 :: x4 :: x5 :: _ if isH4(x1) && isP(x2) && isP(x3) && isP(x4) && isTable(x5) =>
             Item(name = x1, desc = List(x2, x3, x4), table = x5)
           case x1 :: x2 :: x3 :: x4 :: _ if isH4(x1) && isP(x2) && isP(x3) && isTable(x4) =>
