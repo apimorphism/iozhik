@@ -4,7 +4,7 @@ import java.util.StringTokenizer
 import net.ruippeixotog.scalascraper.dsl.DSL._
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
-import net.ruippeixotog.scalascraper.model.Element
+import net.ruippeixotog.scalascraper.model.{Element, ElementNode, Node, TextNode}
 import cats.effect._
 import cats.instances.list._
 import cats.syntax.foldable._
@@ -28,12 +28,51 @@ object TgBotApiScrapper extends IOApp {
   case class Sumtyp(name: String, desc: String, items: List[String], table: List[EntityParam] = List.empty) extends ApiItem
 
   private case class Link(text: String, href: String)
-  private case class Desc(source: List[Element], text: String, links: List[Link])
   private object Desc {
+    private val apiBaseUrl = "https://core.telegram.org/bots/api"
+    private val siteBaseUrl = "https://core.telegram.org"
+
+    private def resolveHref(href: String): String =
+      if (href.startsWith("#")) apiBaseUrl + href
+      else if (href.startsWith("/")) siteBaseUrl + href
+      else href
+
+    // Tags whose formatting is preserved as literal HTML, since scaladoc embeds raw HTML.
+    private val preservedTags = Set("em", "strong", "code", "b", "i")
+
+    // Escapes literal text so it can't be mistaken for markup (e.g. a field whose
+    // prose mentions "<h1>" must not be parsed as an actual tag by the HTML renderer).
+    private def escapeText(s: String): String =
+      s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    // Renders text preserving <a> links (as absolute HTML links), <br> (as line
+    // breaks) and the tags above, dropping "Learn more »" links.
+    private def renderNodes(nodes: List[Node]): String = nodes match {
+      case Nil => ""
+      case ElementNode(el) :: rest if el.tagName == "a" && el.text.contains("»") =>
+        rest match {
+          case TextNode(content) :: rest2 if content.startsWith(".") =>
+            renderNodes(TextNode(content.stripPrefix(".")) :: rest2)
+          case _ => renderNodes(rest)
+        }
+      case ElementNode(el) :: rest if el.tagName == "a" =>
+        s"""<a href="${resolveHref(el.attr("href"))}">${escapeText(el.text)}</a>""" + renderNodes(rest)
+      case ElementNode(el) :: rest if el.tagName == "br" =>
+        "<br>" + renderNodes(rest)
+      case ElementNode(el) :: rest if preservedTags.contains(el.tagName) =>
+        s"<${el.tagName}>${renderNodes(el.childNodes.toList)}</${el.tagName}>" + renderNodes(rest)
+      case ElementNode(el) :: rest =>
+        renderNodes(el.childNodes.toList) + renderNodes(rest)
+      case TextNode(content) :: rest =>
+        escapeText(content) + renderNodes(rest)
+      case _ :: rest =>
+        renderNodes(rest)
+    }
+
     def apply(source: List[Element]): Desc = {
-      val text = source.map(_.text).intercalate("\n")
+      val text = source.map(e => renderNodes(e.childNodes.toList)).intercalate("\n")
       val links = source.flatMap(_ >> elements("a")).map(e => Link(e.text, e.attr("href")))
-      val cleanedText = removeLearnMoreLinks(text, links)
+      val cleanedText = text
         .replace("@", "&#064;")
         .replace("^", "&#94;")
       Desc(source, cleanedText, links)
@@ -42,14 +81,8 @@ object TgBotApiScrapper extends IOApp {
     def apply(source: Element): Desc = Desc(List(source))
 
     def empty: Desc = Desc(List.empty, "", List.empty)
-
-    private def removeLearnMoreLinks(text: String, links: List[Link]): String = {
-      val learnMoreLinks = links.filter(_.text.contains("»"))
-      learnMoreLinks.foldLeft(text) { (txt, link) =>
-        txt.replaceAll(s"${link.text}\\.?", "")
-      }
-    }
   }
+  private case class Desc(source: List[Element], text: String, links: List[Link])
 
   def wrap(text: String, LineWidth: Int): String = {
     val buf = StringBuilder.newBuilder
@@ -85,7 +118,7 @@ object TgBotApiScrapper extends IOApp {
 
   private val quotedPattern = "(?<=“).*?(?=”)".r
   private val forXOnlyPattern = "(?<=For “).*?(?=” only)".r
-  private val messageEntityDescPattern = "Optional. For “.*” only, ".r
+  private val messageEntityDescPattern = "(?:<em>)?Optional(?:</em>)?\\. For “.*” only, ".r
   private val discriminatorPattern = ".*, always “(.*?)”".r
 
   def gen(items: List[ApiItem]): String = {
@@ -466,7 +499,7 @@ object TgBotApiScrapper extends IOApp {
             }
             Method(
               name = x.name.text,
-              desc = x.desc.map(_.text).intercalate("\n"),
+              desc = Desc(x.desc).text,
               table = params.map { y =>
                 val k = y.children.toList(1).text
                 val name = y.children.toList.head.text
