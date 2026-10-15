@@ -40,10 +40,18 @@ object TgBotApiScrapper extends IOApp {
     // Tags whose formatting is preserved as literal HTML, since scaladoc embeds raw HTML.
     private val preservedTags = Set("em", "strong", "code", "b", "i")
 
+    // Tag names that Metals' own (buggy) scaladoc-to-markdown hover converter rewrites into
+    // wiki heading/list syntax even when they're just named in prose, not used as real markup
+    // (see ScaladocParser.scala's DangerousTags). Rendered with lookalike brackets instead of
+    // real angle brackets so no tool mistakes the mention itself for a tag.
+    private val selfReferentialTagMention = "&lt;(/?(?:div|ol|ul|li|h[1-6]|p))&gt;".r
+
     // Escapes literal text so it can't be mistaken for markup (e.g. a field whose
     // prose mentions "<h1>" must not be parsed as an actual tag by the HTML renderer).
-    private def escapeText(s: String): String =
-      s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    private def escapeText(s: String): String = {
+      val escaped = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+      selfReferentialTagMention.replaceAllIn(escaped, m => s"‹${m.group(1)}›")
+    }
 
     // Renders text preserving <a> links (as absolute HTML links), <br> (as line
     // breaks) and the tags above, dropping "Learn more »" links.
@@ -58,7 +66,11 @@ object TgBotApiScrapper extends IOApp {
       case ElementNode(el) :: rest if el.tagName == "a" =>
         s"""<a href="${resolveHref(el.attr("href"))}">${escapeText(el.text)}</a>""" + renderNodes(rest)
       case ElementNode(el) :: rest if el.tagName == "br" =>
-        "<br>" + renderNodes(rest)
+        // A blank line forces a real paragraph break that survives both scalafmt's
+        // docstring reflow and Metals' hover renderer, neither of which reliably
+        // preserve a bare <br> (scalafmt only protects recognized "- " bullet lines;
+        // Metals' HtmlConverter has no case for <br> at all and silently drops it).
+        "<br>\n\n" + renderNodes(rest)
       case ElementNode(el) :: rest if preservedTags.contains(el.tagName) =>
         s"<${el.tagName}>${renderNodes(el.childNodes.toList)}</${el.tagName}>" + renderNodes(rest)
       case ElementNode(el) :: rest =>
@@ -85,21 +97,27 @@ object TgBotApiScrapper extends IOApp {
   private case class Desc(source: List[Element], text: String, links: List[Link])
 
   def wrap(text: String, LineWidth: Int): String = {
-    val buf = StringBuilder.newBuilder
-    val spaceWidth = 1
-    val tokenizer = new StringTokenizer(text)
-    var SpaceLeft = LineWidth
-    while (tokenizer.hasMoreTokens) {
-      val word: String = tokenizer.nextToken
-      if ((word.length + spaceWidth) > SpaceLeft) {
-        buf.append("\n    " + word + " ")
-        SpaceLeft = LineWidth - word.length
-      } else {
-        buf.append(word + " ")
-        SpaceLeft -= (word.length + spaceWidth)
+    // StringTokenizer treats all whitespace alike, so a blank line (paragraph break)
+    // would otherwise collapse into ordinary word-spacing. Wrap each paragraph on
+    // its own and rejoin with the blank line preserved.
+    def wrapParagraph(paragraph: String): String = {
+      val buf = StringBuilder.newBuilder
+      val spaceWidth = 1
+      val tokenizer = new StringTokenizer(paragraph)
+      var SpaceLeft = LineWidth
+      while (tokenizer.hasMoreTokens) {
+        val word: String = tokenizer.nextToken
+        if ((word.length + spaceWidth) > SpaceLeft) {
+          buf.append("\n    " + word + " ")
+          SpaceLeft = LineWidth - word.length
+        } else {
+          buf.append(word + " ")
+          SpaceLeft -= (word.length + spaceWidth)
+        }
       }
+      buf.toString
     }
-    buf.toString
+    text.split("\n\n", -1).map(wrapParagraph).mkString("\n\n")
   }
 
   def camelify(name : String): String = {
