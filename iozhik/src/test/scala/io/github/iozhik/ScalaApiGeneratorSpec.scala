@@ -81,7 +81,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include("""val (stickerAttached, stickerFiles) = attachFiles_InputSticker("sticker", sticker)""")
     body should include("""val req = AddStickerToSetReq(userId,stickerAttached)""")
     body should include("""MethodReq[Boolean]("addStickerToSet", req.asJson, stickerFiles)""")
-    body should include("val (sticker1, stickerFiles) = MethodReq.attachFile(name, v.sticker)")
+    body should include("""val (sticker1, stickerFiles) = MethodReq.attachFile(name + "_sticker", v.sticker)""")
     body should include("(v.copy(sticker = sticker1), stickerFiles)")
   }
 
@@ -114,15 +114,13 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     )
     val body = bodies.mkString("\n")
     body should include(
-      """val (mediaAttached, mediaFilesParts) = media.zipWithIndex.map { case (v, idx) => attachFiles_InputMedia(s"media$idx", v) }.unzip"""
+      """val (mediaAttached, mediaFiles) = media.zipWithIndex.map { case (v, idx) => attachFiles_InputMedia(s"media$idx", v) }.unzip"""
     )
-    body should include("""val mediaFiles = mediaFilesParts.foldLeft(Map.empty[String, IFile])(_ ++ _)""")
     body should include("""val req = SendMediaGroupReq(mediaAttached)""")
-    body should include("""MethodReq[Boolean]("sendMediaGroup", req.asJson, mediaFiles)""")
-    body should include("val (media1, mediaFiles) = MethodReq.attachFile(name, v.media)")
+    body should include("""MethodReq[Boolean]("sendMediaGroup", req.asJson, mediaFiles.flatten.toMap)""")
+    body should include("""val (media1, mediaFiles) = MethodReq.attachFile(name + "_media", v.media)""")
     body should include("(v.copy(media = media1), mediaFiles)")
-    body should include("""val (media1, mediaFiles) = MethodReq.attachFile((name + "_media"), v.media)""")
-    body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFileOpt((name + "_thumbnail"), v.thumbnail)""")
+    body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFile(name + "_thumbnail", v.thumbnail)""")
     body should include("(v.copy(media = media1, thumbnail = thumbnail1), mediaFiles ++ thumbnailFiles)")
   }
 }
