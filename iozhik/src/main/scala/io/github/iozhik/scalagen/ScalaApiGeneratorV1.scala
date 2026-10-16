@@ -713,25 +713,22 @@ class ScalaApiGeneratorV1 {
   private def hasNestedFileFields(s: Struc): Boolean =
     fileBearingVariants(s).exists(_.fields.exists(_.opts.contains("file")))
 
-  // A field whose own kind isn't `(file) IFile`/`Option[IFile]`, but which wraps (directly, or through
-  // one List[_]/Option[_] layer) a compound type (e.g. InputMedia) that itself embeds file fields one level in.
-  private sealed trait NestedWrapper
-  private case object NestedDirect extends NestedWrapper
-  private case object NestedList extends NestedWrapper
+  // A field whose own kind isn't `(file) IFile`/`Option[IFile]`, but which names (directly, or through one
+  // List[_] layer) a compound type (e.g. InputMedia) that itself embeds file fields one level in.
+  private case class NestedFileField(field: Field, isList: Boolean, innerKind: Kind, innerStruc: Struc)
 
-  private case class NestedFileField(field: Field, wrapper: NestedWrapper, innerKind: Kind, struc: Struc)
-
-  private def resolveNestedFileField(f: Field)(implicit meta: GeneratorMeta): Option[NestedFileField] = {
+  private def resolveNestedFileField(f: Field)(implicit meta: GeneratorMeta): Option[NestedFileField] =
     if (f.opts.contains("file")) {
       None
-    } else if (f.kind.name == "List") {
-      f.kind.params.headOption.flatMap { inner =>
-        meta.symt.resolve(inner).collect { case s: Struc if hasNestedFileFields(s) => NestedFileField(f, NestedList, inner, s) }
-      }
     } else {
-      meta.symt.resolve(f.kind).collect { case s: Struc if hasNestedFileFields(s) => NestedFileField(f, NestedDirect, f.kind, s) }
+      val isList = f.kind.name == "List"
+      val innerKindOpt = if (isList) f.kind.params.headOption else Some(f.kind)
+      innerKindOpt.flatMap { innerKind =>
+        meta.symt.resolve(innerKind).collect {
+          case s: Struc if hasNestedFileFields(s) => NestedFileField(f, isList, innerKind, s)
+        }
+      }
     }
-  }
 
   // Generates `private def attachFiles_<Type>(name: String, value: <Type>): (<Type>, Map[String, IFile])`,
   // which rewrites a compound value's embedded file field(s) to `attach://<name>` placeholders and collects
@@ -803,11 +800,14 @@ class ScalaApiGeneratorV1 {
       )
       val docs = genDefunDocs(x)
       val reqParams = params.intercalate(", ")
-      val nestedFileFields = reqFields.flatMap(f => resolveNestedFileField(f).toList)
-      val nestedByName = nestedFileFields.map(n => sanitize(n.field.name) -> n).toMap
-      val fieldNames = reqFields.map { f =>
-        val sanitized = sanitize(f.name)
-        nestedByName.get(sanitized).fold(sanitized)(_ => s"${sanitized}Attached")
+
+      // Pair each request field with its nested-file plan (if any) in one pass, so the arg name used to
+      // build the request, the attach/collect statement, and the files-map contribution all stay in sync
+      // by construction instead of being re-joined later by field name.
+      val fieldPlans = reqFields.map(f => f -> resolveNestedFileField(f))
+      val fieldNames = fieldPlans.map {
+        case (f, None)    => sanitize(f.name)
+        case (f, Some(_)) => s"${sanitize(f.name)}Attached"
       }
       val reqArgs = if (fieldNames.isEmpty) "" else fieldNames.mkString("(", ",", ")")
       val returnTypeParams = x.cod.fold(
@@ -823,22 +823,24 @@ class ScalaApiGeneratorV1 {
           val domFieldName = if (f.kind.name == "Option") f.name else s"Option(${f.name})"
           s""""$fieldName" -> $domFieldName"""
         }
-      val directAttachments = if (fileFields.isEmpty) List.empty else List(s"""Map(${fileFields.mkString(", ")}).collect { case (k, Some(v)) => k -> v }""")
-      val nestedStmts = nestedFileFields.map { n =>
-        val fname = sanitize(n.field.name)
-        val typeName = sanitize(n.innerKind.name)
-        n.wrapper match {
-          case NestedDirect =>
-            s"""val (${fname}Attached, ${fname}Files) = attachFiles_$typeName("$fname", $fname)"""
-          case NestedList =>
-            s"""val (${fname}Attached, ${fname}FilesParts) = $fname.zipWithIndex.map { case (v, idx) => attachFiles_$typeName(s"${fname}$$idx", v) }.unzip
-               |val ${fname}Files = ${fname}FilesParts.foldLeft(Map.empty[String, IFile])(_ ++ _)""".stripMargin
+      val directAttachment = Option.when(fileFields.nonEmpty)(
+        s"""Map(${fileFields.mkString(", ")}).collect { case (k, Some(v)) => k -> v }"""
+      )
+      val nestedFileFields = fieldPlans.collect { case (_, Some(n)) => n }
+      val nestedStmts = fieldPlans.collect { case (f, Some(n)) =>
+        val fname     = sanitize(f.name)
+        val typeName  = sanitize(n.innerKind.name)
+        if (n.isList) {
+          s"""val (${fname}Attached, ${fname}FilesParts) = $fname.zipWithIndex.map { case (v, idx) => attachFiles_$typeName(s"${fname}$$idx", v) }.unzip
+             |val ${fname}Files = ${fname}FilesParts.foldLeft(Map.empty[String, IFile])(_ ++ _)""".stripMargin
+        } else {
+          s"""val (${fname}Attached, ${fname}Files) = attachFiles_$typeName("$fname", $fname)"""
         }
       }
-      val nestedAttachments = nestedFileFields.map(n => s"${sanitize(n.field.name)}Files")
-      val attachmentParts = directAttachments ++ nestedAttachments
+      val nestedAttachments = fieldPlans.collect { case (f, Some(_)) => s"${sanitize(f.name)}Files" }
+      val attachmentParts = directAttachment.toList ++ nestedAttachments
       val attachments = if (attachmentParts.isEmpty) "" else ", " + attachmentParts.mkString(" ++ ")
-      val dispatcherCodes = nestedFileFields.map(n => genAttachDispatcher(n.innerKind, n.struc))
+      val dispatcherCodes = nestedFileFields.map(n => genAttachDispatcher(n.innerKind, n.innerStruc))
       val codomain = genDefunCodomain(x, codName)
       val defunBody =
         (nestedStmts :+
