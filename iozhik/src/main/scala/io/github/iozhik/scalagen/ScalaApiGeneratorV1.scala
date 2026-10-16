@@ -745,9 +745,9 @@ class ScalaApiGeneratorV1 {
           val fname = sanitize(f.name)
           val attachName = if (fileFields.size == 1) "name" else s"""(name + "_$fname")"""
           if (f.kind.name == "Option") {
-            s"val (${fname}1, ${fname}Files) = attachFileOpt($attachName, v.$fname)"
+            s"val (${fname}1, ${fname}Files) = MethodReq.attachFileOpt($attachName, v.$fname)"
           } else {
-            s"val (${fname}1, ${fname}Files) = attachFile($attachName, v.$fname)"
+            s"val (${fname}1, ${fname}Files) = MethodReq.attachFile($attachName, v.$fname)"
           }
         }
         val copyArgs = fileFields.map(f => s"${sanitize(f.name)} = ${sanitize(f.name)}1").mkString(", ")
