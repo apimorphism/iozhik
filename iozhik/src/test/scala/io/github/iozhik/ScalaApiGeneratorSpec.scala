@@ -21,6 +21,21 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     result.fold(err => fail(s"Generation failed: $err"), identity)
   }
 
+  "Generated code" must "include the NamedInputStream predef type that InputStreamFile wraps" in {
+    val bodies = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum IFile {
+        |      wrap InputStreamFile (file) = iozhik.NamedInputStream
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    bodies.exists(_.contains("final case class NamedInputStream(filename: String, openStream: () => java.io.InputStream)")) shouldBe true
+  }
+
   "IFile-like wrap with a custom target" must "fall back to the generic encode/decode-as-wrapped-value codecs" in {
     val bodies = generate(
       """
