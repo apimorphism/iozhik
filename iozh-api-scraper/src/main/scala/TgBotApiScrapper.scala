@@ -40,17 +40,21 @@ object TgBotApiScrapper extends IOApp {
     // Tags whose formatting is preserved as literal HTML, since scaladoc embeds raw HTML.
     private val preservedTags = Set("em", "strong", "code", "b", "i")
 
-    // Tag names that Metals' own (buggy) scaladoc-to-markdown hover converter rewrites into
-    // wiki heading/list syntax even when they're just named in prose, not used as real markup
-    // (see ScaladocParser.scala's DangerousTags). Rendered with lookalike brackets instead of
-    // real angle brackets so no tool mistakes the mention itself for a tag.
-    private val selfReferentialTagMention = "&lt;(/?(?:div|ol|ul|li|h[1-6]|p))&gt;".r
+    // Detects text that is syntactically just a bare HTML tag name in angle brackets
+    // (e.g. a field whose prose names itself after a real tag, like "<h1>" or
+    // "<audio>"). Some HTML-to-markdown converters (Metals' hover renderer is one
+    // known case: its DangerousTags regex rewrites a handful of these into wiki
+    // heading/list syntax) blindly reinterpret such text as real markup. Rather than
+    // hardcode which specific tag names a given tool currently mishandles, every such
+    // mention is rendered with lookalike angle-bracket characters instead of real
+    // ones, so no HTML/Markdown-aware tool can mistake the mention itself for a tag.
+    private val bareTagMention = "^&lt;(/?[a-zA-Z][a-zA-Z0-9-]*)&gt;$".r
 
     // Escapes literal text so it can't be mistaken for markup (e.g. a field whose
     // prose mentions "<h1>" must not be parsed as an actual tag by the HTML renderer).
     private def escapeText(s: String): String = {
       val escaped = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-      selfReferentialTagMention.replaceAllIn(escaped, m => s"‹${m.group(1)}›")
+      bareTagMention.replaceAllIn(escaped, m => s"ᐸ${m.group(1)}ᐳ")
     }
 
     // Renders text preserving <a> links (as absolute HTML links), <br> (as line
