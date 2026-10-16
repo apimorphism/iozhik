@@ -164,10 +164,11 @@ object TgBotApiScrapper extends IOApp {
           else if (isParseMode(f.name))
             "Option[ParseMode]"
           else {
-            if (f.desc.contains("Optional"))
-              s"Option[${f.kind}]"
-            else
-              f.kind
+            if (f.desc.contains("Optional")) {
+              if (f.kind == "IFile") s"(file) Option[${f.kind}]" else s"Option[${f.kind}]"
+            } else {
+              if (f.kind == "IFile") s"(file) ${f.kind}" else f.kind
+            }
           }
           if (f.kind == "__type_tag__")
             s"""    ${f.name} : """" + f.desc + ":__type_id_placeholder__\""

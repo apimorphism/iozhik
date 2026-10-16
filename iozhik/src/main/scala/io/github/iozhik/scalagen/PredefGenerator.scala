@@ -70,11 +70,27 @@ object PredefGenerator {
         |    new MethodReq(MethodPayload(name, json, files), decoder)
         |
         |}
+        |
+        |// A file embedded one level inside a compound parameter (e.g. InputMedia) can't be attached by name
+        |// directly, since Telegram only recognizes "attach://<name>" references nested inside the JSON body.
+        |// These rewrite such a field to that placeholder and collect the real IFile for multipart upload,
+        |// leaving file_id/URL/already-"attach://" references (InputLinkFile) untouched.
+        |private def attachFile(name: String, file: IFile): (IFile, Map[String, IFile]) = file match {
+        |  case _: InputLinkFile => (file, Map.empty)
+        |  case other            => (InputLinkFile("attach://" + name), Map(name -> other))
+        |}
+        |
+        |private def attachFileOpt(name: String, file: Option[IFile]): (Option[IFile], Map[String, IFile]) = file match {
+        |  case Some(f) =>
+        |    val (nf, files) = attachFile(name, f)
+        |    (Some(nf), files)
+        |  case None => (None, Map.empty)
+        |}
         """.stripMargin
     val methodReqCode = Code(
       body = methodReq,
       name = "Method",
-      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path))
+      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path)) ++ importKind(Kind("InputLinkFile", path = x.path))
     )
     val body =
       s"""

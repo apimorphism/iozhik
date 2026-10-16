@@ -703,6 +703,73 @@ class ScalaApiGeneratorV1 {
     }
   }
 
+  // The variant structs that actually carry a file (a union type's leaves, or the struct itself when it has none).
+  private def fileBearingVariants(s: Struc): List[Struc] = if (s.leaves.nonEmpty) s.leaves else List(s)
+
+  private def hasNestedFileFields(s: Struc): Boolean =
+    fileBearingVariants(s).exists(_.fields.exists(_.opts.contains("file")))
+
+  // A field whose own kind isn't `(file) IFile`/`Option[IFile]`, but which wraps (directly, or through
+  // one List[_]/Option[_] layer) a compound type (e.g. InputMedia) that itself embeds file fields one level in.
+  private sealed trait NestedWrapper
+  private case object NestedDirect extends NestedWrapper
+  private case object NestedList extends NestedWrapper
+
+  private case class NestedFileField(field: Field, wrapper: NestedWrapper, innerKind: Kind, struc: Struc)
+
+  private def resolveNestedFileField(f: Field)(implicit meta: GeneratorMeta): Option[NestedFileField] = {
+    if (f.opts.contains("file")) {
+      None
+    } else if (f.kind.name == "List") {
+      f.kind.params.headOption.flatMap { inner =>
+        meta.symt.resolve(inner).collect { case s: Struc if hasNestedFileFields(s) => NestedFileField(f, NestedList, inner, s) }
+      }
+    } else {
+      meta.symt.resolve(f.kind).collect { case s: Struc if hasNestedFileFields(s) => NestedFileField(f, NestedDirect, f.kind, s) }
+    }
+  }
+
+  // Generates `private def attachFiles_<Type>(name: String, value: <Type>): (<Type>, Map[String, IFile])`,
+  // which rewrites a compound value's embedded file field(s) to `attach://<name>` placeholders and collects
+  // the real IFile values that need to be sent as multipart attachments under that name.
+  private def genAttachDispatcher(innerKind: Kind, struc: Struc)(implicit meta: GeneratorMeta): Code = {
+    val typeName = sanitize(innerKind.name)
+    val variants = fileBearingVariants(struc)
+    val cases = variants.map { v =>
+      val variantName = v.kind.map(k => sanitize(k.name)).getOrElse(typeName)
+      val fileFields = v.fields.filter(_.opts.contains("file"))
+      if (fileFields.isEmpty) {
+        s"case v: $variantName => (v, Map.empty[String, IFile])"
+      } else {
+        val stmts = fileFields.map { f =>
+          val fname = sanitize(f.name)
+          val attachName = if (fileFields.size == 1) "name" else s"""(name + "_$fname")"""
+          if (f.kind.name == "Option") {
+            s"val (${fname}1, ${fname}Files) = attachFileOpt($attachName, v.$fname)"
+          } else {
+            s"val (${fname}1, ${fname}Files) = attachFile($attachName, v.$fname)"
+          }
+        }
+        val copyArgs = fileFields.map(f => s"${sanitize(f.name)} = ${sanitize(f.name)}1").mkString(", ")
+        val mergedFiles = fileFields.map(f => s"${sanitize(f.name)}Files").mkString(" ++ ")
+        s"""case v: $variantName =>
+           |  ${stmts.mkString(delimiter + "  ")}
+           |  (v.copy($copyArgs), $mergedFiles)""".stripMargin
+      }
+    }
+    val body =
+      s"""private def attachFiles_$typeName(name: String, value: $typeName): ($typeName, Map[String, IFile]) = value match {
+         |  ${cases.mkString(delimiter + "  ")}
+         |}""".stripMargin
+    val variantImports = variants.flatMap(v => v.kind.toList).flatMap(importKind)
+    Code(
+      body = body,
+      name = s"attachFiles_$typeName",
+      packageObject = "__this_trait__",
+      imports = importKind(innerKind) ++ variantImports
+    )
+  }
+
   private def genMethodsFactoryDefun(x: Defun)(implicit meta: GeneratorMeta) =
     for {
       kind <- genKind(x.kind)
@@ -732,7 +799,12 @@ class ScalaApiGeneratorV1 {
       )
       val docs = genDefunDocs(x)
       val reqParams = params.intercalate(", ")
-      val fieldNames = reqFields.map(f => sanitize(f.name))
+      val nestedFileFields = reqFields.flatMap(f => resolveNestedFileField(f).toList)
+      val nestedByName = nestedFileFields.map(n => sanitize(n.field.name) -> n).toMap
+      val fieldNames = reqFields.map { f =>
+        val sanitized = sanitize(f.name)
+        nestedByName.get(sanitized).fold(sanitized)(_ => s"${sanitized}Attached")
+      }
       val reqArgs = if (fieldNames.isEmpty) "" else fieldNames.mkString("(", ",", ")")
       val returnTypeParams = x.cod.fold(
         kind => kind.params.map(p => genKind(p, wrapWithOpenEnum)).sequence.map(_.mkString("[", ", ", "]")),
@@ -747,17 +819,33 @@ class ScalaApiGeneratorV1 {
           val domFieldName = if (f.kind.name == "Option") f.name else s"Option(${f.name})"
           s""""$fieldName" -> $domFieldName"""
         }
-      val attachments = if (fileFields.isEmpty) "" else fileFields.mkString(", Map(", ", ", ").collect { case (k, Some(v)) => k -> v }")
+      val directAttachments = if (fileFields.isEmpty) List.empty else List(s"""Map(${fileFields.mkString(", ")}).collect { case (k, Some(v)) => k -> v }""")
+      val nestedStmts = nestedFileFields.map { n =>
+        val fname = sanitize(n.field.name)
+        val typeName = sanitize(n.innerKind.name)
+        n.wrapper match {
+          case NestedDirect =>
+            s"""val (${fname}Attached, ${fname}Files) = attachFiles_$typeName("$fname", $fname)"""
+          case NestedList =>
+            s"""val (${fname}Attached, ${fname}FilesParts) = $fname.zipWithIndex.map { case (v, idx) => attachFiles_$typeName(s"${fname}$$idx", v) }.unzip
+               |val ${fname}Files = ${fname}FilesParts.foldLeft(Map.empty[String, IFile])(_ ++ _)""".stripMargin
+        }
+      }
+      val nestedAttachments = nestedFileFields.map(n => s"${sanitize(n.field.name)}Files")
+      val attachmentParts = directAttachments ++ nestedAttachments
+      val attachments = if (attachmentParts.isEmpty) "" else ", " + attachmentParts.mkString(" ++ ")
+      val dispatcherCodes = nestedFileFields.map(n => genAttachDispatcher(n.innerKind, n.struc))
       val codomain = genDefunCodomain(x, codName)
       val defunBody =
-        s"""val req = $reqName$reqArgs
-           |MethodReq$returnTypeParams("${x.kind.name}", req.asJson$attachments)""".stripMargin
+        (nestedStmts :+
+          s"""val req = $reqName$reqArgs
+             |MethodReq$returnTypeParams("${x.kind.name}", req.asJson$attachments)""".stripMargin).mkString(delimiter)
       val code =
         s"""${docs}def $kind($reqParams): $codomain = {
            |  $defunBody
            |}
        """.stripMargin
-      dom ++ cod :+ Code(
+      dom ++ cod ++ dispatcherCodes :+ Code(
         body = code,
         name = x.kind.name,
         packageObject = "__this_trait__",
@@ -947,7 +1035,9 @@ class ScalaApiGeneratorV1 {
         y.packageObject != "__this_impl__" &&
         y.packageObject != "__this_server_defs__"
       }
-      val defuns = items.filter(_.packageObject == "__this_trait__").map(_.body).intercalate(d)
+      // Several methods can embed the same compound type (e.g. InputMedia is used by both sendMediaGroup and
+      // editMessageMedia), each independently emitting the same attachFiles_<Type> dispatcher; keep one copy.
+      val defuns = items.filter(_.packageObject == "__this_trait__").distinctBy(c => (c.name, c.body)).map(_.body).intercalate(d)
       val code = if (x.opts.contains("methodsFactory")) genMethodsFactory(x, defuns, kind, items)
       else genServcDefault(x, defuns, kind, items)
       strucs ++ code
