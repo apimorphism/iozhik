@@ -69,12 +69,32 @@ object PredefGenerator {
         |  )(implicit decoder: Decoder[Res]): MethodReq[Res] =
         |    new MethodReq(MethodPayload(name, json, files), decoder)
         |
+        |  // A file embedded one level inside a compound parameter (e.g. InputMedia) can't be attached by name
+        |  // directly, since Telegram only recognizes "attach://<name>" references nested inside the JSON body.
+        |  // These rewrite such a field to that placeholder and collect the real IFile for multipart upload,
+        |  // leaving file_id/URL/already-"attach://" references (InputLinkFile) untouched.
+        |  def attachFile(name: String, file: IFile): (IFile, Map[String, IFile]) = file match {
+        |    case _: InputLinkFile => (file, Map.empty)
+        |    case other            => (InputLinkFile("attach://" + name), Map(name -> other))
+        |  }
+        |
+        |  def attachFile(name: String, file: Option[IFile]): (Option[IFile], Map[String, IFile]) = file match {
+        |    case Some(f) =>
+        |      val (nf, files) = attachFile(name, f)
+        |      (Some(nf), files)
+        |    case None => (None, Map.empty)
+        |  }
+        |
         |}
         """.stripMargin
     val methodReqCode = Code(
       body = methodReq,
       name = "Method",
-      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path))
+      // InputLinkFile is declared via a `wrap` inside the IFile enum, so the symbol table can't resolve it;
+      // it lives in IFile's package, so derive its import from IFile's.
+      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path)).flatMap { i =>
+        List(i, i.stripSuffix("IFile") + "InputLinkFile")
+      }
     )
     val body =
       s"""

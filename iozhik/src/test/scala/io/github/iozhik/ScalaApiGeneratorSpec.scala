@@ -72,4 +72,75 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       _.contains("""inputstreamfileDecoder: Decoder[InputStreamFile] = Decoder.failedWithMessage[InputStreamFile](s"InputStreamFile cannot be decoded")""")
     ) shouldBe true
   }
+
+  // https://github.com/apimorphism/telegramium/issues/666
+  "A methodsFactory method taking a plain compound type with an embedded file field" must "attach the embedded file and rewrite it to an attach:// reference" in {
+    val bodies = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum IFile {
+        |      wrap InputPartFile (file) = java.io.File
+        |      wrap InputLinkFile (file) = String
+        |    }
+        |    InputSticker {
+        |      sticker: (file) IFile
+        |      format: String
+        |    }
+        |    Methods (methodsFactory) {
+        |      def addStickerToSet {
+        |        userId: Long
+        |        sticker: InputSticker
+        |      } => Method[Boolean]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    val body = bodies.mkString("\n")
+    body should include("""val (stickerAttached, stickerFiles) = attachFiles_InputSticker("sticker", sticker)""")
+    body should include("""val req = AddStickerToSetReq(userId,stickerAttached)""")
+    body should include("""MethodReq[Boolean]("addStickerToSet", req.asJson, stickerFiles)""")
+    body should include("""val (sticker1, stickerFiles) = MethodReq.attachFile(name + "_sticker", v.sticker)""")
+    body should include("(v.copy(sticker = sticker1), stickerFiles)")
+  }
+
+  "A methodsFactory method taking a List of a union type whose variants embed file fields" must "attach each element's file(s) under an indexed name and rewrite them to attach:// references" in {
+    val bodies = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum IFile {
+        |      wrap InputPartFile (file) = java.io.File
+        |      wrap InputLinkFile (file) = String
+        |    }
+        |    abstract InputMedia {
+        |      InputMediaPhoto {
+        |        media: (file) IFile
+        |      }
+        |      InputMediaVideo {
+        |        media: (file) IFile
+        |        thumbnail: (file) Option[IFile]
+        |      }
+        |    }
+        |    Methods (methodsFactory) {
+        |      def sendMediaGroup {
+        |        media: List[InputMedia]
+        |      } => Method[Boolean]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    val body = bodies.mkString("\n")
+    body should include(
+      """val (mediaAttached, mediaFiles) = media.zipWithIndex.map { case (v, idx) => attachFiles_InputMedia(s"media$idx", v) }.unzip"""
+    )
+    body should include("""val req = SendMediaGroupReq(mediaAttached)""")
+    body should include("""MethodReq[Boolean]("sendMediaGroup", req.asJson, mediaFiles.flatten.toMap)""")
+    body should include("""val (media1, mediaFiles) = MethodReq.attachFile(name + "_media", v.media)""")
+    body should include("(v.copy(media = media1), mediaFiles)")
+    body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFile(name + "_thumbnail", v.thumbnail)""")
+    body should include("(v.copy(media = media1, thumbnail = thumbnail1), mediaFiles ++ thumbnailFiles)")
+  }
 }
