@@ -78,7 +78,7 @@ object PredefGenerator {
         |    case other            => (InputLinkFile("attach://" + name), Map(name -> other))
         |  }
         |
-        |  def attachFileOpt(name: String, file: Option[IFile]): (Option[IFile], Map[String, IFile]) = file match {
+        |  def attachFile(name: String, file: Option[IFile]): (Option[IFile], Map[String, IFile]) = file match {
         |    case Some(f) =>
         |      val (nf, files) = attachFile(name, f)
         |      (Some(nf), files)
@@ -90,14 +90,11 @@ object PredefGenerator {
     val methodReqCode = Code(
       body = methodReq,
       name = "Method",
-      // InputLinkFile is declared via a `wrap` inside the IFile enum, not as its own top-level Struc, so it
-      // isn't resolvable through the symbol table the way importKind expects; it lives in IFile's own
-      // package though, so reuse that resolved path instead of hardcoding it.
-      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path)) ++
-        meta.symt.resolve(Kind("IFile", path = x.path)).collect {
-          case y: Struc if y.kind.nonEmpty =>
-            s"import ${(y.path.reverse.filter(_.nonEmpty) :+ "InputLinkFile").mkString(".")}"
-        }.toList
+      // InputLinkFile is declared via a `wrap` inside the IFile enum, so the symbol table can't resolve it;
+      // it lives in IFile's package, so derive its import from IFile's.
+      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path)).flatMap { i =>
+        List(i, i.stripSuffix("IFile") + "InputLinkFile")
+      }
     )
     val body =
       s"""
