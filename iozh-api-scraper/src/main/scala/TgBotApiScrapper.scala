@@ -378,7 +378,7 @@ object TgBotApiScrapper extends IOApp {
        |      /* Use InputLinkFile to send a file accessible via some URL. */
        |      wrap InputLinkFile (file) = String
        |      /* Use InputStreamFile to send a file from an input stream, without loading the whole file into memory. */
-       |      wrap InputStreamFile (file) = telegramium.bots.NamedInputStream
+       |      wrap InputStreamFile (file) = iozhik.NamedInputStream
        |    }
        |
        |    $entities

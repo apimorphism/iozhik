@@ -21,6 +21,21 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     result.fold(err => fail(s"Generation failed: $err"), identity)
   }
 
+  "Generated code" must "include the NamedInputStream predef type that InputStreamFile wraps" in {
+    val bodies = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum IFile {
+        |      wrap InputStreamFile (file) = iozhik.NamedInputStream
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    bodies.exists(_.contains("final case class NamedInputStream(filename: String, openStream: () => java.io.InputStream)")) shouldBe true
+  }
+
   "IFile-like wrap with a custom target" must "fall back to the generic encode/decode-as-wrapped-value codecs" in {
     val bodies = generate(
       """
@@ -53,23 +68,23 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     bodies.exists(_.contains("inputpartfileDecoder: Decoder[InputPartFile] = Decoder[String].map(s => InputPartFile(new java.io.File(s)))")) shouldBe true
   }
 
-  "IFile-like wrap targeting telegramium.bots.NamedInputStream" must "encode via the stream's filename and refuse to decode" in {
+  "IFile-like wrap targeting iozhik.NamedInputStream" must "fall back to the same generic wrapped-value codecs as any other predef type" in {
     val bodies = generate(
       """
         |namespace telegramium {
         |  namespace bots(snake circe) {
         |    enum IFile {
-        |      wrap InputStreamFile (file) = telegramium.bots.NamedInputStream
+        |      wrap InputStreamFile (file) = iozhik.NamedInputStream
         |    }
         |  }
         |}
       """.stripMargin
     )
     bodies.exists(
-      _.contains("inputstreamfileEncoder: Encoder[InputStreamFile] = (x: InputStreamFile) => x.file.filename.asJson")
+      _.contains("inputstreamfileEncoder: Encoder[InputStreamFile] = (x: InputStreamFile) => x.file.asJson")
     ) shouldBe true
     bodies.exists(
-      _.contains("""inputstreamfileDecoder: Decoder[InputStreamFile] = Decoder.failedWithMessage[InputStreamFile](s"InputStreamFile cannot be decoded")""")
+      _.contains("inputstreamfileDecoder: Decoder[InputStreamFile] = Decoder[iozhik.NamedInputStream].map(InputStreamFile.apply)")
     ) shouldBe true
   }
 }
