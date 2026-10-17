@@ -100,15 +100,11 @@ class ScalaApiGeneratorV1 {
       val codecName = x.name.name.toLowerCase
       val encoderBody = if (target == "java.io.File") {
           s"(x: $name) => x.${x.fname}.getName.asJson"
-        } else if (target == "telegramium.bots.NamedInputStream") {
-          s"(x: $name) => x.${x.fname}.filename.asJson"
         } else {
           s"(x: $name) => x.${x.fname}.asJson"
         }
       val decoderBody = if (target == "java.io.File") {
           s"Decoder[String].map(s => $name(new java.io.File(s)))"
-        } else if (target == "telegramium.bots.NamedInputStream") {
-          s"""Decoder.failedWithMessage[$name](s"$name cannot be decoded")"""
         } else {
           s"Decoder[$target].map($name.apply)"
         }
