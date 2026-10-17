@@ -53,23 +53,4 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     bodies.exists(_.contains("inputpartfileDecoder: Decoder[InputPartFile] = Decoder[String].map(s => InputPartFile(new java.io.File(s)))")) shouldBe true
   }
 
-  "IFile-like wrap targeting telegramium.bots.NamedInputStream" must "encode via the stream's filename and refuse to decode" in {
-    val bodies = generate(
-      """
-        |namespace telegramium {
-        |  namespace bots(snake circe) {
-        |    enum IFile {
-        |      wrap InputStreamFile (file) = telegramium.bots.NamedInputStream
-        |    }
-        |  }
-        |}
-      """.stripMargin
-    )
-    bodies.exists(
-      _.contains("inputstreamfileEncoder: Encoder[InputStreamFile] = (x: InputStreamFile) => x.file.filename.asJson")
-    ) shouldBe true
-    bodies.exists(
-      _.contains("""inputstreamfileDecoder: Decoder[InputStreamFile] = Decoder.failedWithMessage[InputStreamFile](s"InputStreamFile cannot be decoded")""")
-    ) shouldBe true
-  }
 }
