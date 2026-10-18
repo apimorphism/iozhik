@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  test:
+    name: sbt test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - run: sbt test
+
+  telegramium-regen:
+    name: Regen telegramium-core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout iozhik
+        uses: actions/checkout@v7
+
+      - name: Checkout apimorphism/telegramium
+        uses: actions/checkout@v7
+        with:
+          repository: apimorphism/telegramium
+          path: telegramium
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Regenerate telegramium-core
+        run: sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf telegramium/telegramium-core/src/main/scala"
+
+      - name: Compile and test regenerated telegramium-core
+        run: sbt telegramium-core/test
+        working-directory: telegramium
