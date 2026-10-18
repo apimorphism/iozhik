@@ -709,22 +709,20 @@ class ScalaApiGeneratorV1 {
   private def hasNestedFileFields(s: Struc): Boolean =
     fileBearingVariants(s).exists(_.fields.exists(_.opts.contains("file")))
 
-  // A field whose own kind isn't `(file) IFile`/`Option[IFile]`, but which names (directly, or through one
-  // List[_] layer) a compound type (e.g. InputMedia) that itself embeds file fields one level in.
-  private case class NestedFileField(isList: Boolean, innerKind: Kind, innerStruc: Struc)
+  // The kind a non-file field names, with one List[_] layer unwrapped, and whether it was a List.
+  private def elementKind(f: Field): Option[(Kind, Boolean)] =
+    if (f.opts.contains("file")) None
+    else if (f.kind.name == "List") f.kind.params.headOption.map(_ -> true)
+    else Some(f.kind -> false)
 
-  private def resolveNestedFileField(f: Field)(implicit meta: GeneratorMeta): Option[NestedFileField] =
-    if (f.opts.contains("file")) {
-      None
-    } else {
-      val isList = f.kind.name == "List"
-      val innerKindOpt = if (isList) f.kind.params.headOption else Some(f.kind)
-      innerKindOpt.flatMap { innerKind =>
-        meta.symt.resolve(innerKind).collect {
-          case s: Struc if hasNestedFileFields(s) => NestedFileField(isList, innerKind, s)
-        }
-      }
-    }
+  // The compound types (e.g. InputMedia) that a service's method params name, directly or through one List[_]
+  // layer, and that themselves embed file fields one level in. Resolved once per service, in first-use order.
+  private def collectFileStrucs(defs: List[Defun])(implicit meta: GeneratorMeta): List[(Kind, Struc)] =
+    defs
+      .flatMap(_.dom.toOption.toList.flatMap(_.fields))
+      .flatMap(elementKind(_).map(_._1))
+      .distinct
+      .flatMap(k => meta.symt.resolve(k).collect { case s: Struc if hasNestedFileFields(s) => k -> s })
 
   // Generates `private def attachFiles_<Type>(name: String, value: <Type>): (<Type>, Map[String, IFile])`,
   // which rewrites a compound value's embedded file field(s) to `attach://<name>` placeholders and collects
@@ -762,7 +760,7 @@ class ScalaApiGeneratorV1 {
     )
   }
 
-  private def genMethodsFactoryDefun(x: Defun)(implicit meta: GeneratorMeta) =
+  private def genMethodsFactoryDefun(x: Defun, fileKinds: Set[Kind])(implicit meta: GeneratorMeta) =
     for {
       kind <- genKind(x.kind)
       params <- x.dom.fold(
@@ -792,10 +790,9 @@ class ScalaApiGeneratorV1 {
       val docs = genDefunDocs(x)
       val reqParams = params.intercalate(", ")
 
-      // Pair each request field with its nested-file plan (if any) in one pass, so the arg name used to
-      // build the request, the attach/collect statement, and the files-map contribution all stay in sync
-      // by construction instead of being re-joined later by field name.
-      val fieldPlans = reqFields.map(f => f -> resolveNestedFileField(f))
+      // Pair each request field with its file-bearing element kind (if any) in one pass, so the arg name used
+      // to build the request, the attach/collect statement, and the files-map contribution all stay in sync.
+      val fieldPlans = reqFields.map(f => f -> elementKind(f).filter { case (k, _) => fileKinds.contains(k) })
       val fieldNames = fieldPlans.map {
         case (f, None)    => sanitize(f.name)
         case (f, Some(_)) => s"${sanitize(f.name)}Attached"
@@ -817,17 +814,15 @@ class ScalaApiGeneratorV1 {
       val directAttachment = Option.when(fileFields.nonEmpty)(
         s"""Map(${fileFields.mkString(", ")}).collect { case (k, Some(v)) => k -> v }"""
       )
-      // For each nested-file field: the attach/collect statement, its files-map expression, and its dispatcher.
-      val nested = fieldPlans.collect { case (f, Some(n)) =>
+      // For each nested-file field: the attach/collect statement and its files-map expression.
+      val nested = fieldPlans.collect { case (f, Some((elemKind, isList))) =>
         val fname    = sanitize(f.name)
-        val typeName = sanitize(n.innerKind.name)
-        val (stmt, files) =
-          if (n.isList)
-            (s"""val (${fname}Attached, ${fname}Files) = $fname.zipWithIndex.map { case (v, idx) => attachFiles_$typeName(s"${fname}$$idx", v) }.unzip""",
-              s"${fname}Files.flatten.toMap")
-          else
-            (s"""val (${fname}Attached, ${fname}Files) = attachFiles_$typeName("$fname", $fname)""", s"${fname}Files")
-        (stmt, files, genAttachDispatcher(n.innerKind, n.innerStruc))
+        val typeName = sanitize(elemKind.name)
+        if (isList)
+          (s"""val (${fname}Attached, ${fname}Files) = $fname.zipWithIndex.map { case (v, idx) => attachFiles_$typeName(s"${fname}$$idx", v) }.unzip""",
+            s"${fname}Files.flatten.toMap")
+        else
+          (s"""val (${fname}Attached, ${fname}Files) = attachFiles_$typeName("$fname", $fname)""", s"${fname}Files")
       }
       val attachmentParts = directAttachment.toList ++ nested.map(_._2)
       val attachments = if (attachmentParts.isEmpty) "" else ", " + attachmentParts.mkString(" ++ ")
@@ -841,7 +836,7 @@ class ScalaApiGeneratorV1 {
            |  $defunBody
            |}
        """.stripMargin
-      dom ++ cod ++ nested.map(_._3) :+ Code(
+      dom ++ cod :+ Code(
         body = code,
         name = x.kind.name,
         packageObject = "__this_trait__",
@@ -1022,8 +1017,10 @@ class ScalaApiGeneratorV1 {
     for {
       kind <- genKind(x.kind)
       defs = x.items.collect{ case a: Defun => a }
-      itemsRaw <- defs.traverse(d => if (x.opts.contains("methodsFactory")) genMethodsFactoryDefun(d) else genDefun(d))
-      items = itemsRaw.flatten
+      fileStrucs = if (x.opts.contains("methodsFactory")) collectFileStrucs(defs) else List.empty
+      fileKinds = fileStrucs.map(_._1).toSet
+      itemsRaw <- defs.traverse(d => if (x.opts.contains("methodsFactory")) genMethodsFactoryDefun(d, fileKinds) else genDefun(d))
+      items = fileStrucs.map { case (k, s) => genAttachDispatcher(k, s) } ++ itemsRaw.flatten
       d = delimiter
     } yield {
       val strucs = items.filter{ y =>
@@ -1031,9 +1028,7 @@ class ScalaApiGeneratorV1 {
         y.packageObject != "__this_impl__" &&
         y.packageObject != "__this_server_defs__"
       }
-      // Several methods can embed the same compound type (e.g. InputMedia is used by both sendMediaGroup and
-      // editMessageMedia), each independently emitting the same attachFiles_<Type> dispatcher; keep one copy.
-      val defuns = items.filter(_.packageObject == "__this_trait__").distinctBy(c => (c.name, c.body)).map(_.body).intercalate(d)
+      val defuns = items.filter(_.packageObject == "__this_trait__").map(_.body).intercalate(d)
       val code = if (x.opts.contains("methodsFactory")) genMethodsFactory(x, defuns, kind, items)
       else genServcDefault(x, defuns, kind, items)
       strucs ++ code
