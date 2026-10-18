@@ -1,9 +1,10 @@
 package iozhik
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import scodec.bits.BitVector
 
-class ScodecSpec extends FlatSpec with Matchers with Model {
+class ScodecSpec extends AnyFlatSpec with Matchers with Model {
 
   import scodec._
 

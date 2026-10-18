@@ -1,8 +1,9 @@
 package iozhik
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class CirceJsonSpec extends FlatSpec with Matchers with Model {
+class CirceJsonSpec extends AnyFlatSpec with Matchers with Model {
 
   import io.circe._
   import io.circe.syntax._

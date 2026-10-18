@@ -1,6 +1,7 @@
 package iozhik
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 trait Fig
 case object Goo extends Fig
@@ -107,7 +108,7 @@ object uPickleImplicits {
 
 }
 
-class BinCodecExperiments extends FlatSpec with Matchers with Model {
+class BinCodecExperiments extends AnyFlatSpec with Matchers with Model {
 
   import upickle.default._
   import uPickleImplicits._
