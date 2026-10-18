@@ -1,0 +1,160 @@
+import net.ruippeixotog.scalascraper.browser.JsoupBrowser
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+import TgBotApiScrapper._
+
+class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
+
+  private def parse(content: String): List[ApiItem] =
+    TgBotApiScrapper.parse(JsoupBrowser.typed().parseString(s"""<div id="dev_page_content">$content</div>"""))
+
+  private def method(content: String): Method = parse(content).collect { case m: Method => m } match {
+    case m :: Nil => m
+    case other    => fail(s"Expected exactly one method, got $other")
+  }
+
+  private def entity(content: String): Entity = parse(content).collect { case e: Entity => e } match {
+    case e :: Nil => e
+    case other    => fail(s"Expected exactly one entity, got $other")
+  }
+
+  private val methodTable =
+    """<table class="table">
+      |<thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      |<tbody><tr><td>limit</td><td>Integer</td><td>Optional</td><td>Limits the number of updates</td></tr></tbody>
+      |</table>""".stripMargin
+
+  private val entityTable =
+    """<table class="table">
+      |<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      |<tbody><tr><td>file_id</td><td>String</td><td>Identifier for this file</td></tr></tbody>
+      |</table>""".stripMargin
+
+  "A note between the description and the table" must "be kept as its own paragraph" in {
+    val file = entity(
+      s"""<h4>File</h4>
+         |<p>This object represents a file ready to be downloaded.</p>
+         |<blockquote>
+         |<p>The maximum file size to download is 20 MB</p>
+         |</blockquote>
+         |$entityTable""".stripMargin
+    )
+    file.desc shouldBe "This object represents a file ready to be downloaded.\n\nThe maximum file size to download is 20 MB"
+    file.table.map(_.name) shouldBe List("file_id")
+  }
+
+  "A note after the table" must "be kept, with its <br>-separated items" in {
+    val getUpdates = method(
+      s"""<h4>getUpdates</h4>
+         |<p>Use this method to receive incoming updates. Returns an Array of <a href="#update">Update</a> objects.</p>
+         |$methodTable
+         |<blockquote>
+         |<p><strong>Notes</strong><br><strong>1.</strong> This method will not work if an outgoing webhook is set up.<br><strong>2.</strong> In order to avoid getting duplicate updates, recalculate <em>offset</em> after each server response.</p>
+         |</blockquote>
+         |<h4>setWebhook</h4>""".stripMargin
+    )
+    getUpdates.desc shouldBe
+      """Use this method to receive incoming updates. Returns an Array of <a href="https://core.telegram.org/bots/api#update">Update</a> objects.
+        |
+        |<strong>Notes</strong><br>
+        |
+        |<strong>1.</strong> This method will not work if an outgoing webhook is set up.<br>
+        |
+        |<strong>2.</strong> In order to avoid getting duplicate updates, recalculate <em>offset</em> after each server response.""".stripMargin
+    getUpdates.returns shouldBe "List[Update]"
+    getUpdates.table.map(_.name) shouldBe List("limit")
+  }
+
+  "A note with several paragraphs" must "keep each of them" in {
+    val setWebhook = method(
+      s"""<h4>setWebhook</h4>
+         |<p>Use this method to specify a URL. Returns <em>True</em> on success.</p>
+         |<p>If you'd like to make sure that the webhook was set by you, you can specify secret data.</p>
+         |$methodTable
+         |<blockquote>
+         |<p><strong>3.</strong> Ports currently supported <em>for webhooks</em>: <strong>443, 80, 88, 8443</strong>.</p>
+         |<p>If you're having any trouble setting up webhooks, please check out this guide.</p>
+         |</blockquote>""".stripMargin
+    )
+    setWebhook.desc shouldBe
+      """Use this method to specify a URL. Returns <em>True</em> on success.
+        |If you'd like to make sure that the webhook was set by you, you can specify secret data.
+        |
+        |<strong>3.</strong> Ports currently supported <em>for webhooks</em>: <strong>443, 80, 88, 8443</strong>.
+        |
+        |If you're having any trouble setting up webhooks, please check out this guide.""".stripMargin
+    setWebhook.returns shouldBe "Boolean"
+  }
+
+  "A note between two paragraphs" must "stay in place" in {
+    val sendChatAction = method(
+      s"""<h4>sendChatAction</h4>
+         |<p>Use this method when you need to tell the user that something is happening. Returns <em>True</em> on success.</p>
+         |<blockquote>
+         |<p>Example: The <a href="https://t.me/imagebot">ImageBot</a> needs some time to process a request.</p>
+         |</blockquote>
+         |<p>We only recommend using this method when a response will take a <strong>noticeable</strong> amount of time.</p>
+         |$methodTable""".stripMargin
+    )
+    sendChatAction.desc shouldBe
+      """Use this method when you need to tell the user that something is happening. Returns <em>True</em> on success.
+        |
+        |Example: The <a href="https://t.me/imagebot">ImageBot</a> needs some time to process a request.
+        |
+        |We only recommend using this method when a response will take a <strong>noticeable</strong> amount of time.""".stripMargin
+    sendChatAction.returns shouldBe "Boolean"
+  }
+
+  "A note after an image" must "be kept" in {
+    val loginUrl = entity(
+      s"""<h4>LoginUrl</h4>
+         |<p>This object represents a parameter of the inline keyboard button used to automatically authorize a user.</p>
+         |<div class="blog_image_wrap"><a href="/file/1"><img src="/file/2" alt="TITLE" /></a></div>
+         |<blockquote>
+         |<p>Sample bot: <a href="https://t.me/discussbot">@DiscussBot</a></p>
+         |</blockquote>
+         |$entityTable""".stripMargin
+    )
+    loginUrl.desc shouldBe
+      """This object represents a parameter of the inline keyboard button used to automatically authorize a user.
+        |
+        |Sample bot: <a href="https://t.me/discussbot">&#064;DiscussBot</a>""".stripMargin
+  }
+
+  "A list inside a note" must "be rendered as bullet paragraphs" in {
+    val forceReply = entity(
+      s"""<h4>ForceReply</h4>
+         |<p>Upon receiving a message with this object, Telegram clients will display a reply interface.</p>
+         |$entityTable
+         |<blockquote>
+         |<p><strong>Example:</strong> There could be two ways to create a new poll:</p>
+         |<ul>
+         |<li>Explain the user how to send a command with parameters.</li>
+         |<li>Guide the user through a step-by-step process.</li>
+         |</ul>
+         |</blockquote>""".stripMargin
+    )
+    forceReply.desc shouldBe
+      """Upon receiving a message with this object, Telegram clients will display a reply interface.
+        |
+        |<strong>Example:</strong> There could be two ways to create a new poll:
+        |
+        |- Explain the user how to send a command with parameters.
+        |
+        |- Guide the user through a step-by-step process.""".stripMargin
+  }
+
+  "The return type" must "be inferred from the description only, not from its notes" in {
+    val answerCallbackQuery = method(
+      s"""<h4>answerCallbackQuery</h4>
+         |<p>Use this method to send answers to callback queries. On success, <em>True</em> is returned.</p>
+         |<blockquote>
+         |<p>Alternatively, see <a href="#message">Message</a> and <em>Array</em> of games, otherwise use links.</p>
+         |</blockquote>
+         |$methodTable""".stripMargin
+    )
+    answerCallbackQuery.returns shouldBe "Boolean"
+    answerCallbackQuery.desc should include("otherwise use links")
+  }
+}
