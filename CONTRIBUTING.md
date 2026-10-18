@@ -22,34 +22,46 @@ hand-edited there (see that repo's CONTRIBUTING.md). If you need a change in
 
 ## Regenerating telegramium-core
 
-Check out `apimorphism/telegramium` next to this repo (or point
-`TELEGRAMIUM_DIR` at it), enter the dev shell (`direnv allow` or
-`nix develop`), and run:
+Check out `apimorphism/telegramium` next to this repo, then from this repo's
+root run:
 
 ```
-tgbot-scrape       # re-scrapes core.telegram.org/bots/api -> iozhtest/src/main/resources/tgbot.api
-tgbot-regen-core   # recompiles tgbot.api -> $TELEGRAMIUM_DIR/telegramium-core/src/main/scala (full rewrite)
-# or both at once:
-tgbot-refresh
+# re-scrape core.telegram.org/bots/api -> iozhtest/src/main/resources/tgbot.api
+IOZHDIR="$PWD" sbt "iozh-api-scraper/runMain TgBotApiScrapper"
+
+# recompile tgbot.api -> <telegramium checkout>/telegramium-core/src/main/scala
+# (full rewrite - everything under src/main/scala there is deleted and regenerated)
+sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf <path-to-telegramium>/telegramium-core/src/main/scala"
 ```
 
-`tgbot-regen-core` deletes and rewrites everything under
-`telegramium-core/src/main/scala` in the target checkout, so run it on a clean
-tree and review the diff before committing. Format and commit the result in
-**both** repos:
+Run the regen step on a clean `telegramium-core` tree and review the diff
+before committing. Format and commit the result in **both** repos:
 
-1. Here: commit the refreshed `iozhtest/src/main/resources/tgbot.api` (run
-   `iozhik-fmt` first) if it changed.
+1. Here: commit the refreshed `iozhtest/src/main/resources/tgbot.api` (format
+   first, see Code style below) if it changed.
 2. In the telegramium checkout: commit the regenerated
    `telegramium-core/src/main/scala` tree (run `sbt fmtAll` there, per its
    CONTRIBUTING.md).
 
 Open a PR in each repo that changed.
 
+(Optional: `nix develop` / `direnv allow` loads a dev shell with these two
+steps as `tgbot-scrape` and `tgbot-regen-core` - the latter reads a
+`TELEGRAMIUM_DIR` env var instead of a positional path, defaulting to
+`../telegramium` - plus a combined `tgbot-refresh`. Not required; the raw
+`sbt` commands above work the same without Nix.)
+
 ## Code style
 
-Before submitting a PR, run `iozhik-fmt` (`scalafixAll`, `scalafmtAll`,
-`scalafmtSbt`) and make sure `sbt iozhik/test iozh-api-scraper/test` passes.
+Before submitting a PR, run:
+
+```
+sbt scalafixAll scalafmtAll scalafmtSbt
+sbt iozhik/test iozh-api-scraper/test
+```
+
+(Optional: the dev shell's `iozhik-fmt` alias runs the three formatting
+commands above.)
 
 Note: the aggregate `sbt test` currently fails because the `iozhtest` module
 (generated fixtures for other scraped APIs, e.g. VK) has a pre-existing
