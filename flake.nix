@@ -41,9 +41,10 @@
       devShells = forEachSupportedSystem (
         { pkgs, system }:
         {
-          # Aliases below implement the generation flow documented in CONTRIBUTING.md
-          # and AGENTS.md. They assume a sibling checkout of apimorphism/telegramium;
-          # set TELEGRAMIUM_DIR if it isn't at ../telegramium.
+          # Aliases below implement the generation flow documented in
+          # CONTRIBUTING.md. They assume a sibling checkout of
+          # apimorphism/telegramium; set TELEGRAMIUM_DIR if it isn't at
+          # ../telegramium.
           default = pkgs.mkShellNoCC {
             packages = with pkgs; [
               scala
@@ -75,17 +76,9 @@
                 sbt scalafixAll scalafmtAll scalafmtSbt
               }
 
-              iozhik-push() {
-                GH_TOKEN="$GH_TOKEN_APIMORPHISM" git push -u origin "$(git branch --show-current)"
-              }
+              export -f tgbot-scrape tgbot-regen-core tgbot-refresh iozhik-fmt
 
-              iozhik-pr-draft() {
-                GH_TOKEN="$GH_TOKEN_APIMORPHISM" gh pr create --repo apimorphism/iozhik --draft --fill
-              }
-
-              export -f tgbot-scrape tgbot-regen-core tgbot-refresh iozhik-fmt iozhik-push iozhik-pr-draft
-
-              echo "iozhik dev shell: tgbot-scrape, tgbot-regen-core, tgbot-refresh, iozhik-fmt, iozhik-push, iozhik-pr-draft"
+              echo "iozhik dev shell: tgbot-scrape, tgbot-regen-core, tgbot-refresh, iozhik-fmt"
               echo "TELEGRAMIUM_DIR=$TELEGRAMIUM_DIR"
             '';
           };

@@ -44,8 +44,7 @@ tree and review the diff before committing. Format and commit the result in
    `telegramium-core/src/main/scala` tree (run `sbt fmtAll` there, per its
    CONTRIBUTING.md).
 
-Open a PR in each repo that changed. See [AGENTS.md](AGENTS.md) for how
-automated agents should open these PRs against `apimorphism/iozhik` directly.
+Open a PR in each repo that changed.
 
 ## Code style
 
