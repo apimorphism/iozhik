@@ -86,8 +86,23 @@ object TgBotApiScrapper extends IOApp {
         renderNodes(rest)
     }
 
+    // A note (<blockquote>) is rendered as its own paragraphs, one per inner block,
+    // with list items as "- " bullet lines like the <br>-separated lists above.
+    private def renderBlock(e: Element): String = e.tagName match {
+      case "blockquote" => e.children.toList.map(renderBlock).mkString("\n\n")
+      case "ul"         => e.children.toList.map(li => "- " + renderNodes(li.childNodes.toList)).mkString("\n\n")
+      case _            => renderNodes(e.childNodes.toList)
+    }
+
+    private def isNote(e: Element): Boolean = e.tagName == "blockquote"
+
     def apply(source: List[Element]): Desc = {
-      val text = source.map(e => renderNodes(e.childNodes.toList)).intercalate("\n")
+      val text = source.headOption.fold("") { head =>
+        source.zip(source.tail).foldLeft(renderBlock(head)) { case (acc, (prev, next)) =>
+          val separator = if (isNote(prev) || isNote(next)) "\n\n" else "\n"
+          acc + separator + renderBlock(next)
+        }
+      }
       val links = source.flatMap(_ >> elements("a")).map(e => Link(e.text, e.attr("href")))
       val cleanedText = text
         .replace("@", "&#064;")
@@ -413,181 +428,189 @@ object TgBotApiScrapper extends IOApp {
       .drain
   }
 
+  def parse(doc: JsoupBrowser.JsoupDocument): List[ApiItem] = {
+    doc.underlying.select("img.emoji").forEach(e => e.replaceWith(new nodes.TextNode(e.attr("alt"))))
+    val rawItems = doc >> elements("div#dev_page_content > *")
+
+    case class Item(name: Element, desc: List[Element], table: Element)
+    case class Sumt(name: Element, desc: Element, items: Element)
+
+    def mkType(name: String, desc: Desc, s: String): String = {
+      val descText = desc.text
+      val mustBeLong = descText.contains("greater than 32 bits") ||
+        descText.contains("more than 32 significant bits") ||
+        descText.contains("bigger than 2^31") ||
+        descText.contains("size in bytes") ||
+        descText.contains("Unix time") ||
+        name == "user_id" ||
+        name == "receiver_user_id" ||
+        name == "chat_id" ||
+        name == "sender_chat_id" ||
+        name == "new_owner_chat_id" ||
+        name == "actor_chat_id" ||
+        name == "added_user_ids" ||
+        name == "from_chat_id" ||
+        name == "amount" || name.toLowerCase().contains("amount") ||
+        name == "send_date" ||
+        name == "direct_messages_topic_id"
+      val isFile = desc.links.exists(_.href == "#sending-files")
+      if (isFile)
+          "IFile"  
+      else {
+        val result = if (s == "List[Messages]") "List[Message]" else s
+        result
+          .replace(" number", "") // Float number => Float
+          .replace("True", "Boolean")
+          .replace("False", "Boolean")
+          .replace("Integer or String", "ChatId")
+          .replace("Integer", if (mustBeLong) "Long" else "Int")
+          .replace("InputFile or String", "IFile")
+          .replace("InputFile", "IFile")
+          .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
+          .replace("InputMediaAudio, InputMediaDocument, InputMediaLivePhoto, InputMediaPhoto and InputMediaVideo", "InputMedia")
+          .replace("InputPollOptionMedia", "InputMedia")
+          .replace("InputPollMedia", "InputMedia")
+          .replace("InputMediaAnimation or InputMediaAudio or InputMediaPhoto or InputMediaVideo or InputMediaVoiceNote", "InputMedia")
+          .replace("InputMediaAnimation or InputMediaAudio or InputMediaDocument or InputMediaPhoto or InputMediaVideo or InputMediaVoiceNote", "InputMedia")
+      }
+    }
+
+    def isH4(e: Element): Boolean = e.tagName.toLowerCase == "h4"
+    def isP(e: Element): Boolean = e.tagName.toLowerCase == "p"
+    def isTable(e: Element): Boolean = e.tagName.toLowerCase == "table" && !e.attrs("class").contains("table-bordered")
+    def isUL(e: Element): Boolean = e.tagName.toLowerCase == "ul"
+    def isBQ(e: Element): Boolean = e.tagName.toLowerCase == "blockquote"
+    def isDiv(e: Element): Boolean = e.tagName.toLowerCase == "div"
+
+    val fake: Element = JsoupElement(new nodes.Element("section"))
+
+    // Notes that follow an item's table (e.g. getUpdates, CallbackQuery) belong to its description.
+    def trailingBQ(rest: List[Element]): List[Element] = rest.headOption.filter(isBQ).toList
+
+    val apiItems = (rawItems.toList ++ List(fake, fake, fake, fake)).sliding(7, 1)
+      .map(_.toList)
+      .collect {
+        case x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: rest if isH4(x1) && isP(x2) &&
+          isDiv(x3) && isP(x4) && isBQ(x5) && isTable(x6) =>
+          Item(name = x1, desc = List(x2, x4, x5) ++ trailingBQ(rest), table = x6)
+        case x1 :: x2 :: x3 :: x4 :: x5 :: rest if isH4(x1) && isP(x2) && isDiv(x3) && isBQ(x4) && isTable(x5) =>
+          Item(name = x1, desc = List(x2, x4) ++ trailingBQ(rest), table = x5)
+        case x1 :: x2 :: x3 :: x4 :: x5 :: rest if isH4(x1) && isP(x2) && isP(x3) && isP(x4) && isTable(x5) =>
+          Item(name = x1, desc = List(x2, x3, x4) ++ trailingBQ(rest), table = x5)
+        case x1 :: x2 :: x3 :: x4 :: rest if isH4(x1) && isP(x2) && isP(x3) && isTable(x4) =>
+          Item(name = x1, desc = List(x2, x3) ++ trailingBQ(rest), table = x4)
+        case x1 :: x2 :: x3 :: x4 :: x5 :: rest if isH4(x1) && isP(x2) && isBQ(x3) && isP(x4) && isTable(x5) =>
+          Item(name = x1, desc = List(x2, x3, x4) ++ trailingBQ(rest), table = x5)
+        case x1 :: x2 :: x3 :: x4 :: rest if isH4(x1) && isP(x2) && isBQ(x3) && isTable(x4) =>
+          Item(name = x1, desc = List(x2, x3) ++ trailingBQ(rest), table = x4)
+        case x1 :: x2 :: x3 :: rest if isH4(x1) && isP(x2) && isTable(x3) =>
+          Item(name = x1, desc = List(x2) ++ trailingBQ(rest), table = x3)
+        case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && isUL(x3) =>
+          Sumt(name = x1, desc = x2, items = x3)
+        case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && !x1.text.contains(" ") =>
+          Item(name = x1, desc = List(x2), table = x3)
+        case x1 :: x2 :: rest if isH4(x1) && isTable(x2) =>
+          Item(name = x1, desc = trailingBQ(rest), table = x2)
+      }
+      .collect {
+        case x: Item if x.name.text.head.isLower =>
+          val params = x.table >> elements("tbody > tr")
+          // Notes may mention other types and words like "otherwise"; infer the return type from the main text only.
+          val retDesc = x.desc.filterNot(isBQ)
+          val types = retDesc.flatMap(y => y >> elements("a"))
+            .filter(_.attr("href").startsWith("#"))
+            .map(_.text)
+            .filter(_.headOption.exists(_.isUpper))
+          val resA = types.find(_ == "Message").orElse(types.headOption)
+          val resEm = retDesc.flatMap(y => y >> elements("em"))
+            .map(_.text)
+            .find(_.head.isUpper)
+          val useEither = retDesc.map(_.text).exists(_.contains("otherwise"))
+          val res = (resA, resEm) match {
+            case (Some(a), Some(em)) if useEither     => s"Either[$em, $a]"
+            case (Some(a), Some(em)) if em == "Array" => a
+            case (_, Some(em))                        => em
+            case (Some(a), None)                      => a
+            case _                                    => "CANT_PARSE_RETURN_VALUE"
+          }
+          val returns = if (retDesc.map(_.text.toLowerCase).intercalate(" ").contains("array of")) {
+            s"List[$res]"
+          } else {
+            res
+          }
+          Method(
+            name = x.name.text,
+            desc = Desc(x.desc).text,
+            table = params.map { y =>
+              val k = y.children.toList(1).text
+              val name = y.children.toList.head.text
+              val desc = Desc(y.children.toList(3))
+              MethodParam(
+                name = name,
+                kind = mkType(name, desc, k),
+                required = y.children.toList(2).text,
+                desc = desc.text,
+              )
+            }.toList,
+            returns = mkType("", Desc.empty, returns)
+          )
+        case x: Item if x.name.text.head.isUpper =>
+          val params = x.table >> elements("tbody > tr")
+          val itemName = x.name.text
+          Entity(
+            name = itemName,
+            desc = Desc(x.desc).text,
+            table = params.map { y =>
+              val name = y.children.toList.head.text
+              val kind = y.children.toList(1).text
+              val desc = Desc(y.children.toList(2))
+              val descText = desc.text
+              if (
+                (name == "type" || name == "source" || name == "status") && 
+                  (descText.contains(", must be ") || descText.contains(", always ") || itemName == "MessageEntity")
+              ) {
+                val cleanedDesc = descText.replaceAll(".*must be ", "")
+                val typeDesc = discriminatorPattern
+                  .findFirstMatchIn(cleanedDesc)
+                  .map(_.group(1))
+                  .getOrElse(cleanedDesc)
+                  .stripPrefix("“")
+                  .stripSuffix("”")
+                  .stripPrefix("<em>")
+                  .stripSuffix("</em>")
+                EntityParam(
+                  name = name,
+                  kind = "__type_tag__",
+                  desc = typeDesc
+                )
+              } else {
+                EntityParam(
+                  name = name,
+                  kind = mkType(name, desc, kind),
+                  desc = descText,
+                )
+              }
+            }.toList
+          )
+        case x: Sumt if !x.name.text.contains(" ") =>
+          val items = x.items >> elements("li")
+          Sumtyp(
+            name = x.name.text,
+            desc = x.desc.text,
+            items = items
+              .map(_.text)
+              .toList
+          )
+      }
+      .toList
+
+    apiItems
+  }
+
   override def run(args: List[String]): IO[ExitCode] =
     IO {
       val browser = JsoupBrowser.typed()
-      val doc = browser.get("https://core.telegram.org/bots/api")
-      doc.underlying.select("img.emoji").forEach(e => e.replaceWith(new nodes.TextNode(e.attr("alt"))))
-      val rawItems = doc >> elements("div#dev_page_content > *")
-
-      case class Item(name: Element, desc: List[Element], table: Element)
-      case class Sumt(name: Element, desc: Element, items: Element)
-
-      def mkType(name: String, desc: Desc, s: String): String = {
-        val descText = desc.text
-        val mustBeLong = descText.contains("greater than 32 bits") ||
-          descText.contains("more than 32 significant bits") ||
-          descText.contains("bigger than 2^31") ||
-          descText.contains("size in bytes") ||
-          descText.contains("Unix time") ||
-          name == "user_id" ||
-          name == "receiver_user_id" ||
-          name == "chat_id" ||
-          name == "sender_chat_id" ||
-          name == "new_owner_chat_id" ||
-          name == "actor_chat_id" ||
-          name == "added_user_ids" ||
-          name == "from_chat_id" ||
-          name == "amount" || name.toLowerCase().contains("amount") ||
-          name == "send_date" ||
-          name == "direct_messages_topic_id"
-        val isFile = desc.links.exists(_.href == "#sending-files")
-        if (isFile)
-            "IFile"  
-        else {
-          val result = if (s == "List[Messages]") "List[Message]" else s
-          result
-            .replace(" number", "") // Float number => Float
-            .replace("True", "Boolean")
-            .replace("False", "Boolean")
-            .replace("Integer or String", "ChatId")
-            .replace("Integer", if (mustBeLong) "Long" else "Int")
-            .replace("InputFile or String", "IFile")
-            .replace("InputFile", "IFile")
-            .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
-            .replace("InputMediaAudio, InputMediaDocument, InputMediaLivePhoto, InputMediaPhoto and InputMediaVideo", "InputMedia")
-            .replace("InputPollOptionMedia", "InputMedia")
-            .replace("InputPollMedia", "InputMedia")
-            .replace("InputMediaAnimation or InputMediaAudio or InputMediaPhoto or InputMediaVideo or InputMediaVoiceNote", "InputMedia")
-            .replace("InputMediaAnimation or InputMediaAudio or InputMediaDocument or InputMediaPhoto or InputMediaVideo or InputMediaVoiceNote", "InputMedia")
-        }
-      }
-
-      def isH4(e: Element): Boolean = e.tagName.toLowerCase == "h4"
-      def isP(e: Element): Boolean = e.tagName.toLowerCase == "p"
-      def isTable(e: Element): Boolean = e.tagName.toLowerCase == "table" && !e.attrs("class").contains("table-bordered")
-      def isUL(e: Element): Boolean = e.tagName.toLowerCase == "ul"
-      def isBQ(e: Element): Boolean = e.tagName.toLowerCase == "blockquote"
-      def isDiv(e: Element): Boolean = e.tagName.toLowerCase == "div"
-
-      val fake: Element = JsoupElement(new nodes.Element("section"))
-
-      val apiItems = (rawItems.toList ++ List(fake, fake, fake)).sliding(6, 1)
-        .map(_.toList)
-        .collect {
-          case x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: Nil if isH4(x1) && isP(x2) &&
-            isDiv(x3) && isP(x4) && isBQ(x5) && isTable(x6) =>
-            Item(name = x1, desc = List(x2), table = x6)
-          case x1 :: x2 :: x3 :: x4 :: x5 :: _ if isH4(x1) && isP(x2) && isDiv(x3) && isBQ(x4) && isTable(x5) =>
-            Item(name = x1, desc = List(x2), table = x5)
-          case x1 :: x2 :: x3 :: x4 :: x5 :: _ if isH4(x1) && isP(x2) && isP(x3) && isP(x4) && isTable(x5) =>
-            Item(name = x1, desc = List(x2, x3, x4), table = x5)
-          case x1 :: x2 :: x3 :: x4 :: _ if isH4(x1) && isP(x2) && isP(x3) && isTable(x4) =>
-            Item(name = x1, desc = List(x2, x3), table = x4)
-          case x1 :: x2 :: x3 :: x4 :: x5 :: _ if isH4(x1) && isP(x2) && isBQ(x3) && isP(x4) && isTable(x5) =>
-            Item(name = x1, desc = List(x2, x4), table = x5)
-          case x1 :: x2 :: x3 :: x4 :: _ if isH4(x1) && isP(x2) && isBQ(x3) && isTable(x4) =>
-            Item(name = x1, desc = List(x2), table = x4)
-          case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && isTable(x3) =>
-            Item(name = x1, desc = List(x2), table = x3)  
-          case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && isUL(x3) =>
-            Sumt(name = x1, desc = x2, items = x3)
-          case x1 :: x2 :: x3 :: _ if isH4(x1) && isP(x2) && !x1.text.contains(" ") =>
-            Item(name = x1, desc = List(x2), table = x3)
-          case x1 :: x2 :: _ if isH4(x1) && isTable(x2) =>
-            Item(name = x1, desc = List.empty, table = x2)
-        }
-        .collect {
-          case x: Item if x.name.text.head.isLower =>
-            val params = x.table >> elements("tbody > tr")
-            val types = x.desc.flatMap(y => y >> elements("a"))
-              .filter(_.attr("href").startsWith("#"))
-              .map(_.text)
-              .filter(_.headOption.exists(_.isUpper))
-            val resA = types.find(_ == "Message").orElse(types.headOption)
-            val resEm = x.desc.flatMap(y => y >> elements("em"))
-              .map(_.text)
-              .find(_.head.isUpper)
-            val useEither = x.desc.map(_.text).exists(_.contains("otherwise"))
-            val res = (resA, resEm) match {
-              case (Some(a), Some(em)) if useEither     => s"Either[$em, $a]"
-              case (Some(a), Some(em)) if em == "Array" => a
-              case (_, Some(em))                        => em
-              case (Some(a), None)                      => a
-              case _                                    => "CANT_PARSE_RETURN_VALUE"
-            }
-            val returns = if (x.desc.map(_.text.toLowerCase).intercalate(" ").contains("array of")) {
-              s"List[$res]"
-            } else {
-              res
-            }
-            Method(
-              name = x.name.text,
-              desc = Desc(x.desc).text,
-              table = params.map { y =>
-                val k = y.children.toList(1).text
-                val name = y.children.toList.head.text
-                val desc = Desc(y.children.toList(3))
-                MethodParam(
-                  name = name,
-                  kind = mkType(name, desc, k),
-                  required = y.children.toList(2).text,
-                  desc = desc.text,
-                )
-              }.toList,
-              returns = mkType("", Desc.empty, returns)
-            )
-          case x: Item if x.name.text.head.isUpper =>
-            val params = x.table >> elements("tbody > tr")
-            val itemName = x.name.text
-            Entity(
-              name = itemName,
-              desc = Desc(x.desc).text,
-              table = params.map { y =>
-                val name = y.children.toList.head.text
-                val kind = y.children.toList(1).text
-                val desc = Desc(y.children.toList(2))
-                val descText = desc.text
-                if (
-                  (name == "type" || name == "source" || name == "status") && 
-                    (descText.contains(", must be ") || descText.contains(", always ") || itemName == "MessageEntity")
-                ) {
-                  val cleanedDesc = descText.replaceAll(".*must be ", "")
-                  val typeDesc = discriminatorPattern
-                    .findFirstMatchIn(cleanedDesc)
-                    .map(_.group(1))
-                    .getOrElse(cleanedDesc)
-                    .stripPrefix("“")
-                    .stripSuffix("”")
-                    .stripPrefix("<em>")
-                    .stripSuffix("</em>")
-                  EntityParam(
-                    name = name,
-                    kind = "__type_tag__",
-                    desc = typeDesc
-                  )
-                } else {
-                  EntityParam(
-                    name = name,
-                    kind = mkType(name, desc, kind),
-                    desc = descText,
-                  )
-                }
-              }.toList
-            )
-          case x: Sumt if !x.name.text.contains(" ") =>
-            val items = x.items >> elements("li")
-            Sumtyp(
-              name = x.name.text,
-              desc = x.desc.text,
-              items = items
-                .map(_.text)
-                .toList
-            )
-        }
-        .toList
-
-      gen(apiItems)
+      gen(parse(browser.get("https://core.telegram.org/bots/api")))
     }.flatMap { content =>
       IO {
         Option(System.getenv("IOZHDIR"))
