@@ -40,21 +40,22 @@ object TgBotApiScrapper extends IOApp {
     // Tags whose formatting is preserved as literal HTML, since scaladoc embeds raw HTML.
     private val preservedTags = Set("em", "strong", "code", "b", "i")
 
-    // Detects text that is syntactically just a bare HTML tag name in angle brackets
-    // (e.g. a field whose prose names itself after a real tag, like "<h1>" or
-    // "<audio>"). Some HTML-to-markdown converters (Metals' hover renderer is one
-    // known case: its DangerousTags regex rewrites a handful of these into wiki
-    // heading/list syntax) blindly reinterpret such text as real markup. Rather than
-    // hardcode which specific tag names a given tool currently mishandles, every such
-    // mention is rendered with lookalike angle-bracket characters instead of real
-    // ones, so no HTML/Markdown-aware tool can mistake the mention itself for a tag.
-    private val bareTagMention = "^&lt;(/?[a-zA-Z][a-zA-Z0-9-]*)&gt;$".r
+    // Detects tag-like tokens in angle brackets anywhere in the text: tag names mentioned
+    // in prose (e.g. "<h1>", "<hr/>") and placeholders (e.g. "attach://<file_attach_name>",
+    // "bot<token>/<file_path>"). Some HTML-to-markdown converters reinterpret such text as
+    // real markup even when it's escaped: Metals' hover renderer decodes the entities, then
+    // either rewrites the token into wiki heading/list syntax (its DangerousTags regex) or
+    // drops it as an unknown tag, so a placeholder silently disappears from the tooltip.
+    // Rather than hardcode which tokens a given tool currently mishandles, every such token
+    // is rendered with lookalike angle-bracket characters instead of real ones, so no
+    // HTML/Markdown-aware tool can mistake it for a tag.
+    private val tagLikeToken = "&lt;(/?[a-zA-Z][a-zA-Z0-9_-]*/?)&gt;".r
 
     // Escapes literal text so it can't be mistaken for markup (e.g. a field whose
     // prose mentions "<h1>" must not be parsed as an actual tag by the HTML renderer).
     private def escapeText(s: String): String = {
       val escaped = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-      bareTagMention.replaceAllIn(escaped, m => s"ᐸ${m.group(1)}ᐳ")
+      tagLikeToken.replaceAllIn(escaped, m => s"ᐸ${m.group(1)}ᐳ")
     }
 
     // Renders text preserving <a> links (as absolute HTML links), <br> (as line

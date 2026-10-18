@@ -1313,9 +1313,8 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. */
         media                 : (file) IFile
         /* <em>Optional</em>. Thumbnail of the file sent; can be 
         ignored if thumbnail generation for the file is supported 
@@ -1324,9 +1323,8 @@ namespace telegramium {
         not exceed 320. Ignored if the file is not uploaded using 
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
-        “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         thumbnail             : (file) Option[IFile]
         /* <em>Optional</em>. Caption of the animation to be sent, 
         0-1024 characters after entities parsing */
@@ -1367,9 +1365,8 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
-        "attach://&lt;file_attach_name&gt;" to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        "attach://ᐸfile_attach_nameᐳ" to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. */
         media           : (file) IFile
         /* <em>Optional</em>. Caption of the voice message to be sent, 
         0-1024 characters after entities parsing */
@@ -1393,9 +1390,8 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. */
         media                 : (file) IFile
         /* <em>Optional</em>. Caption of the photo to be sent, 0-1024 
         characters after entities parsing */
@@ -1423,9 +1419,8 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. */
         media                 : (file) IFile
         /* <em>Optional</em>. Thumbnail of the file sent; can be 
         ignored if thumbnail generation for the file is supported 
@@ -1434,17 +1429,15 @@ namespace telegramium {
         not exceed 320. Ignored if the file is not uploaded using 
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
-        “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         thumbnail             : (file) Option[IFile]
         /* <em>Optional</em>. Cover for the video in the message. Pass 
         a file_id to send a file that exists on the Telegram servers 
         (recommended), pass an HTTP URL for Telegram to get a file 
-        from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        from the Internet, or pass “attach://ᐸfile_attach_nameᐳ” to 
+        upload a new one using multipart/form-data under 
+        ᐸfile_attach_nameᐳ name. */
         cover                 : (file) Option[IFile]
         /* <em>Optional</em>. Start timestamp for the video in the 
         message */
@@ -1483,15 +1476,15 @@ namespace telegramium {
         type : "live_photo:6"
         /* Video of the live photo to send. Pass a file_id to send a 
         file that exists on the Telegram servers (recommended) or 
-        pass “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. Sending live photos by a URL is currently unsupported. */
+        pass “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. Sending 
+        live photos by a URL is currently unsupported. */
         media                 : (file) IFile
         /* The static photo to send. Pass a file_id to send a file 
         that exists on the Telegram servers (recommended) or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. Sending live photos by a URL is currently unsupported. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. Sending 
+        live photos by a URL is currently unsupported. */
         photo                 : (file) IFile
         /* <em>Optional</em>. Caption of the live photo to be sent, 
         0-1024 characters after entities parsing */
@@ -1544,9 +1537,8 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. */
         media                       : (file) IFile
         /* <em>Optional</em>. Thumbnail of the file sent; can be 
         ignored if thumbnail generation for the file is supported 
@@ -1555,9 +1547,8 @@ namespace telegramium {
         not exceed 320. Ignored if the file is not uploaded using 
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
-        “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         thumbnail                   : (file) Option[IFile]
         /* <em>Optional</em>. Caption of the document to be sent, 
         0-1024 characters after entities parsing */
@@ -1584,9 +1575,9 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a .WEBP sticker from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new .WEBP, 
-        .TGS, or .WEBM sticker using multipart/form-data under 
-        &lt;file_attach_name&gt; name. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new .WEBP, .TGS, 
+        or .WEBM sticker using multipart/form-data under 
+        ᐸfile_attach_nameᐳ name. */
         media : (file) IFile
         /* <em>Optional</em>. Emoji associated with the sticker; only 
         for just uploaded stickers */
@@ -1599,9 +1590,8 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. */
         media           : (file) IFile
         /* <em>Optional</em>. Thumbnail of the file sent; can be 
         ignored if thumbnail generation for the file is supported 
@@ -1610,9 +1600,8 @@ namespace telegramium {
         not exceed 320. Ignored if the file is not uploaded using 
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
-        “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         thumbnail       : (file) Option[IFile]
         /* <em>Optional</em>. Caption of the audio to be sent, 0-1024 
         characters after entities parsing */
@@ -1840,9 +1829,8 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. */
         media : (file) IFile
       }
              
@@ -1851,15 +1839,15 @@ namespace telegramium {
         type : "live_photo:1"
         /* Video of the live photo to send. Pass a file_id to send a 
         file that exists on the Telegram servers (recommended) or 
-        pass “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. Sending live photos by a URL is currently unsupported. */
+        pass “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. Sending 
+        live photos by a URL is currently unsupported. */
         media : (file) IFile
         /* The static photo to send. Pass a file_id to send a file 
         that exists on the Telegram servers (recommended) or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. Sending live photos by a URL is currently unsupported. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. Sending 
+        live photos by a URL is currently unsupported. */
         photo : (file) IFile
       }
              
@@ -1869,9 +1857,8 @@ namespace telegramium {
         /* File to send. Pass a file_id to send a file that exists on 
         the Telegram servers (recommended), pass an HTTP URL for 
         Telegram to get a file from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        “attach://ᐸfile_attach_nameᐳ” to upload a new one using 
+        multipart/form-data under ᐸfile_attach_nameᐳ name. */
         media             : (file) IFile
         /* <em>Optional</em>. Thumbnail of the file sent; can be 
         ignored if thumbnail generation for the file is supported 
@@ -1880,17 +1867,15 @@ namespace telegramium {
         not exceed 320. Ignored if the file is not uploaded using 
         multipart/form-data. Thumbnails can't be reused and can be 
         only uploaded as a new file, so you can pass 
-        “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         thumbnail         : (file) Option[IFile]
         /* <em>Optional</em>. Cover for the video in the message. Pass 
         a file_id to send a file that exists on the Telegram servers 
         (recommended), pass an HTTP URL for Telegram to get a file 
-        from the Internet, or pass 
-        “attach://&lt;file_attach_name&gt;” to upload a new one 
-        using multipart/form-data under &lt;file_attach_name&gt; 
-        name. */
+        from the Internet, or pass “attach://ᐸfile_attach_nameᐳ” to 
+        upload a new one using multipart/form-data under 
+        ᐸfile_attach_nameᐳ name. */
         cover             : (file) Option[IFile]
         /* <em>Optional</em>. Start timestamp for the video in the 
         message */
@@ -1915,9 +1900,8 @@ namespace telegramium {
         type : "animated:0"
         /* The animated profile photo. Profile photos can't be reused 
         and can only be uploaded as a new file, so you can pass 
-        “attach://&lt;file_attach_name&gt;” if the photo was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        “attach://ᐸfile_attach_nameᐳ” if the photo was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         animation          : (file) IFile
         /* <em>Optional</em>. Timestamp in seconds of the frame that 
         will be used as the static profile photo. Defaults to 0.0. */
@@ -1929,9 +1913,8 @@ namespace telegramium {
         type : "static:1"
         /* The static profile photo. Profile photos can't be reused 
         and can only be uploaded as a new file, so you can pass 
-        “attach://&lt;file_attach_name&gt;” if the photo was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        “attach://ᐸfile_attach_nameᐳ” if the photo was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         photo : (file) IFile
       }
              
@@ -2052,7 +2035,7 @@ namespace telegramium {
         expression : String
       }
              
-      /* A divider, corresponding to the HTML tag <code>&lt;hr/&gt;</code>.  */
+      /* A divider, corresponding to the HTML tag <code>ᐸhr/ᐳ</code>.  */
       InputRichBlockDivider {
         type : "divider:12"
       }
@@ -2192,9 +2175,8 @@ namespace telegramium {
         /* The photo to post as a story. The photo must be of the size 
         1080x1920 and must not exceed 10 MB. The photo can't be 
         reused and can only be uploaded as a new file, so you can 
-        pass “attach://&lt;file_attach_name&gt;” if the photo was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        pass “attach://ᐸfile_attach_nameᐳ” if the photo was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         photo : (file) IFile
       }
              
@@ -2206,9 +2188,8 @@ namespace telegramium {
         frames added each second in the MPEG4 format, and must not 
         exceed 30 MB. The video can't be reused and can only be 
         uploaded as a new file, so you can pass 
-        “attach://&lt;file_attach_name&gt;” if the video was 
-        uploaded using multipart/form-data under 
-        &lt;file_attach_name&gt;. */
+        “attach://ᐸfile_attach_nameᐳ” if the video was uploaded 
+        using multipart/form-data under ᐸfile_attach_nameᐳ. */
         video               : (file) IFile
         /* <em>Optional</em>. Precise duration of the video in 
         seconds; 0-60 */
@@ -3377,7 +3358,7 @@ namespace telegramium {
         caption : Option[RichBlockCaption]
       }
              
-      /* A divider, corresponding to the HTML tag <code>&lt;hr/&gt;</code>.  */
+      /* A divider, corresponding to the HTML tag <code>ᐸhr/ᐳ</code>.  */
       RichBlockDivider {
         type : "divider:18"
       }
@@ -4406,8 +4387,8 @@ namespace telegramium {
       bio                                : Option[String]
       /* <em>Optional</em>. <em>True</em>, if privacy settings of 
       the other party in the private chat allows to use 
-      <code>tg://user?id=&lt;user_id&gt;</code> links only in 
-      chats with the user */
+      <code>tg://user?id=ᐸuser_idᐳ</code> links only in chats with 
+      the user */
       hasPrivateForwards                 : Option[Boolean]
       /* <em>Optional</em>. <em>True</em>, if the privacy settings 
       of the other party restrict sending voice and video note 
@@ -5140,8 +5121,8 @@ namespace telegramium {
            
     /* This object represents a file ready to be downloaded. The file can be 
       downloaded via the link 
-      <code>https://api.telegram.org/file/bot&lt;token&gt;/&lt;file_path&gt;</code>. 
-      It is guaranteed that the link will be valid for at least 1 hour. When the link 
+      <code>https://api.telegram.org/file/botᐸtokenᐳ/ᐸfile_pathᐳ</code>. It is 
+      guaranteed that the link will be valid for at least 1 hour. When the link 
       expires, a new one can be requested by calling <a 
       href="https://core.telegram.org/bots/api#getfile">getFile</a>.  */
     File {
@@ -5159,7 +5140,7 @@ namespace telegramium {
       double-precision float type are safe for storing this value. */
       fileSize     : Option[Long]
       /* <em>Optional</em>. File path. Use 
-      <code>https://api.telegram.org/file/bot&lt;token&gt;/&lt;file_path&gt;</code> 
+      <code>https://api.telegram.org/file/botᐸtokenᐳ/ᐸfile_pathᐳ</code> 
       to get the file. */
       filePath     : Option[String]
     }
@@ -5478,10 +5459,10 @@ namespace telegramium {
       omitted, then an app-specific style is used. */
       style                        : Option[String]
       /* <em>Optional</em>. HTTP or tg:// URL to be opened when the 
-      button is pressed. Links 
-      <code>tg://user?id=&lt;user_id&gt;</code> can be used to 
-      mention a user by their identifier without using a username, 
-      if this is allowed by their privacy settings. */
+      button is pressed. Links <code>tg://user?id=ᐸuser_idᐳ</code> 
+      can be used to mention a user by their identifier without 
+      using a username, if this is allowed by their privacy 
+      settings. */
       url                          : Option[String]
       /* <em>Optional</em>. Data to be sent in a <a 
       href="https://core.telegram.org/bots/api#callbackquery">callback 
@@ -5768,10 +5749,10 @@ namespace telegramium {
       /* The added sticker. Pass a <em>file_id</em> as a String to 
       send a file that already exists on the Telegram servers, 
       pass an HTTP URL as a String for Telegram to get a file from 
-      the Internet, or pass “attach://&lt;file_attach_name&gt;” to 
+      the Internet, or pass “attach://ᐸfile_attach_nameᐳ” to 
       upload a new file using multipart/form-data under 
-      &lt;file_attach_name&gt; name. Animated and video stickers 
-      can't be uploaded via HTTP URL. */
+      ᐸfile_attach_nameᐳ name. Animated and video stickers can't 
+      be uploaded via HTTP URL. */
       sticker      : (file) IFile
       /* Format of the added sticker, must be one of “static” for a 
       <strong>.WEBP</strong> or <strong>.PNG</strong> image, 
@@ -6686,7 +6667,7 @@ namespace telegramium {
       /* Block caption */
       text   : RichText
       /* <em>Optional</em>. Block credit which corresponds to the 
-      HTML tag &lt;cite&gt; */
+      HTML tag ᐸciteᐳ */
       credit : Option[RichText]
     }
            
@@ -6762,10 +6743,10 @@ namespace telegramium {
       callback buttons. */
       style                        : Option[String]
       /* <em>Optional</em>. HTTP or tg:// URL to be opened when the 
-      button is pressed. Links 
-      <code>tg://user?id=&lt;user_id&gt;</code> can be used to 
-      mention a user by their identifier without using a username, 
-      if this is allowed by their privacy settings. */
+      button is pressed. Links <code>tg://user?id=ᐸuser_idᐳ</code> 
+      can be used to mention a user by their identifier without 
+      using a username, if this is allowed by their privacy 
+      settings. */
       url                          : Option[String]
       /* <em>Optional</em>. Data to be sent in a <a 
       href="https://core.telegram.org/bots/api#callbackquery">callback 
@@ -8468,8 +8449,8 @@ namespace telegramium {
           <em>animals</em>). Can contain only English letters, digits 
           and underscores. Must begin with a letter, can't contain 
           consecutive underscores and must end in 
-          <code>"_by_&lt;bot_username&gt;"</code>. 
-          <code>&lt;bot_username&gt;</code> is case insensitive. 1-64 
+          <code>"_by_ᐸbot_usernameᐳ"</code>. 
+          <code>ᐸbot_usernameᐳ</code> is case insensitive. 1-64 
           characters. */
           name            : String
           /* Sticker set title, 1-64 characters */
@@ -9410,10 +9391,10 @@ namespace telegramium {
           downloading. For the moment, bots can download files of up to 20MB in size. On 
           success, a <a href="https://core.telegram.org/bots/api#file">File</a> object is 
           returned. The file can then be downloaded via the link 
-          <code>https://api.telegram.org/file/bot&lt;token&gt;/&lt;file_path&gt;</code>, 
-          where <code>&lt;file_path&gt;</code> is taken from the response. It is 
-          guaranteed that the link will be valid for at least 1 hour. When the link 
-          expires, a new one can be requested by calling <a 
+          <code>https://api.telegram.org/file/botᐸtokenᐳ/ᐸfile_pathᐳ</code>, where 
+          <code>ᐸfile_pathᐳ</code> is taken from the response. It is guaranteed that the 
+          link will be valid for at least 1 hour. When the link expires, a new one can be 
+          requested by calling <a 
           href="https://core.telegram.org/bots/api#getfile">getFile</a> again.  */
         def getFile {
           /* File identifier to get information about */
@@ -10136,9 +10117,8 @@ namespace telegramium {
           Ignored if the file is not uploaded using 
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
-          “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-          uploaded using multipart/form-data under 
-          &lt;file_attach_name&gt;. */
+          “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+          using multipart/form-data under ᐸfile_attach_nameᐳ. */
           thumbnail                  : (file) Option[IFile]
           /* Animation caption (may also be used when resending 
           animation by <em>file_id</em>), 0-1024 characters after 
@@ -10247,9 +10227,8 @@ namespace telegramium {
           Ignored if the file is not uploaded using 
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
-          “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-          uploaded using multipart/form-data under 
-          &lt;file_attach_name&gt;. */
+          “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+          using multipart/form-data under ᐸfile_attach_nameᐳ. */
           thumbnail                  : (file) Option[IFile]
           /* Sends the message <a 
           href="https://telegram.org/blog/channels-2-0#silent-messages">silently</a>. 
@@ -10525,9 +10504,8 @@ namespace telegramium {
           Ignored if the file is not uploaded using 
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
-          “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-          uploaded using multipart/form-data under 
-          &lt;file_attach_name&gt;. */
+          “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+          using multipart/form-data under ᐸfile_attach_nameᐳ. */
           thumbnail                   : (file) Option[IFile]
           /* Document caption (may also be used when resending documents 
           by <em>file_id</em>), 0-1024 characters after entities 
@@ -11662,16 +11640,15 @@ namespace telegramium {
           Ignored if the file is not uploaded using 
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
-          “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-          uploaded using multipart/form-data under 
-          &lt;file_attach_name&gt;. */
+          “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+          using multipart/form-data under ᐸfile_attach_nameᐳ. */
           thumbnail                  : (file) Option[IFile]
           /* Cover for the video in the message. Pass a file_id to send 
           a file that exists on the Telegram servers (recommended), 
           pass an HTTP URL for Telegram to get a file from the 
-          Internet, or pass “attach://&lt;file_attach_name&gt;” to 
-          upload a new one using multipart/form-data under 
-          &lt;file_attach_name&gt; name. */
+          Internet, or pass “attach://ᐸfile_attach_nameᐳ” to upload a 
+          new one using multipart/form-data under ᐸfile_attach_nameᐳ 
+          name. */
           cover                      : (file) Option[IFile]
           /* Start timestamp for the video in the message */
           startTimestamp             : Option[Int]
@@ -11766,9 +11743,8 @@ namespace telegramium {
           Ignored if the file is not uploaded using 
           multipart/form-data. Thumbnails can't be reused and can be 
           only uploaded as a new file, so you can pass 
-          “attach://&lt;file_attach_name&gt;” if the thumbnail was 
-          uploaded using multipart/form-data under 
-          &lt;file_attach_name&gt;. */
+          “attach://ᐸfile_attach_nameᐳ” if the thumbnail was uploaded 
+          using multipart/form-data under ᐸfile_attach_nameᐳ. */
           thumbnail                  : (file) Option[IFile]
           /* Sends the message <a 
           href="https://telegram.org/blog/channels-2-0#silent-messages">silently</a>. 
