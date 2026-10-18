@@ -2,7 +2,7 @@ name: Regen telegramium-core
 
 on:
   push:
-    branches: ['**']
+    branches: [master]
     paths:
       - 'iozhik/src/main/**'
       - 'iozhtest/src/main/resources/tgbot.api'
