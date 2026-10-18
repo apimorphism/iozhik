@@ -35,9 +35,5 @@ final case class HistoryVideo(
   live: Option[Int] = Option.empty,
   upcoming: Option[Int] = Option.empty,
   isFavorite: Boolean,
-  firstFrame800: String,
-  firstFrame320: String,
-  firstFrame160: String,
-  firstFrame130: String,
-  isPrivate: Boolean
+  firstFrame160: String
 )

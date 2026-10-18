@@ -10,4 +10,4 @@ case object Comments extends DataType
 
 case object Like extends DataType
 
-case object Poll extends DataType
+case object PollSource extends DataType

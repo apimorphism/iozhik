@@ -58,12 +58,5 @@ scalafmt/scalafix sbt plugin) - match the surrounding code's style. Before
 submitting a PR, run:
 
 ```
-sbt iozhik/test iozh-api-scraper/test
+sbt test
 ```
-
-Note: the aggregate `sbt test` currently fails because the `iozhtest` module
-(generated fixtures for other scraped APIs, e.g. VK) has a pre-existing
-compile error unrelated to the Telegram pipeline - `iozhtest/src/main/scala/iozhik/vk/Poll.scala:46`,
-"Poll is already defined as case class Poll". That's a separate, existing
-problem; scope your own test runs to the modules above rather than relying on
-`sbt test`.

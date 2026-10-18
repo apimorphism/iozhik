@@ -3831,7 +3831,7 @@ object CirceImplicits {
     }
 
   implicit lazy val datatypeEncoder: Encoder[DataType] = {
-    case poll: Poll.type => poll.asJson.mapObject(_.add("type", Json.fromString("poll")))
+    case poll: PollSource.type => poll.asJson.mapObject(_.add("type", Json.fromString("poll")))
     case profile_photo: ProfilePhoto.type =>
       profile_photo.asJson.mapObject(_.add("type", Json.fromString("profile_photo")))
     case profile_activity: ProfileActivity.type =>
@@ -3843,7 +3843,7 @@ object CirceImplicits {
   implicit lazy val datatypeDecoder: Decoder[DataType] = for {
     fType <- Decoder[String].prepare(_.downField("type"))
     value <- fType match {
-      case "poll"             => Decoder[Poll.type]
+      case "poll"             => Decoder[PollSource.type]
       case "profile_photo"    => Decoder[ProfilePhoto.type]
       case "profile_activity" => Decoder[ProfileActivity.type]
       case "like"             => Decoder[Like.type]
@@ -3860,8 +3860,8 @@ object CirceImplicits {
   implicit lazy val commentsDecoder: Decoder[Comments.type]               = (_: HCursor) => Right(Comments)
   implicit lazy val likeEncoder: Encoder[Like.type]                       = (_: Like.type) => ().asJson
   implicit lazy val likeDecoder: Decoder[Like.type]                       = (_: HCursor) => Right(Like)
-  implicit lazy val pollEncoder: Encoder[Poll.type]                       = (_: Poll.type) => ().asJson
-  implicit lazy val pollDecoder: Decoder[Poll.type]                       = (_: HCursor) => Right(Poll)
+  implicit lazy val pollsourceEncoder: Encoder[PollSource.type]           = (_: PollSource.type) => ().asJson
+  implicit lazy val pollsourceDecoder: Decoder[PollSource.type]           = (_: HCursor) => Right(PollSource)
 
   implicit lazy val platformtypeEncoder: Encoder[PlatformType] = {
     case iphone: Iphone.type   => iphone.asJson.mapObject(_.add("type", Json.fromString("iphone")))
@@ -6261,11 +6261,7 @@ object CirceImplicits {
           "live"            -> x.live.asJson,
           "upcoming"        -> x.upcoming.asJson,
           "is_favorite"     -> x.isFavorite.asJson,
-          "first_frame800"  -> x.firstFrame800.asJson,
-          "first_frame320"  -> x.firstFrame320.asJson,
-          "first_frame160"  -> x.firstFrame160.asJson,
-          "first_frame130"  -> x.firstFrame130.asJson,
-          "is_private"      -> x.isPrivate.asJson
+          "first_frame160"  -> x.firstFrame160.asJson
         ).filter(!_._2.isNull)
       )
     }
@@ -6302,11 +6298,7 @@ object CirceImplicits {
         _live           <- h.get[Option[Int]]("live")
         _upcoming       <- h.get[Option[Int]]("upcoming")
         _isFavorite     <- h.get[Boolean]("is_favorite")
-        _firstFrame800  <- h.get[String]("first_frame800")
-        _firstFrame320  <- h.get[String]("first_frame320")
         _firstFrame160  <- h.get[String]("first_frame160")
-        _firstFrame130  <- h.get[String]("first_frame130")
-        _isPrivate      <- h.get[Boolean]("is_private")
       } yield {
         HistoryVideo(
           id = _id,
@@ -6338,11 +6330,7 @@ object CirceImplicits {
           live = _live,
           upcoming = _upcoming,
           isFavorite = _isFavorite,
-          firstFrame800 = _firstFrame800,
-          firstFrame320 = _firstFrame320,
-          firstFrame160 = _firstFrame160,
-          firstFrame130 = _firstFrame130,
-          isPrivate = _isPrivate
+          firstFrame160 = _firstFrame160
         )
       }
     }
