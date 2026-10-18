@@ -12,3 +12,4 @@ development.conf
 .vscode
 project/metals.sbt
 project/project/
+.direnv/
