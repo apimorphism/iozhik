@@ -37,8 +37,8 @@ sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf <path-to-telegramium>/te
 Run the regen step on a clean `telegramium-core` tree and review the diff
 before committing. Format and commit the result in **both** repos:
 
-1. Here: commit the refreshed `iozhtest/src/main/resources/tgbot.api` (format
-   first, see Code style below) if it changed.
+1. Here: commit the refreshed `iozhtest/src/main/resources/tgbot.api` if it
+   changed.
 2. In the telegramium checkout: commit the regenerated
    `telegramium-core/src/main/scala` tree (run `sbt fmtAll` there, per its
    CONTRIBUTING.md).
@@ -53,15 +53,13 @@ steps as `tgbot-scrape` and `tgbot-regen-core` - the latter reads a
 
 ## Code style
 
-Before submitting a PR, run:
+This repo has no configured formatter/linter (no `.scalafmt.conf`, no
+scalafmt/scalafix sbt plugin) - match the surrounding code's style. Before
+submitting a PR, run:
 
 ```
-sbt scalafixAll scalafmtAll scalafmtSbt
 sbt iozhik/test iozh-api-scraper/test
 ```
-
-(Optional: the dev shell's `iozhik-fmt` alias runs the three formatting
-commands above.)
 
 Note: the aggregate `sbt test` currently fails because the `iozhtest` module
 (generated fixtures for other scraped APIs, e.g. VK) has a pre-existing

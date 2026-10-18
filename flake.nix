@@ -72,13 +72,9 @@
                 tgbot-scrape && tgbot-regen-core
               }
 
-              iozhik-fmt() {
-                sbt scalafixAll scalafmtAll scalafmtSbt
-              }
+              export -f tgbot-scrape tgbot-regen-core tgbot-refresh
 
-              export -f tgbot-scrape tgbot-regen-core tgbot-refresh iozhik-fmt
-
-              echo "iozhik dev shell: tgbot-scrape, tgbot-regen-core, tgbot-refresh, iozhik-fmt"
+              echo "iozhik dev shell: tgbot-scrape, tgbot-regen-core, tgbot-refresh"
               echo "TELEGRAMIUM_DIR=$TELEGRAMIUM_DIR"
             '';
           };
