@@ -158,6 +158,7 @@ object TgBotApiScrapper extends IOApp {
   private val forXOnlyPattern = "(?<=For “).*?(?=” only)".r
   private val messageEntityDescPattern = "(?:<em>)?Optional(?:</em>)?\\. For “.*” only, ".r
   private val discriminatorPattern = ".*, always “(.*?)”".r
+  private val optionalFieldDescPattern = "^(?:<em>)?Optional\\b".r
 
   def gen(items: List[ApiItem]): String = {
     def trarr(s: String): String = {
@@ -175,8 +176,14 @@ object TgBotApiScrapper extends IOApp {
     // missing optional array the same as an empty one - except for these, which need Option[List] to tell them apart.
     val emptyDiffersFromOmitted = Set("getUpdates.allowed_updates", "setWebhook.allowed_updates", "ChatFullInfo.available_reactions")
     // Optional arrays whose description talks about empty or omitted lists, but means the same by both.
-    val emptySameAsOmitted = Set("sendPoll.country_codes", "Poll.country_codes")
-    val emptyVsOmittedWording = "(?i)empty list|empty array|not specified|omitted|previous setting".r
+    val emptySameAsOmitted = Set(
+      "sendPoll.country_codes", "Poll.country_codes", "Giveaway.country_codes", "ChatFullInfo.active_usernames",
+      "WebhookInfo.allowed_updates"
+    )
+    val emptyVsOmittedWording = "(?i)\\bempty\\b|not specified|omitted|previous setting|defaults? to".r
+
+    def isOptionalField(f: EntityParam) = optionalFieldDescPattern.findFirstIn(f.desc).isDefined
+    def isOptionalParam(f: MethodParam) = f.required.toLowerCase.contains("optional")
 
     def optionalArray(owner: String, f: String, kind: String, desc: String): String = {
       val id = s"$owner.$f"
@@ -193,11 +200,11 @@ object TgBotApiScrapper extends IOApp {
       params
         .map { f =>
           val kind = if (f.kind.startsWith("Array of"))
-            if (f.desc.contains("Optional")) optionalArray(owner, f.name, f.kind, f.desc) else trarr(f.kind)
+            if (isOptionalField(f)) optionalArray(owner, f.name, f.kind, f.desc) else trarr(f.kind)
           else if (isParseMode(f.name))
             "Option[ParseMode]"
           else {
-            if (f.desc.contains("Optional")) {
+            if (isOptionalField(f)) {
               if (f.kind == "IFile") s"(file) Option[${f.kind}]" else s"Option[${f.kind}]"
             } else {
               if (f.kind == "IFile") s"(file) ${f.kind}" else f.kind
@@ -219,7 +226,7 @@ object TgBotApiScrapper extends IOApp {
         val fields = m.table
           .map { f =>
             val kind = if (f.kind.startsWith("Array of")) {
-              if (f.desc.toLowerCase.contains("optional") || f.required.toLowerCase.contains("optional")) {
+              if (isOptionalParam(f)) {
                 optionalArray(m.name, f.name, f.kind, f.desc)
               } else {
                 trarr(f.kind)
@@ -227,7 +234,7 @@ object TgBotApiScrapper extends IOApp {
             } else if (isParseMode(f.name)) {
               "Option[ParseMode]"
             } else {
-              if (f.desc.toLowerCase.contains("optional") || f.required.toLowerCase.contains("optional")) {
+              if (isOptionalParam(f)) {
                 if (f.kind == "IFile") {
                   s"(file) Option[${f.kind}]"
                 } else {

@@ -144,4 +144,23 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include(""""rows" -> x.rows.asJson""")
     body should include(""""allowed_updates" -> x.allowedUpdates.asJson""")
   }
+
+  "An (optional) field that is not a List" must "fail the generation" in {
+    val result = for {
+      space <- Parser.Grammar.parse(
+        """
+          |namespace telegramium {
+          |  namespace bots(snake circe) {
+          |    Foo {
+          |      name: (optional) String
+          |    }
+          |  }
+          |}
+        """.stripMargin
+      )
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, cfg)
+    } yield codes
+    result.left.toOption.getOrElse(fail("Generation succeeded")) should include("Foo.name")
+  }
 }

@@ -218,4 +218,36 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     ))
     e.getMessage should include("setFoo.bars")
   }
+
+  it must "fail the scrape for other wordings that give an empty list a meaning of its own" in {
+    List(
+      "If empty, all bars are removed.",
+      "If non-empty, the list of bars to keep.",
+      "Defaults to all bars.",
+      "Pass an <em>empty</em> list to remove all bars."
+    ).foreach { desc =>
+      val e = the[RuntimeException] thrownBy gen(List(
+        Method("setFoo", "Use this method to set foo.", List(MethodParam("bars", "Array of String", "Optional", desc)), "Boolean")
+      ))
+      e.getMessage should include("setFoo.bars")
+    }
+  }
+
+  "A required array whose description mentions the word optional" must "not be tagged (optional)" in {
+    val dsl = gen(List(
+      Method(
+        "sendMediaGroup",
+        "Use this method to send a group of media.",
+        List(MethodParam("media", "Array of InputMedia", "Yes", "Media to be sent, each with an optional caption")),
+        "List[Message]"
+      ),
+      Entity(
+        "Table",
+        "Describes a table.",
+        List(EntityParam("rows", "Array of Array of String", "Rows of the table. Optional cells are null."))
+      )
+    ))
+    dsl should include("media : List[InputMedia]")
+    dsl should include("rows : List[List[String]]")
+  }
 }
