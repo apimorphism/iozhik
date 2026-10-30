@@ -172,7 +172,7 @@ object TgBotApiScrapper extends IOApp {
 
     def isParseMode(name: String) = name == "parse_mode" || name == "quote_parse_mode" || name == "explanation_parse_mode" || name == "text_parse_mode"
 
-    // Optional arrays are tagged (optional) so the generated encoder can omit them when empty, as Telegram treats a
+    // Optional arrays are tagged (omitempty) so the generated encoder can omit them when empty, as Telegram treats a
     // missing optional array the same as an empty one - except for these, which need Option[List] to tell them apart.
     val emptyDiffersFromOmitted = Set("getUpdates.allowed_updates", "setWebhook.allowed_updates", "ChatFullInfo.available_reactions")
     // Optional arrays whose description talks about empty or omitted lists, but means the same by both.
@@ -188,7 +188,7 @@ object TgBotApiScrapper extends IOApp {
     def optionalArray(owner: String, f: String, kind: String, desc: String): String = {
       val id = s"$owner.$f"
       if (emptyDiffersFromOmitted.contains(id)) s"Option[${trarr(kind)}]"
-      else if (emptySameAsOmitted.contains(id) || emptyVsOmittedWording.findFirstIn(desc).isEmpty) s"(optional) ${trarr(kind)}"
+      else if (emptySameAsOmitted.contains(id) || emptyVsOmittedWording.findFirstIn(desc).isEmpty) s"(omitempty) ${trarr(kind)}"
       else sys.error(
         s"$id: the description may give an empty list and an omitted one different meanings. " +
           "Add it to emptyDiffersFromOmitted or emptySameAsOmitted in TgBotApiScrapper.gen."

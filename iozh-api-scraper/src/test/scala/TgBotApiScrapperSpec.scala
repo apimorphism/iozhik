@@ -159,7 +159,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
   }
 
   // https://github.com/apimorphism/telegramium/issues/686
-  "An optional array" must "be tagged (optional), unlike a required one" in {
+  "An optional array" must "be tagged (omitempty), unlike a required one" in {
     val dsl = gen(List(
       Method(
         "sendMessage",
@@ -179,9 +179,9 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
         )
       )
     ))
-    dsl should include("entities : (optional) List[MessageEntity]")
+    dsl should include("entities : (omitempty) List[MessageEntity]")
     dsl should include("options  : List[String]")
-    dsl should include("blocks : (optional) List[InputRichBlock]")
+    dsl should include("blocks : (omitempty) List[InputRichBlock]")
     dsl should include("rows   : List[List[String]]")
   }
 
@@ -233,7 +233,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     }
   }
 
-  "A required array whose description mentions the word optional" must "not be tagged (optional)" in {
+  "A required array whose description mentions the word optional" must "not be tagged (omitempty)" in {
     val dsl = gen(List(
       Method(
         "sendMediaGroup",

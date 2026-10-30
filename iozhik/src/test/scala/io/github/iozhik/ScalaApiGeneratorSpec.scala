@@ -125,13 +125,13 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
   }
 
   // https://github.com/apimorphism/telegramium/issues/686
-  "An (optional) List field" must "be left out of the encoded JSON when empty, unlike a required List or an Option[List]" in {
+  "An (omitempty) List field" must "be left out of the encoded JSON when empty, unlike a required List or an Option[List]" in {
     val bodies = generate(
       """
         |namespace telegramium {
         |  namespace bots(snake circe) {
         |    InputRichMessage {
-        |      blocks: (optional) List[String]
+        |      blocks: (omitempty) List[String]
         |      rows: List[String]
         |      allowedUpdates: Option[List[String]]
         |    }
@@ -145,14 +145,14 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include(""""allowed_updates" -> x.allowedUpdates.asJson""")
   }
 
-  "An (optional) field that is not a List" must "fail the generation" in {
+  "An (omitempty) field that is not a List" must "fail the generation" in {
     val result = for {
       space <- Parser.Grammar.parse(
         """
           |namespace telegramium {
           |  namespace bots(snake circe) {
           |    Foo {
-          |      name: (optional) String
+          |      name: (omitempty) String
           |    }
           |  }
           |}
