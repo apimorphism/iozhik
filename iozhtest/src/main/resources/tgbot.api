@@ -607,7 +607,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -728,7 +728,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -763,7 +763,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities     : List[MessageEntity]
+        captionEntities     : (optional) List[MessageEntity]
         /* A valid URL for the file */
         documentUrl         : String
         /* MIME type of the content of the file, either 
@@ -810,7 +810,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities     : List[MessageEntity]
+        captionEntities     : (optional) List[MessageEntity]
         /* <em>Optional</em>. <a 
         href="https://core.telegram.org/bots/features#inline-keyboards">Inline 
         keyboard</a> attached to the message */
@@ -867,7 +867,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities     : List[MessageEntity]
+        captionEntities     : (optional) List[MessageEntity]
         /* <em>Optional</em>. Performer */
         performer           : Option[String]
         /* <em>Optional</em>. Audio duration in seconds */
@@ -917,7 +917,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -954,7 +954,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -992,7 +992,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities     : List[MessageEntity]
+        captionEntities     : (optional) List[MessageEntity]
         /* <em>Optional</em>. <a 
         href="https://core.telegram.org/bots/features#inline-keyboards">Inline 
         keyboard</a> attached to the message */
@@ -1027,7 +1027,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -1078,7 +1078,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -1142,7 +1142,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -1186,7 +1186,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities     : List[MessageEntity]
+        captionEntities     : (optional) List[MessageEntity]
         /* <em>Optional</em>. <a 
         href="https://core.telegram.org/bots/features#inline-keyboards">Inline 
         keyboard</a> attached to the message */
@@ -1219,7 +1219,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -1299,7 +1299,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities     : List[MessageEntity]
+        captionEntities     : (optional) List[MessageEntity]
         /* <em>Optional</em>. Recording duration in seconds */
         voiceDuration       : Option[Int]
         /* <em>Optional</em>. <a 
@@ -1358,7 +1358,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -1400,7 +1400,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities : List[MessageEntity]
+        captionEntities : (optional) List[MessageEntity]
         /* <em>Optional</em>. Duration of the voice message in seconds */
         duration        : Option[Int]
       }
@@ -1425,7 +1425,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -1474,7 +1474,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -1518,7 +1518,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities       : List[MessageEntity]
+        captionEntities       : (optional) List[MessageEntity]
         /* <em>Optional</em>. Pass <em>True</em> if the caption must 
         be shown above the message media */
         showCaptionAboveMedia : Option[Boolean]
@@ -1582,7 +1582,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities             : List[MessageEntity]
+        captionEntities             : (optional) List[MessageEntity]
         /* <em>Optional</em>. Disables automatic server-side content 
         type detection for files uploaded using multipart/form-data. 
         Always <em>True</em>, if the document is sent as part of an 
@@ -1635,7 +1635,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         the caption, which can be specified instead of 
         <em>parse_mode</em> */
-        captionEntities : List[MessageEntity]
+        captionEntities : (optional) List[MessageEntity]
         /* <em>Optional</em>. Duration of the audio in seconds */
         duration        : Option[Int]
         /* <em>Optional</em>. Performer of the audio */
@@ -1719,7 +1719,7 @@ namespace telegramium {
         most 4 suggested tip amounts can be specified. The suggested 
         tip amounts must be positive, passed in a strictly increased 
         order and must not exceed <em>max_tip_amount</em>. */
-        suggestedTipAmounts       : List[Long]
+        suggestedTipAmounts       : (optional) List[Long]
         /* <em>Optional</em>. A JSON-serialized object for data about 
         the invoice, which will be shared with the payment provider. 
         A detailed description of the required fields should be 
@@ -1825,7 +1825,7 @@ namespace telegramium {
         /* <em>Optional</em>. List of special entities that appear in 
         message text, which can be specified instead of 
         <em>parse_mode</em> */
-        entities           : List[MessageEntity]
+        entities           : (optional) List[MessageEntity]
         /* <em>Optional</em>. Link preview generation options for the 
         message */
         linkPreviewOptions : Option[LinkPreviewOptions]
@@ -2369,7 +2369,7 @@ namespace telegramium {
         text                          : Option[String]
         /* <em>Optional</em>. For text messages, special entities like 
         usernames, URLs, bot commands, etc. that appear in the text */
-        entities                      : List[MessageEntity]
+        entities                      : (optional) List[MessageEntity]
         /* <em>Optional</em>. Options used for link preview generation 
         for the message, if it is a text message and link preview 
         options were changed */
@@ -2403,7 +2403,7 @@ namespace telegramium {
         paidMedia                     : Option[PaidMediaInfo]
         /* <em>Optional</em>. Message is a photo, available sizes of 
         the photo */
-        photo                         : List[PhotoSize]
+        photo                         : (optional) List[PhotoSize]
         /* <em>Optional</em>. Message is a sticker, information about 
         the sticker */
         sticker                       : Option[Sticker]
@@ -2425,7 +2425,7 @@ namespace telegramium {
         /* <em>Optional</em>. For messages with a caption, special 
         entities like usernames, URLs, bot commands, etc. that 
         appear in the caption */
-        captionEntities               : List[MessageEntity]
+        captionEntities               : (optional) List[MessageEntity]
         /* <em>Optional</em>. <em>True</em>, if the caption must be 
         shown above the message media */
         showCaptionAboveMedia         : Option[Boolean]
@@ -2455,7 +2455,7 @@ namespace telegramium {
         /* <em>Optional</em>. New members that were added to the group 
         or supergroup and information about them (the bot itself may 
         be one of these members) */
-        newChatMembers                : List[User]
+        newChatMembers                : (optional) List[User]
         /* <em>Optional</em>. A member was removed from the group, 
         information about them (this member may be the bot itself) */
         leftChatMember                : Option[User]
@@ -2466,7 +2466,7 @@ namespace telegramium {
         /* <em>Optional</em>. A chat title was changed to this value */
         newChatTitle                  : Option[String]
         /* <em>Optional</em>. A chat photo was change to this value */
-        newChatPhoto                  : List[PhotoSize]
+        newChatPhoto                  : (optional) List[PhotoSize]
         /* <em>Optional</em>. Service message: the chat photo was 
         deleted */
         deleteChatPhoto               : Option[Boolean]
@@ -2921,7 +2921,7 @@ namespace telegramium {
         the gift */
         text                    : Option[String]
         /* <em>Optional</em>. Special entities that appear in the text */
-        entities                : List[MessageEntity]
+        entities                : (optional) List[MessageEntity]
         /* <em>Optional</em>. <em>True</em>, if the sender and gift 
         text are shown only to the gift receiver; otherwise, 
         everyone will be able to see them */
@@ -3793,7 +3793,7 @@ namespace telegramium {
         subscriptionPeriod          : Option[Int]
         /* <em>Optional</em>. Information about the paid media bought 
         by the user; for “paid_media_payment” transactions only */
-        paidMedia                   : List[PaidMedia]
+        paidMedia                   : (optional) List[PaidMedia]
         /* <em>Optional</em>. Bot-specified paid media payload. Can be 
         available only for “paid_media_payment” transactions. */
         paidMediaPayload            : Option[String]
@@ -3951,7 +3951,7 @@ namespace telegramium {
       isAccessRestricted : Boolean
       /* <em>Optional</em>. The list of other users who have access 
       to the bot if the access is restricted */
-      addedUsers         : List[User]
+      addedUsers         : (optional) List[User]
     }
            
     /* This object represents a bot command.  */
@@ -4369,7 +4369,7 @@ namespace telegramium {
       href="https://telegram.org/blog/topics-in-groups-collectible-usernames#collectible-usernames">active 
       chat usernames</a>; for private chats, supergroups and 
       channels */
-      activeUsernames                    : List[String]
+      activeUsernames                    : (optional) List[String]
       /* <em>Optional</em>. For private chats, the date of birth of 
       the user */
       birthdate                          : Option[Birthdate]
@@ -4392,7 +4392,7 @@ namespace telegramium {
       the chat. If omitted, then all <a 
       href="https://core.telegram.org/bots/api#reactiontypeemoji">emoji 
       reactions</a> are allowed. */
-      availableReactions                 : List[ReactionType]
+      availableReactions                 : Option[List[ReactionType]]
       /* <em>Optional</em>. Custom emoji identifier of the emoji 
       chosen by the chat for the reply header and link preview 
       background */
@@ -4738,7 +4738,7 @@ namespace telegramium {
       username  : Option[String]
       /* <em>Optional</em>. Available sizes of the chat photo, if 
       the photo was requested by the bot */
-      photo     : List[PhotoSize]
+      photo     : (optional) List[PhotoSize]
     }
            
     /* Describes a checklist.  */
@@ -4747,7 +4747,7 @@ namespace telegramium {
       title                    : String
       /* <em>Optional</em>. Special entities that appear in the 
       checklist title */
-      titleEntities            : List[MessageEntity]
+      titleEntities            : (optional) List[MessageEntity]
       /* List of tasks in the checklist */
       tasks                    : List[ChecklistTask]
       /* <em>Optional</em>. <em>True</em>, if users other than the 
@@ -4766,7 +4766,7 @@ namespace telegramium {
       text            : String
       /* <em>Optional</em>. Special entities that appear in the task 
       text */
-      textEntities    : List[MessageEntity]
+      textEntities    : (optional) List[MessageEntity]
       /* <em>Optional</em>. User that completed the task; omitted if 
       the task wasn't completed by a user */
       completedByUser : Option[User]
@@ -4802,10 +4802,10 @@ namespace telegramium {
       checklistMessage       : Option[Message]
       /* <em>Optional</em>. Identifiers of the tasks that were 
       marked as done */
-      markedAsDoneTaskIds    : List[Int]
+      markedAsDoneTaskIds    : (optional) List[Int]
       /* <em>Optional</em>. Identifiers of the tasks that were 
       marked as not done */
-      markedAsNotDoneTaskIds : List[Int]
+      markedAsNotDoneTaskIds : (optional) List[Int]
     }
            
     /* Represents a <a 
@@ -5012,7 +5012,7 @@ namespace telegramium {
       Files can be decrypted and verified using the accompanying 
       <a 
       href="https://core.telegram.org/bots/api#encryptedcredentials">EncryptedCredentials</a>. */
-      files       : List[PassportFile]
+      files       : (optional) List[PassportFile]
       /* <em>Optional</em>. Encrypted file with the front side of 
       the document, provided by the user; available only for 
       “passport”, “driver_license”, “identity_card” and 
@@ -5041,7 +5041,7 @@ namespace telegramium {
       “temporary_registration” types. Files can be decrypted and 
       verified using the accompanying <a 
       href="https://core.telegram.org/bots/api#encryptedcredentials">EncryptedCredentials</a>. */
-      translation : List[PassportFile]
+      translation : (optional) List[PassportFile]
       /* Base64-encoded element hash for using in <a 
       href="https://core.telegram.org/bots/api#passportelementerrorunspecified">PassportElementErrorUnspecified</a> */
       hash        : String
@@ -5098,7 +5098,7 @@ namespace telegramium {
       paidMedia          : Option[PaidMediaInfo]
       /* <em>Optional</em>. Message is a photo, available sizes of 
       the photo */
-      photo              : List[PhotoSize]
+      photo              : (optional) List[PhotoSize]
       /* <em>Optional</em>. Message is a sticker, information about 
       the sticker */
       sticker            : Option[Sticker]
@@ -5251,7 +5251,7 @@ namespace telegramium {
       text         : Option[String]
       /* <em>Optional</em>. Special entities that appear in 
       <em>text</em>, such as usernames, URLs, bot commands, etc. */
-      textEntities : List[MessageEntity]
+      textEntities : (optional) List[MessageEntity]
       /* <em>Optional</em>. Animation that will be displayed in the 
       game message in chats. Upload via <a 
       href="https://t.me/botfather">BotFather</a>. */
@@ -5355,7 +5355,7 @@ namespace telegramium {
       the gift */
       text                    : Option[String]
       /* <em>Optional</em>. Special entities that appear in the text */
-      entities                : List[MessageEntity]
+      entities                : (optional) List[MessageEntity]
       /* <em>Optional</em>. <em>True</em>, if the sender and gift 
       text are shown only to the gift receiver; otherwise, 
       everyone will be able to see them */
@@ -5399,7 +5399,7 @@ namespace telegramium {
       empty, then all users can participate in the giveaway. Users 
       with a phone number that was bought on Fragment can always 
       participate in giveaways. */
-      countryCodes                  : List[String]
+      countryCodes                  : (optional) List[String]
       /* <em>Optional</em>. The number of Telegram Stars to be split 
       between giveaway winners; for Telegram Star giveaways only */
       prizeStarCount                : Option[Int]
@@ -5647,7 +5647,7 @@ namespace telegramium {
       <em>underline</em>, <em>strikethrough</em>, 
       <em>spoiler</em>, <em>custom_emoji</em>, and 
       <em>date_time</em> entities are allowed. */
-      titleEntities            : List[MessageEntity]
+      titleEntities            : (optional) List[MessageEntity]
       /* List of 1-30 tasks in the checklist */
       tasks                    : List[InputChecklistTask]
       /* <em>Optional</em>. Pass <em>True</em> if other users can 
@@ -5677,7 +5677,7 @@ namespace telegramium {
       <em>underline</em>, <em>strikethrough</em>, 
       <em>spoiler</em>, <em>custom_emoji</em>, and 
       <em>date_time</em> entities are allowed. */
-      textEntities : List[MessageEntity]
+      textEntities : (optional) List[MessageEntity]
     }
            
     /* This object represents the contents of a file to be uploaded. Must be posted 
@@ -5700,7 +5700,7 @@ namespace telegramium {
       /* <em>Optional</em>. A JSON-serialized list of special 
       entities that appear in the poll option text. It can be 
       specified instead of <em>text_parse_mode</em>. */
-      textEntities  : List[MessageEntity]
+      textEntities  : (optional) List[MessageEntity]
       /* <em>Optional</em>. Media added to the poll option */
       media         : Option[InputMedia]
     }
@@ -5730,7 +5730,7 @@ namespace telegramium {
     InputRichMessage {
       /* <em>Optional</em>. Content of the rich message to send 
       described as a list of blocks */
-      blocks              : List[InputRichBlock]
+      blocks              : (optional) List[InputRichBlock]
       /* <em>Optional</em>. Content of the rich message to send 
       described using HTML formatting. See <a 
       href="https://core.telegram.org/bots/api#rich-message-formatting-options">rich 
@@ -5750,7 +5750,7 @@ namespace telegramium {
       <code>tg://photo?id=</code>, <code>tg://video?id=</code>, 
       <code>tg://document?id=</code>, and 
       <code>tg://audio?id=</code> links */
-      media               : List[InputRichMessageMedia]
+      media               : (optional) List[InputRichMessageMedia]
       /* <em>Optional</em>. Pass <em>True</em> if the rich message 
       must be shown right-to-left */
       isRtl               : Option[Boolean]
@@ -5798,7 +5798,7 @@ namespace telegramium {
       /* <em>Optional</em>. List of 0-20 search keywords for the 
       sticker with total length of up to 64 characters. For 
       “regular” and “custom_emoji” stickers only. */
-      keywords     : List[String]
+      keywords     : (optional) List[String]
     }
            
     /* This object contains basic information about an invoice.  */
@@ -6046,7 +6046,7 @@ namespace telegramium {
     LivePhoto {
       /* <em>Optional</em>. Available sizes of the corresponding 
       static photo */
-      photo        : List[PhotoSize]
+      photo        : (optional) List[PhotoSize]
       /* Identifier for the video file which can be used to download 
       or reuse the file */
       fileId       : String
@@ -6352,7 +6352,7 @@ namespace telegramium {
       /* <em>Optional</em>. Special entities that appear in the 
       <em>question</em>. Currently, only custom emoji entities are 
       allowed in poll questions */
-      questionEntities      : List[MessageEntity]
+      questionEntities      : (optional) List[MessageEntity]
       /* List of poll options */
       options               : List[PollOption]
       /* Total number of users that voted in the poll */
@@ -6378,19 +6378,19 @@ namespace telegramium {
       from which users can vote in the poll. The country code “FT” 
       is used for users with anonymous numbers. If omitted, then 
       users from any country can participate in the poll. */
-      countryCodes          : List[String]
+      countryCodes          : (optional) List[String]
       /* <em>Optional</em>. Array of 0-based identifiers of the 
       correct answer options. Available only for polls in quiz 
       mode which are closed or were sent (not forwarded) by the 
       bot or to the private chat with the bot. */
-      correctOptionIds      : List[Int]
+      correctOptionIds      : (optional) List[Int]
       /* <em>Optional</em>. Text that is shown when a user chooses 
       an incorrect answer or taps on the lamp icon in a quiz-style 
       poll, 0-200 characters */
       explanation           : Option[String]
       /* <em>Optional</em>. Special entities like usernames, URLs, 
       bot commands, etc. that appear in the <em>explanation</em> */
-      explanationEntities   : List[MessageEntity]
+      explanationEntities   : (optional) List[MessageEntity]
       /* <em>Optional</em>. Media added to the quiz explanation */
       explanationMedia      : Option[PollMedia]
       /* <em>Optional</em>. Amount of time in seconds the poll will 
@@ -6406,7 +6406,7 @@ namespace telegramium {
       description           : Option[String]
       /* <em>Optional</em>. Special entities like usernames, URLs, 
       bot commands, etc. that appear in the description */
-      descriptionEntities   : List[MessageEntity]
+      descriptionEntities   : (optional) List[MessageEntity]
       /* <em>Optional</em>. Media added to the poll description; for 
       polls inside the <a 
       href="https://core.telegram.org/bots/api#message">Message</a> 
@@ -6457,7 +6457,7 @@ namespace telegramium {
       location  : Option[Location]
       /* <em>Optional</em>. Media is a photo, available sizes of the 
       photo */
-      photo     : List[PhotoSize]
+      photo     : (optional) List[PhotoSize]
       /* <em>Optional</em>. Media is a sticker, information about 
       the sticker; currently, for poll options only */
       sticker   : Option[Sticker]
@@ -6479,7 +6479,7 @@ namespace telegramium {
       /* <em>Optional</em>. Special entities that appear in the 
       option <em>text</em>. Currently, only custom emoji entities 
       are allowed in poll option texts */
-      textEntities : List[MessageEntity]
+      textEntities : (optional) List[MessageEntity]
       /* <em>Optional</em>. Media added to the poll option */
       media        : Option[PollMedia]
       /* Number of users who voted for this option; may be 0 if 
@@ -6512,7 +6512,7 @@ namespace telegramium {
       optionText         : String
       /* <em>Optional</em>. Special entities that appear in the 
       <em>option_text</em> */
-      optionTextEntities : List[MessageEntity]
+      optionTextEntities : (optional) List[MessageEntity]
     }
            
     /* Describes a service message about an option deleted from a poll.  */
@@ -6530,7 +6530,7 @@ namespace telegramium {
       optionText         : String
       /* <em>Optional</em>. Special entities that appear in the 
       <em>option_text</em> */
-      optionTextEntities : List[MessageEntity]
+      optionTextEntities : (optional) List[MessageEntity]
     }
            
     /* This object contains information about an incoming pre-checkout query.  */
@@ -6667,7 +6667,7 @@ namespace telegramium {
       /* <em>Optional</em>. A JSON-serialized list of special 
       entities that appear in the quote. It can be specified 
       instead of <em>quote_parse_mode</em>. */
-      quoteEntities            : List[MessageEntity]
+      quoteEntities            : (optional) List[MessageEntity]
       /* <em>Optional</em>. Position of the quote in the original 
       message in UTF-16 code units */
       quotePosition            : Option[Int]
@@ -6871,7 +6871,7 @@ namespace telegramium {
       username  : Option[String]
       /* <em>Optional</em>. Available sizes of the chat photo, if 
       the photo was requested by the bot */
-      photo     : List[PhotoSize]
+      photo     : (optional) List[PhotoSize]
     }
            
     /* This object represents a shipping address.  */
@@ -7258,7 +7258,7 @@ namespace telegramium {
       <em>underline</em>, <em>strikethrough</em>, 
       <em>spoiler</em>, <em>custom_emoji</em>, and 
       <em>date_time</em> entities are kept in quotes. */
-      entities : List[MessageEntity]
+      entities : (optional) List[MessageEntity]
       /* Approximate quote position in the original message in 
       UTF-16 code units as specified by the sender */
       position : Int
@@ -7366,7 +7366,7 @@ namespace telegramium {
       the gift */
       text               : Option[String]
       /* <em>Optional</em>. Special entities that appear in the text */
-      entities           : List[MessageEntity]
+      entities           : (optional) List[MessageEntity]
       /* <em>Optional</em>. <em>True</em>, if the sender and gift 
       text are shown only to the gift receiver; otherwise, 
       everyone will be able to see them */
@@ -7712,12 +7712,12 @@ namespace telegramium {
       thumbnail      : Option[PhotoSize]
       /* <em>Optional</em>. Available sizes of the cover of the 
       video in the message */
-      cover          : List[PhotoSize]
+      cover          : (optional) List[PhotoSize]
       /* <em>Optional</em>. Timestamp in seconds from which the 
       video will play in the message */
       startTimestamp : Option[Int]
       /* <em>Optional</em>. List of available qualities of the video */
-      qualities      : List[VideoQuality]
+      qualities      : (optional) List[VideoQuality]
       /* <em>Optional</em>. Original filename as defined by the 
       sender */
       fileName       : Option[String]
@@ -7877,7 +7877,7 @@ namespace telegramium {
       subscribed to. Defaults to all update types except 
       <em>chat_member</em>, <em>message_reaction</em>, and 
       <em>message_reaction_count</em>. */
-      allowedUpdates               : List[String]
+      allowedUpdates               : (optional) List[String]
     }
            
     /* This object represents a service message about a user allowing a bot to write 
@@ -8046,7 +8046,7 @@ namespace telegramium {
           ok              : Boolean
           /* Required if <em>ok</em> is <em>True</em>. A JSON-serialized 
           Array of available shipping options. */
-          shippingOptions : List[ShippingOption]
+          shippingOptions : (optional) List[ShippingOption]
           /* Required if <em>ok</em> is <em>False</em>. Error message in 
           human readable form that explains why it is impossible to 
           complete the order (e.g. “Sorry, delivery to your desired 
@@ -8221,7 +8221,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the new caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities         : List[MessageEntity]
+          captionEntities         : (optional) List[MessageEntity]
           /* Pass <em>True</em> if the caption must be shown above the 
           message media. Ignored if a new caption isn't specified. */
           showCaptionAboveMedia   : Option[Boolean]
@@ -8434,7 +8434,7 @@ namespace telegramium {
           amounts can be specified. The suggested tip amounts must be 
           positive, passed in a strictly increased order and must not 
           exceed <em>max_tip_amount</em>. */
-          suggestedTipAmounts       : List[Long]
+          suggestedTipAmounts       : (optional) List[Long]
           /* JSON-serialized data about the invoice, which will be 
           shared with the payment provider. A detailed description of 
           required fields should be provided by the payment provider. */
@@ -8792,7 +8792,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities       : List[MessageEntity]
+          captionEntities       : (optional) List[MessageEntity]
           /* Pass <em>True</em> if the caption must be shown above the 
           message media. Supported only for animation, photo and video 
           messages. */
@@ -8861,7 +8861,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           message text, which can be specified instead of 
           <em>parse_mode</em> */
-          entities           : List[MessageEntity]
+          entities           : (optional) List[MessageEntity]
           /* New rich content of the message; required if <em>text</em> 
           isn't specified */
           richMessage        : Option[InputRichMessage]
@@ -8940,7 +8940,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities       : List[MessageEntity]
+          captionEntities       : (optional) List[MessageEntity]
           /* Pass <em>True</em> if the caption must be shown above the 
           message media. Supported only for animation, photo and video 
           messages. */
@@ -9116,7 +9116,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           message text, which can be specified instead of 
           <em>parse_mode</em> */
-          entities             : List[MessageEntity]
+          entities             : (optional) List[MessageEntity]
           /* Link preview generation options for the message */
           linkPreviewOptions   : Option[LinkPreviewOptions]
           /* New rich content of the message; required if <em>text</em> 
@@ -9150,10 +9150,10 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities      : List[MessageEntity]
+          captionEntities      : (optional) List[MessageEntity]
           /* A JSON-serialized list of clickable areas to be shown on 
           the story */
-          areas                : List[StoryArea]
+          areas                : (optional) List[StoryArea]
         } => Method[Story]
       
         /* Allows the bot to cancel or re-enable extension of a subscription paid in 
@@ -9630,7 +9630,7 @@ namespace telegramium {
       Please note that this parameter doesn't affect updates 
           created before the call to getUpdates, so unwanted updates 
           may be received for a short period of time. */
-          allowedUpdates : List[String]
+          allowedUpdates : Option[List[String]]
         } => Method[List[Update]]
       
         /* Use this method to get the list of boosts added to a chat by a user. Requires 
@@ -9753,7 +9753,7 @@ namespace telegramium {
           <em>text_parse_mode</em>. Entities other than “bold”, 
           “italic”, “underline”, “strikethrough”, “spoiler”, 
           “custom_emoji”, and “date_time” are ignored. */
-          textEntities  : List[MessageEntity]
+          textEntities  : (optional) List[MessageEntity]
         } => Method[Boolean]
       
         /* Use this method to hide the 'General' topic in a forum supergroup chat. The bot 
@@ -9829,10 +9829,10 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities      : List[MessageEntity]
+          captionEntities      : (optional) List[MessageEntity]
           /* A JSON-serialized list of clickable areas to be shown on 
           the story */
-          areas                : List[StoryArea]
+          areas                : (optional) List[StoryArea]
           /* Pass <em>True</em> to keep the story accessible after it 
           expires */
           postToChatPage       : Option[Boolean]
@@ -10194,7 +10194,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities            : List[MessageEntity]
+          captionEntities            : (optional) List[MessageEntity]
           /* Pass <em>True</em> if the caption must be shown above the 
           message media */
           showCaptionAboveMedia      : Option[Boolean]
@@ -10276,7 +10276,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities            : List[MessageEntity]
+          captionEntities            : (optional) List[MessageEntity]
           /* Duration of the audio in seconds */
           duration                   : Option[Int]
           /* Performer */
@@ -10590,7 +10590,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities             : List[MessageEntity]
+          captionEntities             : (optional) List[MessageEntity]
           /* Disables automatic server-side content type detection for 
           files uploaded using multipart/form-data */
           disableContentTypeDetection : Option[Boolean]
@@ -10703,7 +10703,7 @@ namespace telegramium {
           <em>text_parse_mode</em>. Entities other than “bold”, 
           “italic”, “underline”, “strikethrough”, “spoiler”, 
           “custom_emoji”, and “date_time” are ignored. */
-          textEntities  : List[MessageEntity]
+          textEntities  : (optional) List[MessageEntity]
         } => Method[Boolean]
       
         /* Use this method to send invoices. On success, the sent <a 
@@ -10760,7 +10760,7 @@ namespace telegramium {
           amounts can be specified. The suggested tip amounts must be 
           positive, passed in a strictly increased order and must not 
           exceed <em>max_tip_amount</em>. */
-          suggestedTipAmounts       : List[Long]
+          suggestedTipAmounts       : (optional) List[Long]
           /* Unique deep-linking parameter. If left empty, 
           <strong>forwarded copies</strong> of the sent message will 
           have a <em>Pay</em> button, allowing multiple users to pay 
@@ -10886,7 +10886,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities            : List[MessageEntity]
+          captionEntities            : (optional) List[MessageEntity]
           /* Pass <em>True</em> if the caption must be shown above the 
           message media */
           showCaptionAboveMedia      : Option[Boolean]
@@ -11075,7 +11075,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           message text, which can be specified instead of 
           <em>parse_mode</em> */
-          entities                   : List[MessageEntity]
+          entities                   : (optional) List[MessageEntity]
           /* Link preview generation options for the message */
           linkPreviewOptions         : Option[LinkPreviewOptions]
           /* Sends the message <a 
@@ -11138,7 +11138,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           message text, which can be specified instead of 
           <em>parse_mode</em> */
-          entities        : List[MessageEntity]
+          entities        : (optional) List[MessageEntity]
           /* Pass <em>True</em> to show the user a button to stop 
           further drafts. The bot will receive an <a 
           href="https://core.telegram.org/bots/api#update">Update</a> 
@@ -11191,7 +11191,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities         : List[MessageEntity]
+          captionEntities         : (optional) List[MessageEntity]
           /* Pass <em>True</em> if the caption must be shown above the 
           message media */
           showCaptionAboveMedia   : Option[Boolean]
@@ -11264,7 +11264,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities            : List[MessageEntity]
+          captionEntities            : (optional) List[MessageEntity]
           /* Pass <em>True</em> if the caption must be shown above the 
           message media */
           showCaptionAboveMedia      : Option[Boolean]
@@ -11329,7 +11329,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the poll question. It can be specified instead of 
           <em>question_parse_mode</em>. */
-          questionEntities       : List[MessageEntity]
+          questionEntities       : (optional) List[MessageEntity]
           /* A JSON-serialized list of 1-12 answer options */
           options                : List[InputPollOption]
           /* <em>True</em>, if the poll needs to be anonymous, defaults 
@@ -11365,11 +11365,11 @@ namespace telegramium {
           only. Use “FT” as a country code to allow users with 
           anonymous numbers to vote. If omitted or empty, then users 
           from any country can participate in the poll. */
-          countryCodes           : List[String]
+          countryCodes           : (optional) List[String]
           /* A JSON-serialized list of monotonically increasing 0-based 
           identifiers of the correct answer options, required for 
           polls in quiz mode */
-          correctOptionIds       : List[Int]
+          correctOptionIds       : (optional) List[Int]
           /* Text that is shown when a user chooses an incorrect answer 
           or taps on the lamp icon in a quiz-style poll, 0-200 
           characters with at most 2 line feeds after entities parsing */
@@ -11381,7 +11381,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the poll explanation. It can be specified instead of 
           <em>explanation_parse_mode</em>. */
-          explanationEntities    : List[MessageEntity]
+          explanationEntities    : (optional) List[MessageEntity]
           /* Media added to the quiz explanation */
           explanationMedia       : Option[InputMedia]
           /* Amount of time in seconds the poll will be active after 
@@ -11406,7 +11406,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the poll description, which can be specified instead of 
           <em>description_parse_mode</em> */
-          descriptionEntities    : List[MessageEntity]
+          descriptionEntities    : (optional) List[MessageEntity]
           /* Media added to the poll description */
           media                  : Option[InputMedia]
           /* Sends the message <a 
@@ -11734,7 +11734,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities            : List[MessageEntity]
+          captionEntities            : (optional) List[MessageEntity]
           /* Pass <em>True</em> if the caption must be shown above the 
           message media */
           showCaptionAboveMedia      : Option[Boolean]
@@ -11894,7 +11894,7 @@ namespace telegramium {
           /* A JSON-serialized list of special entities that appear in 
           the caption, which can be specified instead of 
           <em>parse_mode</em> */
-          captionEntities            : List[MessageEntity]
+          captionEntities            : (optional) List[MessageEntity]
           /* Duration of the voice message in seconds */
           duration                   : Option[Int]
           /* Sends the message <a 
@@ -12156,7 +12156,7 @@ namespace telegramium {
           /* A JSON-serialized list of up to 10 identifiers of users who 
           will have access to the bot in addition to its owner. 
           Ignored if <em>is_access_restricted</em> is <em>False</em>. */
-          addedUserIds       : List[Long]
+          addedUserIds       : (optional) List[Long]
         } => Method[Boolean]
       
         /* Use this method to change the chosen reactions on a message. Service messages 
@@ -12178,7 +12178,7 @@ namespace telegramium {
           used if it is either already present on the message or 
           explicitly allowed by chat administrators. Paid reactions 
           can't be used by bots. */
-          reaction  : List[ReactionType]
+          reaction  : (optional) List[ReactionType]
           /* Pass <em>True</em> to set the reaction with a big animation */
           isBig     : Option[Boolean]
         } => Method[Boolean]
@@ -12294,7 +12294,7 @@ namespace telegramium {
           sticker  : String
           /* A JSON-serialized list of 0-20 search keywords for the 
           sticker with total length of up to 64 characters */
-          keywords : List[String]
+          keywords : (optional) List[String]
         } => Method[Boolean]
       
         /* Use this method to change the <a 
@@ -12439,7 +12439,7 @@ namespace telegramium {
       Please note that this parameter doesn't affect updates 
           created before the call to the setWebhook, so unwanted 
           updates may be received for a short period of time. */
-          allowedUpdates     : List[String]
+          allowedUpdates     : Option[List[String]]
           /* Pass <em>True</em> to drop all pending updates */
           dropPendingUpdates : Option[Boolean]
           /* A secret token to be sent in a header 
