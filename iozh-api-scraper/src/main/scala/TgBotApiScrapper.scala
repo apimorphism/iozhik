@@ -171,12 +171,29 @@ object TgBotApiScrapper extends IOApp {
 
     def isParseMode(name: String) = name == "parse_mode" || name == "quote_parse_mode" || name == "explanation_parse_mode" || name == "text_parse_mode"
 
-    def genFields(params: List[EntityParam]) = {
+    // Optional arrays are tagged (optional) so the generated encoder can omit them when empty, as Telegram treats a
+    // missing optional array the same as an empty one - except for these, which need Option[List] to tell them apart.
+    val emptyDiffersFromOmitted = Set("getUpdates.allowed_updates", "setWebhook.allowed_updates", "ChatFullInfo.available_reactions")
+    // Optional arrays whose description talks about empty or omitted lists, but means the same by both.
+    val emptySameAsOmitted = Set("sendPoll.country_codes", "Poll.country_codes")
+    val emptyVsOmittedWording = "(?i)empty list|empty array|not specified|omitted|previous setting".r
+
+    def optionalArray(owner: String, f: String, kind: String, desc: String): String = {
+      val id = s"$owner.$f"
+      if (emptyDiffersFromOmitted.contains(id)) s"Option[${trarr(kind)}]"
+      else if (emptySameAsOmitted.contains(id) || emptyVsOmittedWording.findFirstIn(desc).isEmpty) s"(optional) ${trarr(kind)}"
+      else sys.error(
+        s"$id: the description may give an empty list and an omitted one different meanings. " +
+          "Add it to emptyDiffersFromOmitted or emptySameAsOmitted in TgBotApiScrapper.gen."
+      )
+    }
+
+    def genFields(owner: String, params: List[EntityParam]) = {
       val maxLen = params.map(p => camelify(p.name).length).maximumOption.getOrElse(0)
       params
         .map { f =>
           val kind = if (f.kind.startsWith("Array of"))
-            trarr(f.kind)
+            if (f.desc.contains("Optional")) optionalArray(owner, f.name, f.kind, f.desc) else trarr(f.kind)
           else if (isParseMode(f.name))
             "Option[ParseMode]"
           else {
@@ -202,7 +219,11 @@ object TgBotApiScrapper extends IOApp {
         val fields = m.table
           .map { f =>
             val kind = if (f.kind.startsWith("Array of")) {
-              trarr(f.kind)
+              if (f.desc.toLowerCase.contains("optional") || f.required.toLowerCase.contains("optional")) {
+                optionalArray(m.name, f.name, f.kind, f.desc)
+              } else {
+                trarr(f.kind)
+              }
             } else if (isParseMode(f.name)) {
               "Option[ParseMode]"
             } else {
@@ -297,7 +318,7 @@ object TgBotApiScrapper extends IOApp {
       }
       .filterNot(messageEntityItem.contains) ++ messageEntities)
       .map { e =>
-        val fields = genFields(e.table)
+        val fields = genFields(e.name, e.table)
         val body = s"""
            |  /* ${wrap(e.desc, 80)} */
            |  ${e.name} {
@@ -336,7 +357,7 @@ object TgBotApiScrapper extends IOApp {
     val sumTypes = (richTextSumtyps ++ messageEntityParent)
       .sortBy(_.name)
       .map { e =>
-        val fields = genFields(e.table)
+        val fields = genFields(e.name, e.table)
         val children = emapWithRichText.filterKeys{ k =>
             e.items.contains(k)
           }

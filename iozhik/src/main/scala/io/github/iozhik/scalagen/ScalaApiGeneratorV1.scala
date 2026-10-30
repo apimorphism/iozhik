@@ -302,11 +302,17 @@ class ScalaApiGeneratorV1 {
           if (kind.endsWith(DomPostfix)) "" else s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
         }
         else ""
+        // (optional) List fields encode to null when empty, so the filter below leaves them out of the JSON
+        val optionalLists = (usingf ++ struc.fields).filter(_.opts.contains("optional")).map(_.name).toSet
         val encoderFields = (fields
           .map{ case (fname, _) =>
             val n = if (useSnake) { camel2snake(fname) } else { fname }
             val fn = sanitize(fname)
-            s""""$n" -> x.$fn.asJson"""
+            if (optionalLists.contains(fname)) {
+              s""""$n" -> (if (x.$fn.isEmpty) Json.Null else x.$fn.asJson)"""
+            } else {
+              s""""$n" -> x.$fn.asJson"""
+            }
           } ++ struc.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
           .intercalate(",")
         val encoderBody = if (struc.fields.nonEmpty || struc.usings.nonEmpty) {

@@ -157,4 +157,65 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     answerCallbackQuery.returns shouldBe "Boolean"
     answerCallbackQuery.desc should include("otherwise use links")
   }
+
+  // https://github.com/apimorphism/telegramium/issues/686
+  "An optional array" must "be tagged (optional), unlike a required one" in {
+    val dsl = gen(List(
+      Method(
+        "sendMessage",
+        "Use this method to send text messages.",
+        List(
+          MethodParam("entities", "Array of MessageEntity", "Optional", "List of special entities"),
+          MethodParam("options", "Array of String", "Yes", "List of options")
+        ),
+        "Message"
+      ),
+      Entity(
+        "InputRichMessage",
+        "Describes a rich message to be sent.",
+        List(
+          EntityParam("blocks", "Array of InputRichBlock", "Optional. Content of the rich message"),
+          EntityParam("rows", "Array of Array of String", "Rows of the table")
+        )
+      )
+    ))
+    dsl should include("entities : (optional) List[MessageEntity]")
+    dsl should include("options  : List[String]")
+    dsl should include("blocks : (optional) List[InputRichBlock]")
+    dsl should include("rows   : List[List[String]]")
+  }
+
+  "An optional array where an empty list and an omitted one mean different things" must "be an Option[List]" in {
+    val dsl = gen(List(
+      Method(
+        "getUpdates",
+        "Use this method to receive incoming updates.",
+        List(MethodParam(
+          "allowed_updates",
+          "Array of String",
+          "Optional",
+          "Specify an empty list to receive all update types (default). If not specified, the previous setting will be used."
+        )),
+        "List[Update]"
+      )
+    ))
+    dsl should include("allowedUpdates : Option[List[String]]")
+  }
+
+  "An unclassified optional array whose description distinguishes empty from omitted" must "fail the scrape" in {
+    val e = the[RuntimeException] thrownBy gen(List(
+      Method(
+        "setFoo",
+        "Use this method to set foo.",
+        List(MethodParam(
+          "bars",
+          "Array of String",
+          "Optional",
+          "Pass an empty list to clear the bars. If not specified, the current bars are kept."
+        )),
+        "Boolean"
+      )
+    ))
+    e.getMessage should include("setFoo.bars")
+  }
 }

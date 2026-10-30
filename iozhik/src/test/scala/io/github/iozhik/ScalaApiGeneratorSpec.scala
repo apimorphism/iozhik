@@ -123,4 +123,25 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFile(name + "_thumbnail", v.thumbnail)""")
     body should include("(v.copy(media = media1, thumbnail = thumbnail1), mediaFiles ++ thumbnailFiles)")
   }
+
+  // https://github.com/apimorphism/telegramium/issues/686
+  "An (optional) List field" must "be left out of the encoded JSON when empty, unlike a required List or an Option[List]" in {
+    val bodies = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    InputRichMessage {
+        |      blocks: (optional) List[String]
+        |      rows: List[String]
+        |      allowedUpdates: Option[List[String]]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    val body = bodies.mkString("\n")
+    body should include(""""blocks" -> (if (x.blocks.isEmpty) Json.Null else x.blocks.asJson)""")
+    body should include(""""rows" -> x.rows.asJson""")
+    body should include(""""allowed_updates" -> x.allowedUpdates.asJson""")
+  }
 }
