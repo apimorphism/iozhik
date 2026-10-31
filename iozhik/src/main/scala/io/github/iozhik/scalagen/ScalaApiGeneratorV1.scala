@@ -1228,7 +1228,7 @@ class ScalaApiGeneratorV1 {
         )
       }
 
-      predef ++ commons ++ content
+      predef ++ commons ++ content ++ scalagen.ArbitraryGenerator.gen(x, cfg).fold(e => throw new RuntimeException(e), List(_))
     }
   }
 
