@@ -158,6 +158,7 @@ object TgBotApiScrapper extends IOApp {
   private val forXOnlyPattern = "(?<=For “).*?(?=” only)".r
   private val messageEntityDescPattern = "(?:<em>)?Optional(?:</em>)?\\. For “.*” only, ".r
   private val discriminatorPattern = ".*, always “(.*?)”".r
+  private val optionalFieldDescPattern = "^(?:<em>)?Optional\\b".r
 
   def gen(items: List[ApiItem]): String = {
     def trarr(s: String): String = {
@@ -171,16 +172,42 @@ object TgBotApiScrapper extends IOApp {
 
     def isParseMode(name: String) = name == "parse_mode" || name == "quote_parse_mode" || name == "explanation_parse_mode" || name == "text_parse_mode"
 
-    def genFields(params: List[EntityParam]) = {
+    // Optional arrays are tagged (omitempty) so the generated encoder can omit them when empty, as Telegram treats a
+    // missing optional array the same as an empty one - except for these, which need Option[List] to tell them apart.
+    // editStory.areas isn't documented as such: the Bot API server keeps the current areas when it's omitted, and removes them on [].
+    val emptyDiffersFromOmitted = Set(
+      "getUpdates.allowed_updates", "setWebhook.allowed_updates", "ChatFullInfo.available_reactions", "editStory.areas"
+    )
+    // Optional arrays whose description talks about empty or omitted lists, but means the same by both.
+    val emptySameAsOmitted = Set(
+      "sendPoll.country_codes", "Poll.country_codes", "Giveaway.country_codes", "ChatFullInfo.active_usernames",
+      "WebhookInfo.allowed_updates"
+    )
+    val emptyVsOmittedWording = "(?i)\\bempty\\b|not specified|omitted|previous setting|defaults? to".r
+
+    def isOptionalField(f: EntityParam) = optionalFieldDescPattern.findFirstIn(f.desc).isDefined
+    def isOptionalParam(f: MethodParam) = f.required.toLowerCase.contains("optional")
+
+    def optionalArray(owner: String, f: String, kind: String, desc: String): String = {
+      val id = s"$owner.$f"
+      if (emptyDiffersFromOmitted.contains(id)) s"Option[${trarr(kind)}]"
+      else if (emptySameAsOmitted.contains(id) || emptyVsOmittedWording.findFirstIn(desc).isEmpty) s"(omitempty) ${trarr(kind)}"
+      else sys.error(
+        s"$id: the description may give an empty list and an omitted one different meanings. " +
+          "Add it to emptyDiffersFromOmitted or emptySameAsOmitted in TgBotApiScrapper.gen."
+      )
+    }
+
+    def genFields(owner: String, params: List[EntityParam]) = {
       val maxLen = params.map(p => camelify(p.name).length).maximumOption.getOrElse(0)
       params
         .map { f =>
           val kind = if (f.kind.startsWith("Array of"))
-            trarr(f.kind)
+            if (isOptionalField(f)) optionalArray(owner, f.name, f.kind, f.desc) else trarr(f.kind)
           else if (isParseMode(f.name))
             "Option[ParseMode]"
           else {
-            if (f.desc.contains("Optional")) {
+            if (isOptionalField(f)) {
               if (f.kind == "IFile") s"(file) Option[${f.kind}]" else s"Option[${f.kind}]"
             } else {
               if (f.kind == "IFile") s"(file) ${f.kind}" else f.kind
@@ -202,11 +229,15 @@ object TgBotApiScrapper extends IOApp {
         val fields = m.table
           .map { f =>
             val kind = if (f.kind.startsWith("Array of")) {
-              trarr(f.kind)
+              if (isOptionalParam(f)) {
+                optionalArray(m.name, f.name, f.kind, f.desc)
+              } else {
+                trarr(f.kind)
+              }
             } else if (isParseMode(f.name)) {
               "Option[ParseMode]"
             } else {
-              if (f.desc.toLowerCase.contains("optional") || f.required.toLowerCase.contains("optional")) {
+              if (isOptionalParam(f)) {
                 if (f.kind == "IFile") {
                   s"(file) Option[${f.kind}]"
                 } else {
@@ -297,7 +328,7 @@ object TgBotApiScrapper extends IOApp {
       }
       .filterNot(messageEntityItem.contains) ++ messageEntities)
       .map { e =>
-        val fields = genFields(e.table)
+        val fields = genFields(e.name, e.table)
         val body = s"""
            |  /* ${wrap(e.desc, 80)} */
            |  ${e.name} {
@@ -336,7 +367,7 @@ object TgBotApiScrapper extends IOApp {
     val sumTypes = (richTextSumtyps ++ messageEntityParent)
       .sortBy(_.name)
       .map { e =>
-        val fields = genFields(e.table)
+        val fields = genFields(e.name, e.table)
         val children = emapWithRichText.filterKeys{ k =>
             e.items.contains(k)
           }

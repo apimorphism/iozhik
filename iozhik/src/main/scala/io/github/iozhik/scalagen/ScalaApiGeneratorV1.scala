@@ -265,6 +265,10 @@ class ScalaApiGeneratorV1 {
           .map(path => s"import $path.CirceImplicits._")
       for {
         kind <- struc.kind.map(_.name).toRight("No kind name")
+        _ <- (usingf ++ struc.fields)
+          .find(y => y.opts.contains("omitempty") && y.kind.name != "List")
+          .map(y => s"$kind.${y.name}: (omitempty) is only supported on List fields")
+          .toLeft(())
         fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind, struc.kind))
         fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
       } yield {
@@ -302,11 +306,16 @@ class ScalaApiGeneratorV1 {
           if (kind.endsWith(DomPostfix)) "" else s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
         }
         else ""
-        val encoderFields = (fields
-          .map{ case (fname, _) =>
-            val n = if (useSnake) { camel2snake(fname) } else { fname }
-            val fn = sanitize(fname)
-            s""""$n" -> x.$fn.asJson"""
+        // (omitempty) List fields encode to null when empty, so the filter below leaves them out of the JSON
+        val encoderFields = ((usingf ++ struc.fields)
+          .map{ y =>
+            val n = if (useSnake) { camel2snake(y.name) } else { y.name }
+            val fn = sanitize(y.name)
+            if (y.opts.contains("omitempty")) {
+              s""""$n" -> (if (x.$fn.isEmpty) Json.Null else x.$fn.asJson)"""
+            } else {
+              s""""$n" -> x.$fn.asJson"""
+            }
           } ++ struc.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
           .intercalate(",")
         val encoderBody = if (struc.fields.nonEmpty || struc.usings.nonEmpty) {
