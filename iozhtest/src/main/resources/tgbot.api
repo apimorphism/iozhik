@@ -9153,7 +9153,7 @@ namespace telegramium {
           captionEntities      : (omitempty) List[MessageEntity]
           /* A JSON-serialized list of clickable areas to be shown on 
           the story */
-          areas                : (omitempty) List[StoryArea]
+          areas                : Option[List[StoryArea]]
         } => Method[Story]
       
         /* Allows the bot to cancel or re-enable extension of a subscription paid in 

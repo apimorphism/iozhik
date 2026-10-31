@@ -174,7 +174,10 @@ object TgBotApiScrapper extends IOApp {
 
     // Optional arrays are tagged (omitempty) so the generated encoder can omit them when empty, as Telegram treats a
     // missing optional array the same as an empty one - except for these, which need Option[List] to tell them apart.
-    val emptyDiffersFromOmitted = Set("getUpdates.allowed_updates", "setWebhook.allowed_updates", "ChatFullInfo.available_reactions")
+    // editStory.areas isn't documented as such: the Bot API server keeps the current areas when it's omitted, and removes them on [].
+    val emptyDiffersFromOmitted = Set(
+      "getUpdates.allowed_updates", "setWebhook.allowed_updates", "ChatFullInfo.available_reactions", "editStory.areas"
+    )
     // Optional arrays whose description talks about empty or omitted lists, but means the same by both.
     val emptySameAsOmitted = Set(
       "sendPoll.country_codes", "Poll.country_codes", "Giveaway.country_codes", "ChatFullInfo.active_usernames",

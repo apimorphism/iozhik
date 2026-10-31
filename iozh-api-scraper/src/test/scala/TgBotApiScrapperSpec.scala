@@ -197,9 +197,16 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
           "Specify an empty list to receive all update types (default). If not specified, the previous setting will be used."
         )),
         "List[Update]"
+      ),
+      Method(
+        "editStory",
+        "Edits a story previously posted by the bot.",
+        List(MethodParam("areas", "Array of StoryArea", "Optional", "A JSON-serialized list of clickable areas to be shown on the story")),
+        "Story"
       )
     ))
     dsl should include("allowedUpdates : Option[List[String]]")
+    dsl should include("areas : Option[List[StoryArea]]")
   }
 
   "An unclassified optional array whose description distinguishes empty from omitted" must "fail the scrape" in {
