@@ -163,4 +163,65 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     } yield codes
     result.left.toOption.getOrElse(fail("Generation succeeded")) should include("Foo.name")
   }
+
+  private val gensDsl =
+    """
+      |namespace telegramium {
+      |  namespace bots(snake circe) {
+      |    Dated {
+      |      date: Long
+      |    }
+      |    Reply {
+      |      dated: Dated
+      |    }
+      |    SendOnly {
+      |      text: String
+      |    }
+      |    Methods (methodsFactory) {
+      |      def getReply {
+      |      } => Method[Reply]
+      |      def send {
+      |        sendOnly: SendOnly
+      |      } => Method[Boolean]
+      |    }
+      |  }
+      |}
+    """.stripMargin
+
+  private def generateGens(dsl: String, gensCfg: GeneratorConfig = cfg.copy(generateGens = true)): Map[String, String] = {
+    val result = for {
+      space <- Parser.Grammar.parse(dsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, gensCfg)
+    } yield codes.filter(_.path.contains("test/scala")).map(c => c.name -> c.body).toMap
+    result.fold(err => fail(s"Generation failed: $err"), identity)
+  }
+
+  "Generators" must "be left out unless the config asks for them" in {
+    generateGens(gensDsl, cfg) shouldBe empty
+  }
+
+  "Generators" must "go into the test sources, one small object per type, with the aggregating object and the round-trip list" in {
+    val files = generateGens(gensDsl)
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "Gens.scala", "RoundTrips.scala")
+    files("GenTypes.scala") should include("object GenDated")
+    files("GenTypes.scala") should include("object GenReply")
+    files("Gens.scala") should include("def arbDated: Arbitrary[Dated] = GenDated.arb")
+  }
+
+  "The round-trip list" must "hold the types with both an encoder and a decoder, and leave out encode-only types" in {
+    val list = generateGens(gensDsl)("RoundTrips.scala")
+    list should include("""RoundTripCase[Reply]("Reply"""")
+    list should include("""RoundTripCase[Dated]("Dated"""")
+    list should not include "SendOnly"
+  }
+
+  "A custom-gens entry" must "post-process the generated generator of its type, and leave other types alone" in {
+    val files = generateGens(
+      gensDsl,
+      cfg.copy(generateGens = true, customGens = Map("Dated" -> "generated.map(d => d.copy(date = 1L))"))
+    )
+    files("GenTypes.scala") should include("lazy val gen: Gen[Dated] = generated.map(d => d.copy(date = 1L))")
+    files("GenTypes.scala") should include("lazy val gen: Gen[Reply] = generated")
+  }
 }
