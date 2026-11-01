@@ -257,4 +257,66 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     dsl should include("media : List[InputMedia]")
     dsl should include("rows : List[List[String]]")
   }
+
+  private def integerField(name: String, desc: String, owner: String = "Foo", kind: String = "Integer"): EntityParam =
+    entity(
+      s"""<h4>$owner</h4>
+         |<p>This object represents a foo.</p>
+         |<table class="table">
+         |<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+         |<tbody><tr><td>$name</td><td>$kind</td><td>$desc</td></tr></tbody>
+         |</table>""".stripMargin
+    ).table.head
+
+  // https://github.com/apimorphism/iozhik/issues/26
+  "An integer ID field whose wording and name are in neither list" must "fail the scrape, naming the field and the lists" in {
+    val e = the[RuntimeException] thrownBy integerField("zork_id", "Unique identifier of the zork")
+    e.getMessage should include("Foo.zork_id")
+    e.getMessage should include("intIds")
+    e.getMessage should include("longIds")
+  }
+
+  "An integer ID field described with the known 32-bit wording" must "be a Long, whatever its name" in {
+    integerField("zork_id", "Unique identifier of the zork. This number may have more than 32 significant bits.").kind shouldBe "Long"
+  }
+
+  "An integer ID field in one of the lists" must "be classified by it" in {
+    integerField("message_id", "Unique message identifier inside this chat").kind shouldBe "Int"
+    integerField("user_id", "Unique identifier of the target user").kind shouldBe "Long"
+  }
+
+  "A generic integer ID name" must "be classified per owner" in {
+    integerField("id", "Unique identifier of the task", "ChecklistTask").kind shouldBe "Int"
+    val e = the[RuntimeException] thrownBy integerField("id", "Unique identifier of the task")
+    e.getMessage should include("Foo.id")
+  }
+
+  "An integer described as an identifier, whatever its name," must "need classifying too" in {
+    val e = the[RuntimeException] thrownBy integerField("zork", "Identifier of the zork")
+    e.getMessage should include("Foo.zork")
+  }
+
+  "An array of integer IDs" must "be classified like a single one" in {
+    integerField("message_ids", "A list of identifiers of messages", "Foo", "Array of Integer").kind shouldBe "Array of Int"
+    the[RuntimeException] thrownBy integerField("zork_ids", "The zorks", "Foo", "Array of Integer") should have message
+      "Foo.zork_ids: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +
+        "Read its description and add it to intIds or longIds in TgBotApiScrapper."
+  }
+
+  "An integer that is not an identifier" must "not need classifying" in {
+    integerField("limit", "Limits the number of updates").kind shouldBe "Int"
+    integerField("total_amount", "Total price in the smallest units of the currency").kind shouldBe "Long"
+  }
+
+  "An integer ID param of a method" must "need classifying too" in {
+    val e = the[RuntimeException] thrownBy method(
+      s"""<h4>setFoo</h4>
+         |<p>Use this method to set foo. Returns <em>True</em> on success.</p>
+         |<table class="table">
+         |<thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+         |<tbody><tr><td>zork_id</td><td>Integer</td><td>Yes</td><td>Unique identifier of the zork</td></tr></tbody>
+         |</table>""".stripMargin
+    )
+    e.getMessage should include("setFoo.zork_id")
+  }
 }

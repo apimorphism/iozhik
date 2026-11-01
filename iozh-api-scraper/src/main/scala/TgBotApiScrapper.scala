@@ -160,6 +160,26 @@ object TgBotApiScrapper extends IOApp {
   private val discriminatorPattern = ".*, always “(.*?)”".r
   private val optionalFieldDescPattern = "^(?:<em>)?Optional\\b".r
 
+  // Integer identifiers (fields or params named *_id/*_ids, or described as an identifier) must be classified as Int or Long:
+  // by this wording, else by these lists. The scrape fails for any left over, so a new ID is never silently given the wrong type
+  // (apimorphism/telegramium e5cf9e9: fromChatId was an Int).
+  private val longWording = List("greater than 32 bits", "more than 32 significant bits", "bigger than 2^31")
+  private val identifierWording = "(?i)\\bidentifiers?\\b".r
+  // Entries are a field name, or Owner.name for names too generic to classify everywhere (e.g. id).
+  private val longIds = Set(
+    "user_id", "receiver_user_id", "chat_id", "sender_chat_id", "new_owner_chat_id", "actor_chat_id", "added_user_ids",
+    "from_chat_id", "direct_messages_topic_id"
+  )
+  private val intIds = Set(
+    "message_id", "message_ids", "message_thread_id", "ephemeral_message_id", "giveaway_message_id", "update_id",
+    "getUpdates.offset", "accent_color_id", "profile_accent_color_id", "request_id", "draft_id", "story_id", "from_story_id",
+    "checklist_task_id", "reply_to_checklist_task_id", "marked_as_done_task_ids", "marked_as_not_done_task_ids",
+    "option_ids", "correct_option_ids", "Story.id", "ChecklistTask.id", "InputChecklistTask.id"
+  )
+
+  private def isIntegerId(name: String, desc: String): Boolean =
+    name.endsWith("_id") || name.endsWith("_ids") || identifierWording.findFirstIn(desc).isDefined
+
   def gen(items: List[ApiItem]): String = {
     def trarr(s: String): String = {
       if (s.startsWith("Array of ")) {
@@ -466,24 +486,27 @@ object TgBotApiScrapper extends IOApp {
     case class Item(name: Element, desc: List[Element], table: Element)
     case class Sumt(name: Element, desc: Element, items: Element)
 
-    def mkType(name: String, desc: Desc, s: String): String = {
+    def mkType(owner: String, name: String, desc: Desc, s: String): String = {
       val descText = desc.text
-      val mustBeLong = descText.contains("greater than 32 bits") ||
-        descText.contains("more than 32 significant bits") ||
-        descText.contains("bigger than 2^31") ||
-        descText.contains("size in bytes") ||
-        descText.contains("Unix time") ||
-        name == "user_id" ||
-        name == "receiver_user_id" ||
-        name == "chat_id" ||
-        name == "sender_chat_id" ||
-        name == "new_owner_chat_id" ||
-        name == "actor_chat_id" ||
-        name == "added_user_ids" ||
-        name == "from_chat_id" ||
-        name == "amount" || name.toLowerCase().contains("amount") ||
-        name == "send_date" ||
-        name == "direct_messages_topic_id"
+      val hasLongWording = longWording.exists(descText.contains)
+      // "Integer or String" is a ChatId, not an integer to classify.
+      val isInteger =s.replace("Integer or String", "").contains("Integer")
+      val mustBeLong =
+        if (isInteger && isIntegerId(name, descText)) {
+          def listed(ids: Set[String]) = ids.contains(name) || ids.contains(s"$owner.$name")
+          if (hasLongWording || listed(longIds)) true
+          else if (listed(intIds)) false
+          else sys.error(
+            s"$owner.$name: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +
+              "Read its description and add it to intIds or longIds in TgBotApiScrapper."
+          )
+        } else {
+          hasLongWording ||
+            descText.contains("size in bytes") ||
+            descText.contains("Unix time") ||
+            name == "amount" || name.toLowerCase().contains("amount") ||
+            name == "send_date"
+        }
       val isFile = desc.links.exists(_.href == "#sending-files")
       if (isFile)
           "IFile"  
@@ -578,12 +601,12 @@ object TgBotApiScrapper extends IOApp {
               val desc = Desc(y.children.toList(3))
               MethodParam(
                 name = name,
-                kind = mkType(name, desc, k),
+                kind = mkType(x.name.text, name, desc, k),
                 required = y.children.toList(2).text,
                 desc = desc.text,
               )
             }.toList,
-            returns = mkType("", Desc.empty, returns)
+            returns = mkType("", "", Desc.empty, returns)
           )
         case x: Item if x.name.text.head.isUpper =>
           val params = x.table >> elements("tbody > tr")
@@ -617,7 +640,7 @@ object TgBotApiScrapper extends IOApp {
               } else {
                 EntityParam(
                   name = name,
-                  kind = mkType(name, desc, kind),
+                  kind = mkType(itemName, name, desc, kind),
                   desc = descText,
                 )
               }
