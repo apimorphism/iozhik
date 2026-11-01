@@ -319,4 +319,20 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     )
     e.getMessage should include("setFoo.zork_id")
   }
+
+  "An integer ID in intIds whose description says it may exceed 32 bits" must "fail the scrape instead of silently becoming a Long" in {
+    val e = the[RuntimeException] thrownBy
+      integerField("message_id", "Unique message identifier. This number may have more than 32 significant bits.")
+    e.getMessage should include("Foo.message_id")
+    e.getMessage should include("intIds")
+  }
+
+  "An integer ID in longIds whose description says it may exceed 32 bits" must "still be a Long" in {
+    integerField("user_id", "Identifier of the user. This number may have more than 32 significant bits.").kind shouldBe "Long"
+  }
+
+  // The Bot API server parses draft_id as int64 (telegram-bot-api Client.cpp, process_send_message_draft_query).
+  "A draft_id" must "be a Long" in {
+    integerField("draft_id", "Unique identifier of the message draft; must be non-zero.").kind shouldBe "Long"
+  }
 }

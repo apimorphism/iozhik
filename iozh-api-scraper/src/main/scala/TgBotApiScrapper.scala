@@ -162,19 +162,39 @@ object TgBotApiScrapper extends IOApp {
 
   // Integer identifiers (fields or params named *_id/*_ids, or described as an identifier) must be classified as Int or Long:
   // by this wording, else by these lists. The scrape fails for any left over, so a new ID is never silently given the wrong type
-  // (apimorphism/telegramium e5cf9e9: fromChatId was an Int).
+  // (apimorphism/telegramium e5cf9e9: fromChatId was an Int). It also fails when the wording says Long for an ID in intIds.
   private val longWording = List("greater than 32 bits", "more than 32 significant bits", "bigger than 2^31")
   private val identifierWording = "(?i)\\bidentifiers?\\b".r
+  // The docs rarely state an integer's width, so list entries are checked against the Bot API server instead:
+  // telegram-bot-api Client.cpp at e3e9dd8 (Bot API 10.3), where each handler parses params and serializes fields.
   // Entries are a field name, or Owner.name for names too generic to classify everywhere (e.g. id).
   private val longIds = Set(
+    // int64: get_user_id / get_user_ids, and chat IDs, which are resolved from strings and exceed 32 bits
     "user_id", "receiver_user_id", "chat_id", "sender_chat_id", "new_owner_chat_id", "actor_chat_id", "added_user_ids",
-    "from_chat_id", "direct_messages_topic_id"
+    "from_chat_id",
+    // int64: parsed with to_integer<int64>, serialized from JsonDirectMessagesTopic.topic_id
+    "direct_messages_topic_id",
+    // int64: parsed with to_integer<int64> in process_send_message_draft_query (the docs don't say)
+    "draft_id"
   )
   private val intIds = Set(
-    "message_id", "message_ids", "message_thread_id", "ephemeral_message_id", "giveaway_message_id", "update_id",
-    "getUpdates.offset", "accent_color_id", "profile_accent_color_id", "request_id", "draft_id", "story_id", "from_story_id",
+    // int32: get_message_id / get_message_ids (as_tdlib_message_id), serialized with as_client_message_id
+    "message_id", "message_ids", "ephemeral_message_id", "giveaway_message_id",
+    // int32: get_forum_topic_id, serialized from td forum_topic_id:int32
+    "message_thread_id",
+    // int32: JsonUpdate(td::int32 id, ...), and get_integer_arg for getUpdates offset
+    "update_id", "getUpdates.offset",
+    // int32: td_api accent color ids
+    "accent_color_id", "profile_accent_color_id",
+    // int32: get_integer_arg / get_required_int_field; the docs also say "Signed 32-bit identifier"
+    "request_id",
+    // int32: td_api story ids
+    "story_id", "from_story_id", "Story.id",
+    // int32: td_api checklist task ids
     "checklist_task_id", "reply_to_checklist_task_id", "marked_as_done_task_ids", "marked_as_not_done_task_ids",
-    "option_ids", "correct_option_ids", "Story.id", "ChecklistTask.id", "InputChecklistTask.id"
+    "ChecklistTask.id", "InputChecklistTask.id",
+    // int32: poll option indexes
+    "option_ids", "correct_option_ids"
   )
 
   private def isIntegerId(name: String, desc: String): Boolean =
@@ -490,11 +510,15 @@ object TgBotApiScrapper extends IOApp {
       val descText = desc.text
       val hasLongWording = longWording.exists(descText.contains)
       // "Integer or String" is a ChatId, not an integer to classify.
-      val isInteger =s.replace("Integer or String", "").contains("Integer")
+      val isInteger = s.replace("Integer or String", "").contains("Integer")
       val mustBeLong =
         if (isInteger && isIntegerId(name, descText)) {
           def listed(ids: Set[String]) = ids.contains(name) || ids.contains(s"$owner.$name")
-          if (hasLongWording || listed(longIds)) true
+          if (hasLongWording && listed(intIds)) sys.error(
+            s"$owner.$name: the description says it may not fit in an Int, but it is in intIds. " +
+              "Check the Bot API server source and move it to longIds in TgBotApiScrapper."
+          )
+          else if (hasLongWording || listed(longIds)) true
           else if (listed(intIds)) false
           else sys.error(
             s"$owner.$name: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +

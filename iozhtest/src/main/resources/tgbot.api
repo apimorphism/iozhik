@@ -6205,7 +6205,7 @@ namespace telegramium {
       in which the message is generated */
       messageThreadId : Option[Int]
       /* Unique identifier of the message draft which was stopped */
-      draftId         : Int
+      draftId         : Long
     }
            
     /* This object represents a unique message identifier.  */
@@ -11126,7 +11126,7 @@ namespace telegramium {
           /* Unique identifier of the message draft; must be non-zero. 
           Changes to drafts with the same identifier are animated. 
           Otherwise, the draft is replaced without animation. */
-          draftId         : Int
+          draftId         : Long
           /* Text of the message to be sent, 0-4096 characters after 
           entities parsing. Pass an empty text to show a “Thinking…” 
           placeholder. */
@@ -11512,7 +11512,7 @@ namespace telegramium {
           /* Unique identifier of the message draft; must be non-zero. 
           Changes to drafts with the same identifier are animated. 
           Otherwise, the draft is replaced without animation. */
-          draftId         : Int
+          draftId         : Long
           /* The partial message to be streamed. Direct upload of new 
           files and explicit upload of files by a URL isn't supported. */
           richMessage     : InputRichMessage
