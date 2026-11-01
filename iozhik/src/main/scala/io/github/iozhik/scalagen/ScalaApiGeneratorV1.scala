@@ -4,6 +4,7 @@ import cats.implicits._
 import io.github.iozhik.Generator.Model._
 import io.github.iozhik.GeneratorUtils._
 import io.github.iozhik.scalagen.CirceUtils._
+import io.github.iozhik.scalagen.ArbitraryGenerator
 import io.github.iozhik.scalagen.GeneratorConfig
 import io.github.iozhik.scalagen.GeneratorMeta
 import io.github.iozhik.scalagen.PredefGenerator._
@@ -1229,6 +1230,8 @@ class ScalaApiGeneratorV1 {
       }
 
       predef ++ commons ++ content
+    }.flatMap { code =>
+      if (cfg.generateGens) ArbitraryGenerator.gen(x, cfg).map(code ++ _) else Right(code)
     }
   }
 
