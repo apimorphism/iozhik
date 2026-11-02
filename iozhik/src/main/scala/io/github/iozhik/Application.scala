@@ -84,7 +84,7 @@ object Application extends IOApp {
   // scalafmt-dynamic reports a failure and hands the code back as it was, which would be written unformatted
   object FailingReporter extends ScalafmtReporter {
     def error(file: Path, message: String): Unit = throw new RuntimeException(s"scalafmt failed on $file: $message")
-    def error(file: Path, e: Throwable): Unit = throw new RuntimeException(s"scalafmt failed on $file", e)
+    def error(file: Path, e: Throwable): Unit = throw new RuntimeException(s"scalafmt failed on $file: ${e.getMessage}", e)
     override def error(file: Path, message: String, e: Throwable): Unit =
       throw new RuntimeException(s"scalafmt failed on $file: $message", e)
     def excluded(file: Path): Unit = throw new RuntimeException(s"the scalafmt config excludes $file")
