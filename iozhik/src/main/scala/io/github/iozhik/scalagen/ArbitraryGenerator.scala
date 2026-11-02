@@ -264,21 +264,19 @@ object ArbitraryGenerator {
       Right(emit(typeName, s"$typeName.type", s"Gen.const($typeName)", NoShrink, roundTrip, meta))
     else
       fields.traverse(f => genFor(f.kind, enclosing).map(f -> _)).map { gens =>
-        // Gen.zip groups of up to 9 fields: a for comprehension with a closure per field overflows the Scala 2
-        // compiler's stack on the hundred-field types
-        val groups = gens.map(_._2.gen).zipWithIndex.grouped(9).toList
-        val steps = groups.zipWithIndex.map { case (group, gi) =>
-          val method = if (gi == groups.size - 1) "map" else "flatMap"
-          group match {
-            case List((g, i)) => s"$g.$method { a$i =>"
-            case _ =>
-              s"Gen.zip(${group.map(_._1).mkString(", ")}).$method { ${group.map("a" + _._2).mkString("case (", ", ", ")")} =>"
+        // A flat zip of zips: Gen.zip takes up to 9. Not a for comprehension: a closure per field overflows the Scala 2
+        // compiler's stack on the hundred-field types. Fields are passed by name, so the compiler checks the order.
+        def group(nodes: List[(String, String)]): List[(String, String)] =
+          nodes.grouped(9).toList.map {
+            case List(one) => one
+            case g => (s"Gen.zip(${g.map(_._1).mkString(", ")})", g.map(_._2).mkString("(", ", ", ")"))
           }
-        }
-        val args = groups.map(_.map("a" + _._2).mkString(", "))
-        val ctor = if (args.size == 1) s"$typeName(${args.head})" else s"$typeName(${args.map("\n        " + _).mkString(",")}\n      )"
-        // laid out like a for comprehension: one line per group, closed together at the end
-        val body = steps.map("\n    " + _).mkString + s"\n      $ctor\n    " + "}" * steps.size
+        def top(nodes: List[(String, String)]): (String, String) =
+          if (nodes.size <= 9) group(nodes).head else top(group(nodes))
+        val (src, pat) = top(gens.zipWithIndex.map { case ((_, g), i) => (g.gen, s"a$i") })
+        val args = gens.zipWithIndex.map { case ((f, _), i) => s"${sanitize(f.name)} = a$i" }.mkString(", ")
+        val lambda = if (gens.size == 1) pat else s"case $pat"
+        val body = s"$src.map { $lambda => $typeName($args) }"
         // primitive fields don't shrink, so they get no entry
         val shrinkers = gens.collect { case (f, g) if g.shrink != NoShrink =>
           val name = sanitize(f.name)
@@ -286,8 +284,8 @@ object ArbitraryGenerator {
         }
         val shrink =
           if (shrinkers.isEmpty) NoShrink
-          else s"shrinkFields[$typeName](x => List(${shrinkers.map("\n    " + _).mkString(",")}\n  ))"
-        emit(typeName, typeName, s"deeper($body\n  )", shrink, roundTrip, meta)
+          else s"shrinkFields[$typeName](x => List(${shrinkers.mkString(", ")}))"
+        emit(typeName, typeName, s"deeper($body)", shrink, roundTrip, meta)
       }
 
   private def sanitize(name: String): String = io.github.iozhik.GeneratorUtils.sanitize(name, keywords)
@@ -327,7 +325,7 @@ object ArbitraryGenerator {
         parentShrink =
           if (shrinkable.isEmpty) NoShrink
           else
-            s"shrinkSum[$name](" + shrinkable.map(v => s"\n    variant(${objName(v)}.shrink)").mkString(",") + "\n  )"
+            s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
       } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), meta)
     } else
       kind.flatMap(genCaseClass(_, orderedFields(x), x.kind, Option.when(decodable)(false)))

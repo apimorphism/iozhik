@@ -220,6 +220,12 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     files("Gens.scala") should include("def arbDated: Arbitrary[Dated] = Arbitrary(GenDated.gen)")
   }
 
+  "A generator" must "zip its fields and pass them by name, in groups of up to 9" in {
+    val types = generateGens(gensDsl)("GenTypes.scala")
+    types should include("Gen.zip(genLong, optPrim(genString)).map { case (a0, a1) => Dated(date = a0, note = a1) }")
+    types should include("GenDated.gen.map { a0 => Reply(dated = a0) }")
+  }
+
   "A shrinker" must "have entries for the optional and composite fields only" in {
     val types = generateGens(gensDsl)("GenTypes.scala")
     types should include("field(x.note)(shrinkOpt(noShrink))(v => x.copy(note = v))")

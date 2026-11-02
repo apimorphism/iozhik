@@ -16,6 +16,7 @@ import pureconfig.ConfigSource
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import scala.annotation.tailrec
 
 object Application extends IOApp {
 
@@ -39,9 +40,12 @@ object Application extends IOApp {
         val path = dstDir.resolve(code.path)
         val file = path.resolve(code.name)
         path.toFile.mkdirs()
-        // the generated test sources are laid out by their generator: scalafmt puts every field on a line of its own
+        // the generated test sources are formatted with the target repo's own config, which checks them
         val body =
-          if (code.path.startsWith(ArbitraryGenerator.TestSourcesPath)) code.body
+          if (code.path.startsWith(ArbitraryGenerator.TestSourcesPath))
+            cfg.gensFmtConfigPath.fold(code.body) { c =>
+              formatUntilStable(formatter, dstDir.resolve(c).toAbsolutePath.normalize, file.toAbsolutePath.normalize, code.body)
+            }
           else formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
         (file, body)
       })
@@ -54,6 +58,13 @@ object Application extends IOApp {
       .handleErrorWith(e => Stream.eval(async.delay(e.printStackTrace())))
       .compile
       .drain
+  }
+
+  // One scalafmt pass over the generated layout isn't always stable, and the target repo checks the result.
+  @tailrec
+  def formatUntilStable(formatter: Scalafmt, config: Path, file: Path, code: String, passes: Int = 5): String = {
+    val next = formatter.format(config, file, code)
+    if (next == code || passes <= 1) next else formatUntilStable(formatter, config, file, next, passes - 1)
   }
 
   def cleanDir[F[_]](dir: Path)(implicit sync: Sync[F]): F[Unit] = {
