@@ -323,6 +323,34 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     )).left.toOption.getOrElse(fail("translated")) should include("Figure can't have a flatten embed (`extra`): it's an enum")
   }
 
+  "A flatten embed on an abstract struct" must "fail the translation" in {
+    translate(api(
+      """
+        |    abstract Figure {
+        |      extra: (flatten) {
+        |        color: String
+        |      }
+        |    }
+      """.stripMargin
+    )).left.toOption.getOrElse(fail("translated")) should include("Figure can't have a flatten embed (`extra`): it's abstract")
+  }
+
+  "An abstract variant of an enum" must "fail the translation" in {
+    translate(api(
+      """
+        |    enum Text {
+        |      TextPlain {
+        |        type : "plain:0"
+        |        text : String
+        |      }
+        |      abstract TextStyled {
+        |        text : String
+        |      }
+        |    }
+      """.stripMargin
+    )).left.toOption.getOrElse(fail("translated")) should include("TextStyled can't be abstract: it's a variant of the enum Text")
+  }
+
   "A multipart upload of a file union whose first wrap isn't a file" must "match on the java.io.File wrap" in {
     val body = generate(
       """

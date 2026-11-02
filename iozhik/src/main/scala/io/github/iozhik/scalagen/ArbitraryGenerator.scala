@@ -203,8 +203,6 @@ object ArbitraryGenerator {
         val isOpen = x.kind.exists(k => useOpenEnum(k, struc = None))
         for {
           name <- kind
-          // an abstract variant gets no generator of its own, and Gen.oneOf needs at least one
-          _ <- u.leaves.find(_.shape.isAbstract).flatMap(_.kind).map(k => s"no generator for the abstract variant ${k.name} of $name").toLeft(())
           _ <- Either.cond(variants(x).nonEmpty, (), s"no generator for $name: it has no variants")
           leaves <- u.leaves.flatTraverse(genStrucs(_, depths, shrinking))
           // wrapps and enum strings always get both codecs

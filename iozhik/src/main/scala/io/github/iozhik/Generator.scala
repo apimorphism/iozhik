@@ -400,13 +400,17 @@ object Generator {
           val children = leaves.map(y => y.copy(mixins = kind.toList ++ y.mixins))
           val flatEmbeds = embeds.filter(_.struc.opts.contains("flatten"))
           val flattens = flatEmbeds.map(_.struc)
+          val abstractVariants = leaves.filter(_.shape.isAbstract).flatMap(_.kind).map(_.name)
           val variants: List[Variant] = children ++ wrapps ++ enumstrs
           val name = kind.map(_.name).getOrElse("an anonymous struct")
           val shape: F[Shape] =
             if (x.isEnum && x.isAbstract) E.raiseError(s"$name can't be both abstract and an enum")
             // a variant's codec would put the embed's fields at the top level, not under the embed's name
-            else if (x.isEnum && flatEmbeds.nonEmpty)
-              E.raiseError(s"$name can't have a flatten embed (`${flatEmbeds.head.name}`): it's an enum")
+            else if ((x.isEnum || x.isAbstract) && flatEmbeds.nonEmpty)
+              E.raiseError(s"$name can't have a flatten embed (`${flatEmbeds.head.name}`): it's ${if (x.isEnum) "an enum" else "abstract"}")
+            // an enum's codecs dispatch on its variants' type tags, and an abstract struct has neither a tag nor codecs
+            else if (x.isEnum && abstractVariants.nonEmpty)
+              E.raiseError(s"${abstractVariants.head} can't be abstract: it's a variant of the enum $name")
             else if (x.isEnum || x.isAbstract) E.pure(Shape.Union(isSealed = x.isEnum, variants))
             else if (variants.nonEmpty) E.raiseError(s"$name has variants but is neither abstract nor an enum")
             else E.pure(Shape.Record)
