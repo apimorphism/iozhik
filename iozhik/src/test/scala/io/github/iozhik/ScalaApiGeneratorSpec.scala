@@ -263,7 +263,8 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       else if (seen(kind.name)) Nil
       else
         space.symbol.resolve(kind).toList.collect { case s: Struc => s }.flatMap { s =>
-          (if (s.leaves.nonEmpty) s.leaves else List(s)).flatMap { v =>
+          val leaves = s.variants.collect { case v: Struc => v }
+          (if (leaves.nonEmpty) leaves else List(s)).flatMap { v =>
             val variant = v.kind.map(_.name).getOrElse(kind.name)
             v.fields.flatMap { f =>
               val step = Step(kind.name, variant, f.name)

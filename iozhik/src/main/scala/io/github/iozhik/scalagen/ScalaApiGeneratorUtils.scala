@@ -20,7 +20,7 @@ object ScalaApiGeneratorUtils {
       body = "[" + items.mkString(", ") + "]"
       sanitizedName = sanitize(x.name, keywords)
       kind = meta.symt.resolve(x).collect {
-        case e: Struc if e.isEnum && useOpenEnum(x, struc = None) =>
+        case e: Struc if e.shape.isEnum && useOpenEnum(x, struc = None) =>
           wrapEnumType(sanitizedName + (if (x.params.nonEmpty) body else ""))
         }
         .getOrElse(sanitizedName + (if (x.params.nonEmpty) body else ""))
@@ -36,7 +36,7 @@ object ScalaApiGeneratorUtils {
         case s: Struc
           if s.isCaseObject =>
           sanitize(x.name, keywords) + ".type" + body
-        case e: Struc if e.isEnum && useOpenEnum(x, struc) =>
+        case e: Struc if e.shape.isEnum && useOpenEnum(x, struc) =>
           wrapEnumType(sanitize(x.name, keywords) + body)
         }
         .getOrElse(sanitize(x.name, keywords) + body)
@@ -115,10 +115,12 @@ object ScalaApiGeneratorUtils {
     s.kind.foreach(k => kinds += k)
     s.kind.foreach(k => kinds ++= k.params.flatMap(resolveCodKinds(_, seen)))
     kinds ++= s.fields.flatMap(f => resolveCodKinds(f.kind, seen))
-    kinds ++= s.leaves.flatMap(l => l.kind.map(resolveCodKinds(_, seen)).toList.flatten)
     kinds ++= s.embeds.flatMap(e => resolveCodKinds(Kind(e.name), seen))
-    kinds ++= s.wrapps.flatMap(w => resolveCodKinds(w.name, seen))
-    kinds ++= s.enumstrs.flatMap(e => resolveCodKinds(e.name, seen))
+    kinds ++= s.variants.flatMap {
+      case l: Struc   => l.kind.toList.flatMap(resolveCodKinds(_, seen))
+      case w: Wrapp   => resolveCodKinds(w.name, seen)
+      case e: EnumStr => resolveCodKinds(e.name, seen)
+    }
     kinds.toList
   }
 }

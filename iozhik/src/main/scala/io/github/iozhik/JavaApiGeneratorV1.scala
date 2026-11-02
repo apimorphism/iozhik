@@ -22,7 +22,10 @@ class JavaApiGeneratorV1 extends Generator {
     implicit val space: Space = x
 
     for {
-      strucsSrcs        <- strucs.flatTraverse(s => if (s.isEnum) enumToCode(s) else strucToCode(s))
+      strucsSrcs        <- strucs.flatTraverse(s => s.shape match {
+                             case u @ Shape.Union(true, _) => enumToCode(s, u)
+                             case _                        => strucToCode(s)
+                           })
       servicesSrcs      <- services.flatTraverse(s => serviceToCode(s))
       servicesImplSrcs  <- services.flatTraverse(s => genServiceUnirestImpl(s))
       serviceEntitySrcs <- services.flatTraverse(genServiceEntities)
@@ -219,7 +222,7 @@ class JavaApiGeneratorV1 extends Generator {
         |   ${genNoArgConstructor(strucName)}
         |   ${genAllArgConstructor(struc)}
         |   ${genGSetter(struc).mkString("\n")}
-        |   ${genIsAsMethodsImpl(interface.map(_.leaves).getOrElse(List.empty).map(s => s -> (s == struc)))}
+        |   ${genIsAsMethodsImpl(interface.map(getLeaves).getOrElse(List.empty).map(s => s -> (s == struc)))}
         |   ${genEqualsMethod(struc)}
         |   ${genToStringMethod(struc)}
         | }
@@ -233,51 +236,48 @@ class JavaApiGeneratorV1 extends Generator {
   }
 
   // considered that enum doesn't have inner enums
-  private def enumToCode(struc: Struc)(implicit symt: Symtable, space: Space): Either[String, List[Code]] =
-    if (!struc.isEnum) {
-      Left("Struc is not enum")
-    } else {
-      val packageCode = struc.path.reverse.tail.mkString(".")
-      val enumName = struc.kind.map(_.name).get
-      val subStrucNames = getSubStrucs(struc).flatMap(_.kind).map(_.name)
-      val body =
-      if (subStrucNames.isEmpty) {
-        javaFormatter.formatSource(
-          s"""
-             | package $packageCode;
-             |
-             | public interface $enumName {
-             | }
-            """.stripMargin)
-      } else {
-        javaFormatter.formatSource(
-          s"""
-             | package $packageCode;
-             |
-             | import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-             | import $packageCode.deserializators.${enumName}Deserializer;
-             |
-             | import java.util.*;
-             |
-             | @JsonDeserialize(using = ${enumName}Deserializer.class)
-             | public interface $enumName {
-             |   ${genEnum(enumName, subStrucNames)}
-             |   ${enumName}s what();
-             |   ${genGSetterProto(struc).mkString("\n")}
-             |   ${genIsAsMethods(subStrucNames)}
-             | }
+  private def enumToCode(struc: Struc, union: Shape.Union)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
+    val packageCode = struc.path.reverse.tail.mkString(".")
+    val enumName = struc.kind.map(_.name).get
+    val subStrucNames = getSubStrucs(struc).flatMap(_.kind).map(_.name)
+    val body =
+    if (subStrucNames.isEmpty) {
+      javaFormatter.formatSource(
+        s"""
+           | package $packageCode;
+           |
+           | public interface $enumName {
+           | }
           """.stripMargin)
-      }
-
-      for {
-        codes <- getSubStrucs(struc).flatTraverse(x => strucToCode(x, Some(struc)))
-        wrappCodes <- struc.wrapps.flatTraverse(x => wrappToCode(struc.kind.getOrElse(Kind("$$")), x))
-      } yield {
-        List(Code(body, s"$enumName.java", packageCode.replace('.', '/'))) ++
-            (if (subStrucNames.isEmpty) List.empty[Code] else List(genCustomDeserializer(struc))) ++
-            codes ++ wrappCodes
-      }
+    } else {
+      javaFormatter.formatSource(
+        s"""
+           | package $packageCode;
+           |
+           | import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+           | import $packageCode.deserializators.${enumName}Deserializer;
+           |
+           | import java.util.*;
+           |
+           | @JsonDeserialize(using = ${enumName}Deserializer.class)
+           | public interface $enumName {
+           |   ${genEnum(enumName, subStrucNames)}
+           |   ${enumName}s what();
+           |   ${genGSetterProto(struc).mkString("\n")}
+           |   ${genIsAsMethods(subStrucNames)}
+           | }
+        """.stripMargin)
     }
+
+    for {
+      codes <- getSubStrucs(struc).flatTraverse(x => strucToCode(x, Some(struc)))
+      wrappCodes <- union.wrapps.flatTraverse(x => wrappToCode(struc.kind.getOrElse(Kind("$$")), x))
+    } yield {
+      List(Code(body, s"$enumName.java", packageCode.replace('.', '/'))) ++
+          (if (subStrucNames.isEmpty) List.empty[Code] else List(genCustomDeserializer(struc))) ++
+          codes ++ wrappCodes
+    }
+  }
 
   def wrappToCode(parentKind: Kind, x: Wrapp)
               (implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
@@ -484,8 +484,10 @@ class JavaApiGeneratorV1 extends Generator {
     space.strucs ++ space.spaces.flatMap(getAllStrucs)
   }
 
+  private def getLeaves(struc: Struc): List[Struc] = struc.variants.collect { case s: Struc => s }
+
   private def getSubStrucs(struc: Struc): List[Struc] = {
-    struc.leaves ++ struc.leaves.flatMap(getSubStrucs)
+    getLeaves(struc) ++ getLeaves(struc).flatMap(getSubStrucs)
   }
 
   private def camel2snake(name: String): String = name

@@ -39,12 +39,23 @@ object Generator {
     sealed trait Variant extends StrucItem
 
     // How a struct is generated.
-    sealed trait Shape
+    sealed trait Shape {
+      // Whether it's an `enum`, generated as a sealed trait.
+      def isEnum: Boolean = this match {
+        case Shape.Union(isSealed, _) => isSealed
+        case Shape.Record             => false
+      }
+    }
     object Shape {
       // A case class, or a case object when it has no fields (Struc.isCaseObject).
       case object Record extends Shape
-      // A trait over its variants: sealed for an `enum`, open for an `abstract` struct.
-      final case class Union(isSealed: Boolean, variants: List[Variant]) extends Shape
+      // A trait over its variants: sealed for an `enum`, open for an `abstract` struct. The variants are grouped
+      // leaves first, then wraps, then items, the order they're generated in.
+      final case class Union(isSealed: Boolean, variants: List[Variant]) extends Shape {
+        def leaves: List[Struc] = variants.collect { case s: Struc => s }
+        def wrapps: List[Wrapp] = variants.collect { case w: Wrapp => w }
+        def enumstrs: List[EnumStr] = variants.collect { case e: EnumStr => e }
+      }
     }
 
     final case class EnumStr(doc: String, name: Kind, opts: List[String], target: String) extends Variant {
@@ -118,17 +129,6 @@ object Generator {
         case Shape.Union(_, variants) => variants
         case Shape.Record             => Nil
       }
-      def leaves: List[Struc] = variants.collect { case s: Struc => s }
-      def wrapps: List[Wrapp] = variants.collect { case w: Wrapp => w }
-      def enumstrs: List[EnumStr] = variants.collect { case e: EnumStr => e }
-      def isEnum: Boolean = shape match {
-        case Shape.Union(isSealed, _) => isSealed
-        case Shape.Record             => false
-      }
-      def isAbstract: Boolean = shape match {
-        case Shape.Union(isSealed, _) => !isSealed
-        case Shape.Record             => false
-      }
 
       // Every field the generated class has, the used structs' first.
       def allFields: List[Field] = usingFields ++ fields
@@ -147,8 +147,8 @@ object Generator {
           ))
         }
       }
-      def leavesForBins: List[Struc] = {
-        leaves.map{ s =>
+      def leavesForBins: List[Struc] = variants.map {
+        case s: Struc =>
           if (s.typets.isEmpty) {
             val tag = s.kind.map(_.name).getOrElse("$$")
             s.copy(
@@ -165,7 +165,8 @@ object Generator {
           } else {
             s
           }
-        } ++ wrapps.map(_.asStruc(this)) ++ enumstrs.map(_.asStruc(this))
+        case w: Wrapp   => w.asStruc(this)
+        case e: EnumStr => e.asStruc(this)
       }
     }
 
@@ -283,7 +284,7 @@ object Generator {
         case x: Struc =>
           x.kind.map { k =>
             s.copy(strucMap = s.strucMap + ((k.name :: k.path)  -> x)) ++
-              x.leaves
+              x.variants.collect { case leaf: Struc => leaf }
                 .map(walk(s))
                 .fold(Symtable())(_ ++ _)
           }.getOrElse(s)
