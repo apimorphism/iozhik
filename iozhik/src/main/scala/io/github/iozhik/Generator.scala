@@ -398,11 +398,15 @@ object Generator {
           val kind: Option[Kind] = x.kind.map(trKind(_, path))
           // a variant's fields inherited from the union are added by resolveUsings
           val children = leaves.map(y => y.copy(mixins = kind.toList ++ y.mixins))
-          val flattens = embeds.map(_.struc).filter(_.opts.contains("flatten"))
+          val flatEmbeds = embeds.filter(_.struc.opts.contains("flatten"))
+          val flattens = flatEmbeds.map(_.struc)
           val variants: List[Variant] = children ++ wrapps ++ enumstrs
           val name = kind.map(_.name).getOrElse("an anonymous struct")
           val shape: F[Shape] =
             if (x.isEnum && x.isAbstract) E.raiseError(s"$name can't be both abstract and an enum")
+            // a variant's codec would put the embed's fields at the top level, not under the embed's name
+            else if (x.isEnum && flatEmbeds.nonEmpty)
+              E.raiseError(s"$name can't have a flatten embed (`${flatEmbeds.head.name}`): it's an enum")
             else if (x.isEnum || x.isAbstract) E.pure(Shape.Union(isSealed = x.isEnum, variants))
             else if (variants.nonEmpty) E.raiseError(s"$name has variants but is neither abstract nor an enum")
             else E.pure(Shape.Record)

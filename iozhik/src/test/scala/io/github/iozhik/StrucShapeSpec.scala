@@ -307,17 +307,11 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     body should include("final case class Circle(area: Double, radius: Int)")
   }
 
-  "A flatten embed on an enum" must "give every variant the fields the trait declares" in {
-    val body = generate(
+  "A flatten embed on an enum" must "fail the translation" in {
+    translate(api(
       """
-        |namespace telegramium {
-        |  namespace bots(snake) {
-        |    Props {
-        |      area: Double
-        |    }
         |    enum Figure {
         |      extra: (flatten) {
-        |        use Props
         |        color: String
         |      }
         |      Square {
@@ -325,13 +319,8 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
         |        side: Int
         |      }
         |    }
-        |  }
-        |}
       """.stripMargin
-    )
-    body should include("def area: Double")
-    body should include("def color: String")
-    body should include("final case class Square(area: Double, color: String, side: Int) extends Figure")
+    )).left.toOption.getOrElse(fail("translated")) should include("Figure can't have a flatten embed (`extra`): it's an enum")
   }
 
   "A multipart upload of a file union whose first wrap isn't a file" must "match on the java.io.File wrap" in {
