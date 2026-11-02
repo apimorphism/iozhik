@@ -12,9 +12,12 @@ import fs2.io.file.Files
 import io.github.iozhik.scalagen.ArbitraryGenerator
 import io.github.iozhik.scalagen.GeneratorConfig
 import org.scalafmt.interfaces.Scalafmt
+import org.scalafmt.interfaces.ScalafmtReporter
 import pureconfig.ConfigSource
 
 import java.io.File
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
 import java.nio.file.Path
 import java.nio.file.Paths
 import scala.annotation.tailrec
@@ -24,7 +27,7 @@ object Application extends IOApp {
   def generate[F[_]: RaiseThrowable](cfg: GeneratorConfig, dstDir: Path, testDir: Option[Path])(implicit async: Async[F], files: Files[F]): F[Unit] = {
 
     val generator = new ScalaApiGeneratorV1
-    val formatter = Scalafmt.create(this.getClass.getClassLoader)
+    val formatter = Scalafmt.create(this.getClass.getClassLoader).withReporter(FailingReporter)
 
     val missingTestDir =
       async.raiseWhen(cfg.generateGens && testDir.isEmpty)(
@@ -76,6 +79,18 @@ object Application extends IOApp {
       }
       .compile
       .drain
+  }
+
+  // scalafmt-dynamic reports a failure and hands the code back as it was, which would be written unformatted
+  object FailingReporter extends ScalafmtReporter {
+    def error(file: Path, message: String): Unit = throw new RuntimeException(s"scalafmt failed on $file: $message")
+    def error(file: Path, e: Throwable): Unit = throw new RuntimeException(s"scalafmt failed on $file", e)
+    override def error(file: Path, message: String, e: Throwable): Unit =
+      throw new RuntimeException(s"scalafmt failed on $file: $message", e)
+    def excluded(file: Path): Unit = throw new RuntimeException(s"the scalafmt config excludes $file")
+    def parsedConfig(config: Path, scalafmtVersion: String): Unit = println(s"parsed config (v$scalafmtVersion): $config")
+    def downloadWriter(): PrintWriter = new PrintWriter(System.err, true)
+    def downloadOutputStreamWriter(): OutputStreamWriter = new OutputStreamWriter(System.err)
   }
 
   // One scalafmt pass over the generated layout isn't always stable.
