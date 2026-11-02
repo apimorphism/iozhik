@@ -11,7 +11,7 @@ object CirceUtils {
   ): Either[String, (String, String)] = {
     val wrapEnumType = if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenEnum.Known(_))" else ""
     leaves.traverse { leaf =>
-      val postfix = if (leaf.fields.nonEmpty) "" else ".type"
+      val postfix = if (leaf.isCaseObject) ".type" else ""
       leaf
         .kind
         .map(_.name)
@@ -41,7 +41,7 @@ object CirceUtils {
   def genCirceCodecCases(parent: Struc, typeTag: String, typet: Typet, leaf: Struc)(
     implicit meta: GeneratorMeta
   ): Either[String, (String, String)] = {
-    val postfix = if (leaf.fields.nonEmpty) "" else ".type"
+    val postfix = if (leaf.isCaseObject) ".type" else ""
     val wrapEnumType = if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenEnum.Known(_))" else ""
     leaf
       .kind
@@ -66,7 +66,7 @@ object CirceUtils {
   ): (String, String) = {
     val ownFields = for {
       (name, f) <- child.embeds.flatMap { e =>
-        (e.struc.fields ++ e.struc.usingFields).map(e.name -> _)
+        (e.struc.ownFields ++ e.struc.usingFields).map(e.name -> _)
       }
       ename = "\"" + name + "\""
       fname = "\"" + f.name + "\""
@@ -78,8 +78,8 @@ object CirceUtils {
         ename -> fname
       )
     }
-    val embedFields: Seq[String] = child.embeds.flatMap(_.struc.fields.map(_.name))
-    val inheritedFields = child.fields.filter(z => !embedFields.contains(z.name)).map { f =>
+    val embedFields: Seq[String] = child.embeds.flatMap(_.struc.allFields.map(_.name))
+    val inheritedFields = child.allFields.filter(z => !embedFields.contains(z.name)).map { f =>
       val fname = "\"" + f.name + "\""
       (
         s"${f.name} <- Decoder[${f.kind.name}].prepare(_.downField($fname))",

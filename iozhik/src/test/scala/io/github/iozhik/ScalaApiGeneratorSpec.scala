@@ -266,7 +266,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
           val leaves = s.variants.collect { case v: Struc => v }
           (if (leaves.nonEmpty) leaves else List(s)).flatMap { v =>
             val variant = v.kind.map(_.name).getOrElse(kind.name)
-            v.fields.flatMap { f =>
+            v.allFields.flatMap { f =>
               val step = Step(kind.name, variant, f.name)
               if (f.opts.contains("file")) List(List(step))
               else paths(f.kind, seen + kind.name).map(step :: _)
@@ -291,7 +291,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     // Each link that isn't attached, with the shortest path through it as an example
     val uncovered = (for {
       method <- methods(space)
-      param  <- method.dom.toOption.toList.flatMap(_.fields).filterNot(_.opts.contains("file"))
+      param  <- method.dom.toOption.toList.flatMap(_.allFields).filterNot(_.opts.contains("file"))
       path   <- paths(param.kind, Set.empty)
       paramLink = s"${method.kind.name}.${param.name}"
       missing <- (if (defBody(s"def ${method.kind.name}(").exists(_.contains(s"${param.name}Attached"))) None

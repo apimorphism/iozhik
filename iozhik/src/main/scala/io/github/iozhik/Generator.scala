@@ -82,7 +82,7 @@ object Generator {
           doc = doc,
           kind = Some(name),
           path = parent.path,
-          fields = List(
+          ownFields = List(
             Field(
               doc = "",
               name = fname,
@@ -116,7 +116,8 @@ object Generator {
       maxVersion: Option[Version] = Option.empty[Version],
       typets: List[Typet] = List.empty[Typet],
       opts: List[String] = List.empty[String],
-      fields: List[Field] = List.empty[Field],
+      // The fields declared on the struct itself; allFields adds the used structs' ones.
+      ownFields: List[Field] = List.empty[Field],
       mixins: List[Kind] = List.empty[Kind],
       usings: List[Using] = List.empty[Using],
       // The fields of the structs named by `usings`, resolved by translate.
@@ -131,7 +132,7 @@ object Generator {
       }
 
       // Every field the generated class has, the used structs' first.
-      def allFields: List[Field] = usingFields ++ fields
+      def allFields: List[Field] = usingFields ++ ownFields
 
       // A record with no fields is generated as a case object.
       def isCaseObject: Boolean = shape == Shape.Record && allFields.isEmpty
@@ -381,7 +382,7 @@ object Generator {
           val kind: Option[Kind] = x.kind.map(trKind(_, path))
           val children = leaves.map(
             y => y.copy(
-              fields = fields ++ y.fields,
+              ownFields = fields ++ y.ownFields,
               mixins = kind.toList ++ y.mixins
             )
           )
@@ -402,7 +403,7 @@ object Generator {
             maxVersion = x.maxVersion.map(trVersion),
             typets = if (x.isEnum) leaves.flatMap(_.typets) else typets,
             opts = x.opts,
-            fields = fields ++ flattens.flatMap(_.fields),
+            ownFields = fields ++ flattens.flatMap(_.ownFields),
             mixins = mixins,
             usings = usings ++ flattens.flatMap(_.usings),
             embeds = embeds,
@@ -479,7 +480,7 @@ object Generator {
         // An embed's `use`s resolve in the scope of the struct holding it.
         def struc(x: Struc, scope: Option[Kind]): Either[String, Struc] = for {
           usingFields <- x.usings.flatTraverse { u =>
-            root.symbol.find(u.kind, scope).collect { case s: Struc => s.fields }
+            root.symbol.find(u.kind, scope).collect { case s: Struc => s.ownFields }
               .toRight(s"can't resolve `use ${u.kind.name}` in ${x.kind.fold("an anonymous struct")(_.name)}")
           }
           shape <- x.shape match {

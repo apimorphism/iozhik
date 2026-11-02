@@ -249,8 +249,7 @@ class ScalaApiGeneratorV1 {
           }
         }
       case _ =>
-        val usingf = struc.usingFields
-        val impPacks = (usingf ++ struc.fields)
+        val impPacks = struc.allFields
           .flatMap(_.kind.unresolvedIn(meta.space.symbol))
           .filter(y => !predefined.contains(y.name))
           .flatMap(meta.symt.resolve)
@@ -264,12 +263,12 @@ class ScalaApiGeneratorV1 {
             .map(path => s"import $path.CirceImplicits._")
         for {
           kind <- struc.kind.map(_.name).toRight("No kind name")
-          _ <- (usingf ++ struc.fields)
+          _ <- struc.allFields
             .find(y => y.opts.contains("omitempty") && y.kind.name != "List")
             .map(y => s"$kind.${y.name}: (omitempty) is only supported on List fields")
             .toLeft(())
-          fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind, struc.kind))
-          fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
+          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, struc.kind))
+          fields = struc.allFields.map(y => y.name).zip(fieldKinds)
         } yield {
           val postfix = if (!struc.isCaseObject) "" else ".type"
           val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
@@ -306,7 +305,7 @@ class ScalaApiGeneratorV1 {
           }
           else ""
           // (omitempty) List fields encode to null when empty, so the filter below leaves them out of the JSON
-          val encoderFields = ((usingf ++ struc.fields)
+          val encoderFields = (struc.allFields
             .map{ y =>
               val n = if (useSnake) { camel2snake(y.name) } else { y.name }
               val fn = sanitize(y.name)
@@ -380,11 +379,10 @@ class ScalaApiGeneratorV1 {
           }
         }
       case _ =>
-        val usingf = x.usingFields
         for {
           kind <- x.kind.map(_.name).toRight("No kind name")
-          fieldKinds <- (usingf ++ x.fields).traverse(y => genKind(y.kind))
-          fields = (usingf ++ x.fields).map(y => y.name).zip(fieldKinds)
+          fieldKinds <- x.allFields.traverse(y => genKind(y.kind))
+          fields = x.allFields.map(y => y.name).zip(fieldKinds)
         } yield {
           val name = kind + versionPostfix(x.minVersion, x.maxVersion)
           val codecBody = fields.map{ case (n, k) => s"""("$n" | Codec[$k])""" }.intercalate(s" ::$d")
@@ -463,8 +461,7 @@ class ScalaApiGeneratorV1 {
           }
         }
       case _ =>
-        val usingf = struc.usingFields
-        val impPacks = (usingf ++ struc.fields)
+        val impPacks = struc.allFields
           .flatMap(_.kind.unresolvedIn(meta.space.symbol))
           .filter(y => !predefined.contains(y.name))
           .flatMap(meta.symt.resolve)
@@ -478,8 +475,8 @@ class ScalaApiGeneratorV1 {
           .map(path => s"import $path.uPickleImplicits._")
         for {
           kind <- struc.kind.map(_.name).toRight("No kind name")
-          fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind, struc.kind))
-          fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
+          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, struc.kind))
+          fields = struc.allFields.map(y => y.name).zip(fieldKinds)
         } yield {
           val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
           val keys = fields.map{ case (n, _) => s"""val ${n}Key = upack.Str("$n")""" }.intercalate(d)
@@ -559,7 +556,7 @@ class ScalaApiGeneratorV1 {
   private def genStrucDocs(struc: Struc) = {
     val docsBody = (if (struc.doc.nonEmpty) struc.doc.split("\n").toList.map(_.trim) else List.empty)
       .intercalate(s"$delimiter* ")
-    val params = requiredFieldsFirst(struc.fields).flatMap { field =>
+    val params = constructorFields(struc).flatMap { field =>
       if (field.doc.nonEmpty) Some((s"@param ${field.name}" + field.doc).split(delimiter).toList.map(_.trim))
       else None
     }
@@ -577,23 +574,22 @@ class ScalaApiGeneratorV1 {
   def genStruc(x: Struc, wrapEnumType: String => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
     val isUnion = x.shape != Shape.Record
-    val usingf = x.usingFields
     for {
       kind <- genKind(kindOrDefault)
-      fields <- requiredFieldsFirst(x.fields).traverse(genField(_, x.kind, withDoc = isUnion, isDef = isUnion, wrapEnumType = wrapEnumType))
+      fields <- requiredFieldsFirst(x.ownFields).traverse(genField(_, x.kind, withDoc = isUnion, isDef = isUnion, wrapEnumType = wrapEnumType))
       mixins <- x.mixins.traverse(m => genKind(m))
       children <- x.variants.flatTraverse {
         case s: Struc   => genStruc(s, wrapEnumType)
         case w: Wrapp   => genWrapp(kindOrDefault, w)
         case e: EnumStr => genEnumStr(kindOrDefault, e)
       }
-      usings <- usingf.traverse(genField(_, x.kind, isDef = isUnion, wrapEnumType = wrapEnumType))
+      usings <- x.usingFields.traverse(genField(_, x.kind, isDef = isUnion, wrapEnumType = wrapEnumType))
       upickles <- if (meta.space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
       jsonCodecs <- if (meta.space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
       scodecs <- if (meta.space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
       ms = mixins.toNel.map(_.intercalate(" with ")).fold("")(" extends " + _)
     } yield {
-      val imps = ((usingf ++ x.fields).map(_.kind) ++ x.mixins)
+      val imps = (x.allFields.map(_.kind) ++ x.mixins)
         .flatMap(_.unresolvedIn(meta.space.symbol).flatMap(_.unresolvedIn(meta.space.symbol)))
         .filter(y => !predefined.contains(y.name))
         .flatMap(meta.symt.resolve)
@@ -656,7 +652,7 @@ class ScalaApiGeneratorV1 {
     val d = delimiter
     val params = x.dom.fold(
       _ => "",
-      struc => requiredFieldsFirst(struc.fields).flatMap { field =>
+      struc => constructorFields(struc).flatMap { field =>
         (s"@param ${field.name}" + field.doc).split(d).toList.map(_.trim)
       }
         .intercalate(s"$d* ")
@@ -730,20 +726,20 @@ class ScalaApiGeneratorV1 {
       case k :: rest if k.params.nonEmpty || found.exists(_._1.name == k.name) => reach(rest, found)
       case k :: rest => meta.symt.resolve(k) match {
         case Some(s: Struc) =>
-          val children = fileBearingVariants(s).flatMap(_.fields).filterNot(_.opts.contains("file")).flatMap(f => innerKinds(f.kind))
+          val children = fileBearingVariants(s).flatMap(_.allFields).filterNot(_.opts.contains("file")).flatMap(f => innerKinds(f.kind))
           reach(rest ++ children, found :+ (k -> s))
         case _ => reach(rest, found)
       }
     }
     val reachable = reach(
-      defs.flatMap(_.dom.toOption.toList.flatMap(_.fields)).filterNot(_.opts.contains("file")).flatMap(f => innerKinds(f.kind)),
+      defs.flatMap(_.dom.toOption.toList.flatMap(constructorFields)).filterNot(_.opts.contains("file")).flatMap(f => innerKinds(f.kind)),
       Vector.empty
     )
     // A type holds a file if one of its variants has a file field, or a field holding a type that does.
     @scala.annotation.tailrec
     def holdingFiles(known: Set[String]): Set[String] = {
       val next = reachable.collect {
-        case (k, s) if fileBearingVariants(s).exists(_.fields.exists(f =>
+        case (k, s) if fileBearingVariants(s).exists(_.allFields.exists(f =>
           f.opts.contains("file") || innerKinds(f.kind).exists(i => known(i.name))
         )) => k.name
       }.toSet
@@ -788,7 +784,7 @@ class ScalaApiGeneratorV1 {
     val typeName = sanitize(innerKind.name)
     val variants = fileBearingVariants(struc)
     val attaching = variants.map { v =>
-      v -> v.fields.flatMap { f =>
+      v -> v.allFields.flatMap { f =>
         val fname = sanitize(f.name)
         val name  = s"""name + ".${jsonName(f)}""""
         val expr =
@@ -811,7 +807,7 @@ class ScalaApiGeneratorV1 {
     // missed one fails the match's exhaustiveness check.
     val passing = attaching.collect { case (v, attached) if attached.isEmpty =>
       val variantName = v.kind.map(k => sanitize(k.name)).getOrElse(typeName)
-      if (v.fields.isEmpty) variantName else s"_: $variantName"
+      if (v.isCaseObject) variantName else s"_: $variantName"
     }
     val passingCase = Option.when(passing.nonEmpty)(s"case v @ (${passing.mkString(" | ")}) => (v, Map.empty[String, IFile])")
     val cases = attachingCases ++ passingCase
@@ -833,7 +829,7 @@ class ScalaApiGeneratorV1 {
       kind <- genKind(x.kind)
       params <- x.dom.fold(
         _ => Right(List.empty),
-        struc => requiredFieldsFirst(struc.fields).traverse(genField(_, struc = Some(x.kind), withDoc = false, wrapEnumType = identity))
+        struc => constructorFields(struc).traverse(genField(_, struc = Some(x.kind), withDoc = false, wrapEnumType = identity))
       )
       reqName = x.kind.name.capitalize + DomPostfix
       dom <- x.dom.fold(
@@ -849,11 +845,11 @@ class ScalaApiGeneratorV1 {
       cod <- genDefunCod(x)
       codName <- genDefunCodName(x)
     } yield {
-      val reqFields = x.dom.fold(_ => List.empty, struc => requiredFieldsFirst(struc.fields))
-      val domImports = x.dom.fold(_ => List.empty[String], struc => genStrucImportsWithCodecs(requiredFieldsFirst(struc.fields).map(_.kind)))
+      val reqFields = x.dom.fold(_ => List.empty, constructorFields)
+      val domImports = x.dom.fold(_ => List.empty[String], struc => genStrucImportsWithCodecs(constructorFields(struc).map(_.kind)))
       val codImports = x.cod.fold(
         kind => genStrucImportsWithCodecs(kind.params),
-        struc => genStrucImportsWithCodecs(requiredFieldsFirst(struc.fields).map(_.kind))
+        struc => genStrucImportsWithCodecs(constructorFields(struc).map(_.kind))
       )
       val docs = genDefunDocs(x)
       val reqParams = params.intercalate(", ")
@@ -874,7 +870,7 @@ class ScalaApiGeneratorV1 {
       ).merge
       val fileFields = x.dom.fold(
         _ => List.empty,
-        struc => struc.fields.filter(_.opts.contains("file"))
+        struc => constructorFields(struc).filter(_.opts.contains("file"))
       )
         .map { f =>
           val fieldName = jsonName(f)
@@ -937,15 +933,15 @@ class ScalaApiGeneratorV1 {
     val body = x.dom.fold(
       _ => (defaultFun, List.empty[String]),
       dd => {
-        val fileFields = dd.fields.filter(_.opts.contains("file"))
+        val fileFields = dd.allFields.filter(_.opts.contains("file"))
         if (fileFields.isEmpty) {
           (defaultFun, List.empty[String])
         } else {
-          val otherFields = (dd.fields
+          val otherFields = (dd.allFields
             .filter(!_.opts.contains("file"))
             .map{ f =>
               s"""("${jsonName(f)}", x.${sanitize(f.name)}.asJson)"""
-            } ++ dd.fields.filter(_.opts.contains("file")).map { f =>
+            } ++ dd.allFields.filter(_.opts.contains("file")).map { f =>
               s"""("${f.name}", if (${f.name}Part.isEmpty) { x.${f.name}.asJson } else { Json.Null } )"""
             }).intercalate(",")
           val ff = fileFields.map{ y =>
