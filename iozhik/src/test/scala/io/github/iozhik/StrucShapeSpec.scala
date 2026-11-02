@@ -106,6 +106,97 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     )).left.toOption.getOrElse(fail("translated")) should include("can't resolve `use Missing` in Holder")
   }
 
+  "A `use` inside a method's params that doesn't exist" must "fail the translation, naming the method" in {
+    translate(api(
+      """
+        |    Methods (methodsFactory) {
+        |      def send {
+        |        use Missing
+        |        text: String
+        |      } => Method[Boolean]
+        |    }
+      """.stripMargin
+    )).left.toOption.getOrElse(fail("translated")) should include("can't resolve `use Missing` in the params of `send`")
+  }
+
+  "A `use` of a struct that `use`s another" must "take the fields of both" in {
+    val body = generate(api(
+      """
+        |    Inner {
+        |      x: Int
+        |    }
+        |    Middle {
+        |      use Inner
+        |      y: Int
+        |    }
+        |    Outer {
+        |      use Middle
+        |    }
+      """.stripMargin
+    ))
+    body should include("final case class Middle(x: Int, y: Int)")
+    body should include("final case class Outer(x: Int, y: Int)")
+  }
+
+  "A cycle of `use`s" must "fail the translation" in {
+    translate(api(
+      """
+        |    First {
+        |      use Second
+        |    }
+        |    Second {
+        |      use First
+        |    }
+      """.stripMargin
+    )).left.toOption.getOrElse(fail("translated")) should include("is circular")
+  }
+
+  "A `use` on an enum" must "give every variant the used fields the trait declares" in {
+    val body = generate(api(
+      """
+        |    Props {
+        |      area: Double
+        |    }
+        |    enum Figure {
+        |      use Props
+        |      Square {
+        |        type: "square"
+        |      }
+        |      Circle {
+        |        type: "circle"
+        |        use Props
+        |        radius: Int
+        |      }
+        |    }
+      """.stripMargin
+    ))
+    body should include("def area: Double")
+    body should include("final case class Square(area: Double)")
+    body should include("final case class Circle(area: Double, radius: Int)")
+  }
+
+  "A multipart upload of a file union whose first wrap isn't a file" must "match on the java.io.File wrap" in {
+    val body = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe http4s) {
+        |    enum IFile {
+        |      wrap InputLinkFile (file) = String
+        |      wrap InputPartFile (file) = java.io.File
+        |    }
+        |    Methods (client) {
+        |      def sendPhoto {
+        |        photo: (file) IFile
+        |      } => Boolean
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    body should include("case InputPartFile(f) => makePart(\"photo\", f)")
+    body should not include "case InputLinkFile(f) => makePart"
+  }
+
   "A struct with variants that is neither abstract nor an enum" must "fail the translation" in {
     translate(api(
       """

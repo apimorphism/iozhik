@@ -93,7 +93,7 @@ object ArbitraryGenerator {
   // paths over required fields: a struct is one deeper than its deepest required field, a sum type than its
   // shallowest variant.
   private def minDepths(root: Space)(implicit meta: GeneratorMeta): Map[String, Int] = {
-    def withLeaves(s: Struc): List[Struc] = s :: s.variants.collect { case leaf: Struc => leaf }.flatMap(withLeaves)
+    def withLeaves(s: Struc): List[Struc] = s :: s.leaves.flatMap(withLeaves)
     def strucs(x: Space): List[Struc] = x.strucs.flatMap(withLeaves) ++ x.spaces.flatMap(strucs)
     val rules: List[(String, Map[String, Int] => Option[Int])] = strucs(root).flatMap { s =>
       s.kind.map(_.name).toList.flatMap { name =>
@@ -204,10 +204,7 @@ object ArbitraryGenerator {
         for {
           name <- kind
           // an abstract variant gets no generator of its own, and Gen.oneOf needs at least one
-          _ <- u.leaves.find(l => l.shape match {
-            case Shape.Union(false, _)                => true
-            case Shape.Record | Shape.Union(true, _) => false
-          }).flatMap(_.kind).map(k => s"no generator for the abstract variant ${k.name} of $name").toLeft(())
+          _ <- u.leaves.find(_.shape.isAbstract).flatMap(_.kind).map(k => s"no generator for the abstract variant ${k.name} of $name").toLeft(())
           _ <- Either.cond(variants(x).nonEmpty, (), s"no generator for $name: it has no variants")
           leaves <- u.leaves.flatTraverse(genStrucs(_, depths, shrinking))
           // wrapps and enum strings always get both codecs

@@ -222,7 +222,7 @@ class JavaApiGeneratorV1 extends Generator {
         |   ${genNoArgConstructor(strucName)}
         |   ${genAllArgConstructor(struc)}
         |   ${genGSetter(struc).mkString("\n")}
-        |   ${genIsAsMethodsImpl(interface.map(getLeaves).getOrElse(List.empty).map(s => s -> (s == struc)))}
+        |   ${genIsAsMethodsImpl(interface.map(_.leaves).getOrElse(List.empty).map(s => s -> (s == struc)))}
         |   ${genEqualsMethod(struc)}
         |   ${genToStringMethod(struc)}
         | }
@@ -339,7 +339,7 @@ class JavaApiGeneratorV1 extends Generator {
 
   private def strucToJsonParseExpr(strucs: List[Struc])(implicit symt: Symtable): String = {
     def params(struc: Struc): String = (for {
-          field <- struc.ownFields ++ struc.usingFields
+          field <- javaFields(struc)
         } yield {
          val fieldType = scalaToJavaType(field.kind)
           if (javaPrimitiveTypes.contains(fieldType)) {
@@ -434,7 +434,7 @@ class JavaApiGeneratorV1 extends Generator {
 
   private def genFields(struc: Struc)(implicit symt: Symtable): List[String] = {
     for {
-      field <- struc.ownFields ++ struc.usingFields
+      field <- javaFields(struc)
     } yield {
       s"""
          | private ${scalaToJavaType(field.kind)} ${field.name};
@@ -445,7 +445,7 @@ class JavaApiGeneratorV1 extends Generator {
   private def genGSetter(struc: Struc)(implicit symt: Symtable): List[String] = {
     val strucName = struc.kind.map(_.name).get
     for {
-      field <- struc.ownFields ++ struc.usingFields
+      field <- javaFields(struc)
     } yield {
       val fieldType = scalaToJavaType(field.kind)
       if (field.kind.name == "Option") {
@@ -465,7 +465,7 @@ class JavaApiGeneratorV1 extends Generator {
   private def genGSetterProto(struc: Struc)(implicit symt: Symtable): List[String] = {
     val strucName = struc.kind.map(_.name).get
     for {
-      field <- struc.ownFields ++ struc.usingFields
+      field <- javaFields(struc)
     } yield {
       val fieldType = scalaToJavaType(field.kind)
       s"""
@@ -484,10 +484,12 @@ class JavaApiGeneratorV1 extends Generator {
     space.strucs ++ space.spaces.flatMap(getAllStrucs)
   }
 
-  private def getLeaves(struc: Struc): List[Struc] = struc.variants.collect { case s: Struc => s }
+  // Every field the generated class has, its own first (the reverse of Struc.allFields): the order of the Java
+  // fields, getters, constructor params and JSON parsing.
+  private def javaFields(struc: Struc): List[Field] = struc.ownFields ++ struc.usingFields
 
   private def getSubStrucs(struc: Struc): List[Struc] = {
-    getLeaves(struc) ++ getLeaves(struc).flatMap(getSubStrucs)
+    struc.leaves ++ struc.leaves.flatMap(getSubStrucs)
   }
 
   private def camel2snake(name: String): String = name
@@ -532,7 +534,7 @@ class JavaApiGeneratorV1 extends Generator {
   }
 
   private def genEqualsMethod(struc: Struc)(implicit symt: Symtable): String = {
-    val allFields = struc.ownFields ++ struc.usingFields
+    val allFields = javaFields(struc)
     val strucName = struc.kind.map(_.name).get
 
     if (allFields.isEmpty) {
@@ -547,7 +549,7 @@ class JavaApiGeneratorV1 extends Generator {
     } else {
       val fieldsEqualExpr = (
           for {
-            field <- struc.ownFields ++ struc.usingFields
+            field <- javaFields(struc)
           } yield {
             val fieldType = scalaToJavaType(field.kind)
             if (javaPrimitiveTypes.contains(fieldType))
@@ -575,7 +577,7 @@ class JavaApiGeneratorV1 extends Generator {
   private def genToStringMethod(struc: Struc)(implicit symt: Symtable): String = {
     val fieldsToStringExpr = (
       for {
-        field <- struc.ownFields ++ struc.usingFields
+        field <- javaFields(struc)
       } yield {
         val fieldType = scalaToJavaType(field.kind)
         if (fieldType == "String")
@@ -601,7 +603,7 @@ class JavaApiGeneratorV1 extends Generator {
   }
 
   private def genAllArgConstructor(struc: Struc)(implicit symt: Symtable): String = {
-    val allFields = struc.ownFields ++ struc.usingFields
+    val allFields = javaFields(struc)
     if (allFields.isEmpty) {
       ""
     } else {

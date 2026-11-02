@@ -706,7 +706,7 @@ class ScalaApiGeneratorV1 {
   }
 
   // The variant structs that actually carry a file (a union type's leaves, or the struct itself when it has none).
-  private def fileBearingVariants(s: Struc): List[Struc] = s.variants.collect { case leaf: Struc => leaf } match {
+  private def fileBearingVariants(s: Struc): List[Struc] = s.leaves match {
     case Nil    => List(s)
     case leaves => leaves
   }
@@ -912,7 +912,7 @@ class ScalaApiGeneratorV1 {
                       s"import $path.CirceImplicits._",
                     )
                   }
-                val fileC = s.variants.collectFirst { case w: Wrapp => w.name.name }.get
+                val fileC = s.variants.collectFirst { case w: Wrapp if w.target.name == "java.io.File" => w.name.name }.get
                 val fn = if (meta.space.opts.contains("snake")) { camel2snake(fname) } else { fname }
                 (
                   s"""${fname}Part""",

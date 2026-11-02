@@ -45,6 +45,11 @@ object Generator {
         case Shape.Union(isSealed, _) => isSealed
         case Shape.Record             => false
       }
+      // Whether it's an `abstract` struct, generated as an open trait.
+      def isAbstract: Boolean = this match {
+        case Shape.Union(isSealed, _) => !isSealed
+        case Shape.Record             => false
+      }
     }
     object Shape {
       // A case class, or a case object when it has no fields (Struc.isCaseObject).
@@ -129,6 +134,12 @@ object Generator {
       def variants: List[Variant] = shape match {
         case Shape.Union(_, variants) => variants
         case Shape.Record             => Nil
+      }
+
+      // The variants that are structs of their own.
+      def leaves: List[Struc] = shape match {
+        case u: Shape.Union => u.leaves
+        case Shape.Record   => Nil
       }
 
       // Every field the generated class has, the used structs' first.
@@ -288,7 +299,7 @@ object Generator {
         case x: Struc =>
           x.kind.map { k =>
             s.copy(strucMap = s.strucMap + ((k.name :: k.path)  -> x)) ++
-              x.variants.collect { case leaf: Struc => leaf }
+              x.leaves
                 .map(walk(s))
                 .fold(Symtable())(_ ++ _)
           }.getOrElse(s)
@@ -386,7 +397,9 @@ object Generator {
           val children = leaves.map(
             y => y.copy(
               ownFields = fields ++ y.ownFields,
-              mixins = kind.toList ++ y.mixins
+              mixins = kind.toList ++ y.mixins,
+              // the trait declares the used fields too, so every variant needs them
+              usings = (usings ++ y.usings).distinctBy(_.kind)
             )
           )
           val flattens = embeds.map(_.struc).filter(_.opts.contains("flatten"))
@@ -474,39 +487,45 @@ object Generator {
         val exterMap = x.exters.map(walk(Symtable())).fold(Symtable())(_ ++ _)
         val strucMap = x.strucs.map(walk(Symtable())).fold(Symtable())(_ ++ _)
         val spaceMap = x.spaces.map(walk(Symtable())).fold(Symtable())(_ ++ _)
-        val servcMap = x.spaces.map(walk(Symtable())).fold(Symtable())(_ ++ _)
+        val servcMap = x.servcs.map(walk(Symtable())).fold(Symtable())(_ ++ _)
         x.copy(symbol = exterMap ++ strucMap ++ spaceMap ++ servcMap)
       }
       // Resolves every struct's `use`s to the used structs' fields, against the whole API's symbol table, and
       // re-indexes the spaces so lookups return the resolved structs.
       def resolveUsings(root: Space): Either[String, Space] = {
-        // An embed's `use`s resolve in the scope of the struct holding it.
-        def struc(x: Struc, scope: Option[Kind]): Either[String, Struc] = for {
-          usingFields <- x.usings.flatTraverse { u =>
-            root.symbol.find(u.kind, scope).collect { case s: Struc => s.ownFields }
-              .toRight(s"can't resolve `use ${u.kind.name}` in ${x.kind.fold("an anonymous struct")(_.name)}")
-          }
+        // A used struct's fields, its own `use`s' first. `seen` holds the structs whose `use`s led here, to stop a cycle.
+        def usedFields(u: Using, scope: Option[Kind], seen: List[Kind], name: String): Either[String, List[Field]] =
+          root.symbol.find(u.kind, scope).collect { case s: Struc => s }
+            .toRight(s"can't resolve `use ${u.kind.name}` in $name")
+            .flatMap { s =>
+              if (s.kind.exists(seen.contains)) Left(s"`use ${u.kind.name}` in $name is circular")
+              else s.usings.flatTraverse(usedFields(_, s.kind, seen ++ s.kind, u.kind.name)).map(_ ++ s.ownFields)
+            }
+        // An embed's `use`s resolve in the scope of the struct holding it. `name` names x in an error.
+        def struc(x: Struc, scope: Option[Kind], name: String): Either[String, Struc] = for {
+          usingFields <- x.usings.flatTraverse(usedFields(_, scope, x.kind.toList, name))
           shape <- x.shape match {
             case Shape.Record => Right(Shape.Record)
             case Shape.Union(isSealed, variants) =>
               variants.traverse {
-                case s: Struc => struc(s, s.kind).map(s => s: Variant)
+                case s: Struc => struc(s, s.kind, named(s, s"a variant of $name")).map(s => s: Variant)
                 case w: Wrapp   => Right(w)
                 case e: EnumStr => Right(e)
               }.map(Shape.Union(isSealed, _))
           }
-          embeds <- x.embeds.traverse(e => struc(e.struc, x.kind).map(s => e.copy(struc = s)))
+          embeds <- x.embeds.traverse(e => struc(e.struc, x.kind, named(e.struc, s"the `${e.name}` field of $name")).map(s => e.copy(struc = s)))
         } yield x.copy(usingFields = usingFields, shape = shape, embeds = embeds)
+        def named(x: Struc, anonymous: String): String = x.kind.fold(anonymous)(_.name)
         def servc(x: Servc): Either[String, Servc] =
           x.items.traverse {
             case d: Defun =>
               for {
-                dom <- d.dom.traverse(s => struc(s, s.kind))
-                cod <- d.cod.traverse(s => struc(s, s.kind))
+                dom <- d.dom.traverse(s => struc(s, s.kind, named(s, s"the params of `${d.kind.name}`")))
+                cod <- d.cod.traverse(s => struc(s, s.kind, named(s, s"the result of `${d.kind.name}`")))
               } yield d.copy(dom = dom, cod = cod): ServcItem
           }.map(items => x.copy(items = items))
         def space(x: Space): Either[String, Space] = for {
-          strucs <- x.strucs.traverse(s => struc(s, s.kind))
+          strucs <- x.strucs.traverse(s => struc(s, s.kind, named(s, "an anonymous struct")))
           servcs <- x.servcs.traverse(servc)
           spaces <- x.spaces.traverse(space)
         } yield index(x.copy(strucs = strucs, servcs = servcs, spaces = spaces))
