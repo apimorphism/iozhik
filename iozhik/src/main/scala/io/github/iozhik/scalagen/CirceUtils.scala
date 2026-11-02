@@ -66,7 +66,7 @@ object CirceUtils {
   ): (String, String) = {
     val ownFields = for {
       (name, f) <- child.embeds.flatMap { e =>
-        (e.struc.ownFields ++ e.struc.usingFields).map(e.name -> _)
+        e.struc.allFields.map(e.name -> _)
       }
       ename = "\"" + name + "\""
       fname = "\"" + f.name + "\""

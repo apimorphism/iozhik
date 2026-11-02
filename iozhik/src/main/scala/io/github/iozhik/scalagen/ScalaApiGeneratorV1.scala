@@ -706,10 +706,7 @@ class ScalaApiGeneratorV1 {
   }
 
   // The variant structs that actually carry a file (a union type's leaves, or the struct itself when it has none).
-  private def fileBearingVariants(s: Struc): List[Struc] = s.leaves match {
-    case Nil    => List(s)
-    case leaves => leaves
-  }
+  private def fileBearingVariants(s: Struc): List[Struc] = if (s.leaves.nonEmpty) s.leaves else List(s)
 
   private def hasNestedFileFields(s: Struc): Boolean =
     fileBearingVariants(s).exists(_.allFields.exists(_.opts.contains("file")))
@@ -897,8 +894,13 @@ class ScalaApiGeneratorV1 {
                 (y.name, meta.symt.find(y.kind), false)
               }
             }
-            .collect {
-              case (fname, Some(s: Struc), isOpt) if s.variants.exists { case w: Wrapp => w.target.name == "java.io.File"; case _: Struc | _: EnumStr => false } && s.kind.nonEmpty =>
+            .flatMap { case (fname, found, isOpt) =>
+              found.collect { case s: Struc if s.kind.nonEmpty => s }.flatMap { s =>
+                s.variants.collectFirst { case w: Wrapp if w.target.name == "java.io.File" => (fname, s, isOpt, w.name.name) }
+              }
+            }
+            .map {
+              case (fname, s, isOpt, fileC) =>
                 val imps = s.kind.toList
                   .flatMap(_.unresolvedIn(meta.space.symbol))
                   .filter(y => !predefined.contains(y.name))
@@ -912,7 +914,6 @@ class ScalaApiGeneratorV1 {
                       s"import $path.CirceImplicits._",
                     )
                   }
-                val fileC = s.variants.collectFirst { case w: Wrapp if w.target.name == "java.io.File" => w.name.name }.get
                 val fn = if (meta.space.opts.contains("snake")) { camel2snake(fname) } else { fname }
                 (
                   s"""${fname}Part""",
