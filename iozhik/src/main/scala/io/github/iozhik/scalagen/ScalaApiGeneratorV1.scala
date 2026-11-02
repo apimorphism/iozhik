@@ -248,7 +248,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = usingFields(struc)
+      val usingf = struc.usingFields
       val impPacks = (usingf ++ struc.fields)
         .flatMap(_.kind.unresolvedIn(meta.space.symbol))
         .filter(y => !predefined.contains(y.name))
@@ -270,7 +270,7 @@ class ScalaApiGeneratorV1 {
         fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind, struc.kind))
         fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
       } yield {
-        val postfix = if (struc.fields.nonEmpty || struc.usings.nonEmpty) "" else ".type"
+        val postfix = if (!struc.isCaseObject) "" else ".type"
         val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
         val decoderForBody = fields
           .map{ case (fname, k) =>
@@ -288,7 +288,7 @@ class ScalaApiGeneratorV1 {
               s"${sanitize(fname)} = _$fname"
             }
             .intercalate(",")
-          val decoderBody = if (struc.fields.nonEmpty || struc.usings.nonEmpty) {
+          val decoderBody = if (!struc.isCaseObject) {
             s"""
               |Decoder.instance { h =>
               |  for {
@@ -316,7 +316,7 @@ class ScalaApiGeneratorV1 {
             }
           } ++ struc.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
           .intercalate(",")
-        val encoderBody = if (struc.fields.nonEmpty || struc.usings.nonEmpty) {
+        val encoderBody = if (!struc.isCaseObject) {
           s"""
             | (x: $name) => {
             |   Json.fromFields(
@@ -334,7 +334,7 @@ class ScalaApiGeneratorV1 {
         List(Code(
           body = body,
           packageObject = "CirceImplicits",
-          imports = imps ++ (if (struc.fields.isEmpty && struc.usings.isEmpty) {
+          imports = imps ++ (if (struc.isCaseObject) {
             List("import io.circe.HCursor")
           } else { List.empty[String] })
         ))
@@ -357,7 +357,7 @@ class ScalaApiGeneratorV1 {
               nn <- y.kind.map(_.name).toRight("No kind name")
               tt <- y.typet().flatMap(_.id).toRight(s"No type id found for $nn")
             } yield {
-              if (y.fields.nonEmpty) {
+              if (!y.isCaseObject) {
                 s".typecase($tt, ${nn.toLowerCase}Codec)"
               } else {
                 s".typecase($tt, provide($nn))"
@@ -378,7 +378,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = usingFields(x)
+      val usingf = x.usingFields
       for {
         kind <- x.kind.map(_.name).toRight("No kind name")
         fieldKinds <- (usingf ++ x.fields).traverse(y => genKind(y.kind))
@@ -386,7 +386,7 @@ class ScalaApiGeneratorV1 {
       } yield {
         val name = kind + versionPostfix(x.minVersion, x.maxVersion)
         val codecBody = fields.map{ case (n, k) => s"""("$n" | Codec[$k])""" }.intercalate(s" ::$d")
-        val codec = if (x.fields.nonEmpty) {
+        val codec = if (!x.isCaseObject) {
           s"""
              | implicit lazy val ${name.toLowerCase}Codec = {
              |   $codecBody
@@ -396,7 +396,7 @@ class ScalaApiGeneratorV1 {
           s"implicit lazy val ${name.toLowerCase}Codec = provide($name)"
         }
         val body = s"$codec"
-        val imps = if (x.fields.nonEmpty) {
+        val imps = if (!x.isCaseObject) {
           List("import codecs.implicits._ ")
         } else {
           List.empty[String]
@@ -460,7 +460,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = usingFields(struc)
+      val usingf = struc.usingFields
       val impPacks = (usingf ++ struc.fields)
         .flatMap(_.kind.unresolvedIn(meta.space.symbol))
         .filter(y => !predefined.contains(y.name))
@@ -485,7 +485,7 @@ class ScalaApiGeneratorV1 {
           s"""${sanitize(n)} <- m.get(${n}Key).map(x => readBinary[$k](x))"""
         }.intercalate(d)
         val assign = fields.map{ case (n, _) => s"${sanitize(n)} = ${sanitize(n)}" }.intercalate(",")
-        val codec = if (struc.fields.nonEmpty || struc.usings.nonEmpty) {
+        val codec = if (!struc.isCaseObject) {
           s"""
              | implicit lazy val ${name.toLowerCase}Codec: ReadWriter[$kind] = {
              |   $keys
@@ -573,16 +573,18 @@ class ScalaApiGeneratorV1 {
 
   def genStruc(x: Struc, wrapEnumType: String => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
-    val abstractOrEnum = x.isAbstract || x.isEnum
-    val usingf = usingFields(x)
+    val isUnion = x.shape != Shape.Record
+    val usingf = x.usingFields
     for {
       kind <- genKind(kindOrDefault)
-      fields <- requiredFieldsFirst(x.fields).traverse(genField(_, x.kind, withDoc = abstractOrEnum, isDef = abstractOrEnum, wrapEnumType = wrapEnumType))
+      fields <- requiredFieldsFirst(x.fields).traverse(genField(_, x.kind, withDoc = isUnion, isDef = isUnion, wrapEnumType = wrapEnumType))
       mixins <- x.mixins.traverse(m => genKind(m))
-      leaves <- x.leaves.traverse(genStruc(_, wrapEnumType))
-      wrapps <- x.wrapps.traverse(genWrapp(kindOrDefault, _))
-      enumstrs <- x.enumstrs.traverse(genEnumStr(kindOrDefault, _))
-      usings <- usingf.traverse(genField(_, x.kind, isDef = abstractOrEnum, wrapEnumType = wrapEnumType))
+      children <- x.variants.flatTraverse {
+        case s: Struc   => genStruc(s, wrapEnumType)
+        case w: Wrapp   => genWrapp(kindOrDefault, w)
+        case e: EnumStr => genEnumStr(kindOrDefault, e)
+      }
+      usings <- usingf.traverse(genField(_, x.kind, isDef = isUnion, wrapEnumType = wrapEnumType))
       upickles <- if (meta.space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
       jsonCodecs <- if (meta.space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
       scodecs <- if (meta.space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
@@ -598,32 +600,32 @@ class ScalaApiGeneratorV1 {
         .map{ case (path, name) => s"import $path.$name" }
       val name = kind + versionPostfix(x.minVersion, x.maxVersion)
       val filename = sanitize(kindOrDefault.name) + versionPostfix(x.minVersion, x.maxVersion)
-      val fs = if (x.isAbstract || x.isEnum) {
+      val fs = if (isUnion) {
         (usings ++ fields).toNel.map(_.intercalate(delimiter)).getOrElse("")
       } else {
         (usings ++ fields).toNel.map(_.intercalate(", ")).getOrElse("")
       }
-      val children = leaves.flatten ++ wrapps.flatten ++ enumstrs.flatten
-      if (x.isEnum) {
-        val body = s"sealed trait $name$ms {$delimiter$fs$delimiter}"
-        List(
-          Code(
-            body = (body :: children.filter(_.name.nonEmpty).map(_.body)).intercalate(delimiter + delimiter),
-            name = filename,
-            imports = imps,
-          ),
-        ) ++ jsonCodecs ++ scodecs ++ upickles
-      } else if (x.isAbstract) {
-        val body = s"trait $name$ms { $fs }"
-        Code(body = body, name = filename, imports = imps) :: children
-      } else {
-        val docs = genStrucDocs(x)
-        val body = if (fs.nonEmpty) {
-          s"${docs}final case class $name($fs)$ms"
-        } else {
-          s"${docs}case object $name$ms"
-        }
-        Code(body = body, name = name, imports = imps) :: (children ++ jsonCodecs ++ scodecs ++ upickles)
+      x.shape match {
+        case Shape.Union(true, _) =>
+          val body = s"sealed trait $name$ms {$delimiter$fs$delimiter}"
+          List(
+            Code(
+              body = (body :: children.filter(_.name.nonEmpty).map(_.body)).intercalate(delimiter + delimiter),
+              name = filename,
+              imports = imps,
+            ),
+          ) ++ jsonCodecs ++ scodecs ++ upickles
+        case Shape.Union(false, _) =>
+          val body = s"trait $name$ms { $fs }"
+          Code(body = body, name = filename, imports = imps) :: children
+        case Shape.Record =>
+          val docs = genStrucDocs(x)
+          val body = if (x.isCaseObject) {
+            s"${docs}case object $name$ms"
+          } else {
+            s"${docs}final case class $name($fs)$ms"
+          }
+          Code(body = body, name = name, imports = imps) :: (jsonCodecs ++ scodecs ++ upickles)
       }
     }
   }
@@ -644,7 +646,7 @@ class ScalaApiGeneratorV1 {
     )
 
   private def genDefunCodomain(x: Defun, codName: String) =
-    x.cod.map(y => if (y.fields.isEmpty && y.usings.isEmpty) s"$codName.type" else codName)
+    x.cod.map(y => if (y.isCaseObject) s"$codName.type" else codName)
     .fold(_ => codName, identity)
 
   private def genDefunDocs(x: Defun) = {
@@ -679,7 +681,7 @@ class ScalaApiGeneratorV1 {
       codName <- genDefunCodName(x)
     } yield {
       val domain = x.dom
-        .map(y => if (y.fields.isEmpty && y.usings.isEmpty) "" else s"x: $domName")
+        .map(y => if (y.isCaseObject) "" else s"x: $domName")
         .fold(_ => domName, identity)
       val codomain = genDefunCodomain(x, codName)
       val docs = genDefunDocs(x)
