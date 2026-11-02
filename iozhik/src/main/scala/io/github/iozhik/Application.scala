@@ -39,25 +39,24 @@ object Application extends IOApp {
       }
       .map(_.left.map(new RuntimeException(_)))
       .flatMap(Stream.fromEither(_))
-      // nothing is wiped until the whole model has generated, so a failed regen leaves the old sources in place; the
-      // generated test sources have a tree of their own, so they are wiped too
-      .evalTap(_ => cleanDir[F](dstDir) >> testDir.filter(_ => cfg.generateGens).traverse_(cleanDir[F](_)))
-      .flatMap(Stream.emits(_))
-      .evalMap(code => async.delay{
-        val path = (if (code.test) testDir.get else dstDir).resolve(code.path)
-        val file = path.resolve(code.name)
-        path.toFile.mkdirs()
+      // every file is generated and formatted before anything is wiped, so a failed regen leaves the old sources in place
+      .evalMap(codes => async.delay(codes.map { code =>
+        val file = (if (code.test) testDir.get else dstDir).resolve(code.path).resolve(code.name)
         val body =
           if (code.test)
             formatUntilStable(formatter, Path.of(cfg.fmtConfigPath), file, code.body)
           else formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
         (file, body)
-      })
+      }))
+      // the generated test sources have a tree of their own, so they are wiped too
+      .evalTap(_ => cleanDir[F](dstDir) >> testDir.filter(_ => cfg.generateGens).traverse_(cleanDir[F](_)))
+      .flatMap(Stream.emits(_))
       .flatMap { case (file, body) =>
-        Stream
-          .emit(body)
-          .through(fs2.text.utf8.encode)
-          .through(files.writeAll(fs2.io.file.Path.fromNioPath(file)))
+        Stream.exec(async.delay(file.getParent.toFile.mkdirs()).void) ++
+          Stream
+            .emit(body)
+            .through(fs2.text.utf8.encode)
+            .through(files.writeAll(fs2.io.file.Path.fromNioPath(file)))
       }
       .compile
       .drain
