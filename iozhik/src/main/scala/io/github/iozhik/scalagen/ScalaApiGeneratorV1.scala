@@ -583,10 +583,7 @@ class ScalaApiGeneratorV1 {
   def genStruc(x: Struc, wrapEnumType: String => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
     val abstractOrEnum = x.isAbstract || x.isEnum
-    val usingf = x.usings
-      .flatMap{ y => meta.symt.find(y.kind, x.kind) }
-      .collect{ case s: Struc => s}
-      .flatMap(_.fields)
+    val usingf = usingFields(x)
     for {
       kind <- genKind(kindOrDefault)
       fields <- requiredFieldsFirst(x.fields).traverse(genField(_, x.kind, withDoc = abstractOrEnum, isDef = abstractOrEnum, wrapEnumType = wrapEnumType))

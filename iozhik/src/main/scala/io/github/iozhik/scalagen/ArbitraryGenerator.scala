@@ -69,15 +69,6 @@ object ArbitraryGenerator {
 
   private val NoShrink = "noShrink"
 
-  // Constructor-argument order, as in genStruc.
-  private def orderedFields(x: Struc)(implicit meta: GeneratorMeta): List[Field] = {
-    val usingf = x.usings
-      .flatMap(y => meta.symt.find(y.kind, x.kind))
-      .collect { case s: Struc => s }
-      .flatMap(_.fields)
-    usingf ++ requiredFieldsFirst(x.fields)
-  }
-
   // How deep the shallowest value of each type is. At size 0 a sum type picks only its shallowest variants, so every
   // required field there is shallower than its holder and required recursive fields (RichTextBold.text) end. Shortest
   // paths over required fields: a struct is one deeper than its deepest required field, a sum type than its
@@ -97,7 +88,10 @@ object ArbitraryGenerator {
           (name -> ((d: Map[String, Int]) => variants(s).flatMap(d.get).minOption.map(_ + 1))) ::
             s.wrapps.map(w => w.name.name -> ((d: Map[String, Int]) => depth(w.target, d).map(_ + 1))) ++
             s.enumstrs.map(e => e.name.name -> ((_: Map[String, Int]) => Some(0)))
-        else List(name -> ((d: Map[String, Int]) => orderedFields(s).traverse(f => depth(f.kind, d)).map(_.maxOption.getOrElse(0) + 1)))
+        else {
+          val fields = constructorFields(s)
+          List(name -> ((d: Map[String, Int]) => fields.traverse(f => depth(f.kind, d)).map(_.maxOption.getOrElse(0) + 1)))
+        }
       }
     }
     def relax(depths: Map[String, Int]): Map[String, Int] = {
@@ -217,7 +211,7 @@ object ArbitraryGenerator {
             s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
       } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), meta)
     } else
-      kind.flatMap(genCaseClass(_, orderedFields(x), x.kind, Option.when(decodable)(false)))
+      kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false)))
         .map(List(_))
   }
 
