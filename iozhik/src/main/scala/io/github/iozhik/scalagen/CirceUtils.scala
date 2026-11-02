@@ -66,11 +66,7 @@ object CirceUtils {
   ): (String, String) = {
     val ownFields = for {
       (name, f) <- child.embeds.flatMap { e =>
-        val usingf: Seq[Field] = e.struc.usings
-          .flatMap(y => meta.symt.find(y.kind, parent.kind))
-          .collect { case s: Struc => s }
-          .flatMap(_.fields)
-        (e.struc.fields ++ usingf).map(e.name -> _)
+        (e.struc.fields ++ e.struc.usingFields).map(e.name -> _)
       }
       ename = "\"" + name + "\""
       fname = "\"" + f.name + "\""

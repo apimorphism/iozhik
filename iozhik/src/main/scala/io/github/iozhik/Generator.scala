@@ -35,7 +35,19 @@ object Generator {
     final case class Embed(doc: String, name: String, struc: Struc) extends StrucItem
     final case class Field(doc: String, name: String, opts: List[String], kind: Kind) extends StrucItem
     final case class Typet(doc: String, name: String, opts: List[String], tag: String, id: Option[Int]) extends StrucItem
-    final case class EnumStr(doc: String, name: Kind, opts: List[String], target: String) extends StrucItem {
+    // A union's variant: a struct of its own (a leaf), a wrapped value or a string item, in the order they're generated.
+    sealed trait Variant extends StrucItem
+
+    // How a struct is generated.
+    sealed trait Shape
+    object Shape {
+      // A case class, or a case object when it has no fields (Struc.isCaseObject).
+      case object Record extends Shape
+      // A trait over its variants: sealed for an `enum`, open for an `abstract` struct.
+      final case class Union(isSealed: Boolean, variants: List[Variant]) extends Shape
+    }
+
+    final case class EnumStr(doc: String, name: Kind, opts: List[String], target: String) extends Variant {
       def asStruc(parent: Struc): Struc = {
         Struc(
           doc = doc,
@@ -53,7 +65,7 @@ object Generator {
         )
       }
     }
-    final case class Wrapp(doc: String, name: Kind, opts: List[String], target: Kind, fname: String) extends StrucItem {
+    final case class Wrapp(doc: String, name: Kind, opts: List[String], target: Kind, fname: String) extends Variant {
       def asStruc(parent: Struc): Struc = {
         Struc(
           doc = doc,
@@ -88,8 +100,7 @@ object Generator {
       doc: String,
       kind: Option[Kind],
       path: List[String],
-      isAbstract: Boolean = false,
-      isEnum: Boolean = false,
+      shape: Shape = Shape.Record,
       minVersion: Option[Version] = Option.empty[Version],
       maxVersion: Option[Version] = Option.empty[Version],
       typets: List[Typet] = List.empty[Typet],
@@ -97,12 +108,33 @@ object Generator {
       fields: List[Field] = List.empty[Field],
       mixins: List[Kind] = List.empty[Kind],
       usings: List[Using] = List.empty[Using],
+      // The fields of the structs named by `usings`, resolved by translate.
+      usingFields: List[Field] = List.empty[Field],
       embeds: List[Embed] = List.empty[Embed],
-      leaves: List[Struc] = List.empty[Struc],
-      wrapps: List[Wrapp] = List.empty[Wrapp],
-      enumstrs: List[EnumStr] = List.empty[EnumStr],
-    ) extends SpaceItem with StrucItem with Sym {
+    ) extends SpaceItem with StrucItem with Sym with Variant {
       def typet(): Option[Typet] = typets.headOption
+
+      def variants: List[Variant] = shape match {
+        case Shape.Union(_, variants) => variants
+        case Shape.Record             => Nil
+      }
+      def leaves: List[Struc] = variants.collect { case s: Struc => s }
+      def wrapps: List[Wrapp] = variants.collect { case w: Wrapp => w }
+      def enumstrs: List[EnumStr] = variants.collect { case e: EnumStr => e }
+      def isEnum: Boolean = shape match {
+        case Shape.Union(isSealed, _) => isSealed
+        case Shape.Record             => false
+      }
+      def isAbstract: Boolean = shape match {
+        case Shape.Union(isSealed, _) => !isSealed
+        case Shape.Record             => false
+      }
+
+      // Every field the generated class has, the used structs' first.
+      def allFields: List[Field] = usingFields ++ fields
+
+      // A record with no fields is generated as a case object.
+      def isCaseObject: Boolean = shape == Shape.Record && allFields.isEmpty
 
       def typetForBins: Option[Typet] = {
         typet().orElse {
@@ -353,12 +385,18 @@ object Generator {
             )
           )
           val flattens = embeds.map(_.struc).filter(_.opts.contains("flatten"))
-          Struc(
+          val variants: List[Variant] = children ++ wrapps ++ enumstrs
+          val name = kind.map(_.name).getOrElse("an anonymous struct")
+          val shape: F[Shape] =
+            if (x.isEnum && x.isAbstract) E.raiseError(s"$name can't be both abstract and an enum")
+            else if (x.isEnum || x.isAbstract) E.pure(Shape.Union(isSealed = x.isEnum, variants))
+            else if (variants.nonEmpty) E.raiseError(s"$name has variants but is neither abstract nor an enum")
+            else E.pure(Shape.Record)
+          shape.map(shape => Struc(
             doc = x.doc,
             path = path,
             kind = x.kind.map(trKind(_, path)),
-            isAbstract = x.isAbstract,
-            isEnum = x.isEnum,
+            shape = shape,
             minVersion = x.minVersion.map(trVersion),
             maxVersion = x.maxVersion.map(trVersion),
             typets = if (x.isEnum) leaves.flatMap(_.typets) else typets,
@@ -367,12 +405,9 @@ object Generator {
             mixins = mixins,
             usings = usings ++ flattens.flatMap(_.usings),
             embeds = embeds,
-            leaves = children,
-            wrapps = wrapps,
-            enumstrs = enumstrs,
-          )
+          ))
         }
-      }
+      }.flatten
       def trDefun[F[_]](x: P.Defun, path: List[String])(implicit E: MonadError[F, String]): F[Defun] = {
         for {
           dom <- x.dom.bimap(trKind(_, path), trStruc(_, path)(E)).sequence
@@ -415,12 +450,8 @@ object Generator {
           strucs <- x.items.collect{ case y: P.Struc => trStruc(y, x.name :: path)(E) }.sequence
           servcs <- x.items.collect{ case y: P.Servc => trServc(y, x.name :: path)(E) }.sequence
           spaces <- x.items.collect{ case y: P.Space => trSpace(y, x.name :: path)(E) }.sequence
-          exterMap = exters.map(walk(Symtable())).fold(Symtable())(_ ++ _)
-          strucMap = strucs.map(walk(Symtable())).fold(Symtable())(_ ++ _)
-          spaceMap = spaces.map(walk(Symtable())).fold(Symtable())(_ ++ _)
-          servcMap = spaces.map(walk(Symtable())).fold(Symtable())(_ ++ _)
         } yield {
-          Space(
+          index(Space(
             x.name,
             x.opts,
             path = path,
@@ -430,11 +461,52 @@ object Generator {
             strucs = strucs,
             servcs = servcs,
             spaces = spaces.map(y => y.copy(opts = y.opts ++ x.opts)),
-            symbol = exterMap ++ strucMap ++ spaceMap ++ servcMap
-          )
+          ))
         }
       }
-      trSpace[Either[String, *]](x, List())
+      // A space's symbol table, built from its items (nested spaces carry their own).
+      def index(x: Space): Space = {
+        val exterMap = x.exters.map(walk(Symtable())).fold(Symtable())(_ ++ _)
+        val strucMap = x.strucs.map(walk(Symtable())).fold(Symtable())(_ ++ _)
+        val spaceMap = x.spaces.map(walk(Symtable())).fold(Symtable())(_ ++ _)
+        val servcMap = x.spaces.map(walk(Symtable())).fold(Symtable())(_ ++ _)
+        x.copy(symbol = exterMap ++ strucMap ++ spaceMap ++ servcMap)
+      }
+      // Resolves every struct's `use`s to the used structs' fields, against the whole API's symbol table, and
+      // re-indexes the spaces so lookups return the resolved structs.
+      def resolveUsings(root: Space): Either[String, Space] = {
+        // An embed's `use`s resolve in the scope of the struct holding it.
+        def struc(x: Struc, scope: Option[Kind]): Either[String, Struc] = for {
+          usingFields <- x.usings.flatTraverse { u =>
+            root.symbol.find(u.kind, scope).collect { case s: Struc => s.fields }
+              .toRight(s"can't resolve `use ${u.kind.name}` in ${x.kind.fold("an anonymous struct")(_.name)}")
+          }
+          shape <- x.shape match {
+            case Shape.Record => Right(Shape.Record)
+            case Shape.Union(isSealed, variants) =>
+              variants.traverse {
+                case s: Struc => struc(s, s.kind).map(s => s: Variant)
+                case other    => Right(other)
+              }.map(Shape.Union(isSealed, _))
+          }
+          embeds <- x.embeds.traverse(e => struc(e.struc, x.kind).map(s => e.copy(struc = s)))
+        } yield x.copy(usingFields = usingFields, shape = shape, embeds = embeds)
+        def servc(x: Servc): Either[String, Servc] =
+          x.items.traverse {
+            case d: Defun =>
+              for {
+                dom <- d.dom.traverse(s => struc(s, s.kind))
+                cod <- d.cod.traverse(s => struc(s, s.kind))
+              } yield d.copy(dom = dom, cod = cod): ServcItem
+          }.map(items => x.copy(items = items))
+        def space(x: Space): Either[String, Space] = for {
+          strucs <- x.strucs.traverse(s => struc(s, s.kind))
+          servcs <- x.servcs.traverse(servc)
+          spaces <- x.spaces.traverse(space)
+        } yield index(x.copy(strucs = strucs, servcs = servcs, spaces = spaces))
+        space(root)
+      }
+      trSpace[Either[String, *]](x, List()).flatMap(resolveUsings)
     }
 
   }
