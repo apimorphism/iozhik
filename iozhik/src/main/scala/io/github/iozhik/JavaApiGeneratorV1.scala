@@ -146,7 +146,7 @@ class JavaApiGeneratorV1 extends Generator {
 
     rawDom.map {
       dom =>
-        val domain = if (dom.fields.isEmpty && dom.usings.isEmpty) "" else s"${name.capitalize}Req x"
+        val domain = if (dom.isCaseObject) "" else s"${name.capitalize}Req x"
         s"${name.capitalize}Res ${defun.kind.name}($domain) throws Exception;"
     }.getOrElse("")
   }
@@ -162,7 +162,7 @@ class JavaApiGeneratorV1 extends Generator {
 
     rawDom.map {
       dom =>
-        if (dom.fields.isEmpty && dom.usings.isEmpty)
+        if (dom.isCaseObject)
           s"""
              | public ${name.capitalize}Res ${defun.kind.name}() throws UnirestException {
              |   return post("${defun.kind.name}", ${name.capitalize}Res.class);
@@ -190,7 +190,7 @@ class JavaApiGeneratorV1 extends Generator {
         ""
 
     val imports =
-      (getUsingFields(struc) ++ struc.fields).flatMap { f =>
+      (struc.usingFields ++ struc.fields).flatMap { f =>
         val strucsToImport =
             (f.kind.params :+ f.kind).flatMap { kp =>
               symt.find(kp).collect{ case s: Struc => s}
@@ -339,7 +339,7 @@ class JavaApiGeneratorV1 extends Generator {
 
   private def strucToJsonParseExpr(strucs: List[Struc])(implicit symt: Symtable): String = {
     def params(struc: Struc): String = (for {
-          field <- struc.fields ++ getUsingFields(struc)
+          field <- struc.fields ++ struc.usingFields
         } yield {
          val fieldType = scalaToJavaType(field.kind)
           if (javaPrimitiveTypes.contains(fieldType)) {
@@ -434,7 +434,7 @@ class JavaApiGeneratorV1 extends Generator {
 
   private def genFields(struc: Struc)(implicit symt: Symtable): List[String] = {
     for {
-      field <- struc.fields ++ getUsingFields(struc)
+      field <- struc.fields ++ struc.usingFields
     } yield {
       s"""
          | private ${scalaToJavaType(field.kind)} ${field.name};
@@ -445,7 +445,7 @@ class JavaApiGeneratorV1 extends Generator {
   private def genGSetter(struc: Struc)(implicit symt: Symtable): List[String] = {
     val strucName = struc.kind.map(_.name).get
     for {
-      field <- struc.fields ++ getUsingFields(struc)
+      field <- struc.fields ++ struc.usingFields
     } yield {
       val fieldType = scalaToJavaType(field.kind)
       if (field.kind.name == "Option") {
@@ -465,7 +465,7 @@ class JavaApiGeneratorV1 extends Generator {
   private def genGSetterProto(struc: Struc)(implicit symt: Symtable): List[String] = {
     val strucName = struc.kind.map(_.name).get
     for {
-      field <- struc.fields ++ getUsingFields(struc)
+      field <- struc.fields ++ struc.usingFields
     } yield {
       val fieldType = scalaToJavaType(field.kind)
       s"""
@@ -530,7 +530,7 @@ class JavaApiGeneratorV1 extends Generator {
   }
 
   private def genEqualsMethod(struc: Struc)(implicit symt: Symtable): String = {
-    val allFields = struc.fields ++ getUsingFields(struc)
+    val allFields = struc.fields ++ struc.usingFields
     val strucName = struc.kind.map(_.name).get
 
     if (allFields.isEmpty) {
@@ -545,7 +545,7 @@ class JavaApiGeneratorV1 extends Generator {
     } else {
       val fieldsEqualExpr = (
           for {
-            field <- struc.fields ++ getUsingFields(struc)
+            field <- struc.fields ++ struc.usingFields
           } yield {
             val fieldType = scalaToJavaType(field.kind)
             if (javaPrimitiveTypes.contains(fieldType))
@@ -573,7 +573,7 @@ class JavaApiGeneratorV1 extends Generator {
   private def genToStringMethod(struc: Struc)(implicit symt: Symtable): String = {
     val fieldsToStringExpr = (
       for {
-        field <- struc.fields ++ getUsingFields(struc)
+        field <- struc.fields ++ struc.usingFields
       } yield {
         val fieldType = scalaToJavaType(field.kind)
         if (fieldType == "String")
@@ -599,7 +599,7 @@ class JavaApiGeneratorV1 extends Generator {
   }
 
   private def genAllArgConstructor(struc: Struc)(implicit symt: Symtable): String = {
-    val allFields = struc.fields ++ getUsingFields(struc)
+    val allFields = struc.fields ++ struc.usingFields
     if (allFields.isEmpty) {
       ""
     } else {
@@ -628,13 +628,6 @@ class JavaApiGeneratorV1 extends Generator {
     s"""
        | public $strucName() {}
      """.stripMargin
-  }
-
-  private def getUsingFields(struc: Struc)(implicit symt: Symtable): List[Field] = {
-    struc.usings
-      .flatMap { y => symt.find(y.kind, struc.kind) }
-      .collect { case s: Struc => s }
-      .flatMap(_.fields)
   }
 
   private def scalaToJavaType(kind: Kind, inGeneric: Boolean = false): String = {

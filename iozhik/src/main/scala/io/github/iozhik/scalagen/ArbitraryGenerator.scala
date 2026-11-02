@@ -113,8 +113,11 @@ object ArbitraryGenerator {
     relax(Map.empty)
   }
 
-  private def variants(x: Struc): List[String] =
-    x.leaves.flatMap(_.kind).map(_.name) ++ x.wrapps.map(_.name.name) ++ x.enumstrs.map(_.name.name)
+  private def variants(x: Struc): List[String] = x.variants.flatMap {
+    case s: Struc   => s.kind.map(_.name)
+    case w: Wrapp   => Some(w.name.name)
+    case e: EnumStr => Some(e.name.name)
+  }
 
   // Each type gets its own small object: one object with everything fails to compile on Scala 3 ("Class too large").
   // A custom-gens entry is a function applied to every generated and shrunk value.

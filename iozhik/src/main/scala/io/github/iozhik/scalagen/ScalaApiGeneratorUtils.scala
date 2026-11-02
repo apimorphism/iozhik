@@ -34,7 +34,7 @@ object ScalaApiGeneratorUtils {
       body = if (x.params.nonEmpty) "[" + items.mkString(", ") + "]" else ""
       fieldType = meta.symt.resolve(x).collect {
         case s: Struc
-          if s.fields.isEmpty && s.usings.isEmpty && s.leaves.isEmpty && s.wrapps.isEmpty && s.leavesForBins.isEmpty =>
+          if s.isCaseObject =>
           sanitize(x.name, keywords) + ".type" + body
         case e: Struc if e.isEnum && useOpenEnum(x, struc) =>
           wrapEnumType(sanitize(x.name, keywords) + body)
@@ -47,15 +47,9 @@ object ScalaApiGeneratorUtils {
     required ++ fields.diff(required)
   }
 
-  def usingFields(x: Struc)(implicit meta: GeneratorMeta): List[Field] =
-    x.usings
-      .flatMap{ y => meta.symt.find(y.kind, x.kind) }
-      .collect{ case s: Struc => s}
-      .flatMap(_.fields)
-
   // the constructor arguments of a case class, in the order genStruc lays them out
-  def constructorFields(x: Struc)(implicit meta: GeneratorMeta): List[Field] =
-    usingFields(x) ++ requiredFieldsFirst(x.fields)
+  def constructorFields(x: Struc): List[Field] =
+    x.usingFields ++ requiredFieldsFirst(x.fields)
 
   def importKind(k: Kind)(implicit meta: GeneratorMeta): List[String] = {
     val result = meta.symt.resolve(k)

@@ -30,7 +30,7 @@ object UpickleUtils {
           typeTag <- leaf.typet().map(_.tag).toRight(s"No type id found for $kindName")
           typeName <- leaf.typet().map(_.name).toRight(s"No type id found for $kindName")
         } yield {
-          if (leaf.fields.nonEmpty) {
+          if (!leaf.isCaseObject) {
             (
               s"""case x: $kindName => upack.Obj(writeMsg(x).obj += upack.Str("$typeName") -> writeMsg("$typeTag"))""",
               s"""case upack.Str("$typeTag") => readBinary[$kindName](msg)"""
