@@ -189,14 +189,14 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     // sendRichMessage.rich_message.blocks[i].photo.media, and blocks nested in a collage
     body should include("""val (richMessageAttached, richMessageFiles) = attachFiles_InputRichMessage("rich_message", richMessage)""")
     body should include("""v.blocks.zipWithIndex.map { case (x0, i0) => attachFiles_InputRichBlock(name + ".blocks." + i0, x0) }.unzip""")
-    body should include("case v: InputRichBlockParagraph => (v, Map.empty[String, IFile])")
+    body should include("case v @ (_: InputRichBlockParagraph) => (v, Map.empty[String, IFile])")
     body should not include "case v => (v, Map.empty[String, IFile])"
     body should include("""val (photo1, photoFiles) = attachFiles_InputMediaPhoto(name + ".photo", v.photo)""")
     body should include("case v: InputRichBlockCollage =>")
     body should include("""private def attachFiles_InputMediaPhoto(name: String, value: InputMediaPhoto)""")
   }
 
-  "A file-holding field named after a Scala keyword, next to a variant with no fields" must "generate valid local names and match the variant explicitly" in {
+  "A file-holding field named after a Scala keyword, next to variants without files" must "generate valid local names and match those variants in one case" in {
     val bodies = generate(
       """
         |namespace telegramium {
@@ -211,6 +211,9 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         |      }
         |      InputThingNested {
         |        object: InputThing
+        |      }
+        |      InputThingText {
+        |        text: String
         |      }
         |      InputThingNone {}
         |    }
@@ -228,7 +231,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include("if (files.isEmpty) (v, files) else (v.copy(`type` = type1), files)")
     body should include("""val (object1, objectFiles) = attachFiles_InputThing(name + ".object", v.`object`)""")
     body should include("""val (typeAttached, typeFiles) = attachFiles_InputThing("type", `type`)""")
-    body should include("case InputThingNone => (InputThingNone, Map.empty[String, IFile])")
+    body should include("case v @ (_: InputThingText | InputThingNone) => (v, Map.empty[String, IFile])")
   }
 
   // https://github.com/apimorphism/iozhik/issues/21

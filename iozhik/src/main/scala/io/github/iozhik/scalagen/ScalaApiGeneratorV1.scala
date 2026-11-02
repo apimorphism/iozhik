@@ -799,13 +799,14 @@ class ScalaApiGeneratorV1 {
          |  val files = $mergedFiles
          |  if (files.isEmpty) (v, files) else (v.copy($copyArgs), files)""".stripMargin
     }
-    // The variants holding no file are listed too, so a missed one fails the match's exhaustiveness check.
-    val passingCases = attaching.collect { case (v, attached) if attached.isEmpty =>
+    // The variants holding no file share one case that names each of them (a case object by its bare name), so a
+    // missed one fails the match's exhaustiveness check.
+    val passing = attaching.collect { case (v, attached) if attached.isEmpty =>
       val variantName = v.kind.map(k => sanitize(k.name)).getOrElse(typeName)
-      if (v.fields.isEmpty) s"case $variantName => ($variantName, Map.empty[String, IFile])"
-      else s"case v: $variantName => (v, Map.empty[String, IFile])"
+      if (v.fields.isEmpty) variantName else s"_: $variantName"
     }
-    val cases = attachingCases ++ passingCases
+    val passingCase = Option.when(passing.nonEmpty)(s"case v @ (${passing.mkString(" | ")}) => (v, Map.empty[String, IFile])")
+    val cases = attachingCases ++ passingCase
     val body =
       s"""private def attachFiles_$typeName(name: String, value: $typeName): ($typeName, Map[String, IFile]) = value match {
          |  ${cases.mkString(delimiter).replace(delimiter, delimiter + "  ")}
