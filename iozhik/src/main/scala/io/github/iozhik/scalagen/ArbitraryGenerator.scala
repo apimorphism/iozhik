@@ -41,28 +41,30 @@ object ArbitraryGenerator {
   )
 
   // The same field-type decisions as genFieldType: which enums are wrapped in OpenEnum depends on the enclosing struct
-  // and the codomain set, so this goes through useOpenEnum rather than working it out again.
-  private def genFor(k: Kind, enclosing: Option[Kind])(implicit meta: GeneratorMeta): Either[String, FieldGen] =
+  // and the codomain set, so this goes through useOpenEnum rather than working it out again. A composite whose type
+  // isn't in `shrinking` gets noShrink, so it gets no shrink entry.
+  private def genFor(k: Kind, enclosing: Option[Kind], shrinking: Set[String])(implicit meta: GeneratorMeta): Either[String, FieldGen] =
     k.name match {
       case "List" | "Option" =>
-        k.params.headOption.toRight(s"${k.name} without a type parameter").flatMap(genFor(_, enclosing)).map { inner =>
+        k.params.headOption.toRight(s"${k.name} without a type parameter").flatMap(genFor(_, enclosing, shrinking)).map { inner =>
           val (fn, shrinkFn) = if (k.name == "List") ("list", "shrinkList") else ("opt", "shrinkOpt")
           val suffix = if (inner.primitive) "Prim" else ""
           FieldGen(s"$fn$suffix(${inner.gen})", s"$shrinkFn(${inner.shrink})", inner.primitive)
         }
       case "Either" =>
         for {
-          a <- genFor(k.params(0), enclosing)
-          b <- genFor(k.params(1), enclosing)
+          a <- genFor(k.params(0), enclosing, shrinking)
+          b <- genFor(k.params(1), enclosing, shrinking)
         } yield FieldGen(s"either(${a.gen}, ${b.gen})", s"shrinkEither(${a.shrink}, ${b.shrink})", a.primitive && b.primitive)
       case n if primitives.contains(n) => Right(FieldGen(primitives(n), NoShrink, primitive = true))
       case n =>
         meta.symt.resolve(k) match {
           case Some(s: Struc) =>
             val obj = objName(n)
+            val shrinks = shrinking(n)
             if (s.isEnum && useOpenEnum(k, enclosing))
-              Right(FieldGen(s"openEnum($obj.gen)", s"shrinkOpenEnum($obj.shrink)", primitive = false))
-            else Right(FieldGen(s"$obj.gen", s"$obj.shrink", primitive = false))
+              Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false))
+            else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false))
           case other => Left(s"no generator for kind $n (resolved: $other)")
         }
     }
@@ -142,11 +144,12 @@ object ArbitraryGenerator {
     fields: List[Field],
     enclosing: Option[Kind],
     roundTrip: Option[Boolean],
+    shrinking: Set[String],
   )(implicit meta: GeneratorMeta): Either[String, TypeGen] =
     if (fields.isEmpty)
       Right(emit(typeName, s"$typeName.type", s"Gen.const($typeName)", NoShrink, roundTrip, meta))
     else
-      fields.traverse(f => genFor(f.kind, enclosing).map(f -> _)).map { gens =>
+      fields.traverse(f => genFor(f.kind, enclosing, shrinking).map(f -> _)).map { gens =>
         // A flat zip of zips: Gen.zip takes up to 9. Not a for comprehension: a closure per field overflows the Scala 2
         // compiler's stack on the hundred-field types. Fields are passed by name, so the compiler checks the order.
         def group(nodes: List[(String, String)]): List[(String, String)] =
@@ -160,7 +163,7 @@ object ArbitraryGenerator {
         val args = gens.zipWithIndex.map { case ((f, _), i) => s"${sanitize(f.name)} = a$i" }.mkString(", ")
         val lambda = if (gens.size == 1) pat else s"case $pat"
         val body = s"$src.map { $lambda => $typeName($args) }"
-        // primitive fields don't shrink, so they get no entry
+        // primitive fields, and composites that don't shrink, get no entry
         val shrinkers = gens.collect { case (f, g) if g.shrink != NoShrink =>
           val name = sanitize(f.name)
           s"field(x.$name)(${g.shrink})(v => x.copy($name = v))"
@@ -173,7 +176,7 @@ object ArbitraryGenerator {
 
   private def sanitize(name: String): String = io.github.iozhik.GeneratorUtils.sanitize(name, keywords)
 
-  private def genStrucs(x: Struc, depths: Map[String, Int])(implicit meta: GeneratorMeta): Either[String, List[TypeGen]] = {
+  private def genStrucs(x: Struc, depths: Map[String, Int], shrinking: Set[String])(implicit meta: GeneratorMeta): Either[String, List[TypeGen]] = {
     val kind = x.kind.map(_.name).toRight("No kind name")
     // mirrors where genJsonCodecs emits a decoder
     val decodable = isCodKind(x)
@@ -185,10 +188,10 @@ object ArbitraryGenerator {
         // an abstract variant gets no generator of its own, and Gen.oneOf needs at least one
         _ <- x.leaves.find(_.isAbstract).flatMap(_.kind).map(k => s"no generator for the abstract variant ${k.name} of $name").toLeft(())
         _ <- Either.cond(variants(x).nonEmpty, (), s"no generator for $name: it has no variants")
-        leaves <- x.leaves.flatTraverse(genStrucs(_, depths))
+        leaves <- x.leaves.flatTraverse(genStrucs(_, depths, shrinking))
         // wrapps and enum strings always get both codecs
         wrapps <- x.wrapps.traverse { w =>
-          genFor(w.target, x.kind).map { g =>
+          genFor(w.target, x.kind, shrinking).map { g =>
             val n = w.name.name
             val shrink =
               if (g.shrink == NoShrink) NoShrink
@@ -214,16 +217,16 @@ object ArbitraryGenerator {
             s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
       } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), meta)
     } else
-      kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false)))
+      kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false), shrinking))
         .map(List(_))
   }
 
-  private def genSpace(x: Space, cfg: GeneratorConfig, symt: Symtable, pkg: List[String], depths: Map[String, Int]): Either[String, List[(List[String], List[TypeGen])]] = {
+  private def genSpace(x: Space, cfg: GeneratorConfig, symt: Symtable, pkg: List[String], depths: Map[String, Int], shrinking: Set[String]): Either[String, List[(List[String], List[TypeGen])]] = {
     implicit val meta: GeneratorMeta = GeneratorMeta(x, symt, cfg, collectCodKinds(x)(x.symbol))
     val here = pkg ++ Option(x.name).filter(_.nonEmpty)
     for {
-      strucs <- if (x.opts.contains("circe")) x.strucs.flatTraverse(genStrucs(_, depths)) else Right(Nil)
-      spaces <- x.spaces.flatTraverse(genSpace(_, cfg, symt, here, depths))
+      strucs <- if (x.opts.contains("circe")) x.strucs.flatTraverse(genStrucs(_, depths, shrinking)) else Right(Nil)
+      spaces <- x.spaces.flatTraverse(genSpace(_, cfg, symt, here, depths, shrinking))
     } yield (if (strucs.isEmpty) Nil else List(here -> strucs)) ++ spaces
   }
 
@@ -253,7 +256,14 @@ object ArbitraryGenerator {
 
   def gen(x: Space, cfg: GeneratorConfig): Either[String, List[Code]] = {
     val depths = minDepths(x)(GeneratorMeta(x, x.symbol, cfg, collectCodKinds(x)(x.symbol)))
-    genSpace(x, cfg, x.symbol, Nil, depths).flatMap { spaces =>
+    // Which types have a shrinker that does something: a least fixpoint, as a recursive type shrinks only if something
+    // on its cycle does. Starts from none, and every pass can only add types.
+    def settle(shrinking: Set[String]): Either[String, List[(List[String], List[TypeGen])]] =
+      genSpace(x, cfg, x.symbol, Nil, depths, shrinking).flatMap { spaces =>
+        val next = spaces.flatMap(_._2).filter(_.shrinks).map(_.typeName).toSet
+        if (next == shrinking) Right(spaces) else settle(next)
+      }
+    settle(Set.empty).flatMap { spaces =>
       val unknown = cfg.customGens.keySet -- spaces.flatMap(_._2).map(_.typeName)
       Either.cond(unknown.isEmpty, spaces, s"custom-gens for types without a generator: ${unknown.toList.sorted.mkString(", ")}")
     }.map(_.flatMap { case (pkgPath, types) =>

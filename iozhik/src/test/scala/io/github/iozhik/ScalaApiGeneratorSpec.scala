@@ -233,6 +233,14 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     types should include("field(x.dated)(GenDated.shrink)(v => x.copy(dated = v))")
   }
 
+  "A shrinker" must "leave out composite fields whose type has nothing to shrink, recursive ones too" in {
+    val types = generateGens(gensDsl)("GenTypes.scala")
+    // TextBold.text only leads back to Text, and TextPlain holds a String
+    types should include("lazy val shrink: Shrink[TextBold] = noShrink")
+    types should include("lazy val shrink: Shrink[Text] = noShrink")
+    types should not include "GenText.shrink"
+  }
+
   "A sum type" must "pick only the variants without a required recursive field at size 0" in {
     val types = generateGens(gensDsl)("GenTypes.scala")
     types should include("sum[Text](List(GenTextPlain.gen, GenTextBold.gen), List(GenTextPlain.gen))")
