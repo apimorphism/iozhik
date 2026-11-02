@@ -245,6 +245,24 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     types should include("sum[Text](List(GenTextPlain.gen, GenTextBold.gen), List(GenTextPlain.gen))")
   }
 
+  "A required Either with a recursive side" must "pick only the other side at size 0" in {
+    val types = generateGens(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Leaf {
+        |      date: Long
+        |    }
+        |    Chain {
+        |      next: Either[Leaf, Chain]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )("GenTypes.scala")
+    types should include("eitherLeftAtZero(GenLeaf.gen, GenChain.gen)")
+  }
+
   "The round-trip list" must "hold the types with both an encoder and a decoder, and leave out encode-only types" in {
     val list = generateGens(gensDsl)("RoundTrips.scala")
     list should include("""RoundTripCase[Reply]("Reply"""")

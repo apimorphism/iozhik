@@ -42,19 +42,24 @@ object ArbitraryGenerator {
   // The same field-type decisions as genFieldType: which enums are wrapped in OpenEnum depends on the enclosing struct
   // and the codomain set, so this goes through useOpenEnum rather than working it out again. A composite whose type
   // isn't in `shrinking` gets noShrink, so it gets no shrink entry.
-  private def genFor(k: Kind, enclosing: Option[Kind], shrinking: Set[String])(implicit meta: GeneratorMeta): Either[String, FieldGen] =
+  private def genFor(k: Kind, enclosing: Option[Kind], depths: Map[String, Int], shrinking: Set[String])(implicit meta: GeneratorMeta): Either[String, FieldGen] =
     k.name match {
       case "List" | "Option" =>
-        k.params.headOption.toRight(s"${k.name} without a type parameter").flatMap(genFor(_, enclosing, shrinking)).map { inner =>
+        k.params.headOption.toRight(s"${k.name} without a type parameter").flatMap(genFor(_, enclosing, depths, shrinking)).map { inner =>
           val (fn, shrinkFn) = if (k.name == "List") ("list", "shrinkList") else ("opt", "shrinkOpt")
           val suffix = if (inner.primitive) "Prim" else ""
           FieldGen(s"$fn$suffix(${inner.gen})", s"$shrinkFn(${inner.shrink})", inner.primitive)
         }
       case "Either" =>
         for {
-          a <- genFor(k.params(0), enclosing, shrinking)
-          b <- genFor(k.params(1), enclosing, shrinking)
-        } yield FieldGen(s"either(${a.gen}, ${b.gen})", s"shrinkEither(${a.shrink}, ${b.shrink})", a.primitive && b.primitive)
+          a <- genFor(k.params(0), enclosing, depths, shrinking)
+          b <- genFor(k.params(1), enclosing, depths, shrinking)
+        } yield {
+          // at size 0 only the shallower side, like a sum type; a side without a depth never ends
+          val List(da, db) = k.params.take(2).map(kindDepth(_, depths).getOrElse(Int.MaxValue))
+          val fn = if (da < db) "eitherLeftAtZero" else if (db < da) "eitherRightAtZero" else "either"
+          FieldGen(s"$fn(${a.gen}, ${b.gen})", s"shrinkEither(${a.shrink}, ${b.shrink})", a.primitive && b.primitive)
+        }
       case n if primitives.contains(n) => Right(FieldGen(primitives(n), NoShrink, primitive = true))
       case n =>
         meta.symt.resolve(k) match {
@@ -70,6 +75,15 @@ object ArbitraryGenerator {
 
   private val NoShrink = "noShrink"
 
+  // How deep the shallowest value of a field type is, given the depths of the model types.
+  private def kindDepth(k: Kind, depths: Map[String, Int]): Option[Int] = k.name match {
+    case "List" | "Option" => Some(0)
+    // at size 0 an Either picks its shallower side
+    case "Either" => k.params.flatMap(kindDepth(_, depths)).minOption
+    case n if primitives.contains(n) => Some(0)
+    case n => depths.get(n)
+  }
+
   // How deep the shallowest value of each type is. At size 0 a sum type picks only its shallowest variants, so every
   // required field there is shallower than its holder and required recursive fields (RichTextBold.text) end. Shortest
   // paths over required fields: a struct is one deeper than its deepest required field, a sum type than its
@@ -77,21 +91,15 @@ object ArbitraryGenerator {
   private def minDepths(root: Space)(implicit meta: GeneratorMeta): Map[String, Int] = {
     def withLeaves(s: Struc): List[Struc] = s :: s.leaves.flatMap(withLeaves)
     def strucs(x: Space): List[Struc] = x.strucs.flatMap(withLeaves) ++ x.spaces.flatMap(strucs)
-    def depth(k: Kind, depths: Map[String, Int]): Option[Int] = k.name match {
-      case "List" | "Option" => Some(0)
-      case "Either" => k.params.traverse(depth(_, depths)).map(_.max)
-      case n if primitives.contains(n) => Some(0)
-      case n => depths.get(n)
-    }
     val rules: List[(String, Map[String, Int] => Option[Int])] = strucs(root).flatMap { s =>
       s.kind.map(_.name).toList.flatMap { name =>
         if (s.isEnum)
           (name -> ((d: Map[String, Int]) => variants(s).flatMap(d.get).minOption.map(_ + 1))) ::
-            s.wrapps.map(w => w.name.name -> ((d: Map[String, Int]) => depth(w.target, d).map(_ + 1))) ++
+            s.wrapps.map(w => w.name.name -> ((d: Map[String, Int]) => kindDepth(w.target, d).map(_ + 1))) ++
             s.enumstrs.map(e => e.name.name -> ((_: Map[String, Int]) => Some(0)))
         else {
           val fields = constructorFields(s)
-          List(name -> ((d: Map[String, Int]) => fields.traverse(f => depth(f.kind, d)).map(_.maxOption.getOrElse(0) + 1)))
+          List(name -> ((d: Map[String, Int]) => fields.traverse(f => kindDepth(f.kind, d)).map(_.maxOption.getOrElse(0) + 1)))
         }
       }
     }
@@ -142,12 +150,13 @@ object ArbitraryGenerator {
     fields: List[Field],
     enclosing: Option[Kind],
     roundTrip: Option[Boolean],
+    depths: Map[String, Int],
     shrinking: Set[String],
   )(implicit meta: GeneratorMeta): Either[String, TypeGen] =
     if (fields.isEmpty)
       Right(emit(typeName, s"$typeName.type", s"Gen.const($typeName)", NoShrink, roundTrip, meta))
     else
-      fields.traverse(f => genFor(f.kind, enclosing, shrinking).map(f -> _)).map { gens =>
+      fields.traverse(f => genFor(f.kind, enclosing, depths, shrinking).map(f -> _)).map { gens =>
         // A flat zip of zips: Gen.zip takes up to 9. Not a for comprehension: a closure per field overflows the Scala 2
         // compiler's stack on the hundred-field types. Fields are passed by name, so the compiler checks the order.
         def group(nodes: List[(String, String)]): List[(String, String)] =
@@ -189,7 +198,7 @@ object ArbitraryGenerator {
         leaves <- x.leaves.flatTraverse(genStrucs(_, depths, shrinking))
         // wrapps and enum strings always get both codecs
         wrapps <- x.wrapps.traverse { w =>
-          genFor(w.target, x.kind, shrinking).map { g =>
+          genFor(w.target, x.kind, depths, shrinking).map { g =>
             val n = w.name.name
             val shrink =
               if (g.shrink == NoShrink) NoShrink
@@ -215,7 +224,7 @@ object ArbitraryGenerator {
             s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
       } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), meta)
     } else
-      kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false), shrinking))
+      kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false), depths, shrinking))
         .map(List(_))
   }
 
