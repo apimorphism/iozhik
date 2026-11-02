@@ -40,10 +40,9 @@ object Application extends IOApp {
         val path = dstDir.resolve(code.path)
         val file = path.resolve(code.name)
         path.toFile.mkdirs()
-        // the generated test sources have a config of their own: the default one puts every field on a line of its own
         val body =
           if (code.path.startsWith(ArbitraryGenerator.TestSourcesPath))
-            cfg.gensFmtConfigPath.fold(code.body)(c => formatUntilStable(formatter, Path.of(c), file, code.body))
+            formatUntilStable(formatter, Path.of(cfg.fmtConfigPath), file, code.body)
           else formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
         (file, body)
       })
