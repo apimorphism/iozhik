@@ -23,8 +23,8 @@ class JavaApiGeneratorV1 extends Generator {
 
     for {
       strucsSrcs        <- strucs.flatTraverse(s => s.shape match {
-                             case u @ Shape.Union(true, _) => enumToCode(s, u)
-                             case _                        => strucToCode(s)
+                             case u @ Shape.Union(true, _)             => enumToCode(s, u)
+                             case Shape.Record | Shape.Union(false, _) => strucToCode(s)
                            })
       servicesSrcs      <- services.flatTraverse(s => serviceToCode(s))
       servicesImplSrcs  <- services.flatTraverse(s => genServiceUnirestImpl(s))

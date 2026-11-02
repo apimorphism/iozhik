@@ -102,7 +102,7 @@ object ArbitraryGenerator {
             (name -> ((d: Map[String, Int]) => variants(s).flatMap(d.get).minOption.map(_ + 1))) ::
               u.wrapps.map(w => w.name.name -> ((d: Map[String, Int]) => kindDepth(w.target, d).map(_ + 1))) ++
               u.enumstrs.map(e => e.name.name -> ((_: Map[String, Int]) => Some(0)))
-          case _ =>
+          case Shape.Record | Shape.Union(false, _) =>
             val fields = constructorFields(s)
             List(name -> ((d: Map[String, Int]) => fields.traverse(f => kindDepth(f.kind, d)).map(_.maxOption.getOrElse(0) + 1)))
         }
@@ -205,8 +205,8 @@ object ArbitraryGenerator {
           name <- kind
           // an abstract variant gets no generator of its own, and Gen.oneOf needs at least one
           _ <- u.leaves.find(l => l.shape match {
-            case Shape.Union(false, _) => true
-            case _                     => false
+            case Shape.Union(false, _)                => true
+            case Shape.Record | Shape.Union(true, _) => false
           }).flatMap(_.kind).map(k => s"no generator for the abstract variant ${k.name} of $name").toLeft(())
           _ <- Either.cond(variants(x).nonEmpty, (), s"no generator for $name: it has no variants")
           leaves <- u.leaves.flatTraverse(genStrucs(_, depths, shrinking))
