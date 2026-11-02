@@ -31,11 +31,10 @@ object ArbitraryGenerator {
   /** The generator and shrinker expressions for a field type, and whether the type is free of composites. */
   private final case class FieldGen(gen: String, shrink: String, primitive: Boolean)
 
-  /** One generated type: its object, and the pieces the aggregating object and the round-trip list need. */
+  /** One generated type: its object, and the pieces the round-trip list needs. */
   private final case class TypeGen(
     typeName: String,
     obj: String,
-    forwarder: String,
     roundTrip: Option[String],
     shrinks: Boolean,
   )
@@ -130,7 +129,6 @@ object ArbitraryGenerator {
     TypeGen(
       typeName = typeName,
       obj = body,
-      forwarder = s"implicit def arb${typeName.capitalize}: Arbitrary[$scalaType] = Arbitrary($obj.gen)",
       roundTrip = roundTrip.map { isOpen =>
         val ctor = if (isOpen) "RoundTripCase.open" else "RoundTripCase"
         s"""$ctor[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
@@ -271,12 +269,6 @@ object ArbitraryGenerator {
       List(
         file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder}\nimport scala.reflect.ClassTag", prims),
         file(pkg, "GenTypes.scala", "import org.scalacheck.{Gen, Shrink}", types.map(_.obj).mkString("\n\n")),
-        file(
-          pkg,
-          "Gens.scala",
-          "import org.scalacheck.Arbitrary",
-          s"object Gens {\n${types.map(_.forwarder).mkString("\n")}\n}"
-        ),
         file(
           pkg,
           "RoundTrips.scala",

@@ -212,12 +212,11 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     generateGens(gensDsl, cfg) shouldBe empty
   }
 
-  "Generators" must "go into a test source tree of their own, one small object per type, with the aggregating object and the round-trip list" in {
+  "Generators" must "go into a test source tree of their own, one small object per type, with the round-trip list" in {
     val files = generateGens(gensDsl)
-    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "Gens.scala", "RoundTrips.scala")
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala")
     files("GenTypes.scala") should include("object GenDated")
     files("GenTypes.scala") should include("object GenReply")
-    files("Gens.scala") should include("def arbDated: Arbitrary[Dated] = Arbitrary(GenDated.gen)")
   }
 
   "A generator" must "zip its fields and pass them by name, in groups of up to 9" in {
