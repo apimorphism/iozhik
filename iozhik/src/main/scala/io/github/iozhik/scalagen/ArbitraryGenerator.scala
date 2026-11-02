@@ -28,8 +28,10 @@ object ArbitraryGenerator {
 
   private def objName(typeName: String): String = "Gen" + typeName.capitalize
 
-  /** The generator and shrinker expressions for a field type, and whether the type is free of composites. */
-  private final case class FieldGen(gen: String, shrink: String, primitive: Boolean)
+  /** The generator and shrinker expressions for a field type, whether the type is free of composites, and the model
+    * types whose objects it refers to.
+    */
+  private final case class FieldGen(gen: String, shrink: String, primitive: Boolean, refs: Set[String] = Set.empty)
 
   /** One generated type: its object, and the pieces the round-trip list needs. */
   private final case class TypeGen(
@@ -37,6 +39,7 @@ object ArbitraryGenerator {
     obj: String,
     roundTrip: Option[String],
     shrinks: Boolean,
+    refs: Set[String],
   )
 
   // The same field-type decisions as genFieldType: which enums are wrapped in OpenEnum depends on the enclosing struct
@@ -48,7 +51,7 @@ object ArbitraryGenerator {
         k.params.headOption.toRight(s"${k.name} without a type parameter").flatMap(genFor(_, enclosing, depths, shrinking)).map { inner =>
           val (fn, shrinkFn) = if (k.name == "List") ("list", "shrinkList") else ("opt", "shrinkOpt")
           val suffix = if (inner.primitive) "Prim" else ""
-          FieldGen(s"$fn$suffix(${inner.gen})", s"$shrinkFn(${inner.shrink})", inner.primitive)
+          FieldGen(s"$fn$suffix(${inner.gen})", s"$shrinkFn(${inner.shrink})", inner.primitive, inner.refs)
         }
       case "Either" =>
         for {
@@ -58,7 +61,7 @@ object ArbitraryGenerator {
           // at size 0 only the shallower side, like a sum type; a side without a depth never ends
           val List(da, db) = k.params.take(2).map(kindDepth(_, depths).getOrElse(Int.MaxValue))
           val fn = if (da < db) "eitherLeftAtZero" else if (db < da) "eitherRightAtZero" else "either"
-          FieldGen(s"$fn(${a.gen}, ${b.gen})", s"shrinkEither(${a.shrink}, ${b.shrink})", a.primitive && b.primitive)
+          FieldGen(s"$fn(${a.gen}, ${b.gen})", s"shrinkEither(${a.shrink}, ${b.shrink})", a.primitive && b.primitive, a.refs ++ b.refs)
         }
       case n if primitives.contains(n) => Right(FieldGen(primitives(n), NoShrink, primitive = true))
       case n =>
@@ -67,8 +70,8 @@ object ArbitraryGenerator {
             val obj = objName(n)
             val shrinks = shrinking(n)
             if (s.isEnum && useOpenEnum(k, enclosing))
-              Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false))
-            else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false))
+              Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
+            else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
           case other => Left(s"no generator for kind $n (resolved: $other)")
         }
     }
@@ -89,9 +92,7 @@ object ArbitraryGenerator {
   // paths over required fields: a struct is one deeper than its deepest required field, a sum type than its
   // shallowest variant.
   private def minDepths(root: Space)(implicit meta: GeneratorMeta): Map[String, Int] = {
-    def withLeaves(s: Struc): List[Struc] = s :: s.leaves.flatMap(withLeaves)
-    def strucs(x: Space): List[Struc] = x.strucs.flatMap(withLeaves) ++ x.spaces.flatMap(strucs)
-    val rules: List[(String, Map[String, Int] => Option[Int])] = strucs(root).flatMap { s =>
+    val rules: List[(String, Map[String, Int] => Option[Int])] = allStrucs(root).flatMap { s =>
       s.kind.map(_.name).toList.flatMap { name =>
         if (s.isEnum)
           (name -> ((d: Map[String, Int]) => variants(s).flatMap(d.get).minOption.map(_ + 1))) ::
@@ -110,6 +111,35 @@ object ArbitraryGenerator {
     relax(Map.empty)
   }
 
+  private def allStrucs(x: Space): List[Struc] = {
+    def withLeaves(s: Struc): List[Struc] = s :: s.leaves.flatMap(withLeaves)
+    x.strucs.flatMap(withLeaves) ++ x.spaces.flatMap(allStrucs)
+  }
+
+  // Which types have a shrinker that does something, by the rules genFor and genStrucs emit them with: a least
+  // fixpoint, as a recursive type shrinks only if something on its cycle does. Lists, options and eithers always
+  // shrink, primitives never do.
+  private def shrinkingTypes(root: Space)(implicit meta: GeneratorMeta): Set[String] = {
+    def kindShrinks(k: Kind, shrinking: Set[String]): Boolean =
+      Set("List", "Option", "Either").contains(k.name) || shrinking(k.name)
+    val rules: List[(String, Set[String] => Boolean)] = allStrucs(root).flatMap { s =>
+      s.kind.map(_.name).toList.flatMap { name =>
+        if (s.isEnum)
+          (name -> ((sh: Set[String]) => variants(s).exists(sh))) ::
+            s.wrapps.map(w => w.name.name -> ((sh: Set[String]) => kindShrinks(w.target, sh)))
+        else {
+          val fields = constructorFields(s)
+          List(name -> ((sh: Set[String]) => fields.exists(f => kindShrinks(f.kind, sh))))
+        }
+      }
+    }
+    def grow(shrinking: Set[String]): Set[String] = {
+      val next = rules.collect { case (name, rule) if rule(shrinking) => name }.toSet
+      if (next == shrinking) shrinking else grow(next)
+    }
+    grow(Set.empty)
+  }
+
   private def variants(x: Struc): List[String] =
     x.leaves.flatMap(_.kind).map(_.name) ++ x.wrapps.map(_.name.name) ++ x.enumstrs.map(_.name.name)
 
@@ -121,6 +151,7 @@ object ArbitraryGenerator {
     genBody: String,
     shrinkBody: String,
     roundTrip: Option[Boolean],
+    refs: Set[String],
     meta: GeneratorMeta,
   ): TypeGen = {
     val obj = objName(typeName)
@@ -142,6 +173,7 @@ object ArbitraryGenerator {
         s"""$ctor[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
       },
       shrinks = shrinkBody != NoShrink,
+      refs = refs,
     )
   }
 
@@ -154,7 +186,7 @@ object ArbitraryGenerator {
     shrinking: Set[String],
   )(implicit meta: GeneratorMeta): Either[String, TypeGen] =
     if (fields.isEmpty)
-      Right(emit(typeName, s"$typeName.type", s"Gen.const($typeName)", NoShrink, roundTrip, meta))
+      Right(emit(typeName, s"$typeName.type", s"Gen.const($typeName)", NoShrink, roundTrip, Set.empty, meta))
     else
       fields.traverse(f => genFor(f.kind, enclosing, depths, shrinking).map(f -> _)).map { gens =>
         // A flat zip of zips: Gen.zip takes up to 9. Not a for comprehension: a closure per field overflows the Scala 2
@@ -178,7 +210,7 @@ object ArbitraryGenerator {
         val shrink =
           if (shrinkers.isEmpty) NoShrink
           else s"shrinkFields[$typeName](x => List(${shrinkers.mkString(", ")}))"
-        emit(typeName, typeName, s"deeper($body)", shrink, roundTrip, meta)
+        emit(typeName, typeName, s"deeper($body)", shrink, roundTrip, gens.flatMap(_._2.refs).toSet, meta)
       }
 
   private def sanitize(name: String): String = io.github.iozhik.GeneratorUtils.sanitize(name, keywords)
@@ -203,11 +235,11 @@ object ArbitraryGenerator {
             val shrink =
               if (g.shrink == NoShrink) NoShrink
               else s"Shrink[$n](x => ${g.shrink}.shrink(x.${sanitize(w.fname)}).map($n(_)))"
-            emit(n, n, s"deeper(${g.gen}.map($n(_)))", shrink, Some(false), meta)
+            emit(n, n, s"deeper(${g.gen}.map($n(_)))", shrink, Some(false), g.refs, meta)
           }
         }
         enumStrs = x.enumstrs.map { e =>
-          emit(e.name.name, s"${e.name.name}.type", s"Gen.const(${e.name.name})", NoShrink, Some(false), meta)
+          emit(e.name.name, s"${e.name.name}.type", s"Gen.const(${e.name.name})", NoShrink, Some(false), Set.empty, meta)
         }
         all = variants(x)
         gens = (vs: List[String]) => vs.map(objName(_) + ".gen").mkString(", ")
@@ -222,7 +254,7 @@ object ArbitraryGenerator {
           if (shrinkable.isEmpty) NoShrink
           else
             s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
-      } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), meta)
+      } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), all.toSet, meta)
     } else
       kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false), depths, shrinking))
         .map(List(_))
@@ -262,17 +294,20 @@ object ArbitraryGenerator {
     )
 
   def gen(x: Space, cfg: GeneratorConfig): Either[String, List[Code]] = {
-    val depths = minDepths(x)(GeneratorMeta(x, x.symbol, cfg, collectCodKinds(x)(x.symbol)))
-    // Which types have a shrinker that does something: a least fixpoint, as a recursive type shrinks only if something
-    // on its cycle does. Starts from none, and every pass can only add types.
-    def settle(shrinking: Set[String]): Either[String, List[(List[String], List[TypeGen])]] =
-      genSpace(x, cfg, x.symbol, Nil, depths, shrinking).flatMap { spaces =>
-        val next = spaces.flatMap(_._2).filter(_.shrinks).map(_.typeName).toSet
-        if (next == shrinking) Right(spaces) else settle(next)
-      }
-    settle(Set.empty).flatMap { spaces =>
-      val unknown = cfg.customGens.keySet -- spaces.flatMap(_._2).map(_.typeName)
-      Either.cond(unknown.isEmpty, spaces, s"custom-gens for types without a generator: ${unknown.toList.sorted.mkString(", ")}")
+    val rootMeta = GeneratorMeta(x, x.symbol, cfg, collectCodKinds(x)(x.symbol))
+    val depths = minDepths(x)(rootMeta)
+    genSpace(x, cfg, x.symbol, Nil, depths, shrinkingTypes(x)(rootMeta)).flatMap { spaces =>
+      val types = spaces.flatMap(_._2)
+      val generated = types.map(_.typeName).toSet
+      // abstract structs, and structs outside a circe namespace, get no object
+      val missing = types.flatMap(t => (t.refs -- generated).toList.map(_ -> t.typeName)).groupMap(_._1)(_._2)
+      // a type without a finite value: recursion through it is never cut, and the generator overflows the stack
+      val endless = generated.filterNot(depths.contains)
+      val unknown = cfg.customGens.keySet -- generated
+      if (missing.nonEmpty)
+        Left(missing.toList.sortBy(_._1).map { case (n, users) => s"no generator for $n, which ${users.sorted.distinct.mkString(", ")} refers to" }.mkString("; "))
+      else if (endless.nonEmpty) Left(s"no finite value to generate for: ${endless.toList.sorted.mkString(", ")}")
+      else Either.cond(unknown.isEmpty, spaces, s"custom-gens for types without a generator: ${unknown.toList.sorted.mkString(", ")}")
     }.flatMap { spaces =>
       // the objects refer to each other unqualified, and RoundTrips imports its own package's CirceImplicits
       val pkgs = spaces.map(_._1.mkString("."))

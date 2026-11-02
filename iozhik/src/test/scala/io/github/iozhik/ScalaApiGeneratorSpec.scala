@@ -332,4 +332,35 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       """.stripMargin
     ) should include("abstract variant TextStyled of Text")
   }
+
+  "A field of a type without a generator" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    abstract Styled {
+        |      text : String
+        |    }
+        |    Holder {
+        |      styled : Styled
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("no generator for Styled, which Holder refers to")
+  }
+
+  "A type without a finite value" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Loop {
+        |      next : Loop
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("no finite value to generate for: Loop")
+  }
 }
