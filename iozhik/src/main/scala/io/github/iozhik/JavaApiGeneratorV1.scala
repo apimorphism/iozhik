@@ -239,7 +239,7 @@ class JavaApiGeneratorV1 extends Generator {
   private def enumToCode(struc: Struc, union: Shape.Union)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     val packageCode = struc.path.reverse.tail.mkString(".")
     val enumName = struc.kind.map(_.name).get
-    val subStrucs = union.leaves ++ union.leaves.flatMap(getSubStrucs)
+    val subStrucs = getSubStrucs(struc)
     val subStrucNames = subStrucs.flatMap(_.kind).map(_.name)
     val body =
     if (subStrucNames.isEmpty) {

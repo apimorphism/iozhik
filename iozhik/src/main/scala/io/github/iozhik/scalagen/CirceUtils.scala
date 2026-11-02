@@ -81,8 +81,9 @@ object CirceUtils {
     val embedFields: Seq[String] = child.embeds.flatMap(_.struc.allFields.map(_.name))
     val inheritedFields = child.allFields.filter(z => !embedFields.contains(z.name)).map { f =>
       val fname = "\"" + f.name + "\""
+      val kk = genKind(f.kind).toOption.getOrElse("Wrong kind") // TODO: Better diagnosis, throw error
       (
-        s"${f.name} <- Decoder[${f.kind.name}].prepare(_.downField($fname))",
+        s"${f.name} <- Decoder[$kk].prepare(_.downField($fname))",
         s"${f.name} = ${f.name}",
         "" -> fname
       )

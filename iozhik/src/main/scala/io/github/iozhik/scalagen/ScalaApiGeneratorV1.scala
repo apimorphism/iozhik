@@ -385,8 +385,9 @@ class ScalaApiGeneratorV1 {
       case Shape.Record =>
         for {
           kind <- x.kind.map(_.name).toRight("No kind name")
-          fieldKinds <- x.allFields.traverse(y => genKind(y.kind))
-          fields = x.allFields.map(y => y.name).zip(fieldKinds)
+          // the codec is positional, so its fields go in the order of the case class's arguments
+          fieldKinds <- constructorFields(x).traverse(y => genKind(y.kind))
+          fields = constructorFields(x).map(y => y.name).zip(fieldKinds)
         } yield {
           val name = kind + versionPostfix(x.minVersion, x.maxVersion)
           val codecBody = fields.map{ case (n, k) => s"""("$n" | Codec[$k])""" }.intercalate(s" ::$d")
@@ -579,20 +580,16 @@ class ScalaApiGeneratorV1 {
 
   def genStruc(x: Struc, wrapEnumType: String => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
-    val isUnion = x.shape match {
-      case Shape.Record   => false
-      case _: Shape.Union => true
-    }
     for {
       kind <- genKind(kindOrDefault)
-      fields <- requiredFieldsFirst(x.ownFields).traverse(genField(_, x.kind, withDoc = isUnion, isDef = isUnion, wrapEnumType = wrapEnumType))
+      // a used field keeps its doc on a record too
+      fields <- constructorFields(x).traverse(f => genField(f, x.kind, withDoc = x.isUnion || x.usingFields.contains(f), isDef = x.isUnion, wrapEnumType = wrapEnumType))
       mixins <- x.mixins.traverse(m => genKind(m))
       children <- x.variants.flatTraverse {
         case s: Struc   => genStruc(s, wrapEnumType)
         case w: Wrapp   => genWrapp(kindOrDefault, w)
         case e: EnumStr => genEnumStr(kindOrDefault, e)
       }
-      usings <- x.usingFields.traverse(genField(_, x.kind, isDef = isUnion, wrapEnumType = wrapEnumType))
       upickles <- if (meta.space.opts.contains("upack")) { genuPickle(x) } else { Right(List.empty[Code]) }
       jsonCodecs <- if (meta.space.opts.contains("circe")) { genJsonCodecs(x) } else { Right(List.empty[Code]) }
       scodecs <- if (meta.space.opts.contains("scodec")) { genSCodecs(x) } else { Right(List.empty[Code]) }
@@ -608,10 +605,10 @@ class ScalaApiGeneratorV1 {
         .map{ case (path, name) => s"import $path.$name" }
       val name = kind + versionPostfix(x.minVersion, x.maxVersion)
       val filename = sanitize(kindOrDefault.name) + versionPostfix(x.minVersion, x.maxVersion)
-      val fs = if (isUnion) {
-        (usings ++ fields).toNel.map(_.intercalate(delimiter)).getOrElse("")
+      val fs = if (x.isUnion) {
+        fields.toNel.map(_.intercalate(delimiter)).getOrElse("")
       } else {
-        (usings ++ fields).toNel.map(_.intercalate(", ")).getOrElse("")
+        fields.toNel.map(_.intercalate(", ")).getOrElse("")
       }
       x.shape match {
         case Shape.Enum(_) =>

@@ -132,7 +132,17 @@ object Generator {
       }
       def leaves: List[Struc] = variants.collect { case s: Struc => s }
 
-      // Every field the generated class has, the used structs' first.
+      def isUnion: Boolean = shape match {
+        case _: Shape.Union => true
+        case Shape.Record   => false
+      }
+      def isEnum: Boolean = shape match {
+        case _: Shape.Enum                    => true
+        case Shape.Record | _: Shape.Abstract => false
+      }
+
+      // Every field the generated class has, in the order they're declared, the used structs' first: the order of the
+      // wire format. A generator lays out a positional list (a constructor, a positional codec) in its own order.
       def allFields: List[Field] = usingFields ++ ownFields
 
       // A record with no fields is generated as a case object.
@@ -557,15 +567,16 @@ object Generator {
           all(root).map(s => (s.name :: s.path) -> s).toMap
         }
         // A kind naming no struct or provided type is an alias's target, a type its namespace imports (by its full
-        // name) or a predefined type (by its name alone). `seen` holds the aliases followed, to stop a cycle.
+        // name) or a predefined type (by its name alone). The alias or import is looked for in the namespace k is
+        // written in, then in the ones enclosing it, as the symbol table looks for a struct. `seen` holds the aliases
+        // followed, to stop a cycle.
         def meaning(k: Kind, seen: Set[Key]): Kind =
           if (root.symbol.resolve(k).nonEmpty || seen(key(k))) k
-          else {
-            val space = spaces.get(k.path)
-            space.flatMap(_.aliass.find(_.alias.name == k.name)).map(a => meaning(a.name, seen + key(k)))
-              .orElse(space.flatMap(_.impors.find(_.name.name.split('.').last == k.name)).map(i => Kind(i.name.name, k.params)))
-              .getOrElse(Kind(k.name, k.params))
-          }
+          else
+            k.path.tails.flatMap(spaces.get).flatMap { space =>
+              space.aliass.find(_.alias.name == k.name).map(a => meaning(a.name, seen + key(k)))
+                .orElse(space.impors.find(_.name.name.split('.').last == k.name).map(i => Kind(i.name.name, k.params)))
+            }.nextOption().getOrElse(Kind(k.name, k.params))
         // A Kind records the namespace it was written in, so compare what the two mean there.
         def sameType(a: Kind, b: Kind): Boolean = {
           val (x, y) = (meaning(a, Set.empty), meaning(b, Set.empty))

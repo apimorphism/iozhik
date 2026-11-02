@@ -70,7 +70,7 @@ object ArbitraryGenerator {
           case Some(s: Struc) =>
             val obj = objName(n)
             val shrinks = shrinking(n)
-            if (s.shape.isInstanceOf[Shape.Enum] && useOpenEnum(k, enclosing))
+            if (s.isEnum && useOpenEnum(k, enclosing))
               Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
             else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
           case other => Left(s"no generator for kind $n (resolved: $other)")

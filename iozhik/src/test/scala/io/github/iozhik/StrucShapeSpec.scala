@@ -459,4 +459,77 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     def strucs(x: Generator.Model.Space): List[Generator.Model.Struc] = x.strucs ++ x.spaces.flatMap(strucs)
     strucs(space).find(_.kind.exists(_.name == "Both")).map(_.allFields.map(_.name)) shouldBe Some(List("id"))
   }
+
+  "Two used fields whose types are one alias, declared in an enclosing namespace" must "be one field" in {
+    val space = translate(
+      """
+        |namespace telegramium(snake) {
+        |  type Id = Long
+        |  Outer {
+        |    id: Id
+        |  }
+        |  namespace bots(snake) {
+        |    Inner {
+        |      id: Id
+        |    }
+        |    Both {
+        |      use Outer
+        |      use Inner
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ).fold(err => fail(s"Translation failed: $err"), identity)
+    def strucs(x: Generator.Model.Space): List[Generator.Model.Struc] = x.strucs ++ x.spaces.flatMap(strucs)
+    strucs(space).find(_.kind.exists(_.name == "Both")).map(_.allFields.map(_.name)) shouldBe Some(List("id"))
+  }
+
+  "A used field of a parameterised type, on a variant with a flatten embed" must "be decoded as that type" in {
+    val body = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Extra {
+        |      tags: List[String]
+        |    }
+        |    MetalProps {
+        |      conductivity: Double
+        |    }
+        |    enum Material {
+        |      Metal {
+        |        type: "metal"
+        |        use Extra
+        |        props: (flatten) {
+        |          use MetalProps
+        |        }
+        |      }
+        |    }
+        |    Methods (methodsFactory) {
+        |      def melt {
+        |        id: Int
+        |      } => Method[Material]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    body should include("""tags <- Decoder[List[String]].prepare(_.downField("tags"))""")
+  }
+
+  "A scodec record with an optional field before a required one" must "be coded in the order of the case class's arguments" in {
+    val body = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(scodec) {
+        |    A {
+        |      x: Option[Int]
+        |      y: Int
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    body should include("final case class A(y: Int, x: Option[Int] = Option.empty)")
+    body.replaceAll("\\s+", " ") should include("""("y" | Codec[Int]) :: ("x" | Codec[Option[Int]])""")
+  }
 }
