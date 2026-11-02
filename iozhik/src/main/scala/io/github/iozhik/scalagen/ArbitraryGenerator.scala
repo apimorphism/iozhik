@@ -14,118 +14,9 @@ object ArbitraryGenerator {
 
   val TestSourcesPath = "../../test/scala-generated"
 
-  // Recursion is bounded by a size budget: every composite generator spends one unit, optional or list fields of
-  // composite type collapse to None/Nil at zero, and sum types pick their shallowest variants.
-  private val prelude: String =
-    """
-      |  val Budget = 3
-      |
-      |  // capped at Budget, so that the generators are bounded whatever size they are run at
-      |  def deeper[A](g: Gen[A]): Gen[A] = Gen.sized(n => Gen.resize(math.max(math.min(n, Budget) - 1, 0), g))
-      |
-      |  private val edgeInts = Seq(0, 1, -1, 255, 256, 65535, Int.MaxValue, Int.MinValue)
-      |  val genInt: Gen[Int] = Gen.frequency(2 -> Gen.oneOf(edgeInts), 3 -> Gen.choose(-100000, 100000))
-      |
-      |  // IDs above 2^31 are what broke us before
-      |  private val edgeLongs =
-      |    Seq(0L, 1L, -1L, Int.MaxValue.toLong, Int.MaxValue.toLong + 1, Int.MinValue.toLong - 1, 4294967296L,
-      |      -1001234567890L, 7000000000000L, Long.MaxValue, Long.MinValue)
-      |  val genLong: Gen[Long] = Gen.frequency(3 -> Gen.oneOf(edgeLongs), 2 -> Gen.choose(Long.MinValue, Long.MaxValue))
-      |
-      |  val genBoolean: Gen[Boolean] = Gen.oneOf(true, false)
-      |
-      |  val genFloat: Gen[Float] = Gen.frequency(1 -> Gen.const(0.0f), 3 -> Gen.choose(-1000.0f, 1000.0f))
-      |  val genDouble: Gen[Double] = Gen.frequency(1 -> Gen.const(0.0), 3 -> Gen.choose(-1000.0, 1000.0))
-      |
-      |  private val edgeStrings =
-      |    Seq("Привет", "日本語のテキスト", "😀🎲", "naïve café", "line1\nline2", "quote\"and\\slash", "")
-      |  val genString: Gen[String] = Gen.frequency(
-      |    1 -> Gen.oneOf(edgeStrings),
-      |    4 -> Gen.listOfN(8, Gen.alphaNumChar).map(_.mkString)
-      |  )
-      |
-      |  // a plain file name; checks that build wire requests create the matching temporary files themselves
-      |  val genJavaFile: Gen[java.io.File] = Gen.alphaNumStr.map(s => new java.io.File(s + ".bin"))
-      |
-      |  def opt[A](g: => Gen[A]): Gen[Option[A]] =
-      |    Gen.sized(n => if (n <= 0) Gen.const(None) else Gen.frequency(1 -> Gen.const(None), 1 -> g.map(Some(_))))
-      |  def optPrim[A](g: => Gen[A]): Gen[Option[A]] = Gen.frequency(1 -> Gen.const(None), 1 -> g.map(Some(_)))
-      |
-      |  def list[A](g: => Gen[A]): Gen[List[A]] =
-      |    Gen.sized { n =>
-      |      if (n <= 0) Gen.const(Nil)
-      |      else Gen.frequency(1 -> Gen.const(Nil), 3 -> Gen.choose(1, 3).flatMap(Gen.listOfN(_, g)))
-      |    }
-      |  def listPrim[A](g: => Gen[A]): Gen[List[A]] =
-      |    Gen.frequency(1 -> Gen.const(Nil), 3 -> Gen.choose(1, 3).flatMap(Gen.listOfN(_, g)))
-      |
-      |  // a sum type whose variants aren't all equally shallow: at size 0 it picks only the shallowest ones, so required
-      |  // recursive fields end there
-      |  def sum[A](all: Seq[Gen[A]], atZero: Seq[Gen[A]]): Gen[A] = {
-      |    def pick(gs: Seq[Gen[A]]): Gen[A] = if (gs.size == 1) gs.head else Gen.choose(0, gs.size - 1).flatMap(gs(_))
-      |    Gen.sized(n => if (n <= 0) pick(atZero) else pick(all))
-      |  }
-      |
-      |  def either[A, B](a: => Gen[A], b: => Gen[B]): Gen[Either[A, B]] =
-      |    Gen.oneOf(Gen.lzy(a).map(Left(_)), Gen.lzy(b).map(Right(_)))
-      |
-      |  // Only Known values: Unknown values are receive-only
-      |  def openEnum[A](g: => Gen[A]): Gen[iozhik.OpenEnum[A]] = Gen.lzy(g).map(iozhik.OpenEnum.Known(_))
-      |
-      |  // Shrinking only drops optional and list values, and shrinks the composite ones: primitives stay as generated, so a
-      |  // shrunk value can't break a restriction on them. Everything is lazy, as ScalaCheck stops at the first failing one.
-      |  def noShrink[A]: Shrink[A] = Shrink.shrinkAny
-      |  def shrinkOpt[A](s: => Shrink[A]): Shrink[Option[A]] =
-      |    Shrink {
-      |      case Some(a) => None #:: s.shrink(a).map(Some(_))
-      |      case None => Stream.empty
-      |    }
-      |  def shrinkList[A](s: => Shrink[A]): Shrink[List[A]] =
-      |    Shrink { l =>
-      |      if (l.isEmpty) Stream.empty
-      |      else Nil #:: l.indices.toStream.flatMap(i => s.shrink(l(i)).map(l.updated(i, _)))
-      |    }
-      |  def shrinkEither[A, B](sa: => Shrink[A], sb: => Shrink[B]): Shrink[Either[A, B]] =
-      |    Shrink {
-      |      case Left(a) => sa.shrink(a).map(Left(_))
-      |      case Right(b) => sb.shrink(b).map(Right(_))
-      |    }
-      |  def shrinkOpenEnum[A](s: => Shrink[A]): Shrink[iozhik.OpenEnum[A]] =
-      |    Shrink {
-      |      case iozhik.OpenEnum.Known(a) => s.shrink(a).map(iozhik.OpenEnum.Known(_))
-      |      case _ => Stream.empty
-      |    }
-      |  // a sum type shrinks as the variant it is; case objects have nothing to shrink, and can't be matched by type
-      |  def shrinkSum[A](variants: PartialFunction[A, Stream[A]]*): Shrink[A] =
-      |    Shrink(a => variants.find(_.isDefinedAt(a)).fold(Stream.empty[A])(_(a)))
-      |  def variant[A, B <: A: ClassTag](s: Shrink[B]): PartialFunction[A, Stream[A]] = { case b: B => s.shrink(b) }
-      |  // the shrunk variants of each field, each rebuilt into the whole value
-      |  def shrinkFields[A](fields: A => List[Stream[A]]): Shrink[A] = Shrink(a => fields(a).toStream.flatten)
-      |  def field[A, F](value: F)(s: => Shrink[F])(copy: F => A): Stream[A] = s.shrink(value).map(copy)
-      |  // a custom-gens fix applies to the shrunk values too, so shrinking can't produce what the generator never would
-      |  def fixed[A](s: Shrink[A], fix: A => A): Shrink[A] = Shrink(a => s.shrink(a).map(fix).filter(_ != a))
-      |
-      |  /** A type with both an encoder and a decoder, with the generator to feed it. */
-      |  final class RoundTripCase[A](
-      |    val name: String,
-      |    val gen: Gen[A],
-      |    val shrink: Shrink[A],
-      |    val encoder: Encoder[A],
-      |    val decoder: Decoder[A]
-      |  )
-      |
-      |  object RoundTripCase {
-      |    def apply[A](name: String, gen: Gen[A], shrink: Shrink[A])(implicit e: Encoder[A], d: Decoder[A]): RoundTripCase[A] =
-      |      new RoundTripCase(name, gen, shrink, e, d)
-      |
-      |    // decoded as an OpenEnum; generators only produce the Known values
-      |    def open[A](name: String, gen: Gen[A], shrink: Shrink[A])(implicit e: Encoder[A], d: Decoder[iozhik.OpenEnum[A]]): RoundTripCase[A] =
-      |      new RoundTripCase(name, gen, shrink, e, d.emap {
-      |        case iozhik.OpenEnum.Known(a) => Right(a)
-      |        case iozhik.OpenEnum.Unknown(v) => Left("unknown value: " + v)
-      |      })
-      |  }
-      |""".stripMargin
+  // The shared primitives, shrinkers and RoundTripCase: a Scala file in the resources, so it gets highlighting
+  private lazy val prims: String =
+    scala.util.Using.resource(scala.io.Source.fromResource("scalagen/GenPrims.scala", getClass.getClassLoader))(_.mkString)
 
   private val primitives = Map(
     "Int" -> "genInt",
@@ -366,7 +257,7 @@ object ArbitraryGenerator {
     genSpace(x, cfg, x.symbol, Nil, depths).map(_.flatMap { case (pkgPath, types) =>
       val pkg = pkgPath.mkString(".")
       List(
-        file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder}\nimport scala.reflect.ClassTag", s"// ScalaCheck's Shrink is built on Stream, deprecated since Scala 2.13\n@scala.annotation.nowarn(\"cat=deprecation\")\nobject GenPrims {\n$prelude\n}"),
+        file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder}\nimport scala.reflect.ClassTag", prims),
         file(pkg, "GenTypes.scala", "import org.scalacheck.{Gen, Shrink}", types.map(_.obj).mkString("\n\n")),
         file(
           pkg,
