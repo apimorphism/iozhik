@@ -14,7 +14,7 @@ object ArbitraryGenerator {
 
   // The shared primitives, shrinkers and RoundTripCase: a Scala file in the resources, so it gets highlighting
   private lazy val prims: String =
-    scala.util.Using.resource(scala.io.Source.fromResource("scalagen/GenPrims.scala", getClass.getClassLoader))(_.mkString)
+    scala.util.Using.resource(scala.io.Source.fromResource("scalagen/GenPrims.scala", getClass.getClassLoader)(scala.io.Codec.UTF8))(_.mkString)
 
   private val primitives = Map(
     "Int" -> "genInt",
