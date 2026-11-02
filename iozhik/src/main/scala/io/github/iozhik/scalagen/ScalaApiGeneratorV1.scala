@@ -248,10 +248,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = struc.usings
-        .flatMap{ y => meta.symt.find(y.kind, struc.kind) }
-        .collect{ case s: Struc => s}
-        .flatMap(_.fields)
+      val usingf = usingFields(struc)
       val impPacks = (usingf ++ struc.fields)
         .flatMap(_.kind.unresolvedIn(meta.space.symbol))
         .filter(y => !predefined.contains(y.name))
@@ -381,10 +378,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = x.usings
-        .flatMap{ y => meta.symt.find(y.kind, x.kind) }
-        .collect{ case s: Struc => s}
-        .flatMap(_.fields)
+      val usingf = usingFields(x)
       for {
         kind <- x.kind.map(_.name).toRight("No kind name")
         fieldKinds <- (usingf ++ x.fields).traverse(y => genKind(y.kind))
@@ -466,10 +460,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = struc.usings
-        .flatMap{ y => meta.symt.find(y.kind, struc.kind) }
-        .collect{ case s: Struc => s}
-        .flatMap(_.fields)
+      val usingf = usingFields(struc)
       val impPacks = (usingf ++ struc.fields)
         .flatMap(_.kind.unresolvedIn(meta.space.symbol))
         .filter(y => !predefined.contains(y.name))
