@@ -180,7 +180,76 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
         |      use Right
         |    }
       """.stripMargin
-    )).left.toOption.getOrElse(fail("translated")) should include("Both uses two fields named `id` of different types")
+    )).left.toOption.getOrElse(fail("translated")) should include("Both has two fields named `id` that differ in type or options")
+  }
+
+  "Two used fields of one type written in different namespaces" must "be one field" in {
+    val body = generate(
+      """
+        |namespace telegramium(snake) {
+        |  Outer {
+        |    id: Int
+        |  }
+        |  namespace bots(snake) {
+        |    Inner {
+        |      id: Int
+        |    }
+        |    Both {
+        |      use Outer
+        |      use Inner
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    body should include("final case class Both(id: Int)")
+  }
+
+  "Two used fields with one name and different options" must "fail the translation" in {
+    translate(api(
+      """
+        |    Left {
+        |      ids: (omitempty) List[Int]
+        |    }
+        |    Right {
+        |      ids: List[Int]
+        |    }
+        |    Both {
+        |      use Left
+        |      use Right
+        |    }
+      """.stripMargin
+    )).left.toOption.getOrElse(fail("translated")) should include("Both has two fields named `ids` that differ in type or options")
+  }
+
+  "A field declared on a struct and also used with another type" must "fail the translation" in {
+    translate(api(
+      """
+        |    Used {
+        |      id: String
+        |    }
+        |    Holder {
+        |      use Used
+        |      id: Int
+        |    }
+      """.stripMargin
+    )).left.toOption.getOrElse(fail("translated")) should include("Holder has two fields named `id` that differ in type or options")
+  }
+
+  "A field declared on a struct and also used with the same type" must "be one field" in {
+    val body = generate(api(
+      """
+        |    Used {
+        |      id: Int
+        |      name: String
+        |    }
+        |    Holder {
+        |      use Used
+        |      id: Int
+        |    }
+      """.stripMargin
+    ))
+    body should include("final case class Holder(name: String, id: Int)")
   }
 
   "A cycle of `use`s" must "fail the translation" in {
@@ -193,7 +262,25 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
         |      use First
         |    }
       """.stripMargin
-    )).left.toOption.getOrElse(fail("translated")) should include("is circular")
+    )).left.toOption.getOrElse(fail("translated")) should include("`use` is circular: First → Second → First")
+  }
+
+  "A `use` of a variant" must "take the variant's fields, the ones it inherits from its union too" in {
+    val body = generate(api(
+      """
+        |    enum Figure {
+        |      color: String
+        |      Square {
+        |        type: "square"
+        |        side: Int
+        |      }
+        |    }
+        |    Box {
+        |      use Square
+        |    }
+      """.stripMargin
+    ))
+    body should include("final case class Box(color: String, side: Int)")
   }
 
   "A `use` on an enum" must "give every variant the used fields the trait declares" in {
@@ -218,6 +305,33 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     body should include("def area: Double")
     body should include("final case class Square(area: Double)")
     body should include("final case class Circle(area: Double, radius: Int)")
+  }
+
+  "A flatten embed on an enum" must "give every variant the fields the trait declares" in {
+    val body = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake) {
+        |    Props {
+        |      area: Double
+        |    }
+        |    enum Figure {
+        |      extra: (flatten) {
+        |        use Props
+        |        color: String
+        |      }
+        |      Square {
+        |        type: "square"
+        |        side: Int
+        |      }
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    body should include("def area: Double")
+    body should include("def color: String")
+    body should include("final case class Square(area: Double, color: String, side: Int) extends Figure")
   }
 
   "A multipart upload of a file union whose first wrap isn't a file" must "match on the java.io.File wrap" in {

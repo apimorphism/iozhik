@@ -396,14 +396,8 @@ object Generator {
             .collect{ case y: P.Using => Using(doc = y.doc, kind = trKind(y.kind, path)) }
         } yield {
           val kind: Option[Kind] = x.kind.map(trKind(_, path))
-          val children = leaves.map(
-            y => y.copy(
-              ownFields = fields ++ y.ownFields,
-              mixins = kind.toList ++ y.mixins,
-              // the trait declares the used fields too, so every variant needs them
-              usings = usings ++ y.usings
-            )
-          )
+          // a variant's fields inherited from the union are added by resolveUsings
+          val children = leaves.map(y => y.copy(mixins = kind.toList ++ y.mixins))
           val flattens = embeds.map(_.struc).filter(_.opts.contains("flatten"))
           val variants: List[Variant] = children ++ wrapps ++ enumstrs
           val name = kind.map(_.name).getOrElse("an anonymous struct")
@@ -493,50 +487,96 @@ object Generator {
         x.copy(symbol = exterMap ++ strucMap ++ spaceMap ++ servcMap)
       }
       // Resolves every struct's `use`s to the used structs' fields, against the whole API's symbol table, and
-      // re-indexes the spaces so lookups return the resolved structs.
+      // re-indexes the spaces so lookups return the resolved structs. The symbol table only tells which struct a `use`
+      // names: its structs are unresolved, so their fields are read from the structs resolved so far instead.
       def resolveUsings(root: Space): Either[String, Space] = {
-        // A used struct's fields, its own `use`s' first. `seen` holds the structs whose `use`s led here, to stop a cycle.
-        def usedFields(u: Using, scope: Option[Kind], seen: List[Kind], name: String): Either[String, List[Field]] =
-          root.symbol.find(u.kind, scope).collect { case s: Struc => s }
+        type Key = List[String]
+        def key(k: Kind): Key = k.name :: k.path
+        // Every struct a `use` can name, in the order they're written, with the union it's a variant of.
+        def nameable(x: Space): List[(Key, (Struc, Option[Key]))] = {
+          def struc(s: Struc, parent: Option[Key]): List[(Key, (Struc, Option[Key]))] =
+            s.kind.map(key).toList.flatMap(k => (k -> (s, parent)) :: s.leaves.flatMap(struc(_, Some(k))))
+          x.strucs.flatMap(struc(_, None)) ++ x.spaces.flatMap(nameable)
+        }
+        val graph = nameable(root)
+        val nodes = graph.toMap
+        def used(u: Using, scope: Option[Kind], name: String): Either[String, Key] =
+          root.symbol.find(u.kind, scope).collect { case s: Struc => s }.flatMap(_.kind).map(key)
             .toRight(s"can't resolve `use ${u.kind.name}` in $name")
-            .flatMap { s =>
-              if (s.kind.exists(seen.contains)) Left(s"`use ${u.kind.name}` in $name is circular")
-              else s.usings.flatTraverse(usedFields(_, s.kind, seen ++ s.kind, u.kind.name)).map(_ ++ s.ownFields)
-            }
-        // An embed's `use`s resolve in the scope of the struct holding it. `name` names x in an error.
-        def struc(x: Struc, scope: Option[Kind], name: String): Either[String, Struc] = for {
-          usingFields <- x.usings.flatTraverse(usedFields(_, scope, x.kind.toList, name)).flatMap(distinctFields(_, name))
-          shape <- x.shape match {
-            case Shape.Record => Right(Shape.Record)
-            case Shape.Union(isSealed, variants) =>
-              variants.traverse {
-                case s: Struc => struc(s, s.kind, named(s, s"a variant of $name")).map(s => s: Variant)
-                case w: Wrapp   => Right(w)
-                case e: EnumStr => Right(e)
-              }.map(Shape.Union(isSealed, _))
+        // Resolves the struct k after the ones its fields come from: its union, when it's a variant, and the structs it
+        // uses. `path` holds the structs whose fields led here, to stop a cycle.
+        def visit(k: Key, path: List[Key], done: Map[Key, Struc]): Either[String, Map[Key, Struc]] =
+          if (done.contains(k)) Right(done)
+          else if (path.contains(k))
+            Left(s"`use` is circular: ${(k :: path).reverse.dropWhile(_ != k).map(_.head).mkString(" → ")}")
+          else {
+            val (s, parent) = nodes(k)
+            for {
+              deps <- s.usings.traverse(used(_, s.kind, k.head))
+              done <- (parent.toList ++ deps).foldLeftM(done)((done, dep) => visit(dep, k :: path, done))
+              r <- withFields(s, parent.map(done), s.kind, k.head, done)
+            } yield done + (k -> r)
           }
-          embeds <- x.embeds.traverse(e => struc(e.struc, x.kind, named(e.struc, s"the `${e.name}` field of $name")).map(s => e.copy(struc = s)))
-        } yield x.copy(usingFields = usingFields, shape = shape, embeds = embeds)
-        // A field reached along two paths of `use`s is the same field, unless the two disagree on its type.
+        // A variant inherits its union's fields, so it has every field the union's trait declares; its own `use`s and
+        // fields come after them. `name` names x in an error.
+        def withFields(x: Struc, parent: Option[Struc], scope: Option[Kind], name: String, resolved: Map[Key, Struc]): Either[String, Struc] = for {
+          fromUses <- x.usings.flatTraverse(u => used(u, scope, name).map(resolved(_).allFields))
+          usingFields <- distinctFields(parent.toList.flatMap(_.usingFields) ++ fromUses, name)
+          ownFields <- distinctFields(parent.toList.flatMap(_.ownFields) ++ x.ownFields, name)
+          _ <- distinctFields(usingFields ++ ownFields, name)
+        } yield x.copy(
+          // a field both used and declared is generated once, as declared
+          usingFields = usingFields.filterNot(u => ownFields.exists(_.name == u.name)),
+          ownFields = ownFields,
+        )
+        // Fields met twice by name are one field when they agree on type and options; the first one is kept.
         def distinctFields(fields: List[Field], name: String): Either[String, List[Field]] =
-          fields.groupBy(_.name).collectFirst { case (field, fs) if fs.map(_.kind).distinct.size > 1 => field }
-            .map(field => s"$name uses two fields named `$field` of different types")
-            .toLeft(fields.distinctBy(_.name))
+          fields.foldLeftM(List.empty[Field]) { (kept, f) =>
+            kept.find(_.name == f.name) match {
+              case None                       => Right(kept :+ f)
+              case Some(g) if sameField(g, f) => Right(kept)
+              case Some(_)                    => Left(s"$name has two fields named `${f.name}` that differ in type or options")
+            }
+          }
+        def sameField(a: Field, b: Field): Boolean = sameType(a.kind, b.kind) && a.opts.toSet == b.opts.toSet
+        // A Kind records the namespace it was written in, so compare what the two resolve to.
+        def sameType(a: Kind, b: Kind): Boolean =
+          a.name == b.name && a.params.size == b.params.size &&
+            root.symbol.resolve(a) == root.symbol.resolve(b) &&
+            a.params.lazyZip(b.params).forall(sameType)
         def named(x: Struc, anonymous: String): String = x.kind.fold(anonymous)(_.name)
-        def servc(x: Servc): Either[String, Servc] =
-          x.items.traverse {
-            case d: Defun =>
-              for {
-                dom <- d.dom.traverse(s => struc(s, s.kind, named(s, s"the params of `${d.kind.name}`")))
-                cod <- d.cod.traverse(s => struc(s, s.kind, named(s, s"the result of `${d.kind.name}`")))
-              } yield d.copy(dom = dom, cod = cod): ServcItem
-          }.map(items => x.copy(items = items))
-        def space(x: Space): Either[String, Space] = for {
-          strucs <- x.strucs.traverse(s => struc(s, s.kind, named(s, "an anonymous struct")))
-          servcs <- x.servcs.traverse(servc)
-          spaces <- x.spaces.traverse(space)
-        } yield index(x.copy(strucs = strucs, servcs = servcs, spaces = spaces))
-        space(root)
+        // The structs a `use` can name are resolved first; then the tree is rebuilt from them, resolving the rest
+        // (methods' params and results, embeds) on the way.
+        graph.map(_._1).foldLeftM(Map.empty[Key, Struc])((done, k) => visit(k, Nil, done)).flatMap { resolved =>
+          // An embed's `use`s resolve in the scope of the struct holding it.
+          def struc(x: Struc, parent: Option[Struc], scope: Option[Kind], name: String): Either[String, Struc] = for {
+            y <- withFields(x, parent, scope, name, resolved)
+            shape <- x.shape match {
+              case Shape.Record => Right(Shape.Record)
+              case Shape.Union(isSealed, variants) =>
+                variants.traverse {
+                  case s: Struc => struc(s, Some(y), s.kind, named(s, s"a variant of $name")).map(s => s: Variant)
+                  case w: Wrapp   => Right(w)
+                  case e: EnumStr => Right(e)
+                }.map(Shape.Union(isSealed, _))
+            }
+            embeds <- x.embeds.traverse(e => struc(e.struc, None, x.kind, named(e.struc, s"the `${e.name}` field of $name")).map(s => e.copy(struc = s)))
+          } yield y.copy(shape = shape, embeds = embeds)
+          def servc(x: Servc): Either[String, Servc] =
+            x.items.traverse {
+              case d: Defun =>
+                for {
+                  dom <- d.dom.traverse(s => struc(s, None, s.kind, named(s, s"the params of `${d.kind.name}`")))
+                  cod <- d.cod.traverse(s => struc(s, None, s.kind, named(s, s"the result of `${d.kind.name}`")))
+                } yield d.copy(dom = dom, cod = cod): ServcItem
+            }.map(items => x.copy(items = items))
+          def space(x: Space): Either[String, Space] = for {
+            strucs <- x.strucs.traverse(s => struc(s, None, s.kind, named(s, "an anonymous struct")))
+            servcs <- x.servcs.traverse(servc)
+            spaces <- x.spaces.traverse(space)
+          } yield index(x.copy(strucs = strucs, servcs = servcs, spaces = spaces))
+          space(root)
+        }
       }
       trSpace[Either[String, *]](x, List()).flatMap(resolveUsings)
     }
