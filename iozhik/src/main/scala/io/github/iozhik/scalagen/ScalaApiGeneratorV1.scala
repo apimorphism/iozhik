@@ -747,14 +747,17 @@ class ScalaApiGeneratorV1 {
 
   // An expression giving `value`, of kind `k`, with its files rewritten to attach:// references, paired with those
   // files; None if it holds no file. `name` is the attachment name's expression, which a List element extends with
-  // its index.
+  // "_" and its index. A List holding no file is returned as is.
   private def attachExpr(k: Kind, value: String, name: String, fileKinds: Set[String], depth: Int = 0): Option[String] =
     k.name match {
       case "List" =>
-        k.params.headOption.flatMap(p => attachExpr(p, s"x$depth", s"$name + i$depth", fileKinds, depth + 1)).map { inner =>
+        val indexed =
+          if (name.endsWith("\"")) s"""${name.dropRight(1)}_" + i$depth""" else s"""$name + "_" + i$depth"""
+        k.params.headOption.flatMap(p => attachExpr(p, s"x$depth", indexed, fileKinds, depth + 1)).map { inner =>
           s"""{
              |  val (a$depth, f$depth) = $value.zipWithIndex.map { case (x$depth, i$depth) => $inner }.unzip
-             |  (a$depth, f$depth.flatten.toMap)
+             |  val files$depth = f$depth.flatten.toMap
+             |  (if (files$depth.isEmpty) $value else a$depth, files$depth)
              |}""".stripMargin
         }
       case "Option" =>
@@ -783,25 +786,31 @@ class ScalaApiGeneratorV1 {
         val expr =
           if (f.opts.contains("file")) Some(s"MethodReq.attachFile($name, v.$fname)")
           else attachExpr(f.kind, s"v.$fname", name, fileKinds)
-        expr.map(e => fname -> s"val (${fname}1, ${fname}Files) = $e")
+        expr.map(e => f -> s"val (${f.name}1, ${f.name}Files) = $e")
       }
     }
     val attachingCases = attaching.collect { case (v, attached) if attached.nonEmpty =>
       val variantName = v.kind.map(k => sanitize(k.name)).getOrElse(typeName)
-      val copyArgs = attached.map { case (fname, _) => s"$fname = ${fname}1" }.mkString(", ")
-      val mergedFiles = attached.map { case (fname, _) => s"${fname}Files" }.mkString(" ++ ")
+      val copyArgs = attached.map { case (f, _) => s"${sanitize(f.name)} = ${f.name}1" }.mkString(", ")
+      val mergedFiles = attached.map { case (f, _) => s"${f.name}Files" }.mkString(" ++ ")
+      // A value holding no file is returned as is, rather than copied.
       s"""case v: $variantName =>
          |  ${attached.map(_._2).mkString(delimiter).replace(delimiter, delimiter + "  ")}
-         |  (v.copy($copyArgs), $mergedFiles)""".stripMargin
+         |  val files = $mergedFiles
+         |  if (files.isEmpty) (v, files) else (v.copy($copyArgs), files)""".stripMargin
     }
-    // The variants holding no file, some of which are case objects, share one case.
-    val cases = attachingCases ++
-      Option.when(attaching.exists(_._2.isEmpty))("case v => (v, Map.empty[String, IFile])").toList
+    // The variants holding no file are listed too, so a missed one fails the match's exhaustiveness check.
+    val passingCases = attaching.collect { case (v, attached) if attached.isEmpty =>
+      val variantName = v.kind.map(k => sanitize(k.name)).getOrElse(typeName)
+      if (v.fields.isEmpty) s"case $variantName => ($variantName, Map.empty[String, IFile])"
+      else s"case v: $variantName => (v, Map.empty[String, IFile])"
+    }
+    val cases = attachingCases ++ passingCases
     val body =
       s"""private def attachFiles_$typeName(name: String, value: $typeName): ($typeName, Map[String, IFile]) = value match {
          |  ${cases.mkString(delimiter).replace(delimiter, delimiter + "  ")}
          |}""".stripMargin
-    val variantImports = attaching.collect { case (v, attached) if attached.nonEmpty => v }.flatMap(_.kind.toList).flatMap(importKind)
+    val variantImports = variants.flatMap(_.kind.toList).flatMap(importKind)
     Code(
       body = body,
       name = s"attachFiles_$typeName",
@@ -847,7 +856,7 @@ class ScalaApiGeneratorV1 {
       }
       val fieldNames = fieldPlans.map {
         case (f, None)    => sanitize(f.name)
-        case (f, Some(_)) => s"${sanitize(f.name)}Attached"
+        case (f, Some(_)) => s"${f.name}Attached"
       }
       val reqArgs = if (fieldNames.isEmpty) "" else fieldNames.mkString("(", ",", ")")
       val returnTypeParams = x.cod.fold(
@@ -859,7 +868,7 @@ class ScalaApiGeneratorV1 {
         struc => struc.fields.filter(_.opts.contains("file"))
       )
         .map { f =>
-          val fieldName = if (meta.space.opts.contains("snake")) camel2snake(f.name) else f.name
+          val fieldName = jsonName(f)
           val domFieldName = if (f.kind.name == "Option") f.name else s"Option(${f.name})"
           s""""$fieldName" -> $domFieldName"""
         }
@@ -868,8 +877,7 @@ class ScalaApiGeneratorV1 {
       )
       // For each nested-file field: the attach/collect statement and its files-map expression.
       val nested = fieldPlans.collect { case (f, Some(expr)) =>
-        val fname = sanitize(f.name)
-        (s"val (${fname}Attached, ${fname}Files) = $expr", s"${fname}Files")
+        (s"val (${f.name}Attached, ${f.name}Files) = $expr", s"${f.name}Files")
       }
       val attachmentParts = directAttachment.toList ++ nested.map(_._2)
       val attachments = if (attachmentParts.isEmpty) "" else ", " + attachmentParts.mkString(" ++ ")
@@ -927,8 +935,7 @@ class ScalaApiGeneratorV1 {
           val otherFields = (dd.fields
             .filter(!_.opts.contains("file"))
             .map{ f =>
-              val fname = if (meta.space.opts.contains("snake")) { camel2snake(f.name) } else { f.name }
-              s"""("$fname", x.${sanitize(f.name)}.asJson)"""
+              s"""("${jsonName(f)}", x.${sanitize(f.name)}.asJson)"""
             } ++ dd.fields.filter(_.opts.contains("file")).map { f =>
               s"""("${f.name}", if (${f.name}Part.isEmpty) { x.${f.name}.asJson } else { Json.Null } )"""
             }).intercalate(",")

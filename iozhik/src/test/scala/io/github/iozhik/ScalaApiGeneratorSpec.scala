@@ -82,7 +82,8 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include("""val req = AddStickerToSetReq(userId,stickerAttached)""")
     body should include("""MethodReq[Boolean]("addStickerToSet", req.asJson, stickerFiles)""")
     body should include("""val (sticker1, stickerFiles) = MethodReq.attachFile(name + "_sticker", v.sticker)""")
-    body should include("(v.copy(sticker = sticker1), stickerFiles)")
+    body should include("val files = stickerFiles")
+    body should include("if (files.isEmpty) (v, files) else (v.copy(sticker = sticker1), files)")
   }
 
   "A methodsFactory method taking a List of a union type whose variants embed file fields" must "attach each element's file(s) under an indexed name and rewrite them to attach:// references" in {
@@ -114,15 +115,17 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     )
     val body = bodies.mkString("\n")
     body should include(
-      """val (a0, f0) = media.zipWithIndex.map { case (x0, i0) => attachFiles_InputMedia("media" + i0, x0) }.unzip"""
+      """val (a0, f0) = media.zipWithIndex.map { case (x0, i0) => attachFiles_InputMedia("media_" + i0, x0) }.unzip"""
     )
-    body should include("(a0, f0.flatten.toMap)")
+    body should include("val files0 = f0.flatten.toMap")
+    body should include("(if (files0.isEmpty) media else a0, files0)")
     body should include("""val req = SendMediaGroupReq(mediaAttached)""")
     body should include("""MethodReq[Boolean]("sendMediaGroup", req.asJson, mediaFiles)""")
     body should include("""val (media1, mediaFiles) = MethodReq.attachFile(name + "_media", v.media)""")
-    body should include("(v.copy(media = media1), mediaFiles)")
+    body should include("if (files.isEmpty) (v, files) else (v.copy(media = media1), files)")
     body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFile(name + "_thumbnail", v.thumbnail)""")
-    body should include("(v.copy(media = media1, thumbnail = thumbnail1), mediaFiles ++ thumbnailFiles)")
+    body should include("val files = mediaFiles ++ thumbnailFiles")
+    body should include("if (files.isEmpty) (v, files) else (v.copy(media = media1, thumbnail = thumbnail1), files)")
   }
 
   // https://github.com/apimorphism/iozhik/issues/21
@@ -176,7 +179,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     )
     val body = bodies.mkString("\n")
     // sendPoll.options[i].media: a List of a struct holding an Option of a union
-    body should include("""val (a0, f0) = options.zipWithIndex.map { case (x0, i0) => attachFiles_InputPollOption("options" + i0, x0) }.unzip""")
+    body should include("""val (a0, f0) = options.zipWithIndex.map { case (x0, i0) => attachFiles_InputPollOption("options_" + i0, x0) }.unzip""")
     body should include("case v: InputPollOption =>")
     body should include("val (a0, f0) = attachFiles_InputMedia(name + \"_media\", x0)")
     // sendPoll.media: an Option param
@@ -185,12 +188,47 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include("""MethodReq[Boolean]("sendPoll", req.asJson, optionsFiles ++ mediaFiles)""")
     // sendRichMessage.rich_message.blocks[i].photo.media, and blocks nested in a collage
     body should include("""val (richMessageAttached, richMessageFiles) = attachFiles_InputRichMessage("rich_message", richMessage)""")
-    body should include("""v.blocks.zipWithIndex.map { case (x0, i0) => attachFiles_InputRichBlock(name + "_blocks" + i0, x0) }.unzip""")
-    body should include("case v => (v, Map.empty[String, IFile])")
-    body should not include "case v: InputRichBlockParagraph"
+    body should include("""v.blocks.zipWithIndex.map { case (x0, i0) => attachFiles_InputRichBlock(name + "_blocks_" + i0, x0) }.unzip""")
+    body should include("case v: InputRichBlockParagraph => (v, Map.empty[String, IFile])")
+    body should not include "case v => (v, Map.empty[String, IFile])"
     body should include("""val (photo1, photoFiles) = attachFiles_InputMediaPhoto(name + "_photo", v.photo)""")
     body should include("case v: InputRichBlockCollage =>")
     body should include("""private def attachFiles_InputMediaPhoto(name: String, value: InputMediaPhoto)""")
+  }
+
+  "A file-holding field named after a Scala keyword, next to a variant with no fields" must "generate valid local names and match the variant explicitly" in {
+    val bodies = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum IFile {
+        |      wrap InputPartFile (file) = java.io.File
+        |      wrap InputLinkFile (file) = String
+        |    }
+        |    abstract InputThing {
+        |      InputThingFile {
+        |        type: (file) IFile
+        |      }
+        |      InputThingNested {
+        |        object: InputThing
+        |      }
+        |      InputThingNone {}
+        |    }
+        |    Methods (methodsFactory) {
+        |      def sendThing {
+        |        type: InputThing
+        |      } => Method[Boolean]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    val body = bodies.mkString("\n")
+    body should include("""val (type1, typeFiles) = MethodReq.attachFile(name + "_type", v.`type`)""")
+    body should include("if (files.isEmpty) (v, files) else (v.copy(`type` = type1), files)")
+    body should include("""val (object1, objectFiles) = attachFiles_InputThing(name + "_object", v.`object`)""")
+    body should include("""val (typeAttached, typeFiles) = attachFiles_InputThing("type", `type`)""")
+    body should include("case InputThingNone => (InputThingNone, Map.empty[String, IFile])")
   }
 
   // https://github.com/apimorphism/iozhik/issues/21
