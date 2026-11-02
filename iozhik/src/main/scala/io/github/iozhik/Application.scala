@@ -3,6 +3,7 @@ package io.github.iozhik
 import cats.effect._
 import cats.instances.list._
 import cats.syntax.flatMap._
+import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.traverse._
 import fs2.RaiseThrowable
@@ -10,21 +11,29 @@ import fs2.Stream
 import fs2.io.file.Files
 import io.github.iozhik.scalagen.GeneratorConfig
 import org.scalafmt.interfaces.Scalafmt
+import org.scalafmt.interfaces.ScalafmtReporter
 import pureconfig.ConfigSource
 
 import java.io.File
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
 import java.nio.file.Path
 import java.nio.file.Paths
+import scala.annotation.tailrec
 
 object Application extends IOApp {
 
-  def generate[F[_]: RaiseThrowable](cfgPath: Path, dstDir: Path)(implicit async: Async[F], files: Files[F]): F[Unit] = {
+  def generate[F[_]: RaiseThrowable](cfg: GeneratorConfig, dstDir: Path, testDir: Option[Path])(implicit async: Async[F], files: Files[F]): F[Unit] = {
 
     val generator = new ScalaApiGeneratorV1
-    val formatter = Scalafmt.create(this.getClass.getClassLoader)
-    val cfg = ConfigSource.file(cfgPath).loadOrThrow[GeneratorConfig]
+    val formatter = Scalafmt.create(this.getClass.getClassLoader).withReporter(FailingReporter)
 
-    files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
+    val missingTestDir =
+      async.raiseWhen(cfg.generateGens && testDir.isEmpty)(
+        new IllegalArgumentException("generate-gens needs a test output directory, the third argument")
+      )
+
+    missingTestDir >> files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
       .map { code =>
         Parser.Grammar
           .parse(code)
@@ -33,23 +42,48 @@ object Application extends IOApp {
       }
       .map(_.left.map(new RuntimeException(_)))
       .flatMap(Stream.fromEither(_))
-      .flatMap(Stream.emits(_))
-      .evalMap(code => async.delay{
-        val path = dstDir.resolve(code.path)
-        val file = path.resolve(code.name)
-        path.toFile.mkdirs()
-        val body = formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
+      // every file is generated and formatted before anything is wiped, so a failed regen leaves the old sources in place
+      .evalMap(codes => async.delay(codes.map { code =>
+        val file = (if (code.test) testDir.get else dstDir).resolve(code.path).resolve(code.name)
+        val body =
+          if (code.test)
+            formatUntilStable(formatter, Path.of(cfg.fmtConfigPath), file, code.body)
+          else formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
         (file, body)
-      })
+      }))
+      // the generated test sources have a tree of their own, so they are wiped too
+      .evalTap(_ => cleanDir[F](dstDir) >> testDir.traverse_(cleanDir[F](_)))
+      .flatMap(Stream.emits(_))
       .flatMap { case (file, body) =>
-        Stream
-          .emit(body)
-          .through(fs2.text.utf8.encode)
-          .through(files.writeAll(fs2.io.file.Path.fromNioPath(file)))
+        Stream.exec(async.delay(file.getParent.toFile.mkdirs()).void) ++
+          Stream
+            .emit(body)
+            .through(fs2.text.utf8.encode)
+            .through(files.writeAll(fs2.io.file.Path.fromNioPath(file)))
       }
-      .handleErrorWith(e => Stream.eval(async.delay(e.printStackTrace())))
       .compile
       .drain
+  }
+
+  // scalafmt-dynamic reports a failure and hands the code back as it was, which would be written unformatted
+  object FailingReporter extends ScalafmtReporter {
+    def error(file: Path, message: String): Unit = throw new RuntimeException(s"scalafmt failed on $file: $message")
+    def error(file: Path, e: Throwable): Unit = throw new RuntimeException(s"scalafmt failed on $file: ${e.getMessage}", e)
+    override def error(file: Path, message: String, e: Throwable): Unit =
+      throw new RuntimeException(s"scalafmt failed on $file: $message", e)
+    def excluded(file: Path): Unit = throw new RuntimeException(s"the scalafmt config excludes $file")
+    def parsedConfig(config: Path, scalafmtVersion: String): Unit = println(s"parsed config (v$scalafmtVersion): $config")
+    def downloadWriter(): PrintWriter = new PrintWriter(System.err, true)
+    def downloadOutputStreamWriter(): OutputStreamWriter = new OutputStreamWriter(System.err)
+  }
+
+  // One scalafmt pass over the generated layout isn't always stable.
+  @tailrec
+  def formatUntilStable(formatter: Scalafmt, config: Path, file: Path, code: String, passes: Int = 5): String = {
+    val next = formatter.format(config, file, code)
+    if (next == code) next
+    else if (passes <= 1) throw new RuntimeException(s"scalafmt output for $file didn't settle")
+    else formatUntilStable(formatter, config, file, next, passes - 1)
   }
 
   def cleanDir[F[_]](dir: Path)(implicit sync: Sync[F]): F[Unit] = {
@@ -71,11 +105,12 @@ object Application extends IOApp {
   }
 
   def run(args: List[String]): IO[ExitCode] = {
-      val apiDir = Paths.get(args.head)
+      val cfgPath = Paths.get(args.head)
       val dstDir = Paths.get(args.tail.head)
-      cleanDir[IO](dstDir).flatMap { _ =>
-        generate[IO](apiDir, dstDir)
-          .as(ExitCode.Success)
-      }
+      val testDir = args.lift(2).map(Paths.get(_))
+      for {
+        cfg <- IO(ConfigSource.file(cfgPath).loadOrThrow[GeneratorConfig])
+        _ <- generate[IO](cfg, dstDir, testDir)
+      } yield ExitCode.Success
   }
 }

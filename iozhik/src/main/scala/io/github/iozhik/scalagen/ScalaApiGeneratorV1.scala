@@ -4,6 +4,7 @@ import cats.implicits._
 import io.github.iozhik.Generator.Model._
 import io.github.iozhik.GeneratorUtils._
 import io.github.iozhik.scalagen.CirceUtils._
+import io.github.iozhik.scalagen.ArbitraryGenerator
 import io.github.iozhik.scalagen.GeneratorConfig
 import io.github.iozhik.scalagen.GeneratorMeta
 import io.github.iozhik.scalagen.PredefGenerator._
@@ -247,10 +248,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = struc.usings
-        .flatMap{ y => meta.symt.find(y.kind, struc.kind) }
-        .collect{ case s: Struc => s}
-        .flatMap(_.fields)
+      val usingf = usingFields(struc)
       val impPacks = (usingf ++ struc.fields)
         .flatMap(_.kind.unresolvedIn(meta.space.symbol))
         .filter(y => !predefined.contains(y.name))
@@ -380,10 +378,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = x.usings
-        .flatMap{ y => meta.symt.find(y.kind, x.kind) }
-        .collect{ case s: Struc => s}
-        .flatMap(_.fields)
+      val usingf = usingFields(x)
       for {
         kind <- x.kind.map(_.name).toRight("No kind name")
         fieldKinds <- (usingf ++ x.fields).traverse(y => genKind(y.kind))
@@ -465,10 +460,7 @@ class ScalaApiGeneratorV1 {
         }
       }
     } else {
-      val usingf = struc.usings
-        .flatMap{ y => meta.symt.find(y.kind, struc.kind) }
-        .collect{ case s: Struc => s}
-        .flatMap(_.fields)
+      val usingf = usingFields(struc)
       val impPacks = (usingf ++ struc.fields)
         .flatMap(_.kind.unresolvedIn(meta.space.symbol))
         .filter(y => !predefined.contains(y.name))
@@ -582,10 +574,7 @@ class ScalaApiGeneratorV1 {
   def genStruc(x: Struc, wrapEnumType: String => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
     val abstractOrEnum = x.isAbstract || x.isEnum
-    val usingf = x.usings
-      .flatMap{ y => meta.symt.find(y.kind, x.kind) }
-      .collect{ case s: Struc => s}
-      .flatMap(_.fields)
+    val usingf = usingFields(x)
     for {
       kind <- genKind(kindOrDefault)
       fields <- requiredFieldsFirst(x.fields).traverse(genField(_, x.kind, withDoc = abstractOrEnum, isDef = abstractOrEnum, wrapEnumType = wrapEnumType))
@@ -1175,11 +1164,11 @@ class ScalaApiGeneratorV1 {
         .flatten
         .map(_.copy(path = x.name)) ++
         spaces.flatten.map {
-          case Code(body, name, path, packageObject, imports) =>
+          case Code(body, name, path, packageObject, imports, test) =>
             if (x.name.isEmpty) {
-              Code(body, name, path, packageObject, imports)
+              Code(body, name, path, packageObject, imports, test)
             } else {
-              Code(body, name, s"${x.name}.$path", packageObject, imports)
+              Code(body, name, s"${x.name}.$path", packageObject, imports, test)
             }
         }
     }
@@ -1229,6 +1218,8 @@ class ScalaApiGeneratorV1 {
       }
 
       predef ++ commons ++ content
+    }.flatMap { code =>
+      if (cfg.generateGens) ArbitraryGenerator.gen(x, cfg).map(code ++ _) else Right(code)
     }
   }
 

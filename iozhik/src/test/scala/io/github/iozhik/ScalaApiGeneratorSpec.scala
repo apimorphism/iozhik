@@ -163,4 +163,204 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     } yield codes
     result.left.toOption.getOrElse(fail("Generation succeeded")) should include("Foo.name")
   }
+
+  private val gensDsl =
+    """
+      |namespace telegramium {
+      |  namespace bots(snake circe) {
+      |    Dated {
+      |      date: Long
+      |      note: Option[String]
+      |    }
+      |    Reply {
+      |      dated: Dated
+      |    }
+      |    enum Text {
+      |      TextPlain {
+      |        type : "plain:0"
+      |        text : String
+      |      }
+      |      TextBold {
+      |        type : "bold:1"
+      |        text : Text
+      |      }
+      |    }
+      |    SendOnly {
+      |      text: String
+      |    }
+      |    Methods (methodsFactory) {
+      |      def getReply {
+      |      } => Method[Reply]
+      |      def send {
+      |        sendOnly: SendOnly
+      |      } => Method[Boolean]
+      |    }
+      |  }
+      |}
+    """.stripMargin
+
+  private def generateGens(dsl: String, gensCfg: GeneratorConfig = cfg.copy(generateGens = true)): Map[String, String] = {
+    val result = for {
+      space <- Parser.Grammar.parse(dsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, gensCfg)
+    } yield codes.filter(_.test).map(c => c.name -> c.body).toMap
+    result.fold(err => fail(s"Generation failed: $err"), identity)
+  }
+
+  "Generators" must "be left out unless the config asks for them" in {
+    generateGens(gensDsl, cfg) shouldBe empty
+  }
+
+  "Generators" must "go into a test source tree of their own, one small object per type, with the round-trip list" in {
+    val files = generateGens(gensDsl)
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala")
+    files("GenTypes.scala") should include("object GenDated")
+    files("GenTypes.scala") should include("object GenReply")
+  }
+
+  "A generator" must "zip its fields and pass them by name, in groups of up to 9" in {
+    val types = generateGens(gensDsl)("GenTypes.scala")
+    types should include("Gen.zip(genLong, optPrim(genString)).map { case (a0, a1) => Dated(date = a0, note = a1) }")
+    types should include("GenDated.gen.map { a0 => Reply(dated = a0) }")
+  }
+
+  "A shrinker" must "have entries for the optional and composite fields only" in {
+    val types = generateGens(gensDsl)("GenTypes.scala")
+    types should include("field(x.note)(shrinkOpt(noShrink))(v => x.copy(note = v))")
+    types should not include "x.date)"
+    types should include("field(x.dated)(GenDated.shrink)(v => x.copy(dated = v))")
+  }
+
+  "A shrinker" must "leave out composite fields whose type has nothing to shrink, recursive ones too" in {
+    val types = generateGens(gensDsl)("GenTypes.scala")
+    // TextBold.text only leads back to Text, and TextPlain holds a String
+    types should include("lazy val shrink: Shrink[TextBold] = noShrink")
+    types should include("lazy val shrink: Shrink[Text] = noShrink")
+    types should not include "GenText.shrink"
+  }
+
+  "A sum type" must "pick only the variants without a required recursive field at size 0" in {
+    val types = generateGens(gensDsl)("GenTypes.scala")
+    types should include("sum[Text](List(GenTextPlain.gen, GenTextBold.gen), List(GenTextPlain.gen))")
+  }
+
+  "A required Either with a recursive side" must "pick only the other side at size 0" in {
+    val types = generateGens(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Leaf {
+        |      date: Long
+        |    }
+        |    Chain {
+        |      next: Either[Leaf, Chain]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )("GenTypes.scala")
+    types should include("eitherLeftAtZero(GenLeaf.gen, GenChain.gen)")
+  }
+
+  "Generators for types in more than one package" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Dated {
+        |      date: Long
+        |    }
+        |  }
+        |  namespace other(snake circe) {
+        |    Undated {
+        |      note: String
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("generators for more than one package aren't supported: telegramium.bots, telegramium.other")
+  }
+
+  "The round-trip list" must "hold the types with both an encoder and a decoder, and leave out encode-only types" in {
+    val list = generateGens(gensDsl)("RoundTrips.scala")
+    list should include("""RoundTripCase[Reply]("Reply"""")
+    list should include("""RoundTripCase[Dated]("Dated"""")
+    list should not include "SendOnly"
+  }
+
+  "A custom-gens entry" must "apply to the generated and the shrunk values of its type, and leave other types alone" in {
+    val types = generateGens(
+      gensDsl,
+      cfg.copy(generateGens = true, customGens = Map("Dated" -> "d => d.copy(date = 1L)"))
+    )("GenTypes.scala")
+    types should include("private val fix: Dated => Dated = d => d.copy(date = 1L)")
+    types should include(".map(fix))")
+    types should include("lazy val shrink: Shrink[Dated] = fixed(shrinkFields[Dated]")
+    types.split("object GenReply").last should not include "fix"
+  }
+
+  private def gensError(dsl: String, gensCfg: GeneratorConfig = cfg.copy(generateGens = true)): String = {
+    val result = for {
+      space <- Parser.Grammar.parse(dsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, gensCfg)
+    } yield codes
+    result.left.toOption.getOrElse(fail("Generation succeeded"))
+  }
+
+  "A custom-gens entry for a type without a generator" must "fail the generation" in {
+    gensError(gensDsl, cfg.copy(generateGens = true, customGens = Map("Dtaed" -> "identity"))) should include("custom-gens for types without a generator: Dtaed")
+  }
+
+  "An enum with an abstract variant" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum Text {
+        |      TextPlain {
+        |        type : "plain:0"
+        |        text : String
+        |      }
+        |      abstract TextStyled {
+        |        text : String
+        |      }
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("abstract variant TextStyled of Text")
+  }
+
+  "A field of a type without a generator" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    abstract Styled {
+        |      text : String
+        |    }
+        |    Holder {
+        |      styled : Styled
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("no generator for Styled, which Holder refers to")
+  }
+
+  "A type without a finite value" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Loop {
+        |      next : Loop
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("no finite value to generate for: Loop")
+  }
 }

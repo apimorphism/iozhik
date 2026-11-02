@@ -16,7 +16,11 @@ hand-edited there (see that repo's CONTRIBUTING.md). If you need a change in
 - `iozh-api-scraper/src/main/scala/TgBotApiScrapper.scala` - how the Bot API
   HTML page is parsed and turned into `.api` DSL text.
 - `iozhik/src/main/resources/tgbotapi.conf` - generator config for the
-  Telegram pipeline (open-enum settings, custom encoders/decoders).
+  Telegram pipeline (open-enum settings, custom encoders/decoders, and
+  `custom-gens`, which restrict a type's generated ScalaCheck generator: a
+  function from the type to itself, applied to every generated and shrunk
+  value - a map, never a filter like `suchThat`; comment each restriction with
+  its reason or a linked issue).
 - `iozhik/src/main/scala/io/github/iozhik/scalagen/` - the DSL -> Scala
   codegen itself.
 
@@ -29,9 +33,11 @@ root run:
 # re-scrape core.telegram.org/bots/api -> iozhtest/src/main/resources/tgbot.api
 IOZHDIR="$PWD" sbt "iozh-api-scraper/runMain TgBotApiScrapper"
 
-# recompile tgbot.api -> <telegramium checkout>/telegramium-core/src/main/scala
-# (full rewrite - everything under src/main/scala there is deleted and regenerated)
-sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf <path-to-telegramium>/telegramium-core/src/main/scala"
+# recompile tgbot.api -> <telegramium checkout>/telegramium-core/src/main/scala,
+# and the generators and the round-trip list -> src/test/scala-generated next to it
+# (full rewrite - everything under both trees is deleted and regenerated; the
+# third argument is required while the config has generate-gens on)
+sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf <path-to-telegramium>/telegramium-core/src/main/scala <path-to-telegramium>/telegramium-core/src/test/scala-generated"
 ```
 
 Run the regen step on a clean `telegramium-core` tree and review the diff
@@ -40,8 +46,9 @@ before committing. Format and commit the result in **both** repos:
 1. Here: commit the refreshed `iozhtest/src/main/resources/tgbot.api` if it
    changed.
 2. In the telegramium checkout: commit the regenerated
-   `telegramium-core/src/main/scala` tree (run `sbt fmtAll` there, per its
-   CONTRIBUTING.md).
+   `telegramium-core/src/main/scala` and `telegramium-core/src/test/scala-generated`
+   trees (run `sbt fmtAll` there, per its CONTRIBUTING.md; it leaves
+   `src/test/scala-generated` alone, as the regen formats that tree itself).
 
 Open a PR in each repo that changed.
 
