@@ -8,6 +8,7 @@ import cats.syntax.traverse._
 import fs2.RaiseThrowable
 import fs2.Stream
 import fs2.io.file.Files
+import io.github.iozhik.scalagen.ArbitraryGenerator
 import io.github.iozhik.scalagen.GeneratorConfig
 import org.scalafmt.interfaces.Scalafmt
 import pureconfig.ConfigSource
@@ -38,7 +39,10 @@ object Application extends IOApp {
         val path = dstDir.resolve(code.path)
         val file = path.resolve(code.name)
         path.toFile.mkdirs()
-        val body = formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
+        // the generated test sources are laid out by their generator: scalafmt puts every field on a line of its own
+        val body =
+          if (code.path.startsWith(ArbitraryGenerator.TestSourcesPath)) code.body
+          else formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
         (file, body)
       })
       .flatMap { case (file, body) =>
@@ -73,7 +77,8 @@ object Application extends IOApp {
   def run(args: List[String]): IO[ExitCode] = {
       val apiDir = Paths.get(args.head)
       val dstDir = Paths.get(args.tail.head)
-      cleanDir[IO](dstDir).flatMap { _ =>
+      // the generated test sources have a tree of their own, so they are wiped too
+      (cleanDir[IO](dstDir) >> cleanDir[IO](dstDir.resolve(ArbitraryGenerator.TestSourcesPath))).flatMap { _ =>
         generate[IO](apiDir, dstDir)
           .as(ExitCode.Success)
       }

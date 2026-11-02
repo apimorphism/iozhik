@@ -17,9 +17,10 @@ hand-edited there (see that repo's CONTRIBUTING.md). If you need a change in
   HTML page is parsed and turned into `.api` DSL text.
 - `iozhik/src/main/resources/tgbotapi.conf` - generator config for the
   Telegram pipeline (open-enum settings, custom encoders/decoders, and
-  `custom-gens`, which restrict a type's generated ScalaCheck generator; use
-  `map`, never `suchThat`, and comment each restriction with its reason or a
-  linked issue).
+  `custom-gens`, which restrict a type's generated ScalaCheck generator: a
+  function from the type to itself, applied to every generated and shrunk
+  value - a map, never a filter like `suchThat`; comment each restriction with
+  its reason or a linked issue).
 - `iozhik/src/main/scala/io/github/iozhik/scalagen/` - the DSL -> Scala
   codegen itself.
 
@@ -34,8 +35,8 @@ IOZHDIR="$PWD" sbt "iozh-api-scraper/runMain TgBotApiScrapper"
 
 # recompile tgbot.api -> <telegramium checkout>/telegramium-core/src/main/scala
 # (full rewrite - everything under src/main/scala there is deleted and regenerated;
-# it also writes the generators and the round-trip list into the sibling
-# src/test/scala: GenPrims.scala, GenTypes.scala, Gens.scala, RoundTrips.scala)
+# so is the sibling src/test/scala-generated, which holds the generators and the
+# round-trip list)
 sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf <path-to-telegramium>/telegramium-core/src/main/scala"
 ```
 
@@ -45,9 +46,8 @@ before committing. Format and commit the result in **both** repos:
 1. Here: commit the refreshed `iozhtest/src/main/resources/tgbot.api` if it
    changed.
 2. In the telegramium checkout: commit the regenerated
-   `telegramium-core/src/main/scala` tree and the four generated files in
-   `telegramium-core/src/test/scala/telegramium/bots` (run `sbt fmtAll` there,
-   per its CONTRIBUTING.md).
+   `telegramium-core/src/main/scala` and `telegramium-core/src/test/scala-generated`
+   trees (run `sbt fmtAll` there, per its CONTRIBUTING.md).
 
 Open a PR in each repo that changed.
 

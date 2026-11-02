@@ -170,9 +170,20 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       |  namespace bots(snake circe) {
       |    Dated {
       |      date: Long
+      |      note: Option[String]
       |    }
       |    Reply {
       |      dated: Dated
+      |    }
+      |    enum Text {
+      |      TextPlain {
+      |        type : "plain:0"
+      |        text : String
+      |      }
+      |      TextBold {
+      |        type : "bold:1"
+      |        text : Text
+      |      }
       |    }
       |    SendOnly {
       |      text: String
@@ -193,7 +204,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       space <- Parser.Grammar.parse(dsl)
       model <- Generator.Model.translate(space)
       codes <- new ScalaApiGeneratorV1().gen(model, gensCfg)
-    } yield codes.filter(_.path.contains("test/scala")).map(c => c.name -> c.body).toMap
+    } yield codes.filter(_.path.contains("test/scala-generated")).map(c => c.name -> c.body).toMap
     result.fold(err => fail(s"Generation failed: $err"), identity)
   }
 
@@ -201,12 +212,24 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     generateGens(gensDsl, cfg) shouldBe empty
   }
 
-  "Generators" must "go into the test sources, one small object per type, with the aggregating object and the round-trip list" in {
+  "Generators" must "go into a test source tree of their own, one small object per type, with the aggregating object and the round-trip list" in {
     val files = generateGens(gensDsl)
     files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "Gens.scala", "RoundTrips.scala")
     files("GenTypes.scala") should include("object GenDated")
     files("GenTypes.scala") should include("object GenReply")
-    files("Gens.scala") should include("def arbDated: Arbitrary[Dated] = GenDated.arb")
+    files("Gens.scala") should include("def arbDated: Arbitrary[Dated] = Arbitrary(GenDated.gen)")
+  }
+
+  "A shrinker" must "have entries for the optional and composite fields only" in {
+    val types = generateGens(gensDsl)("GenTypes.scala")
+    types should include("field(x.note)(shrinkOpt(noShrink))(v => x.copy(note = v))")
+    types should not include "x.date)"
+    types should include("field(x.dated)(GenDated.shrink)(v => x.copy(dated = v))")
+  }
+
+  "A sum type" must "pick only the variants without a required recursive field at size 0" in {
+    val types = generateGens(gensDsl)("GenTypes.scala")
+    types should include("sum[Text](List(GenTextPlain.gen, GenTextBold.gen), List(GenTextPlain.gen))")
   }
 
   "The round-trip list" must "hold the types with both an encoder and a decoder, and leave out encode-only types" in {
@@ -216,12 +239,14 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     list should not include "SendOnly"
   }
 
-  "A custom-gens entry" must "post-process the generated generator of its type, and leave other types alone" in {
-    val files = generateGens(
+  "A custom-gens entry" must "apply to the generated and the shrunk values of its type, and leave other types alone" in {
+    val types = generateGens(
       gensDsl,
-      cfg.copy(generateGens = true, customGens = Map("Dated" -> "generated.map(d => d.copy(date = 1L))"))
-    )
-    files("GenTypes.scala") should include("lazy val gen: Gen[Dated] = generated.map(d => d.copy(date = 1L))")
-    files("GenTypes.scala") should include("lazy val gen: Gen[Reply] = generated")
+      cfg.copy(generateGens = true, customGens = Map("Dated" -> "d => d.copy(date = 1L)"))
+    )("GenTypes.scala")
+    types should include("private val fix: Dated => Dated = d => d.copy(date = 1L)")
+    types should include(".map(fix))")
+    types should include("lazy val shrink: Shrink[Dated] = fixed(shrinkFields[Dated]")
+    types.split("object GenReply").last should not include "fix"
   }
 }
