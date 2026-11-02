@@ -49,7 +49,7 @@ object ScalaApiGeneratorUtils {
 
   // the constructor arguments of a case class, in the order genStruc lays them out
   def constructorFields(x: Struc): List[Field] =
-    x.usingFields ++ requiredFieldsFirst(x.fields)
+    x.usingFields ++ requiredFieldsFirst(x.ownFields)
 
   def importKind(k: Kind)(implicit meta: GeneratorMeta): List[String] = {
     val result = meta.symt.resolve(k)
@@ -114,7 +114,7 @@ object ScalaApiGeneratorUtils {
     val kinds = collection.mutable.ListBuffer[Kind]()
     s.kind.foreach(k => kinds += k)
     s.kind.foreach(k => kinds ++= k.params.flatMap(resolveCodKinds(_, seen)))
-    kinds ++= s.fields.flatMap(f => resolveCodKinds(f.kind, seen))
+    kinds ++= s.allFields.flatMap(f => resolveCodKinds(f.kind, seen))
     kinds ++= s.embeds.flatMap(e => resolveCodKinds(Kind(e.name), seen))
     kinds ++= s.variants.flatMap {
       case l: Struc   => l.kind.toList.flatMap(resolveCodKinds(_, seen))
