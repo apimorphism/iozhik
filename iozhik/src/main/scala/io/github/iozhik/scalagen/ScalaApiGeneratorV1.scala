@@ -747,12 +747,12 @@ class ScalaApiGeneratorV1 {
 
   // An expression giving `value`, of kind `k`, with its files rewritten to attach:// references, paired with those
   // files; None if it holds no file. `name` is the attachment name's expression, which a List element extends with
-  // "_" and its index. A List holding no file is returned as is.
+  // "." and its index. A List holding no file is returned as is.
   private def attachExpr(k: Kind, value: String, name: String, fileKinds: Set[String], depth: Int = 0): Option[String] =
     k.name match {
       case "List" =>
         val indexed =
-          if (name.endsWith("\"")) s"""${name.dropRight(1)}_" + i$depth""" else s"""$name + "_" + i$depth"""
+          if (name.endsWith("\"")) s"""${name.dropRight(1)}." + i$depth""" else s"""$name + "." + i$depth"""
         k.params.headOption.flatMap(p => attachExpr(p, s"x$depth", indexed, fileKinds, depth + 1)).map { inner =>
           s"""{
              |  val (a$depth, f$depth) = $value.zipWithIndex.map { case (x$depth, i$depth) => $inner }.unzip
@@ -782,7 +782,7 @@ class ScalaApiGeneratorV1 {
     val attaching = variants.map { v =>
       v -> v.fields.flatMap { f =>
         val fname = sanitize(f.name)
-        val name  = s"""name + "_${jsonName(f)}""""
+        val name  = s"""name + ".${jsonName(f)}""""
         val expr =
           if (f.opts.contains("file")) Some(s"MethodReq.attachFile($name, v.$fname)")
           else attachExpr(f.kind, s"v.$fname", name, fileKinds)

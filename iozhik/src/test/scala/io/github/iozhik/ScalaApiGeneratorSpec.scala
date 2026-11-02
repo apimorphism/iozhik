@@ -81,7 +81,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include("""val (stickerAttached, stickerFiles) = attachFiles_InputSticker("sticker", sticker)""")
     body should include("""val req = AddStickerToSetReq(userId,stickerAttached)""")
     body should include("""MethodReq[Boolean]("addStickerToSet", req.asJson, stickerFiles)""")
-    body should include("""val (sticker1, stickerFiles) = MethodReq.attachFile(name + "_sticker", v.sticker)""")
+    body should include("""val (sticker1, stickerFiles) = MethodReq.attachFile(name + ".sticker", v.sticker)""")
     body should include("val files = stickerFiles")
     body should include("if (files.isEmpty) (v, files) else (v.copy(sticker = sticker1), files)")
   }
@@ -115,15 +115,15 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     )
     val body = bodies.mkString("\n")
     body should include(
-      """val (a0, f0) = media.zipWithIndex.map { case (x0, i0) => attachFiles_InputMedia("media_" + i0, x0) }.unzip"""
+      """val (a0, f0) = media.zipWithIndex.map { case (x0, i0) => attachFiles_InputMedia("media." + i0, x0) }.unzip"""
     )
     body should include("val files0 = f0.flatten.toMap")
     body should include("(if (files0.isEmpty) media else a0, files0)")
     body should include("""val req = SendMediaGroupReq(mediaAttached)""")
     body should include("""MethodReq[Boolean]("sendMediaGroup", req.asJson, mediaFiles)""")
-    body should include("""val (media1, mediaFiles) = MethodReq.attachFile(name + "_media", v.media)""")
+    body should include("""val (media1, mediaFiles) = MethodReq.attachFile(name + ".media", v.media)""")
     body should include("if (files.isEmpty) (v, files) else (v.copy(media = media1), files)")
-    body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFile(name + "_thumbnail", v.thumbnail)""")
+    body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFile(name + ".thumbnail", v.thumbnail)""")
     body should include("val files = mediaFiles ++ thumbnailFiles")
     body should include("if (files.isEmpty) (v, files) else (v.copy(media = media1, thumbnail = thumbnail1), files)")
   }
@@ -179,19 +179,19 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     )
     val body = bodies.mkString("\n")
     // sendPoll.options[i].media: a List of a struct holding an Option of a union
-    body should include("""val (a0, f0) = options.zipWithIndex.map { case (x0, i0) => attachFiles_InputPollOption("options_" + i0, x0) }.unzip""")
+    body should include("""val (a0, f0) = options.zipWithIndex.map { case (x0, i0) => attachFiles_InputPollOption("options." + i0, x0) }.unzip""")
     body should include("case v: InputPollOption =>")
-    body should include("val (a0, f0) = attachFiles_InputMedia(name + \"_media\", x0)")
+    body should include("val (a0, f0) = attachFiles_InputMedia(name + \".media\", x0)")
     // sendPoll.media: an Option param
     body should include("""val (mediaAttached, mediaFiles) = media match {""")
     body should include("""val (a0, f0) = attachFiles_InputMedia("media", x0)""")
     body should include("""MethodReq[Boolean]("sendPoll", req.asJson, optionsFiles ++ mediaFiles)""")
     // sendRichMessage.rich_message.blocks[i].photo.media, and blocks nested in a collage
     body should include("""val (richMessageAttached, richMessageFiles) = attachFiles_InputRichMessage("rich_message", richMessage)""")
-    body should include("""v.blocks.zipWithIndex.map { case (x0, i0) => attachFiles_InputRichBlock(name + "_blocks_" + i0, x0) }.unzip""")
+    body should include("""v.blocks.zipWithIndex.map { case (x0, i0) => attachFiles_InputRichBlock(name + ".blocks." + i0, x0) }.unzip""")
     body should include("case v: InputRichBlockParagraph => (v, Map.empty[String, IFile])")
     body should not include "case v => (v, Map.empty[String, IFile])"
-    body should include("""val (photo1, photoFiles) = attachFiles_InputMediaPhoto(name + "_photo", v.photo)""")
+    body should include("""val (photo1, photoFiles) = attachFiles_InputMediaPhoto(name + ".photo", v.photo)""")
     body should include("case v: InputRichBlockCollage =>")
     body should include("""private def attachFiles_InputMediaPhoto(name: String, value: InputMediaPhoto)""")
   }
@@ -224,9 +224,9 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       """.stripMargin
     )
     val body = bodies.mkString("\n")
-    body should include("""val (type1, typeFiles) = MethodReq.attachFile(name + "_type", v.`type`)""")
+    body should include("""val (type1, typeFiles) = MethodReq.attachFile(name + ".type", v.`type`)""")
     body should include("if (files.isEmpty) (v, files) else (v.copy(`type` = type1), files)")
-    body should include("""val (object1, objectFiles) = attachFiles_InputThing(name + "_object", v.`object`)""")
+    body should include("""val (object1, objectFiles) = attachFiles_InputThing(name + ".object", v.`object`)""")
     body should include("""val (typeAttached, typeFiles) = attachFiles_InputThing("type", `type`)""")
     body should include("case InputThingNone => (InputThingNone, Map.empty[String, IFile])")
   }
