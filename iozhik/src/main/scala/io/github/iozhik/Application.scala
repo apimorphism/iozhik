@@ -9,7 +9,6 @@ import cats.syntax.traverse._
 import fs2.RaiseThrowable
 import fs2.Stream
 import fs2.io.file.Files
-import io.github.iozhik.scalagen.ArbitraryGenerator
 import io.github.iozhik.scalagen.GeneratorConfig
 import org.scalafmt.interfaces.Scalafmt
 import org.scalafmt.interfaces.ScalafmtReporter
@@ -33,23 +32,8 @@ object Application extends IOApp {
       async.raiseWhen(cfg.generateGens && testDir.isEmpty)(
         new IllegalArgumentException("generate-gens needs a test output directory, the third argument")
       )
-    // with generate-gens off nothing would wipe it, so the generators in it would go stale
-    val unusedTestDir =
-      async.raiseWhen(!cfg.generateGens && testDir.isDefined)(
-        new IllegalArgumentException("a test output directory, the third argument, needs generate-gens on")
-      )
-    // it is wiped, so it must hold only what the regen wrote: not a test tree with hand-written specs in it
-    val foreignTestFiles = testDir.traverse_ { dir =>
-      async.delay(notGenerated(dir)).flatMap { foreign =>
-        async.raiseWhen(foreign.nonEmpty)(
-          new IllegalArgumentException(
-            s"$dir holds files the regen didn't write, so it won't wipe it: ${foreign.take(5).mkString(", ")}"
-          )
-        )
-      }
-    }
 
-    missingTestDir >> unusedTestDir >> foreignTestFiles >> files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
+    missingTestDir >> files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
       .map { code =>
         Parser.Grammar
           .parse(code)
@@ -101,23 +85,6 @@ object Application extends IOApp {
     else if (passes <= 1) throw new RuntimeException(s"scalafmt output for $file didn't settle")
     else formatUntilStable(formatter, config, file, next, passes - 1)
   }
-
-  // Hidden files (.gitkeep, .DS_Store) are left to the wipe. A symlink counts as foreign: the wipe would follow it.
-  def notGenerated(dir: Path): List[Path] =
-    Option(dir.toFile.listFiles).getOrElse(Array.empty[File]).toList.flatMap { f =>
-      val path = f.toPath
-      if (java.nio.file.Files.isSymbolicLink(path)) List(path)
-      else if (f.isDirectory) notGenerated(path)
-      else if (f.getName.startsWith(".")) Nil
-      else if (hasMarker(path)) Nil
-      else List(path)
-    }
-
-  // the marker sits right under the package and imports
-  private def hasMarker(file: Path): Boolean =
-    scala.util.Using.resource(java.nio.file.Files.newBufferedReader(file, java.nio.charset.StandardCharsets.UTF_8))(
-      _.lines().limit(20).anyMatch(_.contains(ArbitraryGenerator.GeneratedMarker))
-    )
 
   def cleanDir[F[_]](dir: Path)(implicit sync: Sync[F]): F[Unit] = {
     sync.delay {
