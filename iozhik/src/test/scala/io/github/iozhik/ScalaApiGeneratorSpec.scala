@@ -255,4 +255,37 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     types should include("lazy val shrink: Shrink[Dated] = fixed(shrinkFields[Dated]")
     types.split("object GenReply").last should not include "fix"
   }
+
+  private def gensError(dsl: String, gensCfg: GeneratorConfig = cfg.copy(generateGens = true)): String = {
+    val result = for {
+      space <- Parser.Grammar.parse(dsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, gensCfg)
+    } yield codes
+    result.left.toOption.getOrElse(fail("Generation succeeded"))
+  }
+
+  "A custom-gens entry for a type without a generator" must "fail the generation" in {
+    gensError(gensDsl, cfg.copy(generateGens = true, customGens = Map("Dtaed" -> "identity"))) should include("custom-gens for types without a generator: Dtaed")
+  }
+
+  "An enum with an abstract variant" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum Text {
+        |      TextPlain {
+        |        type : "plain:0"
+        |        text : String
+        |      }
+        |      abstract TextStyled {
+        |        text : String
+        |      }
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("abstract variant TextStyled of Text")
+  }
 }

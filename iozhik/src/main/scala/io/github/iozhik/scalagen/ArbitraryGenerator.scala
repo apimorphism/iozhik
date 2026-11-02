@@ -182,6 +182,9 @@ object ArbitraryGenerator {
       val isOpen = x.kind.exists(k => useOpenEnum(k, struc = None))
       for {
         name <- kind
+        // an abstract variant gets no generator of its own, and Gen.oneOf needs at least one
+        _ <- x.leaves.find(_.isAbstract).flatMap(_.kind).map(k => s"no generator for the abstract variant ${k.name} of $name").toLeft(())
+        _ <- Either.cond(variants(x).nonEmpty, (), s"no generator for $name: it has no variants")
         leaves <- x.leaves.flatTraverse(genStrucs(_, depths))
         // wrapps and enum strings always get both codecs
         wrapps <- x.wrapps.traverse { w =>
@@ -247,7 +250,10 @@ object ArbitraryGenerator {
 
   def gen(x: Space, cfg: GeneratorConfig): Either[String, List[Code]] = {
     val depths = minDepths(x)(GeneratorMeta(x, x.symbol, cfg, collectCodKinds(x)(x.symbol)))
-    genSpace(x, cfg, x.symbol, Nil, depths).map(_.flatMap { case (pkgPath, types) =>
+    genSpace(x, cfg, x.symbol, Nil, depths).flatMap { spaces =>
+      val unknown = cfg.customGens.keySet -- spaces.flatMap(_._2).map(_.typeName)
+      Either.cond(unknown.isEmpty, spaces, s"custom-gens for types without a generator: ${unknown.toList.sorted.mkString(", ")}")
+    }.map(_.flatMap { case (pkgPath, types) =>
       val pkg = pkgPath.mkString(".")
       List(
         file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder}\nimport scala.reflect.ClassTag", prims),
