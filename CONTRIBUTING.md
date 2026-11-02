@@ -48,7 +48,8 @@ before committing. Format and commit the result in **both** repos:
    changed.
 2. In the telegramium checkout: commit the regenerated
    `telegramium-core/src/main/scala` and `telegramium-core/src/test/scala-generated`
-   trees (run `sbt fmtAll` there, per its CONTRIBUTING.md).
+   trees (run `sbt fmtAll` there, per its CONTRIBUTING.md; it leaves
+   `src/test/scala-generated` alone, as the regen formats that tree itself).
 
 Open a PR in each repo that changed.
 
