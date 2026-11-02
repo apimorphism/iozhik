@@ -29,8 +29,13 @@ object Application extends IOApp {
       async.raiseWhen(cfg.generateGens && testDir.isEmpty)(
         new IllegalArgumentException("generate-gens needs a test output directory, the third argument")
       )
+    // with generate-gens off nothing would wipe it, so the generators in it would go stale
+    val unusedTestDir =
+      async.raiseWhen(!cfg.generateGens && testDir.isDefined)(
+        new IllegalArgumentException("a test output directory, the third argument, needs generate-gens on")
+      )
 
-    missingTestDir >> files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
+    missingTestDir >> unusedTestDir >> files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
       .map { code =>
         Parser.Grammar
           .parse(code)
@@ -49,7 +54,7 @@ object Application extends IOApp {
         (file, body)
       }))
       // the generated test sources have a tree of their own, so they are wiped too
-      .evalTap(_ => cleanDir[F](dstDir) >> testDir.filter(_ => cfg.generateGens).traverse_(cleanDir[F](_)))
+      .evalTap(_ => cleanDir[F](dstDir) >> testDir.traverse_(cleanDir[F](_)))
       .flatMap(Stream.emits(_))
       .flatMap { case (file, body) =>
         Stream.exec(async.delay(file.getParent.toFile.mkdirs()).void) ++
