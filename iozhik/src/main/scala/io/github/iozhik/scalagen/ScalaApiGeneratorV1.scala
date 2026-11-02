@@ -248,7 +248,7 @@ class ScalaApiGeneratorV1 {
             )) ++ wrapps ++ enumstrs ++ leaves
           }
         }
-      case _ =>
+      case Shape.Record | Shape.Union(false, _) =>
         val impPacks = struc.allFields
           .flatMap(_.kind.unresolvedIn(meta.space.symbol))
           .filter(y => !predefined.contains(y.name))
@@ -378,7 +378,7 @@ class ScalaApiGeneratorV1 {
             )) ++ items
           }
         }
-      case _ =>
+      case Shape.Record | Shape.Union(false, _) =>
         for {
           kind <- x.kind.map(_.name).toRight("No kind name")
           fieldKinds <- x.allFields.traverse(y => genKind(y.kind))
@@ -460,7 +460,7 @@ class ScalaApiGeneratorV1 {
             )) ++ items
           }
         }
-      case _ =>
+      case Shape.Record | Shape.Union(false, _) =>
         val impPacks = struc.allFields
           .flatMap(_.kind.unresolvedIn(meta.space.symbol))
           .filter(y => !predefined.contains(y.name))
@@ -573,7 +573,10 @@ class ScalaApiGeneratorV1 {
 
   def genStruc(x: Struc, wrapEnumType: String => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
-    val isUnion = x.shape != Shape.Record
+    val isUnion = x.shape match {
+      case Shape.Record   => false
+      case _: Shape.Union => true
+    }
     for {
       kind <- genKind(kindOrDefault)
       fields <- requiredFieldsFirst(x.ownFields).traverse(genField(_, x.kind, withDoc = isUnion, isDef = isUnion, wrapEnumType = wrapEnumType))
@@ -952,7 +955,7 @@ class ScalaApiGeneratorV1 {
               }
             }
             .collect {
-              case (fname, Some(s: Struc), isOpt) if s.variants.exists { case w: Wrapp => w.target.name == "java.io.File"; case _ => false } && s.kind.nonEmpty =>
+              case (fname, Some(s: Struc), isOpt) if s.variants.exists { case w: Wrapp => w.target.name == "java.io.File"; case _: Struc | _: EnumStr => false } && s.kind.nonEmpty =>
                 val imps = s.kind.toList
                   .flatMap(_.unresolvedIn(meta.space.symbol))
                   .filter(y => !predefined.contains(y.name))

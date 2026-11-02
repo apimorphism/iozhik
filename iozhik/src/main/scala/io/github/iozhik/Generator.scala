@@ -135,7 +135,10 @@ object Generator {
       def allFields: List[Field] = usingFields ++ ownFields
 
       // A record with no fields is generated as a case object.
-      def isCaseObject: Boolean = shape == Shape.Record && allFields.isEmpty
+      def isCaseObject: Boolean = shape match {
+        case Shape.Record   => allFields.isEmpty
+        case _: Shape.Union => false
+      }
 
       def typetForBins: Option[Typet] = {
         typet().orElse {
@@ -488,7 +491,8 @@ object Generator {
             case Shape.Union(isSealed, variants) =>
               variants.traverse {
                 case s: Struc => struc(s, s.kind).map(s => s: Variant)
-                case other    => Right(other)
+                case w: Wrapp   => Right(w)
+                case e: EnumStr => Right(e)
               }.map(Shape.Union(isSealed, _))
           }
           embeds <- x.embeds.traverse(e => struc(e.struc, x.kind).map(s => e.copy(struc = s)))
