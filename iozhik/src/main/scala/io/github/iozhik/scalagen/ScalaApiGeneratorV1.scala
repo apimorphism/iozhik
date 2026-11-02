@@ -248,7 +248,9 @@ class ScalaApiGeneratorV1 {
             )) ++ wrapps ++ enumstrs ++ leaves
           }
         }
-      case Shape.Record | Shape.Union(false, _) =>
+      // an abstract struct is generated as a bare trait: there's no type to decode into
+      case Shape.Union(false, _) => Right(Nil)
+      case Shape.Record =>
         val impPacks = struc.allFields
           .flatMap(_.kind.unresolvedIn(meta.space.symbol))
           .filter(y => !predefined.contains(y.name))
@@ -378,7 +380,9 @@ class ScalaApiGeneratorV1 {
             )) ++ items
           }
         }
-      case Shape.Record | Shape.Union(false, _) =>
+      // an abstract struct is generated as a bare trait: there's no type to decode into
+      case Shape.Union(false, _) => Right(Nil)
+      case Shape.Record =>
         for {
           kind <- x.kind.map(_.name).toRight("No kind name")
           fieldKinds <- x.allFields.traverse(y => genKind(y.kind))
@@ -460,7 +464,9 @@ class ScalaApiGeneratorV1 {
             )) ++ items
           }
         }
-      case Shape.Record | Shape.Union(false, _) =>
+      // an abstract struct is generated as a bare trait: there's no type to decode into
+      case Shape.Union(false, _) => Right(Nil)
+      case Shape.Record =>
         val impPacks = struc.allFields
           .flatMap(_.kind.unresolvedIn(meta.space.symbol))
           .filter(y => !predefined.contains(y.name))
