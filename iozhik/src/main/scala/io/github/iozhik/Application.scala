@@ -102,12 +102,22 @@ object Application extends IOApp {
     else formatUntilStable(formatter, config, file, next, passes - 1)
   }
 
+  // Hidden files (.gitkeep, .DS_Store) are left to the wipe. A symlink counts as foreign: the wipe would follow it.
   def notGenerated(dir: Path): List[Path] =
     Option(dir.toFile.listFiles).getOrElse(Array.empty[File]).toList.flatMap { f =>
-      if (f.isDirectory) notGenerated(f.toPath)
-      else if (new String(java.nio.file.Files.readAllBytes(f.toPath), "UTF-8").contains(ArbitraryGenerator.GeneratedMarker)) Nil
-      else List(f.toPath)
+      val path = f.toPath
+      if (java.nio.file.Files.isSymbolicLink(path)) List(path)
+      else if (f.isDirectory) notGenerated(path)
+      else if (f.getName.startsWith(".")) Nil
+      else if (hasMarker(path)) Nil
+      else List(path)
     }
+
+  // the marker sits right under the package and imports
+  private def hasMarker(file: Path): Boolean =
+    scala.util.Using.resource(java.nio.file.Files.newBufferedReader(file, java.nio.charset.StandardCharsets.UTF_8))(
+      _.lines().limit(20).anyMatch(_.contains(ArbitraryGenerator.GeneratedMarker))
+    )
 
   def cleanDir[F[_]](dir: Path)(implicit sync: Sync[F]): F[Unit] = {
     sync.delay {
