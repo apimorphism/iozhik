@@ -92,7 +92,9 @@ object ArbitraryGenerator {
   // paths over required fields: a struct is one deeper than its deepest required field, a sum type than its
   // shallowest variant.
   private def minDepths(root: Space)(implicit meta: GeneratorMeta): Map[String, Int] = {
-    val rules: List[(String, Map[String, Int] => Option[Int])] = allStrucs(root).flatMap { s =>
+    def withLeaves(s: Struc): List[Struc] = s :: s.leaves.flatMap(withLeaves)
+    def strucs(x: Space): List[Struc] = x.strucs.flatMap(withLeaves) ++ x.spaces.flatMap(strucs)
+    val rules: List[(String, Map[String, Int] => Option[Int])] = strucs(root).flatMap { s =>
       s.kind.map(_.name).toList.flatMap { name =>
         if (s.isEnum)
           (name -> ((d: Map[String, Int]) => variants(s).flatMap(d.get).minOption.map(_ + 1))) ::
@@ -109,35 +111,6 @@ object ArbitraryGenerator {
       if (next == depths) depths else relax(next)
     }
     relax(Map.empty)
-  }
-
-  private def allStrucs(x: Space): List[Struc] = {
-    def withLeaves(s: Struc): List[Struc] = s :: s.leaves.flatMap(withLeaves)
-    x.strucs.flatMap(withLeaves) ++ x.spaces.flatMap(allStrucs)
-  }
-
-  // Which types have a shrinker that does something, by the rules genFor and genStrucs emit them with: a least
-  // fixpoint, as a recursive type shrinks only if something on its cycle does. Lists, options and eithers always
-  // shrink, primitives never do.
-  private def shrinkingTypes(root: Space)(implicit meta: GeneratorMeta): Set[String] = {
-    def kindShrinks(k: Kind, shrinking: Set[String]): Boolean =
-      Set("List", "Option", "Either").contains(k.name) || shrinking(k.name)
-    val rules: List[(String, Set[String] => Boolean)] = allStrucs(root).flatMap { s =>
-      s.kind.map(_.name).toList.flatMap { name =>
-        if (s.isEnum)
-          (name -> ((sh: Set[String]) => variants(s).exists(sh))) ::
-            s.wrapps.map(w => w.name.name -> ((sh: Set[String]) => kindShrinks(w.target, sh)))
-        else {
-          val fields = constructorFields(s)
-          List(name -> ((sh: Set[String]) => fields.exists(f => kindShrinks(f.kind, sh))))
-        }
-      }
-    }
-    def grow(shrinking: Set[String]): Set[String] = {
-      val next = rules.collect { case (name, rule) if rule(shrinking) => name }.toSet
-      if (next == shrinking) shrinking else grow(next)
-    }
-    grow(Set.empty)
   }
 
   private def variants(x: Struc): List[String] =
@@ -294,9 +267,15 @@ object ArbitraryGenerator {
     )
 
   def gen(x: Space, cfg: GeneratorConfig): Either[String, List[Code]] = {
-    val rootMeta = GeneratorMeta(x, x.symbol, cfg, collectCodKinds(x)(x.symbol))
-    val depths = minDepths(x)(rootMeta)
-    genSpace(x, cfg, x.symbol, Nil, depths, shrinkingTypes(x)(rootMeta)).flatMap { spaces =>
+    val depths = minDepths(x)(GeneratorMeta(x, x.symbol, cfg, collectCodKinds(x)(x.symbol)))
+    // Which types have a shrinker that does something: a least fixpoint, as a recursive type shrinks only if something
+    // on its cycle does. Starts from none, and every pass can only add types.
+    def settle(shrinking: Set[String]): Either[String, List[(List[String], List[TypeGen])]] =
+      genSpace(x, cfg, x.symbol, Nil, depths, shrinking).flatMap { spaces =>
+        val next = spaces.flatMap(_._2).filter(_.shrinks).map(_.typeName).toSet
+        if (next == shrinking) Right(spaces) else settle(next)
+      }
+    settle(Set.empty).flatMap { spaces =>
       val types = spaces.flatMap(_._2)
       val generated = types.map(_.typeName).toSet
       // abstract structs, and structs outside a circe namespace, get no object
