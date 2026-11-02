@@ -20,7 +20,7 @@ object ScalaApiGeneratorUtils {
       body = "[" + items.mkString(", ") + "]"
       sanitizedName = sanitize(x.name, keywords)
       kind = meta.symt.resolve(x).collect {
-        case e: Struc if e.shape.isEnum && useOpenEnum(x, struc = None) =>
+        case e: Struc if e.shape.isInstanceOf[Shape.Enum] && useOpenEnum(x, struc = None) =>
           wrapEnumType(sanitizedName + (if (x.params.nonEmpty) body else ""))
         }
         .getOrElse(sanitizedName + (if (x.params.nonEmpty) body else ""))
@@ -36,7 +36,7 @@ object ScalaApiGeneratorUtils {
         case s: Struc
           if s.isCaseObject =>
           sanitize(x.name, keywords) + ".type" + body
-        case e: Struc if e.shape.isEnum && useOpenEnum(x, struc) =>
+        case e: Struc if e.shape.isInstanceOf[Shape.Enum] && useOpenEnum(x, struc) =>
           wrapEnumType(sanitize(x.name, keywords) + body)
         }
         .getOrElse(sanitize(x.name, keywords) + body)

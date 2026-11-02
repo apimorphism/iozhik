@@ -39,29 +39,22 @@ object Generator {
     sealed trait Variant extends StrucItem
 
     // How a struct is generated.
-    sealed trait Shape {
-      // Whether it's an `enum`, generated as a sealed trait.
-      def isEnum: Boolean = this match {
-        case Shape.Union(isSealed, _) => isSealed
-        case Shape.Record             => false
-      }
-      // Whether it's an `abstract` struct, generated as an open trait. For guards and filters; branch with a match on
-      // the shape, so the exhaustiveness check sees it.
-      def isAbstract: Boolean = this match {
-        case Shape.Union(isSealed, _) => !isSealed
-        case Shape.Record             => false
-      }
-    }
+    sealed trait Shape
     object Shape {
       // A case class, or a case object when it has no fields (Struc.isCaseObject).
       case object Record extends Shape
-      // A trait over its variants: sealed for an `enum`, open for an `abstract` struct. The variants are grouped
-      // leaves first, then wraps, then items, the order they're generated in.
-      final case class Union(isSealed: Boolean, variants: List[Variant]) extends Shape {
+      // A trait over its variants. The variants are grouped leaves first, then wraps, then items, the order they're
+      // generated in.
+      sealed trait Union extends Shape {
+        def variants: List[Variant]
         def leaves: List[Struc] = variants.collect { case s: Struc => s }
         def wrapps: List[Wrapp] = variants.collect { case w: Wrapp => w }
         def enumstrs: List[EnumStr] = variants.collect { case e: EnumStr => e }
       }
+      // An `enum`, generated as a sealed trait.
+      final case class Enum(variants: List[Variant]) extends Union
+      // An `abstract` struct, generated as an open trait.
+      final case class Abstract(variants: List[Variant]) extends Union
     }
 
     final case class EnumStr(doc: String, name: Kind, opts: List[String], target: String) extends Variant {
@@ -132,17 +125,12 @@ object Generator {
     ) extends SpaceItem with StrucItem with Sym with Variant {
       def typet(): Option[Typet] = typets.headOption
 
+      // A record's are empty. For guards and filters; to read a union's, match on the shape.
       def variants: List[Variant] = shape match {
-        case Shape.Union(_, variants) => variants
-        case Shape.Record             => Nil
-      }
-
-      // The variants that are structs of their own. For guards and filters; branch with a match on the shape, so the
-      // exhaustiveness check sees it.
-      def leaves: List[Struc] = shape match {
-        case u: Shape.Union => u.leaves
+        case u: Shape.Union => u.variants
         case Shape.Record   => Nil
       }
+      def leaves: List[Struc] = variants.collect { case s: Struc => s }
 
       // Every field the generated class has, the used structs' first.
       def allFields: List[Field] = usingFields ++ ownFields
@@ -400,7 +388,10 @@ object Generator {
           val children = leaves.map(y => y.copy(mixins = kind.toList ++ y.mixins))
           val flatEmbeds = embeds.filter(_.struc.opts.contains("flatten"))
           val flattens = flatEmbeds.map(_.struc)
-          val abstractVariants = leaves.filter(_.shape.isAbstract).flatMap(_.kind).map(_.name)
+          val abstractVariants = leaves.flatMap(s => s.shape match {
+            case _: Shape.Abstract           => s.kind.map(_.name)
+            case Shape.Record | _: Shape.Enum => None
+          })
           val variants: List[Variant] = children ++ wrapps ++ enumstrs
           val name = kind.map(_.name).getOrElse("an anonymous struct")
           val shape: F[Shape] =
@@ -411,7 +402,8 @@ object Generator {
             // an enum's codecs dispatch on its variants' type tags, and an abstract struct has neither a tag nor codecs
             else if (x.isEnum && abstractVariants.nonEmpty)
               E.raiseError(s"${abstractVariants.head} can't be abstract: it's a variant of the enum $name")
-            else if (x.isEnum || x.isAbstract) E.pure(Shape.Union(isSealed = x.isEnum, variants))
+            else if (x.isEnum) E.pure(Shape.Enum(variants))
+            else if (x.isAbstract) E.pure(Shape.Abstract(variants))
             else if (variants.nonEmpty) E.raiseError(s"$name has variants but is neither abstract nor an enum")
             else E.pure(Shape.Record)
           shape.map(shape => Struc(
@@ -500,34 +492,46 @@ object Generator {
       def resolveUsings(root: Space): Either[String, Space] = {
         type Key = List[String]
         def key(k: Kind): Key = k.name :: k.path
+        // Where a struct is in the tree, innermost first. Versions of one struct, or a variant and a struct named
+        // alike, share a Key, so a struct is told apart by its place.
+        type Pos = List[Int]
+        def strucsAt(x: Space, at: Pos): List[(Struc, Pos)] = x.strucs.zipWithIndex.map { case (s, i) => s -> (i :: 0 :: at) }
+        def spacesAt(x: Space, at: Pos): List[(Space, Pos)] = x.spaces.zipWithIndex.map { case (s, i) => s -> (i :: 1 :: at) }
         // Every struct a `use` can name, in the order they're written, with the union it's a variant of.
-        def nameable(x: Space): List[(Key, (Struc, Option[Key]))] = {
-          def struc(s: Struc, parent: Option[Key]): List[(Key, (Struc, Option[Key]))] =
-            s.kind.map(key).toList.flatMap(k => (k -> (s, parent)) :: s.leaves.flatMap(struc(_, Some(k))))
-          x.strucs.flatMap(struc(_, None)) ++ x.spaces.flatMap(nameable)
+        def nameable(x: Space, at: Pos): List[(Pos, (Struc, Option[Pos]))] = {
+          def struc(s: Struc, pos: Pos, parent: Option[Pos]): List[(Pos, (Struc, Option[Pos]))] =
+            if (s.kind.isEmpty) Nil
+            else (pos -> (s, parent)) :: s.variants.zipWithIndex.flatMap {
+              case (v: Struc, i)               => struc(v, i :: pos, Some(pos))
+              case (_: Wrapp | _: EnumStr, _) => Nil
+            }
+          strucsAt(x, at).flatMap { case (s, p) => struc(s, p, None) } ++ spacesAt(x, at).flatMap { case (y, p) => nameable(y, p) }
         }
-        val graph = nameable(root)
+        val graph = nameable(root, Nil)
         val nodes = graph.toMap
-        def used(u: Using, scope: Option[Kind], name: String): Either[String, Key] =
-          root.symbol.find(u.kind, scope).collect { case s: Struc => s }.flatMap(_.kind).map(key)
+        def nameAt(p: Pos): String = nodes(p)._1.kind.fold("")(_.name)
+        // A `use` names the last struct with the name, the one the symbol table keeps.
+        val byKey: Map[Key, Pos] = graph.flatMap { case (p, (s, _)) => s.kind.map(k => key(k) -> p) }.toMap
+        def used(u: Using, scope: Option[Kind], name: String): Either[String, Pos] =
+          root.symbol.find(u.kind, scope).collect { case s: Struc => s }.flatMap(_.kind).flatMap(k => byKey.get(key(k)))
             .toRight(s"can't resolve `use ${u.kind.name}` in $name")
         // Resolves the struct k after the ones its fields come from: its union, when it's a variant, and the structs it
         // uses. `path` holds the structs whose fields led here, to stop a cycle.
-        def visit(k: Key, path: List[Key], done: Map[Key, Struc]): Either[String, Map[Key, Struc]] =
+        def visit(k: Pos, path: List[Pos], done: Map[Pos, Struc]): Either[String, Map[Pos, Struc]] =
           if (done.contains(k)) Right(done)
           else if (path.contains(k))
-            Left(s"`use` is circular: ${(k :: path).reverse.dropWhile(_ != k).map(_.head).mkString(" → ")}")
+            Left(s"`use` is circular: ${(k :: path).reverse.dropWhile(_ != k).map(nameAt).mkString(" → ")}")
           else {
             val (s, parent) = nodes(k)
             for {
-              deps <- s.usings.traverse(used(_, s.kind, k.head))
+              deps <- s.usings.traverse(used(_, s.kind, nameAt(k)))
               done <- (parent.toList ++ deps).foldLeftM(done)((done, dep) => visit(dep, k :: path, done))
-              r <- withFields(s, parent.map(done), s.kind, k.head, done)
+              r <- withFields(s, parent.map(done), s.kind, nameAt(k), done)
             } yield done + (k -> r)
           }
         // A variant inherits its union's fields, so it has every field the union's trait declares; its own `use`s and
         // fields come after them. `name` names x in an error.
-        def withFields(x: Struc, parent: Option[Struc], scope: Option[Kind], name: String, resolved: Map[Key, Struc]): Either[String, Struc] = for {
+        def withFields(x: Struc, parent: Option[Struc], scope: Option[Kind], name: String, resolved: Map[Pos, Struc]): Either[String, Struc] = for {
           fromUses <- x.usings.flatTraverse(u => used(u, scope, name).map(resolved(_).allFields))
           usingFields <- distinctFields(parent.toList.flatMap(_.usingFields) ++ fromUses, name)
           ownFields <- distinctFields(parent.toList.flatMap(_.ownFields) ++ x.ownFields, name)
@@ -547,43 +551,64 @@ object Generator {
             }
           }
         def sameField(a: Field, b: Field): Boolean = sameType(a.kind, b.kind) && a.opts.toSet == b.opts.toSet
-        // A Kind records the namespace it was written in, so compare what the two resolve to.
-        def sameType(a: Kind, b: Kind): Boolean =
-          a.name == b.name && a.params.size == b.params.size &&
-            root.symbol.resolve(a) == root.symbol.resolve(b) &&
-            a.params.lazyZip(b.params).forall(sameType)
+        // Every space, by the path its items' kinds carry.
+        lazy val spaces: Map[Key, Space] = {
+          def all(x: Space): List[Space] = x :: x.spaces.flatMap(all)
+          all(root).map(s => (s.name :: s.path) -> s).toMap
+        }
+        // A kind naming no struct or provided type is an alias's target, a type its namespace imports (by its full
+        // name) or a predefined type (by its name alone). `seen` holds the aliases followed, to stop a cycle.
+        def meaning(k: Kind, seen: Set[Key]): Kind =
+          if (root.symbol.resolve(k).nonEmpty || seen(key(k))) k
+          else {
+            val space = spaces.get(k.path)
+            space.flatMap(_.aliass.find(_.alias.name == k.name)).map(a => meaning(a.name, seen + key(k)))
+              .orElse(space.flatMap(_.impors.find(_.name.name.split('.').last == k.name)).map(i => Kind(i.name.name, k.params)))
+              .getOrElse(Kind(k.name, k.params))
+          }
+        // A Kind records the namespace it was written in, so compare what the two mean there.
+        def sameType(a: Kind, b: Kind): Boolean = {
+          val (x, y) = (meaning(a, Set.empty), meaning(b, Set.empty))
+          x.params.size == y.params.size && x.params.lazyZip(y.params).forall(sameType) &&
+            ((root.symbol.resolve(x), root.symbol.resolve(y)) match {
+              case (None, None) => key(x) == key(y)
+              case (s, t)       => s == t
+            })
+        }
         def named(x: Struc, anonymous: String): String = x.kind.fold(anonymous)(_.name)
         // The structs a `use` can name are resolved first; then the tree is rebuilt from them, resolving the rest
         // (methods' params and results, embeds) on the way.
-        graph.map(_._1).foldLeftM(Map.empty[Key, Struc])((done, k) => visit(k, Nil, done)).flatMap { resolved =>
-          // An embed's `use`s resolve in the scope of the struct holding it.
-          def struc(x: Struc, parent: Option[Struc], scope: Option[Kind], name: String): Either[String, Struc] = for {
-            y <- withFields(x, parent, scope, name, resolved)
-            shape <- x.shape match {
-              case Shape.Record => Right(Shape.Record)
-              case Shape.Union(isSealed, variants) =>
-                variants.traverse {
-                  case s: Struc => struc(s, Some(y), s.kind, named(s, s"a variant of $name")).map(s => s: Variant)
-                  case w: Wrapp   => Right(w)
-                  case e: EnumStr => Right(e)
-                }.map(Shape.Union(isSealed, _))
+        graph.map(_._1).foldLeftM(Map.empty[Pos, Struc])((done, k) => visit(k, Nil, done)).flatMap { resolved =>
+          // An embed's `use`s resolve in the scope of the struct holding it. `pos` is x's place in the tree, for the
+          // structs a `use` can name, which are resolved already.
+          def struc(x: Struc, parent: Option[Struc], scope: Option[Kind], name: String, pos: Option[Pos]): Either[String, Struc] = for {
+            y <- pos.flatMap(resolved.get).fold(withFields(x, parent, scope, name, resolved))(Right(_))
+            variants <- x.variants.zipWithIndex.traverse {
+              case (s: Struc, i)   => struc(s, Some(y), s.kind, named(s, s"a variant of $name"), pos.map(i :: _)).map(s => s: Variant)
+              case (w: Wrapp, _)   => Right(w)
+              case (e: EnumStr, _) => Right(e)
             }
-            embeds <- x.embeds.traverse(e => struc(e.struc, None, x.kind, named(e.struc, s"the `${e.name}` field of $name")).map(s => e.copy(struc = s)))
+            shape = x.shape match {
+              case Shape.Record      => Shape.Record
+              case _: Shape.Enum     => Shape.Enum(variants)
+              case _: Shape.Abstract => Shape.Abstract(variants)
+            }
+            embeds <- x.embeds.traverse(e => struc(e.struc, None, x.kind, named(e.struc, s"the `${e.name}` field of $name"), None).map(s => e.copy(struc = s)))
           } yield y.copy(shape = shape, embeds = embeds)
           def servc(x: Servc): Either[String, Servc] =
             x.items.traverse {
               case d: Defun =>
                 for {
-                  dom <- d.dom.traverse(s => struc(s, None, s.kind, named(s, s"the params of `${d.kind.name}`")))
-                  cod <- d.cod.traverse(s => struc(s, None, s.kind, named(s, s"the result of `${d.kind.name}`")))
+                  dom <- d.dom.traverse(s => struc(s, None, s.kind, named(s, s"the params of `${d.kind.name}`"), None))
+                  cod <- d.cod.traverse(s => struc(s, None, s.kind, named(s, s"the result of `${d.kind.name}`"), None))
                 } yield d.copy(dom = dom, cod = cod): ServcItem
             }.map(items => x.copy(items = items))
-          def space(x: Space): Either[String, Space] = for {
-            strucs <- x.strucs.traverse(s => struc(s, None, s.kind, named(s, "an anonymous struct")))
+          def space(x: Space, at: Pos): Either[String, Space] = for {
+            strucs <- strucsAt(x, at).traverse { case (s, p) => struc(s, None, s.kind, named(s, "an anonymous struct"), Some(p)) }
             servcs <- x.servcs.traverse(servc)
-            spaces <- x.spaces.traverse(space)
+            spaces <- spacesAt(x, at).traverse { case (y, p) => space(y, p) }
           } yield index(x.copy(strucs = strucs, servcs = servcs, spaces = spaces))
-          space(root)
+          space(root, Nil)
         }
       }
       trSpace[Either[String, *]](x, List()).flatMap(resolveUsings)

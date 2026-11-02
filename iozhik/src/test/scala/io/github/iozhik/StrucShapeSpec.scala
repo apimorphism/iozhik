@@ -384,4 +384,79 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
       """.stripMargin
     )).left.toOption.getOrElse(fail("translated")) should include("Holder has variants but is neither abstract nor an enum")
   }
+
+  "A variant under each of two versions of one enum" must "take the fields of its own version" in {
+    val body = generate(api(
+      """
+        |    PropsA {
+        |      a: Int
+        |    }
+        |    PropsB {
+        |      b: Int
+        |    }
+        |    enum Figure <5.0 {
+        |      use PropsA
+        |      Square {
+        |        type: "square"
+        |      }
+        |    }
+        |    enum Figure {
+        |      use PropsB
+        |      Square {
+        |        type: "square"
+        |      }
+        |    }
+      """.stripMargin
+    ))
+    body should include("final case class Square(a: Int)")
+    body should include("final case class Square(b: Int)")
+  }
+
+  "Two used fields whose types are different aliases of one name" must "fail the translation" in {
+    translate(
+      """
+        |namespace telegramium(snake) {
+        |  type Id = Long
+        |  Outer {
+        |    id: Id
+        |  }
+        |  namespace bots(snake) {
+        |    type Id = String
+        |    Inner {
+        |      id: Id
+        |    }
+        |    Both {
+        |      use Outer
+        |      use Inner
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ).left.toOption.getOrElse(fail("translated")) should include("Both has two fields named `id` that differ in type or options")
+  }
+
+  "Two used fields whose types are aliases of one type" must "be one field" in {
+    val space = translate(
+      """
+        |namespace telegramium(snake) {
+        |  type Id = Long
+        |  Outer {
+        |    id: Id
+        |  }
+        |  namespace bots(snake) {
+        |    type Id = Long
+        |    Inner {
+        |      id: Id
+        |    }
+        |    Both {
+        |      use Outer
+        |      use Inner
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ).fold(err => fail(s"Translation failed: $err"), identity)
+    def strucs(x: Generator.Model.Space): List[Generator.Model.Struc] = x.strucs ++ x.spaces.flatMap(strucs)
+    strucs(space).find(_.kind.exists(_.name == "Both")).map(_.allFields.map(_.name)) shouldBe Some(List("id"))
+  }
 }

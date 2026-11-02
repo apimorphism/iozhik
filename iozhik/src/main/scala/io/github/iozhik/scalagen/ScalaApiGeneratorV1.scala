@@ -135,7 +135,7 @@ class ScalaApiGeneratorV1 {
     val useSnake = meta.space.opts.contains("snake")
     val useOpenEnums = struc.kind.exists(k => useOpenEnum(k, struc = None))
     struc.shape match {
-      case union @ Shape.Union(true, _) =>
+      case union @ Shape.Enum(_) =>
         if (struc.typets.nonEmpty) {
           for {
             kind <- struc.kind.map(_.name).toRight("No kind name")
@@ -249,7 +249,7 @@ class ScalaApiGeneratorV1 {
           }
         }
       // an abstract struct is generated as a bare trait: there's no type to decode into
-      case Shape.Union(false, _) => Right(Nil)
+      case Shape.Abstract(_) => Right(Nil)
       case Shape.Record =>
         val impPacks = struc.allFields
           .flatMap(_.kind.unresolvedIn(meta.space.symbol))
@@ -347,7 +347,7 @@ class ScalaApiGeneratorV1 {
   def genSCodecs(x: Struc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val d = delimiter
     x.shape match {
-      case union @ Shape.Union(true, _) =>
+      case union @ Shape.Enum(_) =>
         if (x.typets.isEmpty) {
           Right(List.empty[Code])
         } else {
@@ -381,7 +381,7 @@ class ScalaApiGeneratorV1 {
           }
         }
       // an abstract struct is generated as a bare trait: there's no type to decode into
-      case Shape.Union(false, _) => Right(Nil)
+      case Shape.Abstract(_) => Right(Nil)
       case Shape.Record =>
         for {
           kind <- x.kind.map(_.name).toRight("No kind name")
@@ -440,7 +440,7 @@ class ScalaApiGeneratorV1 {
   def genuPickle(struc: Struc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val d = delimiter
     struc.shape match {
-      case Shape.Union(true, _) =>
+      case Shape.Enum(_) =>
         if (struc.typetForBins.isEmpty) {
           Right(List.empty[Code])
         } else {
@@ -465,7 +465,7 @@ class ScalaApiGeneratorV1 {
           }
         }
       // an abstract struct is generated as a bare trait: there's no type to decode into
-      case Shape.Union(false, _) => Right(Nil)
+      case Shape.Abstract(_) => Right(Nil)
       case Shape.Record =>
         val impPacks = struc.allFields
           .flatMap(_.kind.unresolvedIn(meta.space.symbol))
@@ -614,7 +614,7 @@ class ScalaApiGeneratorV1 {
         (usings ++ fields).toNel.map(_.intercalate(", ")).getOrElse("")
       }
       x.shape match {
-        case Shape.Union(true, _) =>
+        case Shape.Enum(_) =>
           val body = s"sealed trait $name$ms {$delimiter$fs$delimiter}"
           List(
             Code(
@@ -623,7 +623,7 @@ class ScalaApiGeneratorV1 {
               imports = imps,
             ),
           ) ++ jsonCodecs ++ scodecs ++ upickles
-        case Shape.Union(false, _) =>
+        case Shape.Abstract(_) =>
           val body = s"trait $name$ms { $fs }"
           Code(body = body, name = filename, imports = imps) :: children
         case Shape.Record =>
@@ -881,16 +881,16 @@ class ScalaApiGeneratorV1 {
     val body = x.dom.fold(
       _ => (defaultFun, List.empty[String]),
       dd => {
-        val fileFields = dd.allFields.filter(_.opts.contains("file"))
+        val fileFields = constructorFields(dd).filter(_.opts.contains("file"))
         if (fileFields.isEmpty) {
           (defaultFun, List.empty[String])
         } else {
-          val otherFields = (dd.allFields
+          val otherFields = (constructorFields(dd)
             .filter(!_.opts.contains("file"))
             .map{ f =>
               val fname = if (meta.space.opts.contains("snake")) { camel2snake(f.name) } else { f.name }
               s"""("$fname", x.${sanitize(f.name)}.asJson)"""
-            } ++ dd.allFields.filter(_.opts.contains("file")).map { f =>
+            } ++ constructorFields(dd).filter(_.opts.contains("file")).map { f =>
               s"""("${f.name}", if (${f.name}Part.isEmpty) { x.${f.name}.asJson } else { Json.Null } )"""
             }).intercalate(",")
           val ff = fileFields.map{ y =>

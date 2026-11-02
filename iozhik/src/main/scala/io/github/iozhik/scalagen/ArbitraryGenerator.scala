@@ -70,7 +70,7 @@ object ArbitraryGenerator {
           case Some(s: Struc) =>
             val obj = objName(n)
             val shrinks = shrinking(n)
-            if (s.shape.isEnum && useOpenEnum(k, enclosing))
+            if (s.shape.isInstanceOf[Shape.Enum] && useOpenEnum(k, enclosing))
               Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
             else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
           case other => Left(s"no generator for kind $n (resolved: $other)")
@@ -98,11 +98,11 @@ object ArbitraryGenerator {
     val rules: List[(String, Map[String, Int] => Option[Int])] = strucs(root).flatMap { s =>
       s.kind.map(_.name).toList.flatMap { name =>
         s.shape match {
-          case u @ Shape.Union(true, _) =>
+          case u @ Shape.Enum(_) =>
             (name -> ((d: Map[String, Int]) => variants(s).flatMap(d.get).minOption.map(_ + 1))) ::
               u.wrapps.map(w => w.name.name -> ((d: Map[String, Int]) => kindDepth(w.target, d).map(_ + 1))) ++
               u.enumstrs.map(e => e.name.name -> ((_: Map[String, Int]) => Some(0)))
-          case Shape.Record | Shape.Union(false, _) =>
+          case Shape.Record | Shape.Abstract(_) =>
             val fields = constructorFields(s)
             List(name -> ((d: Map[String, Int]) => fields.traverse(f => kindDepth(f.kind, d)).map(_.maxOption.getOrElse(0) + 1)))
         }
@@ -198,8 +198,8 @@ object ArbitraryGenerator {
     // mirrors where genJsonCodecs emits a decoder
     val decodable = isCodKind(x)
     x.shape match {
-      case Shape.Union(false, _) => Right(Nil)
-      case u @ Shape.Union(true, _) =>
+      case Shape.Abstract(_) => Right(Nil)
+      case u @ Shape.Enum(_) =>
         val isOpen = x.kind.exists(k => useOpenEnum(k, struc = None))
         for {
           name <- kind

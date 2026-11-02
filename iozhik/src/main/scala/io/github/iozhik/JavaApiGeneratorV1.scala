@@ -23,8 +23,8 @@ class JavaApiGeneratorV1 extends Generator {
 
     for {
       strucsSrcs        <- strucs.flatTraverse(s => s.shape match {
-                             case u @ Shape.Union(true, _)             => enumToCode(s, u)
-                             case Shape.Record | Shape.Union(false, _) => strucToCode(s)
+                             case u @ Shape.Enum(_)             => enumToCode(s, u)
+                             case Shape.Record | Shape.Abstract(_) => strucToCode(s)
                            })
       servicesSrcs      <- services.flatTraverse(s => serviceToCode(s))
       servicesImplSrcs  <- services.flatTraverse(s => genServiceUnirestImpl(s))
@@ -239,7 +239,8 @@ class JavaApiGeneratorV1 extends Generator {
   private def enumToCode(struc: Struc, union: Shape.Union)(implicit symt: Symtable, space: Space): Either[String, List[Code]] = {
     val packageCode = struc.path.reverse.tail.mkString(".")
     val enumName = struc.kind.map(_.name).get
-    val subStrucNames = getSubStrucs(struc).flatMap(_.kind).map(_.name)
+    val subStrucs = union.leaves ++ union.leaves.flatMap(getSubStrucs)
+    val subStrucNames = subStrucs.flatMap(_.kind).map(_.name)
     val body =
     if (subStrucNames.isEmpty) {
       javaFormatter.formatSource(
@@ -270,7 +271,7 @@ class JavaApiGeneratorV1 extends Generator {
     }
 
     for {
-      codes <- getSubStrucs(struc).flatTraverse(x => strucToCode(x, Some(struc)))
+      codes <- subStrucs.flatTraverse(x => strucToCode(x, Some(struc)))
       wrappCodes <- union.wrapps.flatTraverse(x => wrappToCode(struc.kind.getOrElse(Kind("$$")), x))
     } yield {
       List(Code(body, s"$enumName.java", packageCode.replace('.', '/'))) ++
