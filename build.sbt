@@ -7,6 +7,8 @@ lazy val iozhik = project
   .enablePlugins(JavaAppPackaging)
 	.settings( settings: _* )
   .settings(libraryDependencies ++= Dependencies.iozhik)
+  // Fail on a match that may not be exhaustive, e.g. one that misses a Shape or a Variant.
+  .settings(scalacOptions += "-Wconf:cat=other-match-analysis:e")
 
 lazy val `iozh-api-scraper` = project
   .dependsOn(iozhik)

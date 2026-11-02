@@ -59,7 +59,8 @@ object ArbitraryGenerator {
           b <- genFor(k.params(1), enclosing, depths, shrinking)
         } yield {
           // at size 0 only the shallower side, like a sum type; a side without a depth never ends
-          val List(da, db) = k.params.take(2).map(kindDepth(_, depths).getOrElse(Int.MaxValue))
+          val depth    = (p: Kind) => kindDepth(p, depths).getOrElse(Int.MaxValue)
+          val (da, db) = (depth(k.params(0)), depth(k.params(1)))
           val fn = if (da < db) "eitherLeftAtZero" else if (db < da) "eitherRightAtZero" else "either"
           FieldGen(s"$fn(${a.gen}, ${b.gen})", s"shrinkEither(${a.shrink}, ${b.shrink})", a.primitive && b.primitive, a.refs ++ b.refs)
         }
