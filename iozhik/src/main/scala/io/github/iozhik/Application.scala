@@ -9,6 +9,7 @@ import cats.syntax.traverse._
 import fs2.RaiseThrowable
 import fs2.Stream
 import fs2.io.file.Files
+import io.github.iozhik.scalagen.ArbitraryGenerator
 import io.github.iozhik.scalagen.GeneratorConfig
 import org.scalafmt.interfaces.Scalafmt
 import pureconfig.ConfigSource
@@ -34,8 +35,18 @@ object Application extends IOApp {
       async.raiseWhen(!cfg.generateGens && testDir.isDefined)(
         new IllegalArgumentException("a test output directory, the third argument, needs generate-gens on")
       )
+    // it is wiped, so it must hold only what the regen wrote: not a test tree with hand-written specs in it
+    val foreignTestFiles = testDir.traverse_ { dir =>
+      async.delay(notGenerated(dir)).flatMap { foreign =>
+        async.raiseWhen(foreign.nonEmpty)(
+          new IllegalArgumentException(
+            s"$dir holds files the regen didn't write, so it won't wipe it: ${foreign.take(5).mkString(", ")}"
+          )
+        )
+      }
+    }
 
-    missingTestDir >> unusedTestDir >> files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
+    missingTestDir >> unusedTestDir >> foreignTestFiles >> files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
       .map { code =>
         Parser.Grammar
           .parse(code)
@@ -75,6 +86,13 @@ object Application extends IOApp {
     else if (passes <= 1) throw new RuntimeException(s"scalafmt output for $file didn't settle")
     else formatUntilStable(formatter, config, file, next, passes - 1)
   }
+
+  def notGenerated(dir: Path): List[Path] =
+    Option(dir.toFile.listFiles).getOrElse(Array.empty[File]).toList.flatMap { f =>
+      if (f.isDirectory) notGenerated(f.toPath)
+      else if (new String(java.nio.file.Files.readAllBytes(f.toPath), "UTF-8").contains(ArbitraryGenerator.GeneratedMarker)) Nil
+      else List(f.toPath)
+    }
 
   def cleanDir[F[_]](dir: Path)(implicit sync: Sync[F]): F[Unit] = {
     sync.delay {
