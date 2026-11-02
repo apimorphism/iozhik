@@ -3,12 +3,12 @@ package io.github.iozhik
 import cats.effect._
 import cats.instances.list._
 import cats.syntax.flatMap._
+import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.traverse._
 import fs2.RaiseThrowable
 import fs2.Stream
 import fs2.io.file.Files
-import io.github.iozhik.scalagen.ArbitraryGenerator
 import io.github.iozhik.scalagen.GeneratorConfig
 import org.scalafmt.interfaces.Scalafmt
 import pureconfig.ConfigSource
@@ -20,13 +20,17 @@ import scala.annotation.tailrec
 
 object Application extends IOApp {
 
-  def generate[F[_]: RaiseThrowable](cfgPath: Path, dstDir: Path)(implicit async: Async[F], files: Files[F]): F[Unit] = {
+  def generate[F[_]: RaiseThrowable](cfg: GeneratorConfig, dstDir: Path, testDir: Option[Path])(implicit async: Async[F], files: Files[F]): F[Unit] = {
 
     val generator = new ScalaApiGeneratorV1
     val formatter = Scalafmt.create(this.getClass.getClassLoader)
-    val cfg = ConfigSource.file(cfgPath).loadOrThrow[GeneratorConfig]
 
-    files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
+    val missingTestDir =
+      async.raiseWhen(cfg.generateGens && testDir.isEmpty)(
+        new IllegalArgumentException("generate-gens needs a test output directory, the third argument")
+      )
+
+    missingTestDir >> files.readUtf8(fs2.io.file.Path(cfg.apiPath)).reduce(_ + _)
       .map { code =>
         Parser.Grammar
           .parse(code)
@@ -35,13 +39,16 @@ object Application extends IOApp {
       }
       .map(_.left.map(new RuntimeException(_)))
       .flatMap(Stream.fromEither(_))
+      // nothing is wiped until the whole model has generated, so a failed regen leaves the old sources in place; the
+      // generated test sources have a tree of their own, so they are wiped too
+      .evalTap(_ => cleanDir[F](dstDir) >> testDir.filter(_ => cfg.generateGens).traverse_(cleanDir[F](_)))
       .flatMap(Stream.emits(_))
       .evalMap(code => async.delay{
-        val path = dstDir.resolve(code.path)
+        val path = (if (code.test) testDir.get else dstDir).resolve(code.path)
         val file = path.resolve(code.name)
         path.toFile.mkdirs()
         val body =
-          if (code.path.startsWith(ArbitraryGenerator.TestSourcesPath))
+          if (code.test)
             formatUntilStable(formatter, Path.of(cfg.fmtConfigPath), file, code.body)
           else formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
         (file, body)
@@ -52,7 +59,6 @@ object Application extends IOApp {
           .through(fs2.text.utf8.encode)
           .through(files.writeAll(fs2.io.file.Path.fromNioPath(file)))
       }
-      .handleErrorWith(e => Stream.eval(async.delay(e.printStackTrace())))
       .compile
       .drain
   }
@@ -61,7 +67,9 @@ object Application extends IOApp {
   @tailrec
   def formatUntilStable(formatter: Scalafmt, config: Path, file: Path, code: String, passes: Int = 5): String = {
     val next = formatter.format(config, file, code)
-    if (next == code || passes <= 1) next else formatUntilStable(formatter, config, file, next, passes - 1)
+    if (next == code) next
+    else if (passes <= 1) throw new RuntimeException(s"scalafmt output for $file didn't settle")
+    else formatUntilStable(formatter, config, file, next, passes - 1)
   }
 
   def cleanDir[F[_]](dir: Path)(implicit sync: Sync[F]): F[Unit] = {
@@ -83,12 +91,12 @@ object Application extends IOApp {
   }
 
   def run(args: List[String]): IO[ExitCode] = {
-      val apiDir = Paths.get(args.head)
+      val cfgPath = Paths.get(args.head)
       val dstDir = Paths.get(args.tail.head)
-      // the generated test sources have a tree of their own, so they are wiped too
-      (cleanDir[IO](dstDir) >> cleanDir[IO](dstDir.resolve(ArbitraryGenerator.TestSourcesPath))).flatMap { _ =>
-        generate[IO](apiDir, dstDir)
-          .as(ExitCode.Success)
-      }
+      val testDir = args.lift(2).map(Paths.get(_))
+      for {
+        cfg <- IO(ConfigSource.file(cfgPath).loadOrThrow[GeneratorConfig])
+        _ <- generate[IO](cfg, dstDir, testDir)
+      } yield ExitCode.Success
   }
 }

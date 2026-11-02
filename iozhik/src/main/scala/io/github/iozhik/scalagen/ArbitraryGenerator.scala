@@ -7,12 +7,10 @@ import io.github.iozhik.scalagen.ScalaApiGeneratorUtils._
 /** Generates test-scope ScalaCheck generators for every model type, plus the round-trip list: the types that have both
   * an encoder and a decoder.
   *
-  * The output goes next to the generated sources, into a sibling `test/scala-generated` tree that holds nothing else, so
-  * a regen can wipe it like the main tree. Nothing is published.
+  * The output goes into a test source tree of its own that holds nothing else, so a regen can wipe it like the main
+  * tree. Nothing is published.
   */
 object ArbitraryGenerator {
-
-  val TestSourcesPath = "../../test/scala-generated"
 
   // The shared primitives, shrinkers and RoundTripCase: a Scala file in the resources, so it gets highlighting
   private lazy val prims: String =
@@ -249,7 +247,8 @@ object ArbitraryGenerator {
                 |$body
                 |""".stripMargin,
       name = name,
-      path = TestSourcesPath + "/" + pkg.replace(".", "/"),
+      path = pkg.replace(".", "/"),
+      test = true,
     )
 
   def gen(x: Space, cfg: GeneratorConfig): Either[String, List[Code]] = {

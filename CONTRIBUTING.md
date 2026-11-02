@@ -33,11 +33,11 @@ root run:
 # re-scrape core.telegram.org/bots/api -> iozhtest/src/main/resources/tgbot.api
 IOZHDIR="$PWD" sbt "iozh-api-scraper/runMain TgBotApiScrapper"
 
-# recompile tgbot.api -> <telegramium checkout>/telegramium-core/src/main/scala
-# (full rewrite - everything under src/main/scala there is deleted and regenerated;
-# so is the sibling src/test/scala-generated, which holds the generators and the
-# round-trip list)
-sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf <path-to-telegramium>/telegramium-core/src/main/scala"
+# recompile tgbot.api -> <telegramium checkout>/telegramium-core/src/main/scala,
+# and the generators and the round-trip list -> src/test/scala-generated next to it
+# (full rewrite - everything under both trees is deleted and regenerated; the
+# third argument is required while the config has generate-gens on)
+sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf <path-to-telegramium>/telegramium-core/src/main/scala <path-to-telegramium>/telegramium-core/src/test/scala-generated"
 ```
 
 Run the regen step on a clean `telegramium-core` tree and review the diff

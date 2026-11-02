@@ -204,7 +204,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       space <- Parser.Grammar.parse(dsl)
       model <- Generator.Model.translate(space)
       codes <- new ScalaApiGeneratorV1().gen(model, gensCfg)
-    } yield codes.filter(_.path.contains("test/scala-generated")).map(c => c.name -> c.body).toMap
+    } yield codes.filter(_.test).map(c => c.name -> c.body).toMap
     result.fold(err => fail(s"Generation failed: $err"), identity)
   }
 

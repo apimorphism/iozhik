@@ -1176,11 +1176,11 @@ class ScalaApiGeneratorV1 {
         .flatten
         .map(_.copy(path = x.name)) ++
         spaces.flatten.map {
-          case Code(body, name, path, packageObject, imports) =>
+          case Code(body, name, path, packageObject, imports, test) =>
             if (x.name.isEmpty) {
-              Code(body, name, path, packageObject, imports)
+              Code(body, name, path, packageObject, imports, test)
             } else {
-              Code(body, name, s"${x.name}.$path", packageObject, imports)
+              Code(body, name, s"${x.name}.$path", packageObject, imports, test)
             }
         }
     }
