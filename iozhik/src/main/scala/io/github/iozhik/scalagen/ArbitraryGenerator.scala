@@ -273,6 +273,10 @@ object ArbitraryGenerator {
     settle(Set.empty).flatMap { spaces =>
       val unknown = cfg.customGens.keySet -- spaces.flatMap(_._2).map(_.typeName)
       Either.cond(unknown.isEmpty, spaces, s"custom-gens for types without a generator: ${unknown.toList.sorted.mkString(", ")}")
+    }.flatMap { spaces =>
+      // the objects refer to each other unqualified, and RoundTrips imports its own package's CirceImplicits
+      val pkgs = spaces.map(_._1.mkString("."))
+      Either.cond(pkgs.size <= 1, spaces, s"generators for more than one package aren't supported: ${pkgs.mkString(", ")}")
     }.map(_.flatMap { case (pkgPath, types) =>
       val pkg = pkgPath.mkString(".")
       List(

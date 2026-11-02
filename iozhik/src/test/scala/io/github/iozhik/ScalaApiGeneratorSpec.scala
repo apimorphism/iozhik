@@ -263,6 +263,25 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     types should include("eitherLeftAtZero(GenLeaf.gen, GenChain.gen)")
   }
 
+  "Generators for types in more than one package" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Dated {
+        |      date: Long
+        |    }
+        |  }
+        |  namespace other(snake circe) {
+        |    Undated {
+        |      note: String
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("generators for more than one package aren't supported: telegramium.bots, telegramium.other")
+  }
+
   "The round-trip list" must "hold the types with both an encoder and a decoder, and leave out encode-only types" in {
     val list = generateGens(gensDsl)("RoundTrips.scala")
     list should include("""RoundTripCase[Reply]("Reply"""")
