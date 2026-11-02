@@ -12,7 +12,7 @@ object Dependencies {
     val scalaTest  = "3.2.18"
     val fs2Core    = "3.10.2"
     val fs2IO      = "3.10.2"
-    val scalaFmt   = "3.0.6"
+    val scalaFmt   = "3.11.5"
     val scodecCore = "1.11.10"
     val scodecBits = "1.2.0"
     val http4s     = "0.23.27"
@@ -41,7 +41,6 @@ object Dependencies {
 
   val atto  = Seq(
     "org.tpolecat" %% "atto-core"    % V.atto,
-    "org.tpolecat" %% "atto-refined" % V.atto,
   )
 
   val circe = Seq(

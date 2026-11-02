@@ -11,6 +11,8 @@ object Generator {
       path: String = "",
       packageObject: String = "",
       imports: List[String] = List.empty,
+      // a test source: written to the test output directory, not the main one
+      test: Boolean = false,
     )
 
     final case class Version(inclusive: Boolean, version: String)

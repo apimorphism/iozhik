@@ -47,6 +47,16 @@ object ScalaApiGeneratorUtils {
     required ++ fields.diff(required)
   }
 
+  def usingFields(x: Struc)(implicit meta: GeneratorMeta): List[Field] =
+    x.usings
+      .flatMap{ y => meta.symt.find(y.kind, x.kind) }
+      .collect{ case s: Struc => s}
+      .flatMap(_.fields)
+
+  // the constructor arguments of a case class, in the order genStruc lays them out
+  def constructorFields(x: Struc)(implicit meta: GeneratorMeta): List[Field] =
+    usingFields(x) ++ requiredFieldsFirst(x.fields)
+
   def importKind(k: Kind)(implicit meta: GeneratorMeta): List[String] = {
     val result = meta.symt.resolve(k)
       .collect {

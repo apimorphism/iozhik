@@ -65,7 +65,7 @@
                   echo "TELEGRAMIUM_DIR ($TELEGRAMIUM_DIR) is not a telegramium checkout. Set TELEGRAMIUM_DIR to its path." >&2
                   return 1
                 fi
-                sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf $TELEGRAMIUM_DIR/telegramium-core/src/main/scala"
+                sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf $TELEGRAMIUM_DIR/telegramium-core/src/main/scala $TELEGRAMIUM_DIR/telegramium-core/src/test/scala-generated"
               }
 
               tgbot-refresh() {

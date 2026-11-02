@@ -37,7 +37,7 @@ jobs:
       - uses: sbt/setup-sbt@v1
 
       - name: Regenerate telegramium-core
-        run: sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf telegramium/telegramium-core/src/main/scala"
+        run: sbt "iozhik/run iozhik/src/main/resources/tgbotapi.conf telegramium/telegramium-core/src/main/scala telegramium/telegramium-core/src/test/scala-generated"
 
       - name: Compile and test regenerated telegramium-core
         run: sbt telegramium-core/test
