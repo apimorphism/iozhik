@@ -134,59 +134,47 @@ class ScalaApiGeneratorV1 {
     val d = delimiter
     val useSnake = meta.space.opts.contains("snake")
     val useOpenEnums = struc.kind.exists(k => useOpenEnum(k, struc = None))
-    if (struc.isEnum) {
-      if (struc.typets.nonEmpty) {
-        for {
-          kind <- struc.kind.map(_.name).toRight("No kind name")
-          typet <- struc.typet().toRight(s"No type tag found for $kind")
-          items <- struc.leaves.traverse(genJsonCodecs).map(_.flatten)
-          cases <- struc.leaves.groupBy { leaf =>
-            val kn = leaf.kind.map(_.name).getOrElse("ANONYMOUS_STRUC")
-            leaf.typet().map(_.tag).getOrElse(s"Type tag not found for: $kn")
-          }
-            .toList
-            .traverse { case (typeTag, leaves) =>
-              if (leaves.size == 1)
-                genCirceCodecCases(struc, typeTag, typet, leaves.head)
-              else
-                genMergedCirceCodecs(struc, kind, typeTag, typet, leaves)
+    struc.shape match {
+      case union @ Shape.Union(true, _) =>
+        if (struc.typets.nonEmpty) {
+          for {
+            kind <- struc.kind.map(_.name).toRight("No kind name")
+            typet <- struc.typet().toRight(s"No type tag found for $kind")
+            items <- union.leaves.traverse(genJsonCodecs).map(_.flatten)
+            cases <- union.leaves.groupBy { leaf =>
+              val kn = leaf.kind.map(_.name).getOrElse("ANONYMOUS_STRUC")
+              leaf.typet().map(_.tag).getOrElse(s"Type tag not found for: $kn")
             }
-        } yield {
-          val tag = "\"" + typet.name + "\""
-          val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
-          val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
-          val unknownCase = if (useOpenEnums) s"Decoder.const(iozhik.OpenEnum.Unknown[$name](unknown))" 
-            else s"""throw iozhik.DecodingError(s"Unknown type for $name: $$unknown")"""
-          val generatedEncoder = s"""
-            |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
-            |  ${cases.map(_._1).intercalate(d)}
-            |}
-          """.stripMargin
-          val encoder = meta.cfg.customEncoders.get(kind).map { custom =>
-            val genName = s"${name.toLowerCase}GeneratedEncoder"
-            val gen = s"""
-              |private lazy val $genName: Encoder[$name] = {
+              .toList
+              .traverse { case (typeTag, leaves) =>
+                if (leaves.size == 1)
+                  genCirceCodecCases(struc, typeTag, typet, leaves.head)
+                else
+                  genMergedCirceCodecs(struc, kind, typeTag, typet, leaves)
+              }
+          } yield {
+            val tag = "\"" + typet.name + "\""
+            val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
+            val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
+            val unknownCase = if (useOpenEnums) s"Decoder.const(iozhik.OpenEnum.Unknown[$name](unknown))" 
+              else s"""throw iozhik.DecodingError(s"Unknown type for $name: $$unknown")"""
+            val generatedEncoder = s"""
+              |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
               |  ${cases.map(_._1).intercalate(d)}
               |}
             """.stripMargin
-            gen + d + custom
-          }.getOrElse(generatedEncoder)
-          val generatedDecoder = if (isCodKind(struc)) {
-            s"""
-              |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = for {
-              |  fType <- Decoder[String].prepare(_.downField($tag))
-              |  value <- fType match {
-              |    ${cases.map(_._2).intercalate(d)}
-              |    case unknown => $unknownCase
-              |  }
-              |} yield value
-            """.stripMargin
-          } else ""
-          val decoder = if (isCodKind(struc)) {
-            meta.cfg.customDecoders.get(kind).map { custom =>
-              val genName = s"${name.toLowerCase}GeneratedDecoder"
+            val encoder = meta.cfg.customEncoders.get(kind).map { custom =>
+              val genName = s"${name.toLowerCase}GeneratedEncoder"
               val gen = s"""
-                |private lazy val $genName: Decoder[$wrappedName] = for {
+                |private lazy val $genName: Encoder[$name] = {
+                |  ${cases.map(_._1).intercalate(d)}
+                |}
+              """.stripMargin
+              gen + d + custom
+            }.getOrElse(generatedEncoder)
+            val generatedDecoder = if (isCodKind(struc)) {
+              s"""
+                |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = for {
                 |  fType <- Decoder[String].prepare(_.downField($tag))
                 |  value <- fType match {
                 |    ${cases.map(_._2).intercalate(d)}
@@ -194,219 +182,233 @@ class ScalaApiGeneratorV1 {
                 |  }
                 |} yield value
               """.stripMargin
-              gen + d + custom
-            }.getOrElse(generatedDecoder)
-          } else ""
-          val body = encoder + d + decoder
-          List(Code(body = body, packageObject = "CirceImplicits")) ++ items
+            } else ""
+            val decoder = if (isCodKind(struc)) {
+              meta.cfg.customDecoders.get(kind).map { custom =>
+                val genName = s"${name.toLowerCase}GeneratedDecoder"
+                val gen = s"""
+                  |private lazy val $genName: Decoder[$wrappedName] = for {
+                  |  fType <- Decoder[String].prepare(_.downField($tag))
+                  |  value <- fType match {
+                  |    ${cases.map(_._2).intercalate(d)}
+                  |    case unknown => $unknownCase
+                  |  }
+                  |} yield value
+                """.stripMargin
+                gen + d + custom
+              }.getOrElse(generatedDecoder)
+            } else ""
+            val body = encoder + d + decoder
+            List(Code(body = body, packageObject = "CirceImplicits")) ++ items
+          }
+        } else {
+          for {
+            kind <- struc.kind.map(_.name).toRight("No kind name")
+            wrapps <- union.wrapps.flatTraverse(genJsonCodecs)
+            enumstrs <- union.enumstrs.flatTraverse(genJsonCodecs)
+            leaves <- union.leaves.flatTraverse(genJsonCodecs)
+            cases <- (
+                union.wrapps.map(_.name -> false) ++
+                  union.enumstrs.map(_.name -> true) ++
+                  union.leaves.flatMap(_.kind).map(_ -> false)
+              ).traverse{ case (k, isSingle) =>
+                for {
+                  name <- genKind(k)
+                  codecName = k.name.toLowerCase
+                } yield {
+                  (
+                    if (isSingle) s"case $name => $name.asJson" else s"case x: $name => x.asJson",
+                    s"${codecName}Decoder.widen",
+                  )
+                }
+              }
+          } yield {
+            val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
+            val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
+            val wrapEnumType = if (useOpenEnums) ".map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(iozhik.OpenEnum.Unknown(_)))" else ""
+            val encoder = s"""
+              |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
+              |  ${cases.map(_._1).intercalate(d)}
+              |}
+            """.stripMargin
+            val decoder = if (isCodKind(struc)) {
+              meta.cfg.customDecoders.get(kind).getOrElse(s"""
+                |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = {
+                |  List[Decoder[$name]](
+                |    ${cases.map(_._2).intercalate(",")}
+                |  ).reduceLeft(_ or _)$wrapEnumType
+                |}
+              """.stripMargin)
+            } else ""  
+            val body = encoder + d + decoder
+            List(Code(
+              body = body,
+              packageObject = "CirceImplicits",
+              imports = List("import cats.syntax.functor._")
+            )) ++ wrapps ++ enumstrs ++ leaves
+          }
         }
-      } else {
+      case _ =>
+        val usingf = struc.usingFields
+        val impPacks = (usingf ++ struc.fields)
+          .flatMap(_.kind.unresolvedIn(meta.space.symbol))
+          .filter(y => !predefined.contains(y.name))
+          .flatMap(meta.symt.resolve)
+          .collect{
+            case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
+          }
+        val imps = impPacks
+          .map{ case (path, name) => s"import $path.$name" } ++ impPacks
+            .map(_._1)
+            .distinct
+            .map(path => s"import $path.CirceImplicits._")
         for {
           kind <- struc.kind.map(_.name).toRight("No kind name")
-          wrapps <- struc.wrapps.flatTraverse(genJsonCodecs)
-          enumstrs <- struc.enumstrs.flatTraverse(genJsonCodecs)
-          leaves <- struc.leaves.flatTraverse(genJsonCodecs)
-          cases <- (
-              struc.wrapps.map(_.name -> false) ++
-                struc.enumstrs.map(_.name -> true) ++
-                struc.leaves.flatMap(_.kind).map(_ -> false)
-            ).traverse{ case (k, isSingle) =>
-              for {
-                name <- genKind(k)
-                codecName = k.name.toLowerCase
-              } yield {
-                (
-                  if (isSingle) s"case $name => $name.asJson" else s"case x: $name => x.asJson",
-                  s"${codecName}Decoder.widen",
-                )
+          _ <- (usingf ++ struc.fields)
+            .find(y => y.opts.contains("omitempty") && y.kind.name != "List")
+            .map(y => s"$kind.${y.name}: (omitempty) is only supported on List fields")
+            .toLeft(())
+          fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind, struc.kind))
+          fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
+        } yield {
+          val postfix = if (!struc.isCaseObject) "" else ".type"
+          val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
+          val decoderForBody = fields
+            .map{ case (fname, k) =>
+              val n = if (useSnake) { camel2snake(fname) } else { fname }
+              if (k.startsWith("List")) {
+                s"""_$fname <- h.getOrElse[$k]("$n")(List.empty)"""
+              } else {
+                s"""_$fname <- h.get[$k]("$n")"""
               }
             }
-        } yield {
-          val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
-          val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
-          val wrapEnumType = if (useOpenEnums) ".map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(iozhik.OpenEnum.Unknown(_)))" else ""
-          val encoder = s"""
-            |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
-            |  ${cases.map(_._1).intercalate(d)}
-            |}
-          """.stripMargin
+            .intercalate(d)
           val decoder = if (isCodKind(struc)) {
-            meta.cfg.customDecoders.get(kind).getOrElse(s"""
-              |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = {
-              |  List[Decoder[$name]](
-              |    ${cases.map(_._2).intercalate(",")}
-              |  ).reduceLeft(_ or _)$wrapEnumType
-              |}
-            """.stripMargin)
-          } else ""  
-          val body = encoder + d + decoder
+            val decoderFields = fields
+              .map{ case (fname, _) =>
+                s"${sanitize(fname)} = _$fname"
+              }
+              .intercalate(",")
+            val decoderBody = if (!struc.isCaseObject) {
+              s"""
+                |Decoder.instance { h =>
+                |  for {
+                |    $decoderForBody
+                |  } yield {
+                |    $name($decoderFields)
+                |  }
+                |}
+              """.stripMargin
+            } else {
+              s"(_: HCursor) => Right($name)"
+            }
+            if (kind.endsWith(DomPostfix)) "" else s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
+          }
+          else ""
+          // (omitempty) List fields encode to null when empty, so the filter below leaves them out of the JSON
+          val encoderFields = ((usingf ++ struc.fields)
+            .map{ y =>
+              val n = if (useSnake) { camel2snake(y.name) } else { y.name }
+              val fn = sanitize(y.name)
+              if (y.opts.contains("omitempty")) {
+                s""""$n" -> (if (x.$fn.isEmpty) Json.Null else x.$fn.asJson)"""
+              } else {
+                s""""$n" -> x.$fn.asJson"""
+              }
+            } ++ struc.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
+            .intercalate(",")
+          val encoderBody = if (!struc.isCaseObject) {
+            s"""
+              | (x: $name) => {
+              |   Json.fromFields(
+              |     List(
+              |       $encoderFields
+              |     ).filter(!_._2.isNull)
+              |   )
+              | }
+            """.stripMargin
+          } else {
+            s"(_: $name.type) => ().asJson"
+          }
+          val encoder = s"implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name$postfix] = $encoderBody"
+          val body = s"$encoder$delimiter$decoder"
           List(Code(
             body = body,
             packageObject = "CirceImplicits",
-            imports = List("import cats.syntax.functor._")
-          )) ++ wrapps ++ enumstrs ++ leaves
+            imports = imps ++ (if (struc.isCaseObject) {
+              List("import io.circe.HCursor")
+            } else { List.empty[String] })
+          ))
         }
-      }
-    } else {
-      val usingf = struc.usingFields
-      val impPacks = (usingf ++ struc.fields)
-        .flatMap(_.kind.unresolvedIn(meta.space.symbol))
-        .filter(y => !predefined.contains(y.name))
-        .flatMap(meta.symt.resolve)
-        .collect{
-          case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
-        }
-      val imps = impPacks
-        .map{ case (path, name) => s"import $path.$name" } ++ impPacks
-          .map(_._1)
-          .distinct
-          .map(path => s"import $path.CirceImplicits._")
-      for {
-        kind <- struc.kind.map(_.name).toRight("No kind name")
-        _ <- (usingf ++ struc.fields)
-          .find(y => y.opts.contains("omitempty") && y.kind.name != "List")
-          .map(y => s"$kind.${y.name}: (omitempty) is only supported on List fields")
-          .toLeft(())
-        fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind, struc.kind))
-        fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
-      } yield {
-        val postfix = if (!struc.isCaseObject) "" else ".type"
-        val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
-        val decoderForBody = fields
-          .map{ case (fname, k) =>
-            val n = if (useSnake) { camel2snake(fname) } else { fname }
-            if (k.startsWith("List")) {
-              s"""_$fname <- h.getOrElse[$k]("$n")(List.empty)"""
-            } else {
-              s"""_$fname <- h.get[$k]("$n")"""
-            }
-          }
-          .intercalate(d)
-        val decoder = if (isCodKind(struc)) {
-          val decoderFields = fields
-            .map{ case (fname, _) =>
-              s"${sanitize(fname)} = _$fname"
-            }
-            .intercalate(",")
-          val decoderBody = if (!struc.isCaseObject) {
-            s"""
-              |Decoder.instance { h =>
-              |  for {
-              |    $decoderForBody
-              |  } yield {
-              |    $name($decoderFields)
-              |  }
-              |}
-            """.stripMargin
-          } else {
-            s"(_: HCursor) => Right($name)"
-          }
-          if (kind.endsWith(DomPostfix)) "" else s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
-        }
-        else ""
-        // (omitempty) List fields encode to null when empty, so the filter below leaves them out of the JSON
-        val encoderFields = ((usingf ++ struc.fields)
-          .map{ y =>
-            val n = if (useSnake) { camel2snake(y.name) } else { y.name }
-            val fn = sanitize(y.name)
-            if (y.opts.contains("omitempty")) {
-              s""""$n" -> (if (x.$fn.isEmpty) Json.Null else x.$fn.asJson)"""
-            } else {
-              s""""$n" -> x.$fn.asJson"""
-            }
-          } ++ struc.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
-          .intercalate(",")
-        val encoderBody = if (!struc.isCaseObject) {
-          s"""
-            | (x: $name) => {
-            |   Json.fromFields(
-            |     List(
-            |       $encoderFields
-            |     ).filter(!_._2.isNull)
-            |   )
-            | }
-          """.stripMargin
-        } else {
-          s"(_: $name.type) => ().asJson"
-        }
-        val encoder = s"implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name$postfix] = $encoderBody"
-        val body = s"$encoder$delimiter$decoder"
-        List(Code(
-          body = body,
-          packageObject = "CirceImplicits",
-          imports = imps ++ (if (struc.isCaseObject) {
-            List("import io.circe.HCursor")
-          } else { List.empty[String] })
-        ))
-      }
     }
   }
 
   def genSCodecs(x: Struc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val d = delimiter
-    if (x.isEnum) {
-      if (x.typets.isEmpty) {
-        Right(List.empty[Code])
-      } else {
-        for {
-          kind  <- x.kind.map(_.name).toRight("No kind name")
-          _     <- x.typet().toRight(s"No type tag found for $kind")
-          items <- x.leaves.traverse(genSCodecs).map(_.flatten)
-          cases <- x.leaves.traverse{ y =>
-            for {
-              nn <- y.kind.map(_.name).toRight("No kind name")
-              tt <- y.typet().flatMap(_.id).toRight(s"No type id found for $nn")
-            } yield {
-              if (!y.isCaseObject) {
-                s".typecase($tt, ${nn.toLowerCase}Codec)"
-              } else {
-                s".typecase($tt, provide($nn))"
+    x.shape match {
+      case union @ Shape.Union(true, _) =>
+        if (x.typets.isEmpty) {
+          Right(List.empty[Code])
+        } else {
+          for {
+            kind  <- x.kind.map(_.name).toRight("No kind name")
+            _     <- x.typet().toRight(s"No type tag found for $kind")
+            items <- union.leaves.traverse(genSCodecs).map(_.flatten)
+            cases <- union.leaves.traverse{ y =>
+              for {
+                nn <- y.kind.map(_.name).toRight("No kind name")
+                tt <- y.typet().flatMap(_.id).toRight(s"No type id found for $nn")
+              } yield {
+                if (!y.isCaseObject) {
+                  s".typecase($tt, ${nn.toLowerCase}Codec)"
+                } else {
+                  s".typecase($tt, provide($nn))"
+                }
               }
             }
+          } yield {
+            val name = kind + versionPostfix(x.minVersion, x.maxVersion)
+            val body = s"""
+                          | implicit lazy val ${name.toLowerCase}Codec: Codec[$name] = discriminated[$name]
+                          |   .by(uint32)
+                          |   ${cases.intercalate(d)}
+          """.stripMargin
+            List(Code(
+              body = body,
+              packageObject = "ScodecImplicits",
+            )) ++ items
           }
+        }
+      case _ =>
+        val usingf = x.usingFields
+        for {
+          kind <- x.kind.map(_.name).toRight("No kind name")
+          fieldKinds <- (usingf ++ x.fields).traverse(y => genKind(y.kind))
+          fields = (usingf ++ x.fields).map(y => y.name).zip(fieldKinds)
         } yield {
           val name = kind + versionPostfix(x.minVersion, x.maxVersion)
-          val body = s"""
-                        | implicit lazy val ${name.toLowerCase}Codec: Codec[$name] = discriminated[$name]
-                        |   .by(uint32)
-                        |   ${cases.intercalate(d)}
-        """.stripMargin
+          val codecBody = fields.map{ case (n, k) => s"""("$n" | Codec[$k])""" }.intercalate(s" ::$d")
+          val codec = if (!x.isCaseObject) {
+            s"""
+               | implicit lazy val ${name.toLowerCase}Codec = {
+               |   $codecBody
+               | }.as[$name]
+             """.stripMargin
+          } else {
+            s"implicit lazy val ${name.toLowerCase}Codec = provide($name)"
+          }
+          val body = s"$codec"
+          val imps = if (!x.isCaseObject) {
+            List("import codecs.implicits._ ")
+          } else {
+            List.empty[String]
+          }
           List(Code(
             body = body,
             packageObject = "ScodecImplicits",
-          )) ++ items
+            imports = imps
+          ))
         }
-      }
-    } else {
-      val usingf = x.usingFields
-      for {
-        kind <- x.kind.map(_.name).toRight("No kind name")
-        fieldKinds <- (usingf ++ x.fields).traverse(y => genKind(y.kind))
-        fields = (usingf ++ x.fields).map(y => y.name).zip(fieldKinds)
-      } yield {
-        val name = kind + versionPostfix(x.minVersion, x.maxVersion)
-        val codecBody = fields.map{ case (n, k) => s"""("$n" | Codec[$k])""" }.intercalate(s" ::$d")
-        val codec = if (!x.isCaseObject) {
-          s"""
-             | implicit lazy val ${name.toLowerCase}Codec = {
-             |   $codecBody
-             | }.as[$name]
-           """.stripMargin
-        } else {
-          s"implicit lazy val ${name.toLowerCase}Codec = provide($name)"
-        }
-        val body = s"$codec"
-        val imps = if (!x.isCaseObject) {
-          List("import codecs.implicits._ ")
-        } else {
-          List.empty[String]
-        }
-        List(Code(
-          body = body,
-          packageObject = "ScodecImplicits",
-          imports = imps
-        ))
-      }
     }
   }
 
@@ -435,90 +437,91 @@ class ScalaApiGeneratorV1 {
 
   def genuPickle(struc: Struc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val d = delimiter
-    if (struc.isEnum) {
-      if (struc.typetForBins.isEmpty) {
-        Right(List.empty[Code])
-      } else {
-        for {
-          kind  <- struc.kind.map(_.name).toRight("No kind name")
-          _     <- struc.typetForBins.toRight(s"No type tag found for $kind")
-          items <- struc.leavesForBins.traverse(genuPickle).map(_.flatten)
-          hasDuplicateLeavesTypets = struc.leavesForBins.groupBy { leaf =>
-            val kn = leaf.kind.map(_.name).toRight("No kind name")
-            leaf.typet().map(_.tag).getOrElse(s"Type tag not found for: $kn")
-          }
-            .exists {
-              case (_, leaves) => leaves.size >= 2
+    struc.shape match {
+      case Shape.Union(true, _) =>
+        if (struc.typetForBins.isEmpty) {
+          Right(List.empty[Code])
+        } else {
+          for {
+            kind  <- struc.kind.map(_.name).toRight("No kind name")
+            _     <- struc.typetForBins.toRight(s"No type tag found for $kind")
+            items <- struc.leavesForBins.traverse(genuPickle).map(_.flatten)
+            hasDuplicateLeavesTypets = struc.leavesForBins.groupBy { leaf =>
+              val kn = leaf.kind.map(_.name).toRight("No kind name")
+              leaf.typet().map(_.tag).getOrElse(s"Type tag not found for: $kn")
             }
-          name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
-          body <- if (hasDuplicateLeavesTypets) genMergedUpickleCodecs(struc, name) else genUpickleCodecCases(struc, name)
+              .exists {
+                case (_, leaves) => leaves.size >= 2
+              }
+            name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
+            body <- if (hasDuplicateLeavesTypets) genMergedUpickleCodecs(struc, name) else genUpickleCodecCases(struc, name)
+          } yield {
+            List(Code(
+              body = body,
+              packageObject = "uPickleImplicits",
+            )) ++ items
+          }
+        }
+      case _ =>
+        val usingf = struc.usingFields
+        val impPacks = (usingf ++ struc.fields)
+          .flatMap(_.kind.unresolvedIn(meta.space.symbol))
+          .filter(y => !predefined.contains(y.name))
+          .flatMap(meta.symt.resolve)
+          .collect{
+            case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
+          }
+        val imps = impPacks
+          .map{ case (path, name) => s"import $path.$name" } ++ impPacks
+          .map(_._1)
+          .distinct
+          .map(path => s"import $path.uPickleImplicits._")
+        for {
+          kind <- struc.kind.map(_.name).toRight("No kind name")
+          fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind, struc.kind))
+          fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
         } yield {
+          val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
+          val keys = fields.map{ case (n, _) => s"""val ${n}Key = upack.Str("$n")""" }.intercalate(d)
+          val wf = fields.map{ case (n, _) => s"""${n}Key -> writeMsg(x.${sanitize(n)})""" }.intercalate(",")
+          val rf = fields.map{ case (n, k) =>
+            s"""${sanitize(n)} <- m.get(${n}Key).map(x => readBinary[$k](x))"""
+          }.intercalate(d)
+          val assign = fields.map{ case (n, _) => s"${sanitize(n)} = ${sanitize(n)}" }.intercalate(",")
+          val codec = if (!struc.isCaseObject) {
+            s"""
+               | implicit lazy val ${name.toLowerCase}Codec: ReadWriter[$kind] = {
+               |   $keys
+               |   readwriter[upack.Msg].bimap(
+               |     x => {
+               |       upack.Obj(
+               |         $wf
+               |       )
+               |     },
+               |     msg => {
+               |       val m = msg.obj
+               |       val result = for {
+               |         $rf
+               |       } yield {
+               |         $name(
+               |           $assign
+               |         )
+               |       }
+               |       result.get
+               |     }
+               |   )
+               | }
+             """.stripMargin
+          } else {
+            s"""implicit lazy val ${name.toLowerCase}Codec: ReadWriter[$name.type] = macroRW"""
+          }
+          val body = s"$codec"
           List(Code(
             body = body,
             packageObject = "uPickleImplicits",
-          )) ++ items
+            imports = imps,
+          ))
         }
-      }
-    } else {
-      val usingf = struc.usingFields
-      val impPacks = (usingf ++ struc.fields)
-        .flatMap(_.kind.unresolvedIn(meta.space.symbol))
-        .filter(y => !predefined.contains(y.name))
-        .flatMap(meta.symt.resolve)
-        .collect{
-          case y: Struc if y.kind.nonEmpty => (y.path.reverse.filter(_.nonEmpty).intercalate("."), y.kind.get.name)
-        }
-      val imps = impPacks
-        .map{ case (path, name) => s"import $path.$name" } ++ impPacks
-        .map(_._1)
-        .distinct
-        .map(path => s"import $path.uPickleImplicits._")
-      for {
-        kind <- struc.kind.map(_.name).toRight("No kind name")
-        fieldKinds <- (usingf ++ struc.fields).traverse(y => genFieldType(y.kind, struc.kind))
-        fields = (usingf ++ struc.fields).map(y => y.name).zip(fieldKinds)
-      } yield {
-        val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
-        val keys = fields.map{ case (n, _) => s"""val ${n}Key = upack.Str("$n")""" }.intercalate(d)
-        val wf = fields.map{ case (n, _) => s"""${n}Key -> writeMsg(x.${sanitize(n)})""" }.intercalate(",")
-        val rf = fields.map{ case (n, k) =>
-          s"""${sanitize(n)} <- m.get(${n}Key).map(x => readBinary[$k](x))"""
-        }.intercalate(d)
-        val assign = fields.map{ case (n, _) => s"${sanitize(n)} = ${sanitize(n)}" }.intercalate(",")
-        val codec = if (!struc.isCaseObject) {
-          s"""
-             | implicit lazy val ${name.toLowerCase}Codec: ReadWriter[$kind] = {
-             |   $keys
-             |   readwriter[upack.Msg].bimap(
-             |     x => {
-             |       upack.Obj(
-             |         $wf
-             |       )
-             |     },
-             |     msg => {
-             |       val m = msg.obj
-             |       val result = for {
-             |         $rf
-             |       } yield {
-             |         $name(
-             |           $assign
-             |         )
-             |       }
-             |       result.get
-             |     }
-             |   )
-             | }
-           """.stripMargin
-        } else {
-          s"""implicit lazy val ${name.toLowerCase}Codec: ReadWriter[$name.type] = macroRW"""
-        }
-        val body = s"$codec"
-        List(Code(
-          body = body,
-          packageObject = "uPickleImplicits",
-          imports = imps,
-        ))
-      }
     }
   }
 
@@ -704,7 +707,10 @@ class ScalaApiGeneratorV1 {
   }
 
   // The variant structs that actually carry a file (a union type's leaves, or the struct itself when it has none).
-  private def fileBearingVariants(s: Struc): List[Struc] = if (s.leaves.nonEmpty) s.leaves else List(s)
+  private def fileBearingVariants(s: Struc): List[Struc] = s.variants.collect { case leaf: Struc => leaf } match {
+    case Nil    => List(s)
+    case leaves => leaves
+  }
 
   private def hasNestedFileFields(s: Struc): Boolean =
     fileBearingVariants(s).exists(_.fields.exists(_.opts.contains("file")))
@@ -893,7 +899,7 @@ class ScalaApiGeneratorV1 {
               }
             }
             .collect {
-              case (fname, Some(s: Struc), isOpt) if s.wrapps.exists(_.target.name == "java.io.File") && s.kind.nonEmpty =>
+              case (fname, Some(s: Struc), isOpt) if s.variants.exists { case w: Wrapp => w.target.name == "java.io.File"; case _ => false } && s.kind.nonEmpty =>
                 val imps = s.kind.toList
                   .flatMap(_.unresolvedIn(meta.space.symbol))
                   .filter(y => !predefined.contains(y.name))
@@ -907,7 +913,7 @@ class ScalaApiGeneratorV1 {
                       s"import $path.CirceImplicits._",
                     )
                   }
-                val fileC = s.wrapps.head.name.name
+                val fileC = s.variants.collectFirst { case w: Wrapp => w.name.name }.get
                 val fn = if (meta.space.opts.contains("snake")) { camel2snake(fname) } else { fname }
                 (
                   s"""${fname}Part""",

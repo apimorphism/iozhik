@@ -69,7 +69,7 @@ object ArbitraryGenerator {
           case Some(s: Struc) =>
             val obj = objName(n)
             val shrinks = shrinking(n)
-            if (s.isEnum && useOpenEnum(k, enclosing))
+            if (s.shape.isEnum && useOpenEnum(k, enclosing))
               Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
             else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
           case other => Left(s"no generator for kind $n (resolved: $other)")
@@ -92,17 +92,18 @@ object ArbitraryGenerator {
   // paths over required fields: a struct is one deeper than its deepest required field, a sum type than its
   // shallowest variant.
   private def minDepths(root: Space)(implicit meta: GeneratorMeta): Map[String, Int] = {
-    def withLeaves(s: Struc): List[Struc] = s :: s.leaves.flatMap(withLeaves)
+    def withLeaves(s: Struc): List[Struc] = s :: s.variants.collect { case leaf: Struc => leaf }.flatMap(withLeaves)
     def strucs(x: Space): List[Struc] = x.strucs.flatMap(withLeaves) ++ x.spaces.flatMap(strucs)
     val rules: List[(String, Map[String, Int] => Option[Int])] = strucs(root).flatMap { s =>
       s.kind.map(_.name).toList.flatMap { name =>
-        if (s.isEnum)
-          (name -> ((d: Map[String, Int]) => variants(s).flatMap(d.get).minOption.map(_ + 1))) ::
-            s.wrapps.map(w => w.name.name -> ((d: Map[String, Int]) => kindDepth(w.target, d).map(_ + 1))) ++
-            s.enumstrs.map(e => e.name.name -> ((_: Map[String, Int]) => Some(0)))
-        else {
-          val fields = constructorFields(s)
-          List(name -> ((d: Map[String, Int]) => fields.traverse(f => kindDepth(f.kind, d)).map(_.maxOption.getOrElse(0) + 1)))
+        s.shape match {
+          case u @ Shape.Union(true, _) =>
+            (name -> ((d: Map[String, Int]) => variants(s).flatMap(d.get).minOption.map(_ + 1))) ::
+              u.wrapps.map(w => w.name.name -> ((d: Map[String, Int]) => kindDepth(w.target, d).map(_ + 1))) ++
+              u.enumstrs.map(e => e.name.name -> ((_: Map[String, Int]) => Some(0)))
+          case _ =>
+            val fields = constructorFields(s)
+            List(name -> ((d: Map[String, Int]) => fields.traverse(f => kindDepth(f.kind, d)).map(_.maxOption.getOrElse(0) + 1)))
         }
       }
     }
@@ -195,45 +196,50 @@ object ArbitraryGenerator {
     val kind = x.kind.map(_.name).toRight("No kind name")
     // mirrors where genJsonCodecs emits a decoder
     val decodable = isCodKind(x)
-    if (x.isAbstract) Right(Nil)
-    else if (x.isEnum) {
-      val isOpen = x.kind.exists(k => useOpenEnum(k, struc = None))
-      for {
-        name <- kind
-        // an abstract variant gets no generator of its own, and Gen.oneOf needs at least one
-        _ <- x.leaves.find(_.isAbstract).flatMap(_.kind).map(k => s"no generator for the abstract variant ${k.name} of $name").toLeft(())
-        _ <- Either.cond(variants(x).nonEmpty, (), s"no generator for $name: it has no variants")
-        leaves <- x.leaves.flatTraverse(genStrucs(_, depths, shrinking))
-        // wrapps and enum strings always get both codecs
-        wrapps <- x.wrapps.traverse { w =>
-          genFor(w.target, x.kind, depths, shrinking).map { g =>
-            val n = w.name.name
-            val shrink =
-              if (g.shrink == NoShrink) NoShrink
-              else s"Shrink[$n](x => ${g.shrink}.shrink(x.${sanitize(w.fname)}).map($n(_)))"
-            emit(n, n, s"deeper(${g.gen}.map($n(_)))", shrink, Some(false), g.refs, meta)
+    x.shape match {
+      case Shape.Union(false, _) => Right(Nil)
+      case u @ Shape.Union(true, _) =>
+        val isOpen = x.kind.exists(k => useOpenEnum(k, struc = None))
+        for {
+          name <- kind
+          // an abstract variant gets no generator of its own, and Gen.oneOf needs at least one
+          _ <- u.leaves.find(l => l.shape match {
+            case Shape.Union(false, _) => true
+            case _                     => false
+          }).flatMap(_.kind).map(k => s"no generator for the abstract variant ${k.name} of $name").toLeft(())
+          _ <- Either.cond(variants(x).nonEmpty, (), s"no generator for $name: it has no variants")
+          leaves <- u.leaves.flatTraverse(genStrucs(_, depths, shrinking))
+          // wrapps and enum strings always get both codecs
+          wrapps <- u.wrapps.traverse { w =>
+            genFor(w.target, x.kind, depths, shrinking).map { g =>
+              val n = w.name.name
+              val shrink =
+                if (g.shrink == NoShrink) NoShrink
+                else s"Shrink[$n](x => ${g.shrink}.shrink(x.${sanitize(w.fname)}).map($n(_)))"
+              emit(n, n, s"deeper(${g.gen}.map($n(_)))", shrink, Some(false), g.refs, meta)
+            }
           }
-        }
-        enumStrs = x.enumstrs.map { e =>
-          emit(e.name.name, s"${e.name.name}.type", s"Gen.const(${e.name.name})", NoShrink, Some(false), Set.empty, meta)
-        }
-        all = variants(x)
-        gens = (vs: List[String]) => vs.map(objName(_) + ".gen").mkString(", ")
-        shallowest = all.flatMap(depths.get).minOption
-        atZero = all.filter(v => depths.get(v) == shallowest)
-        parentBody =
-          if (all.size == 1) s"${objName(all.head)}.gen"
-          else if (atZero.isEmpty || atZero == all) s"Gen.oneOf[$name](${gens(all)})"
-          else s"sum[$name](List(${gens(all)}), List(${gens(atZero)}))"
-        shrinkable = (leaves ++ wrapps).filter(t => t.shrinks && all.contains(t.typeName)).map(_.typeName)
-        parentShrink =
-          if (shrinkable.isEmpty) NoShrink
-          else
-            s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
-      } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), all.toSet, meta)
-    } else
-      kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false), depths, shrinking))
-        .map(List(_))
+          enumStrs = u.enumstrs.map { e =>
+            emit(e.name.name, s"${e.name.name}.type", s"Gen.const(${e.name.name})", NoShrink, Some(false), Set.empty, meta)
+          }
+          all = variants(x)
+          gens = (vs: List[String]) => vs.map(objName(_) + ".gen").mkString(", ")
+          shallowest = all.flatMap(depths.get).minOption
+          atZero = all.filter(v => depths.get(v) == shallowest)
+          parentBody =
+            if (all.size == 1) s"${objName(all.head)}.gen"
+            else if (atZero.isEmpty || atZero == all) s"Gen.oneOf[$name](${gens(all)})"
+            else s"sum[$name](List(${gens(all)}), List(${gens(atZero)}))"
+          shrinkable = (leaves ++ wrapps).filter(t => t.shrinks && all.contains(t.typeName)).map(_.typeName)
+          parentShrink =
+            if (shrinkable.isEmpty) NoShrink
+            else
+              s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
+        } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), all.toSet, meta)
+      case Shape.Record =>
+        kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false), depths, shrinking))
+          .map(List(_))
+    }
   }
 
   private def genSpace(x: Space, cfg: GeneratorConfig, symt: Symtable, pkg: List[String], depths: Map[String, Int], shrinking: Set[String]): Either[String, List[(List[String], List[TypeGen])]] = {
