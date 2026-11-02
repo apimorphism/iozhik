@@ -704,52 +704,104 @@ class ScalaApiGeneratorV1 {
   // The variant structs that actually carry a file (a union type's leaves, or the struct itself when it has none).
   private def fileBearingVariants(s: Struc): List[Struc] = if (s.leaves.nonEmpty) s.leaves else List(s)
 
-  private def hasNestedFileFields(s: Struc): Boolean =
-    fileBearingVariants(s).exists(_.fields.exists(_.opts.contains("file")))
+  // A field's JSON key, which attachment names are built from.
+  private def jsonName(f: Field)(implicit meta: GeneratorMeta): String =
+    if (meta.space.opts.contains("snake")) camel2snake(f.name) else f.name
 
-  // The kind a non-file field names, with one List[_] layer unwrapped, and whether it was a List.
-  private def elementKind(f: Field): Option[(Kind, Boolean)] =
-    if (f.opts.contains("file")) None
-    else if (f.kind.name == "List") f.kind.params.headOption.map(_ -> true)
-    else Some(f.kind -> false)
+  // The kinds a field holds inside its List[_] and Option[_] layers, which attachFiles sees through.
+  private def innerKinds(k: Kind): List[Kind] =
+    if (k.name == "List" || k.name == "Option") k.params.flatMap(innerKinds) else List(k)
 
-  // The compound types (e.g. InputMedia) that a service's method params name, directly or through one List[_]
-  // layer, and that themselves embed file fields one level in. Resolved once per service, in first-use order.
-  private def collectFileStrucs(defs: List[Defun])(implicit meta: GeneratorMeta): List[(Kind, Struc)] =
-    defs
-      .flatMap(_.dom.toOption.toList.flatMap(_.fields))
-      .flatMap(elementKind(_).map(_._1))
-      .distinct
-      .flatMap(k => meta.symt.resolve(k).collect { case s: Struc if hasNestedFileFields(s) => k -> s })
-
-  // Generates `private def attachFiles_<Type>(name: String, value: <Type>): (<Type>, Map[String, IFile])`,
-  // which rewrites a compound value's embedded file field(s) to `attach://<name>` placeholders and collects
-  // the real IFile values that need to be sent as multipart attachments under that name.
-  private def genAttachDispatcher(innerKind: Kind, struc: Struc)(implicit meta: GeneratorMeta): Code = {
-    val typeName = sanitize(innerKind.name)
-    val variants = fileBearingVariants(struc)
-    val cases = variants.map { v =>
-      val variantName = v.kind.map(k => sanitize(k.name)).getOrElse(typeName)
-      val fileFields = v.fields.filter(_.opts.contains("file"))
-      if (fileFields.isEmpty) {
-        s"case v: $variantName => (v, Map.empty[String, IFile])"
-      } else {
-        val stmts = fileFields.map { f =>
-          val fname = sanitize(f.name)
-          s"""val (${fname}1, ${fname}Files) = MethodReq.attachFile(name + "_$fname", v.$fname)"""
-        }
-        val copyArgs = fileFields.map(f => s"${sanitize(f.name)} = ${sanitize(f.name)}1").mkString(", ")
-        val mergedFiles = fileFields.map(f => s"${sanitize(f.name)}Files").mkString(" ++ ")
-        s"""case v: $variantName =>
-           |  ${stmts.mkString(delimiter + "  ")}
-           |  (v.copy($copyArgs), $mergedFiles)""".stripMargin
+  // The compound types (e.g. InputMedia, InputRichMessage) that a service's method params reach through struct
+  // fields, union leaves, List[_] and Option[_], and that hold a file at any depth. Resolved once per service,
+  // in first-use order.
+  private def collectFileStrucs(defs: List[Defun])(implicit meta: GeneratorMeta): List[(Kind, Struc)] = {
+    @scala.annotation.tailrec
+    def reach(todo: List[Kind], found: Vector[(Kind, Struc)]): Vector[(Kind, Struc)] = todo match {
+      case Nil => found
+      case k :: rest if k.params.nonEmpty || found.exists(_._1.name == k.name) => reach(rest, found)
+      case k :: rest => meta.symt.resolve(k) match {
+        case Some(s: Struc) =>
+          val children = fileBearingVariants(s).flatMap(_.fields).filterNot(_.opts.contains("file")).flatMap(f => innerKinds(f.kind))
+          reach(rest ++ children, found :+ (k -> s))
+        case _ => reach(rest, found)
       }
     }
+    val reachable = reach(
+      defs.flatMap(_.dom.toOption.toList.flatMap(_.fields)).filterNot(_.opts.contains("file")).flatMap(f => innerKinds(f.kind)),
+      Vector.empty
+    )
+    // A type holds a file if one of its variants has a file field, or a field holding a type that does.
+    @scala.annotation.tailrec
+    def holdingFiles(known: Set[String]): Set[String] = {
+      val next = reachable.collect {
+        case (k, s) if fileBearingVariants(s).exists(_.fields.exists(f =>
+          f.opts.contains("file") || innerKinds(f.kind).exists(i => known(i.name))
+        )) => k.name
+      }.toSet
+      if (next == known) known else holdingFiles(next)
+    }
+    val fileKinds = holdingFiles(Set.empty)
+    reachable.filter { case (k, _) => fileKinds(k.name) }.toList
+  }
+
+  // An expression giving `value`, of kind `k`, with its files rewritten to attach:// references, paired with those
+  // files; None if it holds no file. `name` is the attachment name's expression, which a List element extends with
+  // its index.
+  private def attachExpr(k: Kind, value: String, name: String, fileKinds: Set[String], depth: Int = 0): Option[String] =
+    k.name match {
+      case "List" =>
+        k.params.headOption.flatMap(p => attachExpr(p, s"x$depth", s"$name + i$depth", fileKinds, depth + 1)).map { inner =>
+          s"""{
+             |  val (a$depth, f$depth) = $value.zipWithIndex.map { case (x$depth, i$depth) => $inner }.unzip
+             |  (a$depth, f$depth.flatten.toMap)
+             |}""".stripMargin
+        }
+      case "Option" =>
+        k.params.headOption.flatMap(p => attachExpr(p, s"x$depth", name, fileKinds, depth + 1)).map { inner =>
+          s"""$value match {
+             |  case Some(x$depth) =>
+             |    val (a$depth, f$depth) = $inner
+             |    (Some(a$depth), f$depth)
+             |  case None => (None, Map.empty[String, IFile])
+             |}""".stripMargin
+        }
+      case n if k.params.isEmpty && fileKinds(n) => Some(s"attachFiles_${sanitize(n)}($name, $value)")
+      case _ => None
+    }
+
+  // Generates `private def attachFiles_<Type>(name: String, value: <Type>): (<Type>, Map[String, IFile])`,
+  // which rewrites a compound value's embedded files, at any depth, to `attach://<name>` placeholders and collects
+  // the real IFile values that need to be sent as multipart attachments under those names.
+  private def genAttachDispatcher(innerKind: Kind, struc: Struc, fileKinds: Set[String])(implicit meta: GeneratorMeta): Code = {
+    val typeName = sanitize(innerKind.name)
+    val variants = fileBearingVariants(struc)
+    val attaching = variants.map { v =>
+      v -> v.fields.flatMap { f =>
+        val fname = sanitize(f.name)
+        val name  = s"""name + "_${jsonName(f)}""""
+        val expr =
+          if (f.opts.contains("file")) Some(s"MethodReq.attachFile($name, v.$fname)")
+          else attachExpr(f.kind, s"v.$fname", name, fileKinds)
+        expr.map(e => fname -> s"val (${fname}1, ${fname}Files) = $e")
+      }
+    }
+    val attachingCases = attaching.collect { case (v, attached) if attached.nonEmpty =>
+      val variantName = v.kind.map(k => sanitize(k.name)).getOrElse(typeName)
+      val copyArgs = attached.map { case (fname, _) => s"$fname = ${fname}1" }.mkString(", ")
+      val mergedFiles = attached.map { case (fname, _) => s"${fname}Files" }.mkString(" ++ ")
+      s"""case v: $variantName =>
+         |  ${attached.map(_._2).mkString(delimiter).replace(delimiter, delimiter + "  ")}
+         |  (v.copy($copyArgs), $mergedFiles)""".stripMargin
+    }
+    // The variants holding no file, some of which are case objects, share one case.
+    val cases = attachingCases ++
+      Option.when(attaching.exists(_._2.isEmpty))("case v => (v, Map.empty[String, IFile])").toList
     val body =
       s"""private def attachFiles_$typeName(name: String, value: $typeName): ($typeName, Map[String, IFile]) = value match {
-         |  ${cases.mkString(delimiter + "  ")}
+         |  ${cases.mkString(delimiter).replace(delimiter, delimiter + "  ")}
          |}""".stripMargin
-    val variantImports = variants.flatMap(v => v.kind.toList).flatMap(importKind)
+    val variantImports = attaching.collect { case (v, attached) if attached.nonEmpty => v }.flatMap(_.kind.toList).flatMap(importKind)
     Code(
       body = body,
       name = s"attachFiles_$typeName",
@@ -758,7 +810,7 @@ class ScalaApiGeneratorV1 {
     )
   }
 
-  private def genMethodsFactoryDefun(x: Defun, fileKinds: Set[Kind])(implicit meta: GeneratorMeta) =
+  private def genMethodsFactoryDefun(x: Defun, fileKinds: Set[String])(implicit meta: GeneratorMeta) =
     for {
       kind <- genKind(x.kind)
       params <- x.dom.fold(
@@ -788,9 +840,11 @@ class ScalaApiGeneratorV1 {
       val docs = genDefunDocs(x)
       val reqParams = params.intercalate(", ")
 
-      // Pair each request field with its file-bearing element kind (if any) in one pass, so the arg name used
+      // Pair each request field with the expression attaching its files (if any) in one pass, so the arg name used
       // to build the request, the attach/collect statement, and the files-map contribution all stay in sync.
-      val fieldPlans = reqFields.map(f => f -> elementKind(f).filter { case (k, _) => fileKinds.contains(k) })
+      val fieldPlans = reqFields.map { f =>
+        f -> (if (f.opts.contains("file")) None else attachExpr(f.kind, sanitize(f.name), s""""${jsonName(f)}"""", fileKinds))
+      }
       val fieldNames = fieldPlans.map {
         case (f, None)    => sanitize(f.name)
         case (f, Some(_)) => s"${sanitize(f.name)}Attached"
@@ -813,14 +867,9 @@ class ScalaApiGeneratorV1 {
         s"""Map(${fileFields.mkString(", ")}).collect { case (k, Some(v)) => k -> v }"""
       )
       // For each nested-file field: the attach/collect statement and its files-map expression.
-      val nested = fieldPlans.collect { case (f, Some((elemKind, isList))) =>
-        val fname    = sanitize(f.name)
-        val typeName = sanitize(elemKind.name)
-        if (isList)
-          (s"""val (${fname}Attached, ${fname}Files) = $fname.zipWithIndex.map { case (v, idx) => attachFiles_$typeName(s"${fname}$$idx", v) }.unzip""",
-            s"${fname}Files.flatten.toMap")
-        else
-          (s"""val (${fname}Attached, ${fname}Files) = attachFiles_$typeName("$fname", $fname)""", s"${fname}Files")
+      val nested = fieldPlans.collect { case (f, Some(expr)) =>
+        val fname = sanitize(f.name)
+        (s"val (${fname}Attached, ${fname}Files) = $expr", s"${fname}Files")
       }
       val attachmentParts = directAttachment.toList ++ nested.map(_._2)
       val attachments = if (attachmentParts.isEmpty) "" else ", " + attachmentParts.mkString(" ++ ")
@@ -1016,9 +1065,9 @@ class ScalaApiGeneratorV1 {
       kind <- genKind(x.kind)
       defs = x.items.collect{ case a: Defun => a }
       fileStrucs = if (x.opts.contains("methodsFactory")) collectFileStrucs(defs) else List.empty
-      fileKinds = fileStrucs.map(_._1).toSet
+      fileKinds = fileStrucs.map(_._1.name).toSet
       itemsRaw <- defs.traverse(d => if (x.opts.contains("methodsFactory")) genMethodsFactoryDefun(d, fileKinds) else genDefun(d))
-      items = fileStrucs.map { case (k, s) => genAttachDispatcher(k, s) } ++ itemsRaw.flatten
+      items = fileStrucs.map { case (k, s) => genAttachDispatcher(k, s, fileKinds) } ++ itemsRaw.flatten
       d = delimiter
     } yield {
       val strucs = items.filter{ y =>

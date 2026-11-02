@@ -114,14 +114,155 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     )
     val body = bodies.mkString("\n")
     body should include(
-      """val (mediaAttached, mediaFiles) = media.zipWithIndex.map { case (v, idx) => attachFiles_InputMedia(s"media$idx", v) }.unzip"""
+      """val (a0, f0) = media.zipWithIndex.map { case (x0, i0) => attachFiles_InputMedia("media" + i0, x0) }.unzip"""
     )
+    body should include("(a0, f0.flatten.toMap)")
     body should include("""val req = SendMediaGroupReq(mediaAttached)""")
-    body should include("""MethodReq[Boolean]("sendMediaGroup", req.asJson, mediaFiles.flatten.toMap)""")
+    body should include("""MethodReq[Boolean]("sendMediaGroup", req.asJson, mediaFiles)""")
     body should include("""val (media1, mediaFiles) = MethodReq.attachFile(name + "_media", v.media)""")
     body should include("(v.copy(media = media1), mediaFiles)")
     body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFile(name + "_thumbnail", v.thumbnail)""")
     body should include("(v.copy(media = media1, thumbnail = thumbnail1), mediaFiles ++ thumbnailFiles)")
+  }
+
+  // https://github.com/apimorphism/iozhik/issues/21
+  "A methodsFactory method whose params hold files deeper than one level, through Option, List and a recursive union" must "attach every file under a name built from its path" in {
+    val bodies = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum IFile {
+        |      wrap InputPartFile (file) = java.io.File
+        |      wrap InputLinkFile (file) = String
+        |    }
+        |    abstract InputMedia {
+        |      InputMediaPhoto {
+        |        media: (file) IFile
+        |      }
+        |    }
+        |    InputPollOption {
+        |      text: String
+        |      media: Option[InputMedia]
+        |    }
+        |    enum InputRichBlock {
+        |      InputRichBlockParagraph {
+        |        type : "paragraph:0"
+        |        text : String
+        |      }
+        |      InputRichBlockPhoto {
+        |        type : "photo:1"
+        |        photo : InputMediaPhoto
+        |      }
+        |      InputRichBlockCollage {
+        |        type : "collage:2"
+        |        blocks : List[InputRichBlock]
+        |      }
+        |    }
+        |    InputRichMessage {
+        |      blocks: (omitempty) List[InputRichBlock]
+        |    }
+        |    Methods (methodsFactory) {
+        |      def sendPoll {
+        |        options: List[InputPollOption]
+        |        media: Option[InputMedia]
+        |      } => Method[Boolean]
+        |      def sendRichMessage {
+        |        richMessage: InputRichMessage
+        |      } => Method[Boolean]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    val body = bodies.mkString("\n")
+    // sendPoll.options[i].media: a List of a struct holding an Option of a union
+    body should include("""val (a0, f0) = options.zipWithIndex.map { case (x0, i0) => attachFiles_InputPollOption("options" + i0, x0) }.unzip""")
+    body should include("case v: InputPollOption =>")
+    body should include("val (a0, f0) = attachFiles_InputMedia(name + \"_media\", x0)")
+    // sendPoll.media: an Option param
+    body should include("""val (mediaAttached, mediaFiles) = media match {""")
+    body should include("""val (a0, f0) = attachFiles_InputMedia("media", x0)""")
+    body should include("""MethodReq[Boolean]("sendPoll", req.asJson, optionsFiles ++ mediaFiles)""")
+    // sendRichMessage.rich_message.blocks[i].photo.media, and blocks nested in a collage
+    body should include("""val (richMessageAttached, richMessageFiles) = attachFiles_InputRichMessage("rich_message", richMessage)""")
+    body should include("""v.blocks.zipWithIndex.map { case (x0, i0) => attachFiles_InputRichBlock(name + "_blocks" + i0, x0) }.unzip""")
+    body should include("case v => (v, Map.empty[String, IFile])")
+    body should not include "case v: InputRichBlockParagraph"
+    body should include("""val (photo1, photoFiles) = attachFiles_InputMediaPhoto(name + "_photo", v.photo)""")
+    body should include("case v: InputRichBlockCollage =>")
+    body should include("""private def attachFiles_InputMediaPhoto(name: String, value: InputMediaPhoto)""")
+  }
+
+  // https://github.com/apimorphism/iozhik/issues/21
+  "Every file reachable from a methodsFactory method's params in the real Bot API" must "be attached by the generated Methods code" in {
+    import Generator.Model.{Defun, Kind, Space, Struc}
+
+    val apiFile = List("iozhtest/src/main/resources/tgbot.api", "../iozhtest/src/main/resources/tgbot.api")
+      .map(new java.io.File(_))
+      .find(_.exists)
+      .getOrElse(fail("tgbot.api not found"))
+    val source = scala.io.Source.fromFile(apiFile, "UTF-8")
+    val dsl    = try source.mkString finally source.close()
+    val (space, code) = (for {
+      parsed <- Parser.Grammar.parse(dsl)
+      model  <- Generator.Model.translate(parsed)
+      codes  <- new ScalaApiGeneratorV1().gen(model, cfg)
+    } yield model -> codes.map(_.body).mkString("\n")).fold(err => fail(s"Generation failed: $err"), identity)
+
+    def methods(s: Space): List[Defun] =
+      s.servcs.filter(_.opts.contains("methodsFactory")).flatMap(_.items.collect { case d: Defun => d }) ++
+        s.spaces.flatMap(methods)
+
+    // A step on the way to a file: the type as a field names it, the variant holding the field, and the field
+    final case class Step(owner: String, variant: String, field: String)
+
+    // Every path from a value of `kind` to a (file) field, through struct fields, union leaves and any type params
+    def paths(kind: Kind, seen: Set[String]): List[List[Step]] =
+      if (kind.params.nonEmpty) kind.params.flatMap(paths(_, seen))
+      else if (seen(kind.name)) Nil
+      else
+        space.symbol.resolve(kind).toList.collect { case s: Struc => s }.flatMap { s =>
+          (if (s.leaves.nonEmpty) s.leaves else List(s)).flatMap { v =>
+            val variant = v.kind.map(_.name).getOrElse(kind.name)
+            v.fields.flatMap { f =>
+              val step = Step(kind.name, variant, f.name)
+              if (f.opts.contains("file")) List(List(step))
+              else paths(f.kind, seen + kind.name).map(step :: _)
+            }
+          }
+        }
+
+    // The generated code of a def, up to the next one
+    def defBody(signature: String): Option[String] = {
+      val start = code.indexOf(signature)
+      Option.when(start >= 0) {
+        val end = code.indexOf("def ", start + signature.length)
+        code.substring(start, if (end < 0) code.length else end)
+      }
+    }
+
+    def covered(step: Step): Boolean =
+      defBody(s"def attachFiles_${step.owner}(").exists { helper =>
+        helper.split("case v: ").exists(c => c.startsWith(s"${step.variant} =>") && c.contains(s"v.${step.field}"))
+      }
+
+    // Each link that isn't attached, with the shortest path through it as an example
+    val uncovered = (for {
+      method <- methods(space)
+      param  <- method.dom.toOption.toList.flatMap(_.fields).filterNot(_.opts.contains("file"))
+      path   <- paths(param.kind, Set.empty)
+      paramLink = s"${method.kind.name}.${param.name}"
+      missing <- (if (defBody(s"def ${method.kind.name}(").exists(_.contains(s"${param.name}Attached"))) None
+                  else Some(paramLink)).orElse(path.find(!covered(_)).map(s => s"${s.variant}.${s.field} in attachFiles_${s.owner}"))
+    } yield missing -> (paramLink + path.map(s => s".${s.variant}.${s.field}").mkString))
+      .groupBy(_._1)
+      .map { case (missing, examples) => s"$missing, e.g. ${examples.map(_._2).minBy(_.length)}" }
+      .toList
+      .sorted
+
+    withClue(s"${uncovered.size} links to a file aren't attached:\n${uncovered.mkString("\n")}\n") {
+      uncovered shouldBe empty
+    }
   }
 
   // https://github.com/apimorphism/telegramium/issues/686
