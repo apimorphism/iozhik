@@ -138,6 +138,51 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     body should include("final case class Outer(x: Int, y: Int)")
   }
 
+  "A struct reaching the same struct along two paths of `use`s" must "get its fields once" in {
+    val body = generate(api(
+      """
+        |    Base {
+        |      id: Int
+        |    }
+        |    Left {
+        |      use Base
+        |      l: Int
+        |    }
+        |    Right {
+        |      use Base
+        |      r: Int
+        |    }
+        |    Both {
+        |      use Left
+        |      use Right
+        |    }
+        |    Twice {
+        |      use Base
+        |      use Base
+        |    }
+      """.stripMargin
+    ))
+    body should include("final case class Both(id: Int, l: Int, r: Int)")
+    body should include("final case class Twice(id: Int)")
+  }
+
+  "Two used fields with one name and different types" must "fail the translation" in {
+    translate(api(
+      """
+        |    Left {
+        |      id: Int
+        |    }
+        |    Right {
+        |      id: String
+        |    }
+        |    Both {
+        |      use Left
+        |      use Right
+        |    }
+      """.stripMargin
+    )).left.toOption.getOrElse(fail("translated")) should include("Both uses two fields named `id` of different types")
+  }
+
   "A cycle of `use`s" must "fail the translation" in {
     translate(api(
       """

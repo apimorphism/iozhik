@@ -45,7 +45,8 @@ object Generator {
         case Shape.Union(isSealed, _) => isSealed
         case Shape.Record             => false
       }
-      // Whether it's an `abstract` struct, generated as an open trait.
+      // Whether it's an `abstract` struct, generated as an open trait. For guards and filters; branch with a match on
+      // the shape, so the exhaustiveness check sees it.
       def isAbstract: Boolean = this match {
         case Shape.Union(isSealed, _) => !isSealed
         case Shape.Record             => false
@@ -136,7 +137,8 @@ object Generator {
         case Shape.Record             => Nil
       }
 
-      // The variants that are structs of their own.
+      // The variants that are structs of their own. For guards and filters; branch with a match on the shape, so the
+      // exhaustiveness check sees it.
       def leaves: List[Struc] = shape match {
         case u: Shape.Union => u.leaves
         case Shape.Record   => Nil
@@ -399,7 +401,7 @@ object Generator {
               ownFields = fields ++ y.ownFields,
               mixins = kind.toList ++ y.mixins,
               // the trait declares the used fields too, so every variant needs them
-              usings = (usings ++ y.usings).distinctBy(_.kind)
+              usings = usings ++ y.usings
             )
           )
           val flattens = embeds.map(_.struc).filter(_.opts.contains("flatten"))
@@ -503,7 +505,7 @@ object Generator {
             }
         // An embed's `use`s resolve in the scope of the struct holding it. `name` names x in an error.
         def struc(x: Struc, scope: Option[Kind], name: String): Either[String, Struc] = for {
-          usingFields <- x.usings.flatTraverse(usedFields(_, scope, x.kind.toList, name))
+          usingFields <- x.usings.flatTraverse(usedFields(_, scope, x.kind.toList, name)).flatMap(distinctFields(_, name))
           shape <- x.shape match {
             case Shape.Record => Right(Shape.Record)
             case Shape.Union(isSealed, variants) =>
@@ -515,6 +517,11 @@ object Generator {
           }
           embeds <- x.embeds.traverse(e => struc(e.struc, x.kind, named(e.struc, s"the `${e.name}` field of $name")).map(s => e.copy(struc = s)))
         } yield x.copy(usingFields = usingFields, shape = shape, embeds = embeds)
+        // A field reached along two paths of `use`s is the same field, unless the two disagree on its type.
+        def distinctFields(fields: List[Field], name: String): Either[String, List[Field]] =
+          fields.groupBy(_.name).collectFirst { case (field, fs) if fs.map(_.kind).distinct.size > 1 => field }
+            .map(field => s"$name uses two fields named `$field` of different types")
+            .toLeft(fields.distinctBy(_.name))
         def named(x: Struc, anonymous: String): String = x.kind.fold(anonymous)(_.name)
         def servc(x: Servc): Either[String, Servc] =
           x.items.traverse {
