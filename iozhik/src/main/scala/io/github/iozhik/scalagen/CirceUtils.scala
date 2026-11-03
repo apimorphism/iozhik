@@ -56,7 +56,7 @@ object CirceUtils {
           )
         } else {
           val (enc, dec) = genEmbedsCodecs(parent, typet, leaf, kindName, typeTag, postfix)
-          (enc, "case \"" + typeTag + "\"" + s" => " + dec)
+          (enc, "case \"" + typeTag + "\"" + s" => " + (if (wrapEnumType.isEmpty) dec else s"($dec)$wrapEnumType"))
         }
       }
   }
@@ -70,7 +70,8 @@ object CirceUtils {
       }
       ename = "\"" + name + "\""
       fname = "\"" + f.name + "\""
-      kk = genKind(f.kind).toOption.getOrElse("Wrong kind") // TODO: Better diagnosis, throw error
+      // the type the case class declares the field with, an open enum included
+      kk = genFieldType(f.kind, child.kind).toOption.getOrElse("Wrong kind") // TODO: Better diagnosis, throw error
     } yield {
       (
         s"${f.name} <- Decoder[$kk].prepare(_.downField($ename).downField($fname))",
@@ -81,7 +82,7 @@ object CirceUtils {
     val embedFields: Seq[String] = child.embeds.flatMap(_.struc.allFields.map(_.name))
     val inheritedFields = child.allFields.filter(z => !embedFields.contains(z.name)).map { f =>
       val fname = "\"" + f.name + "\""
-      val kk = genKind(f.kind).toOption.getOrElse("Wrong kind") // TODO: Better diagnosis, throw error
+      val kk = genFieldType(f.kind, child.kind).toOption.getOrElse("Wrong kind") // TODO: Better diagnosis, throw error
       (
         s"${f.name} <- Decoder[$kk].prepare(_.downField($fname))",
         s"${f.name} = ${f.name}",

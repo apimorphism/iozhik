@@ -17,9 +17,9 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
   private def translate(dsl: String): Either[String, Generator.Model.Space] =
     Parser.Grammar.parse(dsl).flatMap(Generator.Model.translate)
 
-  private def generate(dsl: String): String =
+  private def generate(dsl: String, config: GeneratorConfig = cfg): String =
     translate(dsl)
-      .flatMap(new ScalaApiGeneratorV1().gen(_, cfg))
+      .flatMap(new ScalaApiGeneratorV1().gen(_, config))
       .fold(err => fail(s"Generation failed: $err"), _.map(_.body).mkString("\n"))
 
   private def api(items: String): String =
@@ -531,5 +531,38 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     )
     body should include("final case class A(y: Int, x: Option[Int] = Option.empty)")
     body.replaceAll("\\s+", " ") should include("""("y" | Codec[Int]) :: ("x" | Codec[Option[Int]])""")
+  }
+
+  "A variant with a flatten embed, under open enums" must "decode its enum-typed fields and itself as open enums" in {
+    val body = generate(
+      api(
+        """
+          |    enum Color {
+          |      Red {
+          |        type: "red"
+          |      }
+          |    }
+          |    enum Event {
+          |      color: Color
+          |      Created {
+          |        type: "created"
+          |        object: (flatten) {
+          |          tint: Color
+          |        }
+          |      }
+          |    }
+          |    Methods (methodsFactory) {
+          |      def get {
+          |        id: Int
+          |      } => Method[Event]
+          |    }
+        """.stripMargin
+      ),
+      cfg.copy(openEnum = OpenEnumConfig(enabled = true, excludeTypes = List.empty))
+    )
+    body should include("color <- Decoder[iozhik.OpenEnum[Color]].prepare(_.downField(\"color\"))")
+    body should include("tint <- Decoder[iozhik.OpenEnum[Color]].prepare(_.downField(\"object\").downField(\"tint\"))")
+    body.replaceAll("\\s+", " ") should include("""case "created" => (for {""")
+    body.replaceAll("\\s+", " ") should include("Created(color = color,tint = tint) }).map(iozhik.OpenEnum.Known(_))")
   }
 }
