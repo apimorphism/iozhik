@@ -20,10 +20,6 @@ class ScalaApiGeneratorV1 {
   def DomPostfix = "Req" // function domain postfix
   def CodPostfix = "Res" // function codomain postfix
 
-  def camel2snake(name: String): String = name
-    .replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2")
-    .replaceAll("([a-z\\d])([A-Z])", "$1_$2")
-    .toLowerCase
   def snake2camel(name: String): String = {
     def loop(x : List[Char]): List[Char] = (x: @unchecked) match {
       case '_' :: '_' :: rest => loop('_' :: rest)
@@ -711,10 +707,6 @@ class ScalaApiGeneratorV1 {
     case Nil    => List(s)
     case leaves => leaves
   }
-
-  // A field's JSON key, which attachment names are built from.
-  private def jsonName(f: Field)(implicit meta: GeneratorMeta): String =
-    if (meta.space.opts.contains("snake")) camel2snake(f.name) else f.name
 
   // The kinds a field holds inside its List[_] and Option[_] layers, which attachFiles sees through.
   private def innerKinds(k: Kind): List[Kind] =

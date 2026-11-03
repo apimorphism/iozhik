@@ -14,6 +14,15 @@ object ScalaApiGeneratorUtils {
     "Option" -> "Option.empty"
   )
 
+  def camel2snake(name: String): String = name
+    .replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2")
+    .replaceAll("([a-z\\d])([A-Z])", "$1_$2")
+    .toLowerCase
+
+  // a field's key in the JSON, which attachment names are built from
+  def jsonName(f: Field)(implicit meta: GeneratorMeta): String =
+    if (meta.space.opts.contains("snake")) camel2snake(f.name) else f.name
+
   def genKind(x: Kind, wrapEnumType: String => String = identity)(implicit meta: GeneratorMeta): Either[String, String] =
     for {
       items <- x.params.map(p => genKind(p, wrapEnumType)).sequence
