@@ -69,33 +69,60 @@ object PredefGenerator {
         |  )(implicit decoder: Decoder[Res]): MethodReq[Res] =
         |    new MethodReq(MethodPayload(name, json, files), decoder)
         |
-        |  // A file embedded inside a compound parameter (e.g. InputMedia), at any depth, can't be attached by name
-        |  // directly, since Telegram only recognizes "attach://<name>" references nested inside the JSON body.
-        |  // These rewrite such a field to that placeholder and collect the real IFile for multipart upload,
-        |  // leaving file_id/URL/already-"attach://" references (InputLinkFile) untouched.
-        |  def attachFile(name: String, file: IFile): (IFile, Map[String, IFile]) = file match {
-        |    case _: InputLinkFile => (file, Map.empty)
-        |    case other            => (InputLinkFile("attach://" + name), Map(name -> other))
-        |  }
-        |
-        |  def attachFile(name: String, file: Option[IFile]): (Option[IFile], Map[String, IFile]) = file match {
-        |    case Some(f) =>
-        |      val (nf, files) = attachFile(name, f)
-        |      (Some(nf), files)
-        |    case None => (None, Map.empty)
-        |  }
-        |
         |}
         """.stripMargin
     val methodReqCode = Code(
       body = methodReq,
       name = "Method",
-      // InputLinkFile is declared via a `wrap` inside the IFile enum, so the symbol table can't resolve it;
-      // it lives in IFile's package, so derive its import from IFile's.
-      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path)).flatMap { i =>
-        List(i, i.stripSuffix("IFile") + "InputLinkFile")
-      }
+      imports = "import io.circe.{Decoder, Json}" :: importKind(Kind("IFile", path = x.path))
     )
+    // The helpers of the attachFiles_ functions, private to the factory: only the generated code calls them.
+    val attaching = items.exists(_.name.startsWith("attachFiles_"))
+    val attachHelpers =
+      if (!attaching) ""
+      else
+        """
+          |  // A file embedded inside a compound parameter (e.g. InputMedia), at any depth, can't be attached by name
+          |  // directly, since Telegram only recognizes "attach://<name>" references nested inside the JSON body.
+          |  // These rewrite such a field to that placeholder and collect the real IFile for multipart upload,
+          |  // leaving file_id/URL/already-"attach://" references (InputLinkFile) untouched.
+          |  private def attachFile(name: String, file: IFile): (IFile, Map[String, IFile]) = file match {
+          |    case _: InputLinkFile => (file, Map.empty)
+          |    case other            => (InputLinkFile("attach://" + name), Map(name -> other))
+          |  }
+          |
+          |  private def attachFile(name: String, file: Option[IFile]): (Option[IFile], Map[String, IFile]) =
+          |    attachOption(name, file)(attachFile)
+          |
+          |  // Attaches the files of each element of a List, under the List's name and the element's index. A List holding no
+          |  // file is returned as is.
+          |  private def attachList[A](name: String, values: List[A])(
+          |    attach: (String, A) => (A, Map[String, IFile])
+          |  ): (List[A], Map[String, IFile]) = {
+          |    val (attached, files) = values.zipWithIndex.map { case (x, i) => attach(name + "." + i, x) }.unzip
+          |    val all               = files.flatten.toMap
+          |    (if (all.isEmpty) values else attached, all)
+          |  }
+          |
+          |  // Attaches the files of an Option's value, under the Option's name.
+          |  private def attachOption[A](name: String, value: Option[A])(
+          |    attach: (String, A) => (A, Map[String, IFile])
+          |  ): (Option[A], Map[String, IFile]) = value match {
+          |    case Some(x) =>
+          |      val (attached, files) = attach(name, x)
+          |      (Some(attached), files)
+          |    case None => (None, Map.empty)
+          |  }
+          |
+          |  // The value with its fields' files attached, or as it is, rather than copied, when it holds none.
+          |  private def withAttached[A](value: A, files: Map[String, IFile])(attached: => A): (A, Map[String, IFile]) =
+          |    if (files.isEmpty) (value, files) else (attached, files)
+          |""".stripMargin
+    // InputLinkFile is declared via a `wrap` inside the IFile enum, so the symbol table can't resolve it;
+    // it lives in IFile's package, so derive its import from IFile's.
+    val attachImports =
+      if (!attaching) Nil
+      else importKind(Kind("IFile", path = x.path)).flatMap(i => List(i, i.stripSuffix("IFile") + "InputLinkFile"))
     val body =
       s"""
          |trait $kind {
@@ -104,7 +131,7 @@ object PredefGenerator {
          |  private implicit def decodeEither[A, B](
          |    implicit decoderA: Decoder[A], decoderB: Decoder[B]
          |  ): Decoder[Either[A, B]] = decoderA.either(decoderB)
-         |$defuns
+         |$attachHelpers$defuns
          |}
          """.stripMargin
     List(
@@ -112,7 +139,7 @@ object PredefGenerator {
         body = body,
         name = x.kind.name,
         imports = "import io.circe.syntax._" :: "import CirceImplicits._" ::
-          items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
+          attachImports ++ items.filter(_.packageObject == "__this_trait__").flatMap(_.imports)
       ),
       methodReqCode
     )
