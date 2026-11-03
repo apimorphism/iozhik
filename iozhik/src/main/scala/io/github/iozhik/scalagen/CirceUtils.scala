@@ -19,8 +19,7 @@ object CirceUtils {
         .map { kindName =>
           if (leaf.embeds.isEmpty) {
             (
-              s"case $typeTag: $kindName$postfix => $typeTag.asJson.mapObject(_.add(" +
-                "\"" + typet.name + "\", Json.fromString(\"" + typeTag + "\")))",
+              s"case $typeTag: $kindName$postfix => $typeTag.asJson",
               s"Decoder[$kindName$postfix]"
             )
           } else {
@@ -50,8 +49,7 @@ object CirceUtils {
       .map { kindName =>
         if (leaf.embeds.isEmpty) {
           (
-            s"case $typeTag: $kindName$postfix => $typeTag.asJson.mapObject(_.add(" +
-              "\"" + typet.name + "\", Json.fromString(\"" + typeTag + "\")))",
+            s"case $typeTag: $kindName$postfix => $typeTag.asJson",
             "case \"" + typeTag + "\"" + s" => Decoder[$kindName$postfix]$wrapEnumType"
           )
         } else {

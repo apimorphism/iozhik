@@ -304,6 +304,8 @@ class ScalaApiGeneratorV1 {
             if (kind.endsWith(DomPostfix)) "" else s"implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name$postfix] = $decoderBody"
           }
           else ""
+          // A variant writes its own tag (and a request its method), so it's sent whichever type a field declares
+          val tagFields = struc.typets.map(t => s""""${t.name}" -> "${t.tag}".asJson""")
           // (omitempty) List fields encode to null when empty, so the filter below leaves them out of the JSON
           val encoderFields = (struc.allFields
             .map{ y =>
@@ -314,7 +316,7 @@ class ScalaApiGeneratorV1 {
               } else {
                 s""""$n" -> x.$fn.asJson"""
               }
-            } ++ struc.typets.find(_.name == "method").map(m => s""""method" -> "${m.tag}".asJson"""))
+            } ++ tagFields)
             .intercalate(",")
           val encoderBody = if (!struc.isCaseObject) {
             s"""
@@ -326,6 +328,8 @@ class ScalaApiGeneratorV1 {
               |   )
               | }
             """.stripMargin
+          } else if (tagFields.nonEmpty) {
+            s"(_: $name.type) => Json.obj(${tagFields.intercalate(",")})"
           } else {
             s"(_: $name.type) => ().asJson"
           }

@@ -332,6 +332,36 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include(""""allowed_updates" -> x.allowedUpdates.asJson""")
   }
 
+  // https://github.com/apimorphism/telegramium/issues/704
+  "A variant of a tagged enum" must "write its own tag, so a field of the variant's type sends it too" in {
+    val bodies = generate(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum Media {
+        |      MediaPhoto {
+        |        type : "photo:0"
+        |        media : String
+        |      }
+        |      MediaDice {
+        |        type : "dice:1"
+        |      }
+        |    }
+        |    RichBlockPhoto {
+        |      photo: MediaPhoto
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    val body = bodies.mkString("\n")
+    body should include(""""media" -> x.media.asJson,"type" -> "photo".asJson""")
+    body should include("""mediadiceEncoder: Encoder[MediaDice.type] = (_: MediaDice.type) => Json.obj("type" -> "dice".asJson)""")
+    body should include("case photo: MediaPhoto => photo.asJson")
+    body should include("case dice: MediaDice.type => dice.asJson")
+    body should not include "mapObject"
+  }
+
   "An (omitempty) field that is not a List" must "fail the generation" in {
     val result = for {
       space <- Parser.Grammar.parse(
