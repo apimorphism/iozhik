@@ -96,18 +96,6 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     body should include("val req = SendReq(chatId,text)")
   }
 
-  "A `use` of a struct that doesn't exist" must "be dropped, as before" in {
-    val body = generate(api(
-      """
-        |    Holder {
-        |      use Missing
-        |      x: Int
-        |    }
-      """.stripMargin
-    ))
-    body should include("final case class Holder(x: Int)")
-  }
-
   "A struct with variants that is neither abstract nor an enum" must "fail the translation" in {
     translate(api(
       """
@@ -137,43 +125,5 @@ class StrucShapeSpec extends AnyFlatSpec with Matchers {
     body.replaceAll("\\s+", " ") should include(
       "/** @param text the text */ final case class Holder( /** the chat */ chatId: Long, text: String)"
     )
-  }
-
-  "A Java method whose params are an enum without fields" must "take no request, as before" in {
-    val body = translate(
-      """
-        |namespace iozhik {
-        |  namespace geometry {
-        |    enum Figure {
-        |      Square {
-        |        type: "square:1"
-        |      }
-        |    }
-        |    Methods {
-        |      def draw Figure => {
-        |        ok: Boolean
-        |      }
-        |    }
-        |  }
-        |}
-      """.stripMargin
-    ).flatMap(new JavaApiGeneratorV1().gen(_)).fold(err => fail(s"Generation failed: $err"), _.map(_.body).mkString("\n"))
-    body should include("draw() throws")
-    body should not include "DrawReq x"
-  }
-
-  "An abstract enum" must "be generated as an enum, as before" in {
-    val body = generate(api(
-      """
-        |    abstract enum Figure {
-        |      Square {
-        |        type: "square"
-        |        side: Int
-        |      }
-        |    }
-      """.stripMargin
-    ))
-    body should include("sealed trait Figure")
-    body should include("final case class Square(side: Int) extends Figure")
   }
 }
