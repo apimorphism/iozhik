@@ -81,9 +81,8 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     body should include("""val (stickerAttached, stickerFiles) = attachFiles_InputSticker("sticker", sticker)""")
     body should include("""val req = AddStickerToSetReq(userId,stickerAttached)""")
     body should include("""MethodReq[Boolean]("addStickerToSet", req.asJson, stickerFiles)""")
-    body should include("""val (sticker1, stickerFiles) = MethodReq.attachFile(name + ".sticker", v.sticker)""")
-    body should include("val files = stickerFiles")
-    body should include("if (files.isEmpty) (v, files) else (v.copy(sticker = sticker1), files)")
+    body should include("""val (sticker1, stickerFiles) = attachFile(name + ".sticker", v.sticker)""")
+    body should include("withAttached(v, stickerFiles)(v.copy(sticker = sticker1))")
   }
 
   "A methodsFactory method taking a List of a union type whose variants embed file fields" must "attach each element's file(s) under an indexed name and rewrite them to attach:// references" in {
@@ -115,17 +114,21 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     )
     val body = bodies.mkString("\n")
     body should include(
-      """val (a0, f0) = media.zipWithIndex.map { case (x0, i0) => attachFiles_InputMedia("media." + i0, x0) }.unzip"""
+      """val (mediaAttached, mediaFiles) = attachList("media", media)((n0, x0) => attachFiles_InputMedia(n0, x0))"""
     )
-    body should include("val files0 = f0.flatten.toMap")
-    body should include("(if (files0.isEmpty) media else a0, files0)")
     body should include("""val req = SendMediaGroupReq(mediaAttached)""")
     body should include("""MethodReq[Boolean]("sendMediaGroup", req.asJson, mediaFiles)""")
-    body should include("""val (media1, mediaFiles) = MethodReq.attachFile(name + ".media", v.media)""")
-    body should include("if (files.isEmpty) (v, files) else (v.copy(media = media1), files)")
-    body should include("""val (thumbnail1, thumbnailFiles) = MethodReq.attachFile(name + ".thumbnail", v.thumbnail)""")
-    body should include("val files = mediaFiles ++ thumbnailFiles")
-    body should include("if (files.isEmpty) (v, files) else (v.copy(media = media1, thumbnail = thumbnail1), files)")
+    body should include("""val (media1, mediaFiles) = attachFile(name + ".media", v.media)""")
+    body should include("withAttached(v, mediaFiles)(v.copy(media = media1))")
+    body should include("""val (thumbnail1, thumbnailFiles) = attachFile(name + ".thumbnail", v.thumbnail)""")
+    body should include("withAttached(v, mediaFiles ++ thumbnailFiles)(v.copy(media = media1, thumbnail = thumbnail1))")
+    // the helpers belong to the factory, not to MethodReq's API
+    body should include("private def attachFile(name: String, file: IFile): (IFile, Map[String, IFile])")
+    body should include("private def attachList[A](name: String, values: List[A])")
+    body should include("private def attachOption[A](name: String, value: Option[A])")
+    body should include("private def withAttached[A](value: A, files: Map[String, IFile])(attached: => A)")
+    body should not include "files.isEmpty) (v, files)"
+    body should not include "MethodReq.attach"
   }
 
   // https://github.com/apimorphism/iozhik/issues/21
@@ -179,16 +182,17 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     )
     val body = bodies.mkString("\n")
     // sendPoll.options[i].media: a List of a struct holding an Option of a union
-    body should include("""val (a0, f0) = options.zipWithIndex.map { case (x0, i0) => attachFiles_InputPollOption("options." + i0, x0) }.unzip""")
+    body should include("""attachList("options", options)((n0, x0) => attachFiles_InputPollOption(n0, x0))""")
     body should include("case v: InputPollOption =>")
-    body should include("val (a0, f0) = attachFiles_InputMedia(name + \".media\", x0)")
+    body should include("""attachOption(name + ".media", v.media)((n0, x0) => attachFiles_InputMedia(n0, x0))""")
     // sendPoll.media: an Option param
-    body should include("""val (mediaAttached, mediaFiles) = media match {""")
-    body should include("""val (a0, f0) = attachFiles_InputMedia("media", x0)""")
+    body should include("""val (mediaAttached, mediaFiles) = attachOption("media", media)((n0, x0) => attachFiles_InputMedia(n0, x0))""")
     body should include("""MethodReq[Boolean]("sendPoll", req.asJson, optionsFiles ++ mediaFiles)""")
     // sendRichMessage.rich_message.blocks[i].photo.media, and blocks nested in a collage
     body should include("""val (richMessageAttached, richMessageFiles) = attachFiles_InputRichMessage("rich_message", richMessage)""")
-    body should include("""v.blocks.zipWithIndex.map { case (x0, i0) => attachFiles_InputRichBlock(name + ".blocks." + i0, x0) }.unzip""")
+    body should include("""attachList(name + ".blocks", v.blocks)((n0, x0) => attachFiles_InputRichBlock(n0, x0))""")
+    body should not include "case (x0, i0)"
+    body should not include "case Some(x0)"
     body should include("case v @ (_: InputRichBlockParagraph) => (v, Map.empty[String, IFile])")
     body should not include "case v => (v, Map.empty[String, IFile])"
     body should include("""val (photo1, photoFiles) = attachFiles_InputMediaPhoto(name + ".photo", v.photo)""")
@@ -227,8 +231,8 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       """.stripMargin
     )
     val body = bodies.mkString("\n")
-    body should include("""val (type1, typeFiles) = MethodReq.attachFile(name + ".type", v.`type`)""")
-    body should include("if (files.isEmpty) (v, files) else (v.copy(`type` = type1), files)")
+    body should include("""val (type1, typeFiles) = attachFile(name + ".type", v.`type`)""")
+    body should include("withAttached(v, typeFiles)(v.copy(`type` = type1))")
     body should include("""val (object1, objectFiles) = attachFiles_InputThing(name + ".object", v.`object`)""")
     body should include("""val (typeAttached, typeFiles) = attachFiles_InputThing("type", `type`)""")
     body should include("case v @ (_: InputThingText | InputThingNone) => (v, Map.empty[String, IFile])")
