@@ -393,8 +393,8 @@ object Generator {
           val variants: List[Variant] = children ++ wrapps ++ enumstrs
           val name = kind.map(_.name).getOrElse("an anonymous struct")
           val shape: F[Shape] =
-            if (x.isEnum && x.isAbstract) E.raiseError(s"$name can't be both abstract and an enum")
-            else if (x.isEnum || x.isAbstract) E.pure(Shape.Union(isSealed = x.isEnum, variants))
+            // an `abstract enum` is an enum
+            if (x.isEnum || x.isAbstract) E.pure(Shape.Union(isSealed = x.isEnum, variants))
             else if (variants.nonEmpty) E.raiseError(s"$name has variants but is neither abstract nor an enum")
             else E.pure(Shape.Record)
           shape.map(shape => Struc(
@@ -481,22 +481,22 @@ object Generator {
       // re-indexes the spaces so lookups return the resolved structs.
       def resolveUsings(root: Space): Either[String, Space] = {
         // An embed's `use`s resolve in the scope of the struct holding it.
-        def struc(x: Struc, scope: Option[Kind]): Either[String, Struc] = for {
-          usingFields <- x.usings.flatTraverse { u =>
-            root.symbol.find(u.kind, scope).collect { case s: Struc => s.ownFields }
-              .toRight(s"can't resolve `use ${u.kind.name}` in ${x.kind.fold("an anonymous struct")(_.name)}")
-          }
-          shape <- x.shape match {
-            case Shape.Record => Right(Shape.Record)
-            case Shape.Union(isSealed, variants) =>
-              variants.traverse {
-                case s: Struc => struc(s, s.kind).map(s => s: Variant)
-                case w: Wrapp   => Right(w)
-                case e: EnumStr => Right(e)
-              }.map(Shape.Union(isSealed, _))
-          }
-          embeds <- x.embeds.traverse(e => struc(e.struc, x.kind).map(s => e.copy(struc = s)))
-        } yield x.copy(usingFields = usingFields, shape = shape, embeds = embeds)
+        def struc(x: Struc, scope: Option[Kind]): Either[String, Struc] = {
+          // a `use` that names no struct adds no fields
+          val usingFields = x.usings.flatMap(u => root.symbol.find(u.kind, scope).collect { case s: Struc => s.ownFields }.toList.flatten)
+          for {
+            shape <- x.shape match {
+              case Shape.Record => Right(Shape.Record)
+              case Shape.Union(isSealed, variants) =>
+                variants.traverse {
+                  case s: Struc => struc(s, s.kind).map(s => s: Variant)
+                  case w: Wrapp   => Right(w)
+                  case e: EnumStr => Right(e)
+                }.map(Shape.Union(isSealed, _))
+            }
+            embeds <- x.embeds.traverse(e => struc(e.struc, x.kind).map(s => e.copy(struc = s)))
+          } yield x.copy(usingFields = usingFields, shape = shape, embeds = embeds)
+        }
         def servc(x: Servc): Either[String, Servc] =
           x.items.traverse {
             case d: Defun =>

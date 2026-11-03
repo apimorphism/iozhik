@@ -149,7 +149,8 @@ class JavaApiGeneratorV1 extends Generator {
 
     rawDom.map {
       dom =>
-        val domain = if (dom.isCaseObject) "" else s"${name.capitalize}Req x"
+        // a `use` that names no struct still counts, as it always has
+        val domain = if (dom.ownFields.isEmpty && dom.usings.isEmpty) "" else s"${name.capitalize}Req x"
         s"${name.capitalize}Res ${defun.kind.name}($domain) throws Exception;"
     }.getOrElse("")
   }
@@ -165,7 +166,7 @@ class JavaApiGeneratorV1 extends Generator {
 
     rawDom.map {
       dom =>
-        if (dom.isCaseObject)
+        if (dom.ownFields.isEmpty && dom.usings.isEmpty)
           s"""
              | public ${name.capitalize}Res ${defun.kind.name}() throws UnirestException {
              |   return post("${defun.kind.name}", ${name.capitalize}Res.class);

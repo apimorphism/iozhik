@@ -556,7 +556,8 @@ class ScalaApiGeneratorV1 {
   private def genStrucDocs(struc: Struc) = {
     val docsBody = (if (struc.doc.nonEmpty) struc.doc.split("\n").toList.map(_.trim) else List.empty)
       .intercalate(s"$delimiter* ")
-    val params = constructorFields(struc).flatMap { field =>
+    // a used field is documented inline, where genStruc declares it
+    val params = requiredFieldsFirst(struc.ownFields).flatMap { field =>
       if (field.doc.nonEmpty) Some((s"@param ${field.name}" + field.doc).split(delimiter).toList.map(_.trim))
       else None
     }
