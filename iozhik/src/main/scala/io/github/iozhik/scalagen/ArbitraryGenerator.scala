@@ -40,6 +40,7 @@ object ArbitraryGenerator {
     roundTrip: Option[String],
     shrinks: Boolean,
     refs: Set[String],
+    optionalArrays: List[String] = Nil,
   )
 
   // The same field-type decisions as genFieldType: which enums are wrapped in OpenEnum depends on the enclosing struct
@@ -162,9 +163,12 @@ object ArbitraryGenerator {
     roundTrip: Option[Boolean],
     depths: Map[String, Int],
     shrinking: Set[String],
-  )(implicit meta: GeneratorMeta): Either[String, TypeGen] =
+    // how the type is spelled where the generator is, when that's not its bare name
+    scalaType: Option[String] = None,
+  )(implicit meta: GeneratorMeta): Either[String, TypeGen] = {
+    val tpe = scalaType.getOrElse(typeName)
     if (fields.isEmpty)
-      Right(emit(typeName, s"$typeName.type", s"Gen.const($typeName)", NoShrink, roundTrip, Set.empty, meta))
+      Right(emit(typeName, s"$tpe.type", s"Gen.const($tpe)", NoShrink, roundTrip, Set.empty, meta))
     else
       fields.traverse(f => genFor(f.kind, enclosing, depths, shrinking).map(f -> _)).map { gens =>
         // A flat zip of zips: Gen.zip takes up to 9. Not a for comprehension: a closure per field overflows the Scala 2
@@ -179,7 +183,7 @@ object ArbitraryGenerator {
         val (src, pat) = top(gens.zipWithIndex.map { case ((_, g), i) => (g.gen, s"a$i") })
         val args = gens.zipWithIndex.map { case ((f, _), i) => s"${sanitize(f.name)} = a$i" }.mkString(", ")
         val lambda = if (gens.size == 1) pat else s"case $pat"
-        val body = s"$src.map { $lambda => $typeName($args) }"
+        val body = s"$src.map { $lambda => $tpe($args) }"
         // primitive fields, and composites that don't shrink, get no entry
         val shrinkers = gens.collect { case (f, g) if g.shrink != NoShrink =>
           val name = sanitize(f.name)
@@ -187,9 +191,11 @@ object ArbitraryGenerator {
         }
         val shrink =
           if (shrinkers.isEmpty) NoShrink
-          else s"shrinkFields[$typeName](x => List(${shrinkers.mkString(", ")}))"
-        emit(typeName, typeName, s"deeper($body)", shrink, roundTrip, gens.flatMap(_._2.refs).toSet, meta)
+          else s"shrinkFields[$tpe](x => List(${shrinkers.mkString(", ")}))"
+        emit(typeName, tpe, s"deeper($body)", shrink, roundTrip, gens.flatMap(_._2.refs).toSet, meta)
+          .copy(optionalArrays = fields.filter(_.opts.contains("omitempty")).map(jsonName))
       }
+  }
 
   private def sanitize(name: String): String = io.github.iozhik.GeneratorUtils.sanitize(name, keywords)
 
@@ -252,6 +258,79 @@ object ArbitraryGenerator {
     } yield (if (strucs.isEmpty) Nil else List(here -> strucs)) ++ spaces
   }
 
+  /** One Method of a methodsFactory service: the generator of its `<Method>Req`, which holds the Method's arguments, and
+    * its entry in the Methods list, which builds the Method from them with the factory, as users do.
+    */
+  private final case class MethodGen(req: TypeGen, entry: String, factory: String)
+
+  // The Req types are in the service's package, which may not be the generators' one.
+  private def genMethods(x: Space, cfg: GeneratorConfig, symt: Symtable, pkg: List[String], gensPkg: List[String], depths: Map[String, Int], shrinking: Set[String]): Either[String, List[MethodGen]] = {
+    implicit val meta: GeneratorMeta = GeneratorMeta(x, symt, cfg, collectCodKinds(x)(x.symbol))
+    val here = pkg ++ Option(x.name).filter(_.nonEmpty)
+    val q =
+      if (here == gensPkg) ""
+      else if (here.startsWith(gensPkg)) here.drop(gensPkg.size).mkString("", ".", ".")
+      else here.mkString("", ".", ".")
+    for {
+      methods <- x.servcs.filter(_.opts.contains("methodsFactory")).flatTraverse { s =>
+        s.items.collect { case d: Defun => d }.traverse { d =>
+          val name = d.kind.name
+          val reqName = name.capitalize + "Req"
+          for {
+            struc <- d.dom.left.map(k => s"no generator for the arguments of $name: it takes a $k, not fields")
+            params = constructorFields(struc)
+            // the Req encloses its params: a type that is never decoded, so, as in the factory, no param is an OpenEnum
+            req <- genCaseClass(reqName, params, Some(Kind(reqName)), None, depths, shrinking, scalaType = Some(q + reqName))
+          } yield {
+            // the Req is a case object when it has no params, as genCaseClass decides
+            val tpe = if (params.isEmpty) s"$q$reqName.type" else q + reqName
+            val call =
+              if (params.isEmpty) s"_ => Factory.${sanitize(name)}()"
+              else s"x => Factory.${sanitize(name)}(${params.map(f => s"${sanitize(f.name)} = x.${sanitize(f.name)}").mkString(", ")})"
+            val obj = objName(reqName)
+            MethodGen(req, s"""new MethodCase[$tpe]("$name", $obj.gen, $obj.shrink, $call, _.asJson)""", q + s.kind.name)
+          }
+        }
+      }
+      spaces <- x.spaces.flatTraverse(genMethods(_, cfg, symt, here, gensPkg, depths, shrinking))
+    } yield methods ++ spaces
+  }
+
+  private def methodCases(factory: String, methods: List[MethodGen]): String = {
+    // the Method type and the codecs of the Reqs are next to the factory
+    def nextToFactory(name: String) = factory.split('.').init.appended(name).mkString(".")
+    s"""${methods.map(_.req.obj).mkString("\n\n")}
+       |
+       |object MethodCases {
+       |  import ${nextToFactory("CirceImplicits")}._
+       |
+       |  /** A Method, with the generator of the arguments it is built from, and those arguments as the factory encodes them,
+       |    * before any file is attached.
+       |    */
+       |  final class MethodCase[A](
+       |    val name: String,
+       |    val gen: Gen[A],
+       |    val shrink: Shrink[A],
+       |    val method: A => ${nextToFactory("Method")}[_],
+       |    val json: A => Json
+       |  )
+       |
+       |  private object Factory extends $factory
+       |
+       |  val all: List[MethodCase[_]] = List(
+       |${methods.map("    " + _.entry).mkString(",\n")}
+       |  )
+       |}""".stripMargin
+  }
+
+  private def optionalArrays(types: List[TypeGen]): String = {
+    val entries = types.flatMap(t => t.optionalArrays.map(k => s""""${t.typeName}.$k""""))
+    s"""object OptionalArrays {
+       |  /** The (omitempty) List fields, as <type>.<JSON key>: left out of the JSON when empty, never sent as []. */
+       |  val all: Set[String] = Set(${entries.mkString(", ")})
+       |}""".stripMargin
+  }
+
   // On top of the main config: scalafmt otherwise puts every argument on a line of its own, and the wide types have a
   // hundred fields. One comment: a second one replaces the first.
   private val fmtOverrides =
@@ -283,22 +362,28 @@ object ArbitraryGenerator {
         if (next == shrinking) Right(spaces) else settle(next)
       }
     settle(Set.empty).flatMap { spaces =>
-      val types = spaces.flatMap(_._2)
-      val generated = types.map(_.typeName).toSet
-      // abstract structs, and structs outside a circe namespace, get no object
-      val missing = types.flatMap(t => (t.refs -- generated).toList.map(_ -> t.typeName)).groupMap(_._1)(_._2)
-      // a type without a finite value: recursion through it is never cut, and the generator overflows the stack
-      val endless = generated.filterNot(depths.contains)
-      val unknown = cfg.customGens.keySet -- generated
-      if (missing.nonEmpty)
-        Left(missing.toList.sortBy(_._1).map { case (n, users) => s"no generator for $n, which ${users.sorted.distinct.mkString(", ")} refers to" }.mkString("; "))
-      else if (endless.nonEmpty) Left(s"no finite value to generate for: ${endless.toList.sorted.mkString(", ")}")
-      else Either.cond(unknown.isEmpty, spaces, s"custom-gens for types without a generator: ${unknown.toList.sorted.mkString(", ")}")
-    }.flatMap { spaces =>
       // the objects refer to each other unqualified, and RoundTrips imports its own package's CirceImplicits
       val pkgs = spaces.map(_._1.mkString("."))
       Either.cond(pkgs.size <= 1, spaces, s"generators for more than one package aren't supported: ${pkgs.mkString(", ")}")
-    }.map(_.flatMap { case (pkgPath, types) =>
+    }.flatMap { spaces =>
+      val types = spaces.flatMap(_._2)
+      val gensPkg = spaces.headOption.fold(List.empty[String])(_._1)
+      genMethods(x, cfg, x.symbol, Nil, gensPkg, depths, types.filter(_.shrinks).map(_.typeName).toSet).flatMap { methods =>
+        val generated = types.map(_.typeName).toSet
+        val reqs = methods.map(_.req)
+        // abstract structs, and structs outside a circe namespace, get no object
+        val missing = (types ++ reqs).flatMap(t => (t.refs -- generated).toList.map(_ -> t.typeName)).groupMap(_._1)(_._2)
+        // a type without a finite value: recursion through it is never cut, and the generator overflows the stack
+        val endless = generated.filterNot(depths.contains)
+        val unknown = cfg.customGens.keySet -- generated -- reqs.map(_.typeName)
+        val factories = methods.map(_.factory).distinct
+        if (factories.size > 1) Left(s"a Methods list for more than one methodsFactory isn't supported: ${factories.mkString(", ")}")
+        else if (missing.nonEmpty)
+          Left(missing.toList.sortBy(_._1).map { case (n, users) => s"no generator for $n, which ${users.sorted.distinct.mkString(", ")} refers to" }.mkString("; "))
+        else if (endless.nonEmpty) Left(s"no finite value to generate for: ${endless.toList.sorted.mkString(", ")}")
+        else Either.cond(unknown.isEmpty, spaces.map { case (pkg, types) => (pkg, types, factories.headOption.map(_ -> methods)) }, s"custom-gens for types without a generator: ${unknown.toList.sorted.mkString(", ")}")
+      }
+    }.map(_.flatMap { case (pkgPath, types, factoryMethods) =>
       val pkg = pkgPath.mkString(".")
       List(
         file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder}\nimport scala.reflect.ClassTag", prims),
@@ -309,7 +394,9 @@ object ArbitraryGenerator {
           s"import $pkg.CirceImplicits._\nimport $pkg.GenPrims.RoundTripCase",
           s"object RoundTrips {\n  val all: List[RoundTripCase[_]] = List(\n${types.flatMap(_.roundTrip).map("    " + _).mkString(",\n")}\n  )\n}"
         ),
-      )
+      ) ++ factoryMethods.map { case (factory, methods) =>
+        file(pkg, "MethodCases.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.Json\nimport io.circe.syntax._", methodCases(factory, methods))
+      } :+ file(pkg, "OptionalArrays.scala", "", optionalArrays(types ++ factoryMethods.toList.flatMap(_._2).map(_.req)))
     })
   }
 }

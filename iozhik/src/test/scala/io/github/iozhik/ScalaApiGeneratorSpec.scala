@@ -431,7 +431,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
 
   "Generators" must "go into a test source tree of their own, one small object per type, with the round-trip list" in {
     val files = generateGens(gensDsl)
-    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala")
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "MethodCases.scala", "OptionalArrays.scala")
     files("GenTypes.scala") should include("object GenDated")
     files("GenTypes.scala") should include("object GenReply")
   }
@@ -499,11 +499,125 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     ) should include("generators for more than one package aren't supported: telegramium.bots, telegramium.other")
   }
 
+  "Generators for more than one methodsFactory" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Methods (methodsFactory) {
+        |      def getMe {
+        |      } => Method[Boolean]
+        |    }
+        |    MoreMethods (methodsFactory) {
+        |      def getYou {
+        |      } => Method[Boolean]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    ) should include("a Methods list for more than one methodsFactory isn't supported: telegramium.bots.Methods, telegramium.bots.MoreMethods")
+  }
+
+  "Generators without a methodsFactory" must "leave out the Methods list" in {
+    val files = generateGens(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Dated {
+        |      date: Long
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "OptionalArrays.scala")
+  }
+
   "The round-trip list" must "hold the types with both an encoder and a decoder, and leave out encode-only types" in {
     val list = generateGens(gensDsl)("RoundTrips.scala")
     list should include("""RoundTripCase[Reply]("Reply"""")
     list should include("""RoundTripCase[Dated]("Dated"""")
     list should not include "SendOnly"
+  }
+
+  "The Methods list" must "build every Method by calling the Methods factory with generated arguments" in {
+    val list = generateGens(gensDsl)("MethodCases.scala")
+    list should include("object Factory extends Methods")
+    list should include("""new MethodCase[GetReplyReq.type]("getReply", GenGetReplyReq.gen, GenGetReplyReq.shrink, _ => Factory.getReply(), _.asJson)""")
+    list should include("""new MethodCase[SendReq]("send", GenSendReq.gen, GenSendReq.shrink, x => Factory.send(sendOnly = x.sendOnly), _.asJson)""")
+    // the arguments as the factory encodes them, before any file is attached
+    list should include("val json: A => Json")
+    list should include("import CirceImplicits._")
+    list should include("GenSendOnly.gen.map { a0 => SendReq(sendOnly = a0) }")
+  }
+
+  // the Methods factory in the generators' own package, or in a client subpackage
+  private def modeDsl(inClient: Boolean): String = {
+    val methods =
+      """Methods (methodsFactory) {
+        |  def setMode {
+        |    mode: Mode
+        |  } => Method[Settings]
+        |}""".stripMargin
+    s"""
+      |namespace telegramium {
+      |  namespace bots(snake circe) {
+      |    enum Mode {
+      |      ModeOn {
+      |        type : "on:0"
+      |      }
+      |      ModeOff {
+      |        type : "off:1"
+      |      }
+      |    }
+      |    Settings {
+      |      mode: Mode
+      |    }
+      |    ${if (inClient) s"namespace client {\n$methods\n}" else methods}
+      |  }
+      |}
+    """.stripMargin
+  }
+
+  "A Method's arguments" must "not be wrapped in OpenEnum, unlike the fields of a decodable type" in {
+    val openEnums = cfg.copy(generateGens = true, openEnum = OpenEnumConfig(enabled = true, excludeTypes = List.empty))
+    val files = generateGens(modeDsl(inClient = false), openEnums)
+    files("GenTypes.scala") should include("openEnum(GenMode.gen).map { a0 => Settings(mode = a0) }")
+    files("MethodCases.scala") should include("GenMode.gen.map { a0 => SetModeReq(mode = a0) }")
+  }
+
+  "The Methods list" must "qualify the types of a factory in a subpackage of the generators' one" in {
+    val list = generateGens(modeDsl(inClient = true))("MethodCases.scala")
+    list should include("GenMode.gen.map { a0 => client.SetModeReq(mode = a0) }")
+    list should include("private object Factory extends client.Methods")
+    list should include("val method: A => client.Method[_]")
+    list should include("import client.CirceImplicits._")
+  }
+
+  // https://github.com/apimorphism/telegramium/issues/686
+  "The optional arrays" must "be the (omitempty) List fields, by type and JSON key, and nothing else" in {
+    val arrays = generateGens(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    InputRichMessage {
+        |      blocks: (omitempty) List[String]
+        |      rows: List[String]
+        |      allowedUpdates: Option[List[String]]
+        |      isRtl: Boolean
+        |    }
+        |    Methods (methodsFactory) {
+        |      def send {
+        |        message: Option[InputRichMessage]
+        |        chatId: Long
+        |        captionEntities: (omitempty) List[String]
+        |      } => Method[Boolean]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )("OptionalArrays.scala")
+    arrays should include("""val all: Set[String] = Set("InputRichMessage.blocks", "SendReq.caption_entities")""")
   }
 
   "A custom-gens entry" must "apply to the generated and the shrunk values of its type, and leave other types alone" in {
