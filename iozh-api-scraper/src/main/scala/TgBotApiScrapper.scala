@@ -156,51 +156,44 @@ object TgBotApiScrapper extends IOApp {
 
   private val quotedPattern = "(?<=“).*?(?=”)".r
   private val forXOnlyPattern = "(?<=For “).*?(?=” only)".r
-  private val messageEntityDescPattern = "(?:<em>)?Optional(?:</em>)?\\. For “.*” only, ".r
+  private val forXOnlyDescPattern = "(?:<em>)?Optional(?:</em>)?\\. For “.*” only, ".r
   private val discriminatorPattern = ".*, always “(.*?)”".r
-  private val optionalFieldDescPattern = "^(?:<em>)?Optional\\b".r
+  val optionalFieldDescPattern = "^(?:<em>)?Optional\\b".r
+  private val unionSeparator = ", | and | or ".r
 
   // Integer identifiers (fields or params named *_id/*_ids, or described as an identifier) must be classified as Int or Long:
-  // by this wording, else by these lists. The scrape fails for any left over, so a new ID is never silently given the wrong type
-  // (apimorphism/telegramium e5cf9e9: fromChatId was an Int). It also fails when the wording says Long for an ID in intIds.
+  // by the overrides' integer, else by this wording, else by their name. The scrape fails for any left over, so a new ID is
+  // never silently given the wrong type (apimorphism/telegramium e5cf9e9: fromChatId was an Int). It also fails when the
+  // wording says Long for an integer the overrides or its name make an Int.
   private val longWording = List("greater than 32 bits", "more than 32 significant bits", "bigger than 2^31")
   private val identifierWording = "(?i)\\bidentifiers?\\b".r
-  // The docs rarely state an integer's width, so list entries are checked against the Bot API server instead:
-  // telegram-bot-api Client.cpp at e3e9dd8 (Bot API 10.3), where each handler parses params and serializes fields.
-  // Entries are a field name, or Owner.name for names too generic to classify everywhere (e.g. id).
-  private val longIds = Set(
-    // int64: get_user_id / get_user_ids, and chat IDs, which are resolved from strings and exceed 32 bits
-    "user_id", "receiver_user_id", "chat_id", "sender_chat_id", "new_owner_chat_id", "actor_chat_id", "added_user_ids",
-    "from_chat_id",
-    // int64: parsed with to_integer<int64>, serialized from JsonDirectMessagesTopic.topic_id
-    "direct_messages_topic_id",
-    // int64: parsed with to_integer<int64> in process_send_message_draft_query (the docs don't say)
-    "draft_id"
-  )
-  private val intIds = Set(
-    // int32: get_message_id / get_message_ids (as_tdlib_message_id), serialized with as_client_message_id
-    "message_id", "message_ids", "ephemeral_message_id", "giveaway_message_id",
-    // int32: get_forum_topic_id, serialized from td forum_topic_id:int32
-    "message_thread_id",
-    // int32: JsonUpdate(td::int32 id, ...), and get_integer_arg for getUpdates offset
-    "update_id", "getUpdates.offset",
-    // int32: td_api accent color ids
-    "accent_color_id", "profile_accent_color_id",
-    // int32: get_integer_arg / get_required_int_field; the docs also say "Signed 32-bit identifier"
-    "request_id",
-    // int32: td_api story ids
-    "story_id", "from_story_id", "Story.id",
-    // int32: td_api checklist task ids
-    "checklist_task_id", "reply_to_checklist_task_id", "marked_as_done_task_ids", "marked_as_not_done_task_ids",
-    "ChecklistTask.id", "InputChecklistTask.id",
-    // int32: poll option indexes
-    "option_ids", "correct_option_ids"
-  )
+  // Checked against the Bot API server: telegram-bot-api Client.cpp at e3e9dd8 (Bot API 10.3). User and chat IDs are int64
+  // (get_user_id / get_user_ids, and chat IDs, which are resolved from strings and exceed 32 bits). Message IDs are int32
+  // (get_message_id / get_message_ids), and so are td_api's story and checklist task IDs.
+  private val longIdName = "(^|_)(user|chat)_ids?$".r
+  private val intIdName = "(^|_)(message|story|task)_ids?$".r
 
   private def isIntegerId(name: String, desc: String): Boolean =
     name.endsWith("_id") || name.endsWith("_ids") || identifierWording.findFirstIn(desc).isDefined
 
-  def gen(items: List[ApiItem]): String = {
+  // A type's own id is read as <type>_id, e.g. Story.id as story_id.
+  private def integerWidthByName(owner: String, name: String): Option[TgBotApiOverrides.IntegerWidth] = {
+    val idName = if (name == "id") owner.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase + "_id" else name
+    if (longIdName.findFirstIn(idName).isDefined) Some(TgBotApiOverrides.AsLong)
+    else if (intIdName.findFirstIn(idName).isDefined) Some(TgBotApiOverrides.AsInt)
+    else None
+  }
+
+  // Parses a docs page, checks the overrides still fit it, and generates the DSL.
+  def scrape(doc: JsoupBrowser.JsoupDocument, overrides: TgBotApiOverrides.Overrides = TgBotApiOverrides.default): String = {
+    val items = parse(doc, overrides)
+    overrides.problems(items) match {
+      case Nil      => gen(items, overrides)
+      case problems => sys.error(s"Overrides in ${TgBotApiOverrides.file} don't fit the docs:\n" + problems.mkString("\n"))
+    }
+  }
+
+  def gen(items: List[ApiItem], overrides: TgBotApiOverrides.Overrides = TgBotApiOverrides.default): String = {
     def trarr(s: String): String = {
       if (s.startsWith("Array of ")) {
         val body = trarr(s.drop("Array of ".length))
@@ -210,32 +203,64 @@ object TgBotApiScrapper extends IOApp {
       }
     }
 
-    def isParseMode(name: String) = name == "parse_mode" || name == "quote_parse_mode" || name == "explanation_parse_mode" || name == "text_parse_mode"
-
     // Optional arrays are tagged (omitempty) so the generated encoder can omit them when empty, as Telegram treats a
-    // missing optional array the same as an empty one - except for these, which need Option[List] to tell them apart.
-    // editStory.areas isn't documented as such: the Bot API server keeps the current areas when it's omitted, and removes them on [].
-    val emptyDiffersFromOmitted = Set(
-      "getUpdates.allowed_updates", "setWebhook.allowed_updates", "ChatFullInfo.available_reactions", "editStory.areas"
-    )
-    // Optional arrays whose description talks about empty or omitted lists, but means the same by both.
-    val emptySameAsOmitted = Set(
-      "sendPoll.country_codes", "Poll.country_codes", "Giveaway.country_codes", "ChatFullInfo.active_usernames",
-      "WebhookInfo.allowed_updates"
-    )
+    // missing optional array the same as an empty one - unless the overrides say otherwise.
     val emptyVsOmittedWording = "(?i)\\bempty\\b|not specified|omitted|previous setting|defaults? to".r
 
     def isOptionalField(f: EntityParam) = optionalFieldDescPattern.findFirstIn(f.desc).isDefined
     def isOptionalParam(f: MethodParam) = f.required.toLowerCase.contains("optional")
 
-    def optionalArray(owner: String, f: String, kind: String, desc: String): String = {
-      val id = s"$owner.$f"
-      if (emptyDiffersFromOmitted.contains(id)) s"Option[${trarr(kind)}]"
-      else if (emptySameAsOmitted.contains(id) || emptyVsOmittedWording.findFirstIn(desc).isEmpty) s"(omitempty) ${trarr(kind)}"
-      else sys.error(
-        s"$id: the description may give an empty list and an omitted one different meanings. " +
-          "Add it to emptyDiffersFromOmitted or emptySameAsOmitted in TgBotApiScrapper.gen."
-      )
+    def optionalArray(owner: String, f: String, kind: String, desc: String): String =
+      overrides.field(owner, f).emptyVsOmitted match {
+        case Some(TgBotApiOverrides.Distinct) => s"Option[${trarr(kind)}]"
+        case Some(TgBotApiOverrides.Same)     => s"(omitempty) ${trarr(kind)}"
+        case None if emptyVsOmittedWording.findFirstIn(desc).isEmpty => s"(omitempty) ${trarr(kind)}"
+        case None => sys.error(
+          s"$owner.$f: the description may give an empty list and an omitted one different meanings. " +
+            s"Give it empty-vs-omitted = distinct or same in ${TgBotApiOverrides.file}."
+        )
+      }
+
+    // Sum types merged into another: a field of one of them gets the one they're merged into.
+    val allSumtyps = items.collect{ case e: Sumtyp => e }
+    val mergedInto = overrides.types.toList.flatMap { case (name, t) =>
+      t.merge.filter(m => allSumtyps.exists(_.name == m)).map(_ -> name)
+    }
+    val resolvedSumtyps = allSumtyps
+      .map { s =>
+        val t = overrides.typeOverride(s.name)
+        // A merged sum type brings its items, a merged standalone type itself.
+        val extraItems = t.merge
+          .flatMap(m => allSumtyps.find(_.name == m).fold(List(m))(_.items))
+          .filterNot(s.items.contains)
+          .distinct
+        s.copy(items = s.items ++ extraItems ++ t.extraItems.map(_.name))
+      }
+      .filterNot(s => mergedInto.exists(_._1 == s.name))
+    val declaredTypes = overrides.types.toList.filter(_._2.items.nonEmpty).map { case (name, t) => name -> t.items }.sortBy(_._1)
+    val unionTargets = resolvedSumtyps.map(s => s.name -> s.items) ++ declaredTypes
+
+    // A docs type that's a union of types becomes the sum type whose items include them all.
+    def resolveKind(owner: String, name: String, kind: String): String = {
+      val renamed = mergedInto.foldLeft(kind) { case (k, (from, to)) => k.replaceAll(s"\\b$from\\b", to) }
+      val arrays = "^(Array of )*".r.findFirstIn(renamed).getOrElse("")
+      val members = unionSeparator.split(renamed.drop(arrays.length)).toList
+      if (members.size < 2) renamed
+      else unionTargets.collect { case (target, targetItems) if members.forall(targetItems.contains) => target } match {
+        case target :: Nil => arrays + target
+        case targets => sys.error(
+          s"$owner.$name: its type ${renamed.drop(arrays.length)} should be the items of exactly one type, but is of " +
+            s"${if (targets.isEmpty) "none" else targets.mkString(", ")}. Declare one with these items in ${TgBotApiOverrides.file}."
+        )
+      }
+    }
+    // A type override is a DSL type already, so it's never a union.
+    def resolve(owner: String, name: String, kind: String) =
+      if (overrides.field(owner, name).tpe.isDefined) kind else resolveKind(owner, name, kind)
+    val resolvedItems = items.map {
+      case m: Method => m.copy(table = m.table.map(p => p.copy(kind = resolve(m.name, p.name, p.kind))))
+      case e: Entity => e.copy(table = e.table.map(f => f.copy(kind = resolve(e.name, f.name, f.kind))))
+      case s: Sumtyp => s
     }
 
     def genFields(owner: String, params: List[EntityParam]) = {
@@ -244,8 +269,6 @@ object TgBotApiScrapper extends IOApp {
         .map { f =>
           val kind = if (f.kind.startsWith("Array of"))
             if (isOptionalField(f)) optionalArray(owner, f.name, f.kind, f.desc) else trarr(f.kind)
-          else if (isParseMode(f.name))
-            "Option[ParseMode]"
           else {
             if (isOptionalField(f)) {
               if (f.kind == "IFile") s"(file) Option[${f.kind}]" else s"Option[${f.kind}]"
@@ -261,7 +284,7 @@ object TgBotApiScrapper extends IOApp {
         .intercalate("\n")
     }
 
-    val mmap = items.collect{
+    val mmap = resolvedItems.collect{
         case m: Method => m
       }
       .map { m =>
@@ -274,8 +297,6 @@ object TgBotApiScrapper extends IOApp {
               } else {
                 trarr(f.kind)
               }
-            } else if (isParseMode(f.name)) {
-              "Option[ParseMode]"
             } else {
               if (isOptionalParam(f)) {
                 if (f.kind == "IFile") {
@@ -306,67 +327,42 @@ object TgBotApiScrapper extends IOApp {
             |  } => Method[${m.returns}]""".stripMargin
         m.name -> body
       }.toMap
-    val messageEntityItem = items.collect {
-      case e: Entity => e
+    val splitItems = resolvedItems.collect {
+      case e: Entity if overrides.typeOverride(e.name).splitByType => e
     }
-      .find(_.name == "MessageEntity")
-    val messageEntities = messageEntityItem
-      .flatMap { e =>
-        e.table
-          .find(_.name == "type")
-          .map { t =>
-            quotedPattern.findAllIn(t.desc)
-              .toList
-              .map { child =>
-                Entity(
-                  name = camelify(child).capitalize + "MessageEntity",
-                  child,
-                  table = t.copy(desc = child) :: e.table
-                    .filter(f => f.desc.contains("Optional") && forXOnlyPattern.findFirstIn(f.desc).contains(child))
-                    .map { f =>
-                      val optional = if (f.name == "language") "Optional, " else ""
-                      f.copy(desc = optional + messageEntityDescPattern.replaceFirstIn(f.desc, ""))
-                    }
-                )
-              }
-          }
-      }
-      .getOrElse(List.empty)
-    val messageEntityParent = messageEntityItem.map { e =>
+    val splitVariants = splitItems.map { e =>
+      e -> e.table
+        .find(_.name == "type")
+        .map { t =>
+          quotedPattern.findAllIn(t.desc)
+            .toList
+            .map { child =>
+              Entity(
+                name = camelify(child).capitalize + e.name,
+                child,
+                table = t.copy(desc = child) :: e.table
+                  .filter(f => f.desc.contains("Optional") && forXOnlyPattern.findFirstIn(f.desc).contains(child))
+                  .map { f =>
+                    val optional = if (overrides.field(e.name, f.name).optional) "Optional, " else ""
+                    f.copy(desc = optional + forXOnlyDescPattern.replaceFirstIn(f.desc, ""))
+                  }
+              )
+            }
+        }
+        .getOrElse(List.empty)
+    }
+    val splitParents = splitVariants.map { case (e, variants) =>
       Sumtyp(
-        "MessageEntity",
+        e.name,
         e.desc,
-        messageEntities.map(_.name),
+        variants.map(_.name),
         e.table.filterNot(f => f.desc.contains("Optional") || f.name == "type")
       )
     }
-      .toList
-    val inputMediaAliases = Set("InputPollMedia", "InputPollOptionMedia")
-    val allSumtyps = items.collect{ case e: Sumtyp => e }
-    val allEntities = items.collect{ case e: Entity => e }
-    val inputMediaSumtyp = allSumtyps.find(_.name == "InputMedia")
-    val standaloneInputMedia = allEntities
-      .filter(e => e.name.startsWith("InputMedia") && e.table.exists(_.kind == "__type_tag__"))
-      .map(_.name)
-    val mergedInputMediaItems = inputMediaSumtyp.map { im =>
-      val extraItems = allSumtyps
-        .filter(s => inputMediaAliases.contains(s.name))
-        .flatMap(_.items)
-        .filterNot(im.items.contains)
-        .distinct
-      val extraStandalone = standaloneInputMedia
-        .filterNot(im.items.contains)
-        .filterNot(extraItems.contains)
-      im.copy(items = im.items ++ extraItems ++ extraStandalone)
-    }
-    val resolvedSumtyps = allSumtyps.map { s =>
-      if (s.name == "InputMedia") mergedInputMediaItems.getOrElse(s)
-      else s
-    }.filterNot(s => inputMediaAliases.contains(s.name))
-    val emap = (items.collect{
+    val emap = (resolvedItems.collect{
         case e: Entity => e
       }
-      .filterNot(messageEntityItem.contains) ++ messageEntities)
+      .filterNot(splitItems.contains) ++ splitVariants.flatMap(_._2) ++ resolvedSumtyps.flatMap(s => overrides.typeOverride(s.name).extraItems))
       .map { e =>
         val fields = genFields(e.name, e.table)
         val body = s"""
@@ -377,38 +373,19 @@ object TgBotApiScrapper extends IOApp {
          """.stripMargin
         e.name -> body
       }.toMap
-    val richTextExtras = Map(
-      "RichTextPlain" ->
-        """
-          |  /* Plain text. */
-          |  RichTextPlain {
-          |    type : "plain:__type_id_placeholder__"
-          |    /* The text */
-          |    text : String
-          |  }
-        """.stripMargin,
-      "RichTextConcat" ->
-        """
-          |  /* Concatenation of rich texts. */
-          |  RichTextConcat {
-          |    type : "concat:__type_id_placeholder__"
-          |    /* The texts */
-          |    texts : List[RichText]
-          |  }
-        """.stripMargin
+    val leaves = (resolvedSumtyps.map(_.items) ++ splitParents.map(_.items) ++ declaredTypes.map(_._2)).flatten.toSet
+    // A tagged type gets its type id as an item of a sum type: one outside them all would keep the placeholder.
+    val sumItems = (resolvedSumtyps ++ splitParents).flatMap(_.items).toSet
+    val untagged = emap.collect { case (name, b) if b.contains("__type_id_placeholder__") && !sumItems(name) => name }
+    if (untagged.nonEmpty) sys.error(
+      s"${untagged.toList.sorted.mkString(", ")}: tagged, but an item of no sum type. " +
+        s"Add each to one with merge in ${TgBotApiOverrides.file}."
     )
-    val richTextSumtyps = resolvedSumtyps.map { s =>
-      if (s.name == "RichText") s.copy(items = s.items ++ richTextExtras.keys.toList)
-      else s
-    }
-    val emapWithRichText = emap ++ richTextExtras
-    val inlines = Set("InlineKeyboardMarkup", "ReplyKeyboardMarkup", "ReplyKeyboardRemove", "ForceReply")
-    val leaves = (richTextSumtyps.map(_.items) ++ messageEntityParent.map(_.items)).flatten.toSet ++ inlines
-    val sumTypes = (richTextSumtyps ++ messageEntityParent)
+    val sumTypes = (resolvedSumtyps ++ splitParents)
       .sortBy(_.name)
       .map { e =>
         val fields = genFields(e.name, e.table)
-        val children = emapWithRichText.filterKeys{ k =>
+        val children = emap.filterKeys{ k =>
             e.items.contains(k)
           }
           .values
@@ -423,11 +400,16 @@ object TgBotApiScrapper extends IOApp {
           |  }
         """.stripMargin
       }
-    val body = sumTypes.intercalate("") + emapWithRichText.filterKeys(k => !leaves.contains(k)).toList.sortBy(_._1).map(_._2).intercalate("")
+    val body = sumTypes.intercalate("") + emap.filterKeys(k => !leaves.contains(k)).toList.sortBy(_._1).map(_._2).intercalate("")
     val entities = body.split("\n").map("  " + _).toList.intercalate("\n")
     val methods = mmap.toList.sortBy(_._1).map(_._2).flatMap(_.split("\n")).map("      " + _).intercalate("\n")
-    val markups = emap.filterKeys(inlines.contains).values.toList
-      .flatMap(_.split("\n")).map("    " + _).intercalate("\n")
+    val declared = declaredTypes
+      .map { case (name, typeItems) =>
+        val children = emap.filterKeys(typeItems.contains).values.toList
+          .flatMap(_.split("\n")).map("    " + _).intercalate("\n")
+        s"enum $name {\n      $children\n    }"
+      }
+      .intercalate("\n\n    ")
     s"""
        |namespace telegramium {
        |  namespace bots(snake circe http4s) {
@@ -455,9 +437,7 @@ object TgBotApiScrapper extends IOApp {
        |      wrap ChatStrId (id) = String
        |    }
        |
-       |    enum KeyboardMarkup {
-       |      $markups
-       |    }
+       |    $declared
        |
        |    /** A file to send. */
        |    enum IFile {
@@ -499,7 +479,7 @@ object TgBotApiScrapper extends IOApp {
       .drain
   }
 
-  def parse(doc: JsoupBrowser.JsoupDocument): List[ApiItem] = {
+  def parse(doc: JsoupBrowser.JsoupDocument, overrides: TgBotApiOverrides.Overrides = TgBotApiOverrides.default): List[ApiItem] = {
     doc.underlying.select("img.emoji").forEach(e => e.replaceWith(new nodes.TextNode(e.attr("alt"))))
     val rawItems = doc >> elements("div#dev_page_content > *")
 
@@ -509,34 +489,36 @@ object TgBotApiScrapper extends IOApp {
     def mkType(owner: String, name: String, desc: Desc, s: String): String = {
       val descText = desc.text
       val hasLongWording = longWording.exists(descText.contains)
-      // "Integer or String" is a ChatId, not an integer to classify.
-      val isInteger = s.replace("Integer or String", "").contains("Integer")
+      val fieldOverride = overrides.field(owner, name)
+      // "Integer or String" is a ChatId, not an integer to classify, and a type override replaces the docs' type.
+      val isInteger = fieldOverride.tpe.isEmpty && s.replace("Integer or String", "").contains("Integer")
+      val width = fieldOverride.integer.orElse(integerWidthByName(owner, name))
       val mustBeLong =
-        if (isInteger && isIntegerId(name, descText)) {
-          def listed(ids: Set[String]) = ids.contains(name) || ids.contains(s"$owner.$name")
-          if (hasLongWording && listed(intIds)) sys.error(
-            s"$owner.$name: the description says it may not fit in an Int, but it is in intIds. " +
-              "Check the Bot API server source and move it to longIds in TgBotApiScrapper."
-          )
-          else if (hasLongWording || listed(longIds)) true
-          else if (listed(intIds)) false
-          else sys.error(
-            s"$owner.$name: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +
-              "Read its description and add it to intIds or longIds in TgBotApiScrapper."
-          )
-        } else {
-          hasLongWording ||
-            descText.contains("size in bytes") ||
+        if (!isInteger) false
+        else if (hasLongWording && width.contains(TgBotApiOverrides.AsInt)) sys.error(
+          s"$owner.$name: the description says it may not fit in an Int, but " +
+            (if (fieldOverride.integer.isDefined) s"it has integer = Int in ${TgBotApiOverrides.file}"
+             else "its name makes it an Int (TgBotApiScrapper.intIdName)") +
+            ". Check the Bot API server source and change it to Long."
+        )
+        else if (hasLongWording || width.contains(TgBotApiOverrides.AsLong)) true
+        else if (width.contains(TgBotApiOverrides.AsInt)) false
+        else if (isIntegerId(name, descText)) sys.error(
+          s"$owner.$name: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +
+            s"Read its description and give it integer = Int or Long in ${TgBotApiOverrides.file}."
+        )
+        else {
+          descText.contains("size in bytes") ||
             descText.contains("Unix time") ||
-            name == "amount" || name.toLowerCase().contains("amount") ||
-            name == "send_date"
+            name.toLowerCase().contains("amount")
         }
       val isFile = desc.links.exists(_.href == "#sending-files")
       if (isFile)
-          "IFile"  
+          "IFile"
+      else if (fieldOverride.tpe.isDefined)
+        fieldOverride.tpe.get
       else {
-        val result = if (s == "List[Messages]") "List[Message]" else s
-        result
+        s
           .replace(" number", "") // Float number => Float
           .replace("True", "Boolean")
           .replace("False", "Boolean")
@@ -544,12 +526,6 @@ object TgBotApiScrapper extends IOApp {
           .replace("Integer", if (mustBeLong) "Long" else "Int")
           .replace("InputFile or String", "IFile")
           .replace("InputFile", "IFile")
-          .replace("InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply", "KeyboardMarkup")
-          .replace("InputMediaAudio, InputMediaDocument, InputMediaLivePhoto, InputMediaPhoto and InputMediaVideo", "InputMedia")
-          .replace("InputPollOptionMedia", "InputMedia")
-          .replace("InputPollMedia", "InputMedia")
-          .replace("InputMediaAnimation or InputMediaAudio or InputMediaPhoto or InputMediaVideo or InputMediaVoiceNote", "InputMedia")
-          .replace("InputMediaAnimation or InputMediaAudio or InputMediaDocument or InputMediaPhoto or InputMediaVideo or InputMediaVoiceNote", "InputMedia")
       }
     }
 
@@ -645,7 +621,7 @@ object TgBotApiScrapper extends IOApp {
               val descText = desc.text
               if (
                 (name == "type" || name == "source" || name == "status") && 
-                  (descText.contains(", must be ") || descText.contains(", always ") || itemName == "MessageEntity")
+                  (descText.contains(", must be ") || descText.contains(", always ") || overrides.typeOverride(itemName).splitByType)
               ) {
                 val cleanedDesc = descText.replaceAll(".*must be ", "")
                 val typeDesc = discriminatorPattern
@@ -688,7 +664,7 @@ object TgBotApiScrapper extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     IO {
       val browser = JsoupBrowser.typed()
-      gen(parse(browser.get("https://core.telegram.org/bots/api")))
+      scrape(browser.get("https://core.telegram.org/bots/api"))
     }.flatMap { content =>
       IO {
         Option(System.getenv("IOZHDIR"))

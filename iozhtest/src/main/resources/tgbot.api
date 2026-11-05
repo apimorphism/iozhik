@@ -3475,13 +3475,13 @@ namespace telegramium {
         anchorName : String
       }
              
-      /* Concatenation of rich texts. */
+      /* Concatenation of rich texts.  */
       RichTextConcat {
         type : "concat:4"
         /* The texts */
         texts : List[RichText]
       }
-            
+             
       /* A text covered by a spoiler.  */
       RichTextSpoiler {
         type : "spoiler:5"
@@ -3578,13 +3578,13 @@ namespace telegramium {
         text : RichText
       }
              
-      /* Plain text. */
+      /* Plain text.  */
       RichTextPlain {
         type : "plain:17"
         /* The text */
         text : String
       }
-            
+             
       /* An italicized text.  */
       RichTextItalic {
         type : "italic:18"
