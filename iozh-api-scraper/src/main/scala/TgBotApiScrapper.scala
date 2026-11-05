@@ -171,12 +171,12 @@ object TgBotApiScrapper extends IOApp {
   private def isIntegerId(name: String, desc: String): Boolean =
     name.endsWith("_id") || name.endsWith("_ids") || identifierWording.findFirstIn(desc).isDefined
 
-  // Parses a docs page, checks the overrides still name things in it, and generates the DSL.
+  // Parses a docs page, checks the overrides still fit it, and generates the DSL.
   def scrape(doc: JsoupBrowser.JsoupDocument, overrides: TgBotApiOverrides.Overrides = TgBotApiOverrides.default): String = {
     val items = parse(doc, overrides)
-    overrides.stale(items) match {
-      case Nil   => gen(items, overrides)
-      case stale => sys.error(s"Stale overrides in ${TgBotApiOverrides.file}:\n" + stale.mkString("\n"))
+    overrides.problems(items) match {
+      case Nil      => gen(items, overrides)
+      case problems => sys.error(s"Overrides in ${TgBotApiOverrides.file} don't fit the docs:\n" + problems.mkString("\n"))
     }
   }
 
@@ -241,12 +241,16 @@ object TgBotApiScrapper extends IOApp {
         )
       }
     }
+    val resolvedItems = items.map {
+      case m: Method => m.copy(table = m.table.map(p => p.copy(kind = resolveKind(m.name, p.name, p.kind))))
+      case e: Entity => e.copy(table = e.table.map(f => f.copy(kind = resolveKind(e.name, f.name, f.kind))))
+      case s: Sumtyp => s
+    }
 
     def genFields(owner: String, params: List[EntityParam]) = {
       val maxLen = params.map(p => camelify(p.name).length).maximumOption.getOrElse(0)
       params
-        .map { f0 =>
-          val f = f0.copy(kind = resolveKind(owner, f0.name, f0.kind))
+        .map { f =>
           val kind = if (f.kind.startsWith("Array of"))
             if (isOptionalField(f)) optionalArray(owner, f.name, f.kind, f.desc) else trarr(f.kind)
           else {
@@ -264,14 +268,13 @@ object TgBotApiScrapper extends IOApp {
         .intercalate("\n")
     }
 
-    val mmap = items.collect{
+    val mmap = resolvedItems.collect{
         case m: Method => m
       }
       .map { m =>
         val maxLen = m.table.map(x => camelify(x.name).length).maximumOption.getOrElse(0)
         val fields = m.table
-          .map { f0 =>
-            val f = f0.copy(kind = resolveKind(m.name, f0.name, f0.kind))
+          .map { f =>
             val kind = if (f.kind.startsWith("Array of")) {
               if (isOptionalParam(f)) {
                 optionalArray(m.name, f.name, f.kind, f.desc)
@@ -308,7 +311,7 @@ object TgBotApiScrapper extends IOApp {
             |  } => Method[${m.returns}]""".stripMargin
         m.name -> body
       }.toMap
-    val splitItems = items.collect {
+    val splitItems = resolvedItems.collect {
       case e: Entity if overrides.typeOverride(e.name).splitByType => e
     }
     val splitVariants = splitItems.map { e =>
@@ -340,7 +343,7 @@ object TgBotApiScrapper extends IOApp {
         e.table.filterNot(f => f.desc.contains("Optional") || f.name == "type")
       )
     }
-    val emap = (items.collect{
+    val emap = (resolvedItems.collect{
         case e: Entity => e
       }
       .filterNot(splitItems.contains) ++ splitVariants.flatMap(_._2) ++ overrides.types.values.flatMap(_.extraItems))
@@ -468,12 +471,12 @@ object TgBotApiScrapper extends IOApp {
       val fieldOverride = overrides.field(owner, name)
       val mustBeLong =
         if (!isInteger) false
-        else if (hasLongWording && fieldOverride.integer.contains("Int")) sys.error(
+        else if (hasLongWording && fieldOverride.integer.contains(TgBotApiOverrides.AsInt)) sys.error(
           s"$owner.$name: the description says it may not fit in an Int, but it has integer = Int in ${TgBotApiOverrides.file}. " +
             "Check the Bot API server source and change it to Long."
         )
-        else if (hasLongWording || fieldOverride.integer.contains("Long")) true
-        else if (fieldOverride.integer.contains("Int")) false
+        else if (hasLongWording || fieldOverride.integer.contains(TgBotApiOverrides.AsLong)) true
+        else if (fieldOverride.integer.contains(TgBotApiOverrides.AsInt)) false
         else if (isIntegerId(name, descText)) sys.error(
           s"$owner.$name: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +
             s"Read its description and give it integer = Int or Long in ${TgBotApiOverrides.file}."

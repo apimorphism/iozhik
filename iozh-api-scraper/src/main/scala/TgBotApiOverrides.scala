@@ -15,9 +15,13 @@ object TgBotApiOverrides {
   case object Distinct extends EmptyVsOmitted
   case object Same extends EmptyVsOmitted
 
+  sealed trait IntegerWidth
+  case object AsInt extends IntegerWidth
+  case object AsLong extends IntegerWidth
+
   case class FieldOverride(
     emptyVsOmitted: Option[EmptyVsOmitted] = None,
-    integer: Option[String] = None,
+    integer: Option[IntegerWidth] = None,
     tpe: Option[String] = None,
     optional: Boolean = false
   )
@@ -37,14 +41,15 @@ object TgBotApiOverrides {
 
     def typeOverride(name: String): TypeOverride = types.getOrElse(name, TypeOverride())
 
-    // Overrides naming a field, method or type the docs don't have (any more), so they'd silently do nothing.
-    def stale(items: List[ApiItem]): List[String] = {
+    // Overrides that don't fit the docs: they name a field, method or type the docs don't have (any more), so they'd
+    // silently do nothing, or they use a setting where it doesn't apply.
+    def problems(items: List[ApiItem]): List[String] = {
       val entities = items.collect { case e: Entity => e.name -> e.table.map(_.name) }.toMap
       val methods = items.collect { case m: Method => m.name -> m.table.map(_.name) }.toMap
       val sumtyps = items.collect { case s: Sumtyp => s.name }.toSet
       val owners = entities ++ methods
       val allNames = owners.values.flatten.toSet
-      val staleFields = fields.toList.flatMap { case (key, o) =>
+      val fieldProblems = fields.toList.flatMap { case (key, o) =>
         key.split('.') match {
           case Array(owner, name) =>
             if (!owners.get(owner).exists(_.contains(name))) List(s"fields.\"$key\": the docs have no such field or param")
@@ -56,7 +61,7 @@ object TgBotApiOverrides {
             else List.empty
         }
       }
-      val staleTypes = types.toList.flatMap { case (name, t) =>
+      val typeProblems = types.toList.flatMap { case (name, t) =>
         val inDocs = entities.contains(name) || sumtyps.contains(name)
         val existence =
           if (t.items.nonEmpty) {
@@ -71,7 +76,7 @@ object TgBotApiOverrides {
           (if (t.splitByType && !entities.get(name).exists(_.contains("type"))) List(s"types.$name: split-by-type needs a type field")
            else List.empty)
       }
-      (staleFields ++ staleTypes).sorted
+      (fieldProblems ++ typeProblems).sorted
     }
   }
 
@@ -121,7 +126,10 @@ object TgBotApiOverrides {
           case "distinct" => Distinct
           case _          => Same
         },
-        integer = oneOf(c, path, "integer", Set("Int", "Long")),
+        integer = oneOf(c, path, "integer", Set("Int", "Long")).map {
+          case "Int" => AsInt
+          case _     => AsLong
+        },
         tpe = get(c, path, "type")(c.getString),
         optional = get(c, path, "optional")(c.getBoolean).getOrElse(false)
       )

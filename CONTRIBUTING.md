@@ -16,8 +16,8 @@ hand-edited there (see that repo's CONTRIBUTING.md). If you need a change in
 - `iozh-api-scraper/src/main/resources/tgbotapi-overrides.conf` - corrections
   to the Bot API docs for a specific field or type (integer widths, empty vs
   omitted arrays, types merged or added); the file describes each kind. Give
-  each entry a comment with its reason. The scrape fails on an entry naming something the docs
-  no longer have.
+  each entry a comment with its reason. The scrape fails on an entry naming
+  something the docs no longer have.
 - `iozh-api-scraper/src/main/scala/TgBotApiScrapper.scala` - how the Bot API
   HTML page is parsed and turned into `.api` DSL text.
 - `iozhik/src/main/resources/tgbotapi.conf` - generator config for the
