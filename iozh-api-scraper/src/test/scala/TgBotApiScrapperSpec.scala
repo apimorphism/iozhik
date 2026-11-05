@@ -503,4 +503,19 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
       e.getMessage should include(key)
     }
   }
+
+  "A scrape whose overrides merge or add items into a type that isn't a sum type" must "fail, naming it" in {
+    val e = the[RuntimeException] thrownBy TgBotApiScrapper.scrape(fooPage, overrides(
+      """types {
+        |  Foo { merge = [Media] }
+        |  Bar { items = [Foo], merge = [Media] }
+        |  Baz { items = [Foo], extra-items = [{ name = BazPlain, desc = "Plain.", tag = plain, fields = [] }] }
+        |  Qux { items = [Foo], split-by-type = true }
+        |}""".stripMargin
+    ))
+    List("types.Foo:", "types.Bar:", "types.Baz:", "types.Qux:").foreach { key =>
+      e.getMessage should include(key)
+    }
+    e.getMessage should include("only apply to a sum type")
+  }
 }

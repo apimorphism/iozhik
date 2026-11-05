@@ -69,7 +69,11 @@ object TgBotApiOverrides {
             else t.items.filterNot(entities.contains).map(i => s"types.$name.items: the docs have no type $i")
           } else if (!inDocs) List(s"types.$name: the docs have no such type")
           else List.empty
-        existence ++
+        val notSumtyp =
+          if ((t.merge.nonEmpty || t.extraItems.nonEmpty) && !sumtyps.contains(name))
+            List(s"types.$name: merge and extra-items only apply to a sum type in the docs")
+          else List.empty
+        existence ++ notSumtyp ++
           t.merge.filterNot(m => sumtyps.contains(m) || entities.contains(m)).map(m => s"types.$name.merge: the docs have no type $m") ++
           t.extraItems.map(_.name).filter(n => entities.contains(n) || sumtyps.contains(n))
             .map(n => s"types.$name.extra-items: the docs define $n now") ++
