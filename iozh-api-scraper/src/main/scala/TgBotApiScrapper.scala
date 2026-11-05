@@ -162,14 +162,27 @@ object TgBotApiScrapper extends IOApp {
   private val unionSeparator = ", | and | or ".r
 
   // Integer identifiers (fields or params named *_id/*_ids, or described as an identifier) must be classified as Int or Long:
-  // by this wording, else by the overrides' integer. The scrape fails for any left over, so a new ID is never silently given
-  // the wrong type (apimorphism/telegramium e5cf9e9: fromChatId was an Int). It also fails when the wording says Long for
-  // an integer the overrides make an Int.
+  // by the overrides' integer, else by this wording, else by their name. The scrape fails for any left over, so a new ID is
+  // never silently given the wrong type (apimorphism/telegramium e5cf9e9: fromChatId was an Int). It also fails when the
+  // wording says Long for an integer the overrides or its name make an Int.
   private val longWording = List("greater than 32 bits", "more than 32 significant bits", "bigger than 2^31")
   private val identifierWording = "(?i)\\bidentifiers?\\b".r
+  // Checked against the Bot API server: telegram-bot-api Client.cpp at e3e9dd8 (Bot API 10.3). User and chat IDs are int64
+  // (get_user_id / get_user_ids, and chat IDs, which are resolved from strings and exceed 32 bits). Message IDs are int32
+  // (get_message_id / get_message_ids), and so are td_api's story and checklist task IDs.
+  private val longIdName = "(^|_)(user|chat)_ids?$".r
+  private val intIdName = "(^|_)(message|story|task)_ids?$".r
 
   private def isIntegerId(name: String, desc: String): Boolean =
     name.endsWith("_id") || name.endsWith("_ids") || identifierWording.findFirstIn(desc).isDefined
+
+  // A type's own id is read as <type>_id, e.g. Story.id as story_id.
+  private def integerWidthByName(owner: String, name: String): Option[TgBotApiOverrides.IntegerWidth] = {
+    val idName = if (name == "id") owner.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase + "_id" else name
+    if (longIdName.findFirstIn(idName).isDefined) Some(TgBotApiOverrides.AsLong)
+    else if (intIdName.findFirstIn(idName).isDefined) Some(TgBotApiOverrides.AsInt)
+    else None
+  }
 
   // Parses a docs page, checks the overrides still fit it, and generates the DSL.
   def scrape(doc: JsoupBrowser.JsoupDocument, overrides: TgBotApiOverrides.Overrides = TgBotApiOverrides.default): String = {
@@ -469,14 +482,17 @@ object TgBotApiScrapper extends IOApp {
       // "Integer or String" is a ChatId, not an integer to classify.
       val isInteger = s.replace("Integer or String", "").contains("Integer")
       val fieldOverride = overrides.field(owner, name)
+      val width = fieldOverride.integer.orElse(integerWidthByName(owner, name))
       val mustBeLong =
         if (!isInteger) false
-        else if (hasLongWording && fieldOverride.integer.contains(TgBotApiOverrides.AsInt)) sys.error(
-          s"$owner.$name: the description says it may not fit in an Int, but it has integer = Int in ${TgBotApiOverrides.file}. " +
-            "Check the Bot API server source and change it to Long."
+        else if (hasLongWording && width.contains(TgBotApiOverrides.AsInt)) sys.error(
+          s"$owner.$name: the description says it may not fit in an Int, but " +
+            (if (fieldOverride.integer.isDefined) s"it has integer = Int in ${TgBotApiOverrides.file}"
+             else "its name makes it an Int (TgBotApiScrapper.intIdName)") +
+            ". Check the Bot API server source and change it to Long."
         )
-        else if (hasLongWording || fieldOverride.integer.contains(TgBotApiOverrides.AsLong)) true
-        else if (fieldOverride.integer.contains(TgBotApiOverrides.AsInt)) false
+        else if (hasLongWording || width.contains(TgBotApiOverrides.AsLong)) true
+        else if (width.contains(TgBotApiOverrides.AsInt)) false
         else if (isIntegerId(name, descText)) sys.error(
           s"$owner.$name: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +
             s"Read its description and give it integer = Int or Long in ${TgBotApiOverrides.file}."

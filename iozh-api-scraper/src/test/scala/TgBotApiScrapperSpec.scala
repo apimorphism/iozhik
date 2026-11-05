@@ -259,15 +259,21 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     dsl should include("rows : List[List[String]]")
   }
 
-  private def integerField(name: String, desc: String, owner: String = "Foo", kind: String = "Integer"): EntityParam =
-    entity(
+  private def integerField(
+    name: String,
+    desc: String,
+    owner: String = "Foo",
+    kind: String = "Integer",
+    o: TgBotApiOverrides.Overrides = TgBotApiOverrides.default
+  ): EntityParam =
+    TgBotApiScrapper.parse(doc(
       s"""<h4>$owner</h4>
          |<p>This object represents a foo.</p>
          |<table class="table">
          |<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
          |<tbody><tr><td>$name</td><td>$kind</td><td>$desc</td></tr></tbody>
          |</table>""".stripMargin
-    ).table.head
+    ), o).collect { case e: Entity => e.table.head }.head
 
   // https://github.com/apimorphism/iozhik/issues/26
   "An integer ID field whose wording and name have no override" must "fail the scrape, naming the field and the overrides file" in {
@@ -323,9 +329,42 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
 
   "An integer ID overridden to Int whose description says it may exceed 32 bits" must "fail the scrape instead of silently becoming a Long" in {
     val e = the[RuntimeException] thrownBy
-      integerField("message_id", "Unique message identifier. This number may have more than 32 significant bits.")
-    e.getMessage should include("Foo.message_id")
+      integerField("update_id", "The update's unique identifier. This number may have more than 32 significant bits.")
+    e.getMessage should include("Foo.update_id")
     e.getMessage should include("integer = Int")
+  }
+
+  "An integer ID whose name makes it an Int, but whose description says it may exceed 32 bits" must "fail the scrape" in {
+    val e = the[RuntimeException] thrownBy
+      integerField("message_id", "Unique message identifier. This number may have more than 32 significant bits.", o = overrides(""))
+    e.getMessage should include("Foo.message_id")
+    e.getMessage should include("its name")
+  }
+
+  "A user or chat ID" must "be a Long by its name, without an override" in {
+    List("user_id", "receiver_user_id", "added_user_ids", "chat_id", "sender_chat_id", "new_owner_chat_id").foreach { name =>
+      integerField(name, "Unique identifier of the target", kind = if (name.endsWith("s")) "Array of Integer" else "Integer", o = overrides(""))
+        .kind should endWith("Long")
+    }
+  }
+
+  "A message, story or checklist task ID" must "be an Int by its name, without an override" in {
+    List("message_id", "message_ids", "giveaway_message_id", "from_story_id", "reply_to_checklist_task_id", "marked_as_done_task_ids")
+      .foreach { name =>
+        integerField(name, "Identifier of the thing", kind = if (name.endsWith("s")) "Array of Integer" else "Integer", o = overrides(""))
+          .kind should endWith("Int")
+      }
+  }
+
+  "A type's own id" must "be classified like <type>_id, without an override" in {
+    integerField("id", "Unique identifier of the story", "Story", o = overrides("")).kind shouldBe "Int"
+    integerField("id", "Unique identifier of the task", "InputChecklistTask", o = overrides("")).kind shouldBe "Int"
+    integerField("id", "Unique identifier of the user", "User", o = overrides("")).kind shouldBe "Long"
+  }
+
+  "A message thread ID" must "not be taken for a message ID" in {
+    an[RuntimeException] should be thrownBy
+      integerField("message_thread_id", "Unique identifier of the forum topic", o = overrides(""))
   }
 
   "An integer ID overridden to Long whose description says it may exceed 32 bits" must "still be a Long" in {
