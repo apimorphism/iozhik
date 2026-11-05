@@ -79,8 +79,8 @@ object TgBotApiOverrides {
 
   def parse(hocon: String): Overrides = load(ConfigFactory.parseString(hocon))
 
-  private val fieldKeys = Set("empty-vs-omitted", "integer", "type", "optional", "source")
-  private val typeKeys = Set("merge", "extra-items", "items", "split-by-type", "source")
+  private val fieldKeys = Set("empty-vs-omitted", "integer", "type", "optional")
+  private val typeKeys = Set("merge", "extra-items", "items", "split-by-type")
   private val extraItemKeys = Set("name", "desc", "tag", "fields")
   private val extraFieldKeys = Set("name", "type", "desc")
 
