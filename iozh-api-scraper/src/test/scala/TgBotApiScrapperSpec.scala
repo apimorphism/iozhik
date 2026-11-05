@@ -362,6 +362,13 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     integerField("id", "Unique identifier of the user", "User", o = overrides("")).kind shouldBe "Long"
   }
 
+  // https://github.com/apimorphism/iozhik/pull/37: sendPoll's question_parse_mode and description_parse_mode were Strings
+  "A field named *parse_mode" must "be a ParseMode, without an override" in {
+    List("parse_mode", "question_parse_mode", "description_parse_mode").foreach { name =>
+      integerField(name, "Mode for parsing entities", kind = "String", o = overrides("")).kind shouldBe "ParseMode"
+    }
+  }
+
   "A message thread ID" must "not be taken for a message ID" in {
     an[RuntimeException] should be thrownBy
       integerField("message_thread_id", "Unique identifier of the forum topic", o = overrides(""))

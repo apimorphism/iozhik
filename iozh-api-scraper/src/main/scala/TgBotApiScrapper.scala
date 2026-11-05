@@ -517,6 +517,9 @@ object TgBotApiScrapper extends IOApp {
           "IFile"
       else if (fieldOverride.tpe.isDefined)
         fieldOverride.tpe.get
+      // The docs give these as a String; ParseMode lists the values they name under "Formatting options".
+      else if (name.endsWith("parse_mode"))
+        "ParseMode"
       else {
         s
           .replace(" number", "") // Float number => Float
