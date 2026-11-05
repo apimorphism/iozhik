@@ -11325,7 +11325,7 @@ namespace telegramium {
           href="https://core.telegram.org/bots/api#formatting-options">formatting 
           options</a> for more details. Currently, only custom emoji 
           entities are allowed. */
-          questionParseMode      : Option[String]
+          questionParseMode      : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the poll question. It can be specified instead of 
           <em>question_parse_mode</em>. */
@@ -11402,7 +11402,7 @@ namespace telegramium {
           /* Mode for parsing entities in the poll description. See <a 
           href="https://core.telegram.org/bots/api#formatting-options">formatting 
           options</a> for more details. */
-          descriptionParseMode   : Option[String]
+          descriptionParseMode   : Option[ParseMode]
           /* A JSON-serialized list of special entities that appear in 
           the poll description, which can be specified instead of 
           <em>description_parse_mode</em> */
