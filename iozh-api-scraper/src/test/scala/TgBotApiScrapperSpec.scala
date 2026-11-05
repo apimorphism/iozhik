@@ -532,7 +532,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
         |  bazs { integer = Long }
         |}
         |types {
-        |  Qux { merge = [Media] }
+        |  Qux { merge = [Zork] }
         |  Media { merge = [PollMedia] }
         |  Foo { items = [Media] }
         |}""".stripMargin
@@ -547,7 +547,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     val e = the[RuntimeException] thrownBy TgBotApiScrapper.scrape(fooPage, overrides(
       """types {
         |  Foo { merge = [Media] }
-        |  Bar { items = [Foo], merge = [Media] }
+        |  Bar { items = [Foo], merge = [PhotoMedia] }
         |  Baz { items = [Foo], extra-items = [{ name = BazPlain, desc = "Plain.", tag = plain, fields = [] }] }
         |  Qux { items = [Foo], split-by-type = true }
         |}""".stripMargin
@@ -556,5 +556,69 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
       e.getMessage should include(key)
     }
     e.getMessage should include("only apply to a sum type")
+  }
+
+  private def fooField(name: String, kind: String, desc: String) = doc(
+    s"""<h4>Foo</h4><p>This object represents a foo.</p>
+       |<table class="table"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+       |<tbody><tr><td>$name</td><td>$kind</td><td>$desc</td></tr></tbody></table>""".stripMargin
+  )
+
+  "An integer override on a field that isn't an integer" must "fail the scrape" in {
+    val e = the[RuntimeException] thrownBy
+      TgBotApiScrapper.scrape(fooField("name", "String", "The name"), overrides("""fields { "Foo.name" { integer = Long } }"""))
+    e.getMessage should include("Foo.name")
+    e.getMessage should include("integer")
+  }
+
+  "An empty-vs-omitted override on a field that isn't an optional array" must "fail the scrape" in {
+    val e = the[RuntimeException] thrownBy TgBotApiScrapper.scrape(
+      fooField("bars", "Array of String", "The bars"),
+      overrides("""fields { "Foo.bars" { empty-vs-omitted = distinct } }""")
+    )
+    e.getMessage should include("Foo.bars")
+    e.getMessage should include("empty-vs-omitted")
+  }
+
+  "A type override on an integer ID" must "replace the docs' type without needing an integer width too" in {
+    integerField("zork_ids", "The zorks", kind = "Array of Integer", o = overrides("""fields { "Foo.zork_ids" { type = "List[Long]" } }"""))
+      .kind shouldBe "List[Long]"
+  }
+
+  "A type override naming a DSL type with two type arguments" must "come out as written, not as a union" in {
+    TgBotApiScrapper.scrape(fooField("res", "String", "The result"), overrides("""fields { "Foo.res" { type = "Either[Boolean, Message]" } }""")) should
+      include("res : Either[Boolean, Message]")
+  }
+
+  "A tagged type in no sum type" must "fail the scrape, naming it and the overrides file" in {
+    // The old scraper added every tagged InputMedia* type to InputMedia; now one needs a merge entry, and fails without it.
+    val e = the[RuntimeException] thrownBy gen(List(
+      Sumtyp("InputMedia", "Some media.", List("InputMediaPhoto")),
+      tagged("InputMediaPhoto", "photo"),
+      tagged("InputMediaSticker", "sticker")
+    ), overrides(""))
+    e.getMessage should include("InputMediaSticker")
+    e.getMessage should not include "InputMediaPhoto"
+    e.getMessage should include(TgBotApiOverrides.file)
+  }
+
+  it must "fail the scrape for a tagged item of a declared type, which is untagged" in {
+    val e = the[RuntimeException] thrownBy gen(List(tagged("PhotoThing", "photo"), tagged("VideoThing", "video")),
+      overrides("types { Pair { items = [PhotoThing, VideoThing] } }"))
+    e.getMessage should include("PhotoThing")
+    e.getMessage should include("VideoThing")
+  }
+
+  "A merge of a type that merges types itself" must "fail to load" in {
+    val e = the[RuntimeException] thrownBy overrides("types { A { merge = [B] }, B { merge = [C] } }")
+    e.getMessage should include("types.A.merge")
+    e.getMessage should include(TgBotApiOverrides.file)
+  }
+
+  "A type merged into two types" must "fail to load" in {
+    val e = the[RuntimeException] thrownBy overrides("types { A { merge = [C] }, B { merge = [C] } }")
+    e.getMessage should include("C")
+    e.getMessage should include("types.A")
+    e.getMessage should include("types.B")
   }
 }

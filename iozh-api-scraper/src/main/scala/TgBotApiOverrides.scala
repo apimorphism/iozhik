@@ -49,16 +49,29 @@ object TgBotApiOverrides {
       val sumtyps = items.collect { case s: Sumtyp => s.name }.toSet
       val owners = entities ++ methods
       val allNames = owners.values.flatten.toSet
+      // Each field and param as (owner, name, parsed type, optional).
+      val params = items.flatMap {
+        case e: Entity => e.table.map(f => (e.name, f.name, f.kind, TgBotApiScrapper.optionalFieldDescPattern.findFirstIn(f.desc).isDefined))
+        case m: Method => m.table.map(p => (m.name, p.name, p.kind, p.required.toLowerCase.contains("optional")))
+        case _: Sumtyp => List.empty
+      }
+      // A setting needs at least one of the fields its key names to be of a type it applies to.
+      def settingProblems(path: String, o: FieldOverride, named: List[(String, Boolean)]): List[String] =
+        o.integer.filterNot(_ => named.exists { case (kind, _) => "\\b(Int|Long)\\b".r.findFirstIn(kind).isDefined })
+          .map(_ => s"$path: integer only applies to an Integer").toList ++
+          o.emptyVsOmitted.filterNot(_ => named.exists { case (kind, optional) => optional && kind.startsWith("Array of") })
+            .map(_ => s"$path: empty-vs-omitted only applies to an optional array").toList
       val fieldProblems = fields.toList.flatMap { case (key, o) =>
         key.split('.') match {
           case Array(owner, name) =>
-            if (!owners.get(owner).exists(_.contains(name))) List(s"fields.\"$key\": the docs have no such field or param")
-            else if (o.optional && !typeOverride(owner).splitByType) List(s"fields.\"$key\": optional only applies to a type with split-by-type")
-            else List.empty
+            val path = s"fields.\"$key\""
+            if (!owners.get(owner).exists(_.contains(name))) List(s"$path: the docs have no such field or param")
+            else if (o.optional && !typeOverride(owner).splitByType) List(s"$path: optional only applies to a type with split-by-type")
+            else settingProblems(path, o, params.collect { case (`owner`, `name`, kind, optional) => kind -> optional })
           case _ =>
             if (!allNames.contains(key)) List(s"fields.$key: the docs have no field or param of this name")
             else if (o.optional) List(s"fields.$key: optional needs an Owner.name key")
-            else List.empty
+            else settingProblems(s"fields.$key", o, params.collect { case (_, `key`, kind, optional) => kind -> optional })
         }
       }
       val typeProblems = types.toList.flatMap { case (name, t) =>
@@ -162,6 +175,15 @@ object TgBotApiOverrides {
         splitByType = get(c, path, "split-by-type")(c.getBoolean).getOrElse(false)
       )
     }.toMap
+
+    // Merges don't chain: a type's items join one type, which isn't merged into another.
+    types.foreach { case (name, t) =>
+      t.merge.filter(m => types.get(m).exists(_.merge.nonEmpty))
+        .foreach(m => errors += s"types.$name.merge: $m merges types itself; merge those here instead")
+    }
+    types.toList.flatMap { case (name, t) => t.merge.map(_ -> name) }.groupBy(_._1).foreach { case (m, targets) =>
+      if (targets.size > 1) errors += s"$m is merged into ${targets.map(t => s"types.${t._2}").sorted.mkString(" and ")}"
+    }
 
     errors.result() match {
       case Nil  => Overrides(fields, types)

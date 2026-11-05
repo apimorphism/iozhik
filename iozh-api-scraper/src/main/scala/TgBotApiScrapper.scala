@@ -158,7 +158,7 @@ object TgBotApiScrapper extends IOApp {
   private val forXOnlyPattern = "(?<=For “).*?(?=” only)".r
   private val forXOnlyDescPattern = "(?:<em>)?Optional(?:</em>)?\\. For “.*” only, ".r
   private val discriminatorPattern = ".*, always “(.*?)”".r
-  private val optionalFieldDescPattern = "^(?:<em>)?Optional\\b".r
+  val optionalFieldDescPattern = "^(?:<em>)?Optional\\b".r
   private val unionSeparator = ", | and | or ".r
 
   // Integer identifiers (fields or params named *_id/*_ids, or described as an identifier) must be classified as Int or Long:
@@ -254,9 +254,12 @@ object TgBotApiScrapper extends IOApp {
         )
       }
     }
+    // A type override is a DSL type already, so it's never a union.
+    def resolve(owner: String, name: String, kind: String) =
+      if (overrides.field(owner, name).tpe.isDefined) kind else resolveKind(owner, name, kind)
     val resolvedItems = items.map {
-      case m: Method => m.copy(table = m.table.map(p => p.copy(kind = resolveKind(m.name, p.name, p.kind))))
-      case e: Entity => e.copy(table = e.table.map(f => f.copy(kind = resolveKind(e.name, f.name, f.kind))))
+      case m: Method => m.copy(table = m.table.map(p => p.copy(kind = resolve(m.name, p.name, p.kind))))
+      case e: Entity => e.copy(table = e.table.map(f => f.copy(kind = resolve(e.name, f.name, f.kind))))
       case s: Sumtyp => s
     }
 
@@ -359,7 +362,7 @@ object TgBotApiScrapper extends IOApp {
     val emap = (resolvedItems.collect{
         case e: Entity => e
       }
-      .filterNot(splitItems.contains) ++ splitVariants.flatMap(_._2) ++ overrides.types.values.flatMap(_.extraItems))
+      .filterNot(splitItems.contains) ++ splitVariants.flatMap(_._2) ++ resolvedSumtyps.flatMap(s => overrides.typeOverride(s.name).extraItems))
       .map { e =>
         val fields = genFields(e.name, e.table)
         val body = s"""
@@ -371,6 +374,13 @@ object TgBotApiScrapper extends IOApp {
         e.name -> body
       }.toMap
     val leaves = (resolvedSumtyps.map(_.items) ++ splitParents.map(_.items) ++ declaredTypes.map(_._2)).flatten.toSet
+    // A tagged type gets its type id as an item of a sum type: one outside them all would keep the placeholder.
+    val sumItems = (resolvedSumtyps ++ splitParents).flatMap(_.items).toSet
+    val untagged = emap.collect { case (name, b) if b.contains("__type_id_placeholder__") && !sumItems(name) => name }
+    if (untagged.nonEmpty) sys.error(
+      s"${untagged.toList.sorted.mkString(", ")}: tagged, but an item of no sum type. " +
+        s"Add each to one with merge in ${TgBotApiOverrides.file}."
+    )
     val sumTypes = (resolvedSumtyps ++ splitParents)
       .sortBy(_.name)
       .map { e =>
@@ -479,9 +489,9 @@ object TgBotApiScrapper extends IOApp {
     def mkType(owner: String, name: String, desc: Desc, s: String): String = {
       val descText = desc.text
       val hasLongWording = longWording.exists(descText.contains)
-      // "Integer or String" is a ChatId, not an integer to classify.
-      val isInteger = s.replace("Integer or String", "").contains("Integer")
       val fieldOverride = overrides.field(owner, name)
+      // "Integer or String" is a ChatId, not an integer to classify, and a type override replaces the docs' type.
+      val isInteger = fieldOverride.tpe.isEmpty && s.replace("Integer or String", "").contains("Integer")
       val width = fieldOverride.integer.orElse(integerWidthByName(owner, name))
       val mustBeLong =
         if (!isInteger) false
