@@ -1,15 +1,14 @@
-import scala.jdk.CollectionConverters._
-import scala.util.Try
-
-import com.typesafe.config.{Config, ConfigFactory, ConfigObject}
-
 import TgBotApiScrapper.{ApiItem, Entity, EntityParam, Method, Sumtyp}
 
-// Corrections to the Bot API docs, read from tgbotapi-overrides.conf: everything the scraper knows about a specific
-// field or type that the docs don't say, or say wrongly. Heuristics that read the docs' wording stay in the scraper.
+// Corrections to the Bot API docs, applied by TgBotApiScrapper: what it knows about a specific field or type that the
+// docs don't say, or say wrongly. The scrape fails on an entry naming a field, method or type the docs no longer have,
+// or using a setting where it doesn't apply.
+// Give each entry, or group of entries, a comment with its reason: the doc wording, a Bot API server reference, an issue.
+// An entry is for a field or type no rule in TgBotApiScrapper covers. When several entries share a reason, make that
+// reason a rule there instead, so this object doesn't grow into a copy of the docs.
 object TgBotApiOverrides {
 
-  val file = "iozh-api-scraper/src/main/resources/tgbotapi-overrides.conf"
+  val file = "iozh-api-scraper/src/main/scala/TgBotApiOverrides.scala"
 
   sealed trait EmptyVsOmitted
   case object Distinct extends EmptyVsOmitted
@@ -19,27 +18,67 @@ object TgBotApiOverrides {
   case object AsInt extends IntegerWidth
   case object AsLong extends IntegerWidth
 
-  case class FieldOverride(
+  /** A field or param, keyed by Owner.name (a type's field or a method's param), or by a bare name, for every field and
+    * param of that name. An Owner.name entry wins over a bare name one.
+    *
+    * @param emptyVsOmitted
+    *   For an optional array. Telegram treats a missing optional array the same as an empty one, so it's tagged
+    *   (omitempty), and the encoder leaves an empty one out. `Distinct` makes it an Option[List] instead, for arrays
+    *   where [] means something of its own. The scrape fails on an optional array whose description talks about empty
+    *   or omitted lists, until it's given one or the other.
+    * @param integer
+    *   The width of an Integer (or of an array's). The scrape fails on an integer that looks like an identifier (named
+    *   *_id or *_ids, or described as an identifier) unless the docs say it may exceed 32 bits, its name classifies it
+    *   (user and chat IDs are Long; message, story and checklist task IDs are Int), or it's given here.
+    * @param tpe
+    *   Replaces the docs' type, written as a DSL type (e.g. List[Long], not "Array of Integer"): the scraper's
+    *   conversions from the docs' wording don't apply to it. It's still wrapped in an Option when optional. A field the
+    *   docs link to "Sending files" stays an IFile.
+    * @param optional
+    *   For a field of a type with splitByType: it stays optional in its variant ("Optional. For “X” only" otherwise
+    *   means required in variant X).
+    */
+  case class Field(
     emptyVsOmitted: Option[EmptyVsOmitted] = None,
     integer: Option[IntegerWidth] = None,
     tpe: Option[String] = None,
     optional: Boolean = false
   )
 
-  case class TypeOverride(
+  /** A type in the docs, or one declared here with items. A tagged type (one whose type field is fixed) has to end up an
+    * item of a sum type, or the scrape fails.
+    *
+    * @param merge
+    *   On a sum type in the docs (so is extraItems). These sum types' items join this type's, and they're dropped: a
+    *   field of their type gets this one. A standalone type joins as an item itself.
+    * @param extraItems
+    *   Items the docs don't list; see [[item]].
+    * @param items
+    *   Declares a sum type the docs don't have, of these (untagged) items. A docs type that's a union of types ("A or
+    *   B", "A, B and C") becomes the sum type whose items include all of them, so a union with no such type, or several,
+    *   fails the scrape.
+    * @param splitByType
+    *   The docs give one object whose type field lists its values, and whose optional fields say "For “X” only". It
+    *   becomes a sum type with a variant per value, holding the fields for that value.
+    */
+  case class Type(
     merge: List[String] = List.empty,
     extraItems: List[Entity] = List.empty,
     items: List[String] = List.empty,
     splitByType: Boolean = false
   )
 
-  case class Overrides(fields: Map[String, FieldOverride], types: Map[String, TypeOverride]) {
+  /** An item the docs don't list, tagged with type = tag. */
+  def item(name: String, desc: String, tag: String, fields: EntityParam*): Entity =
+    Entity(name, desc, EntityParam("type", "__type_tag__", tag) :: fields.toList)
+
+  case class Overrides(fields: Map[String, Field] = Map.empty, types: Map[String, Type] = Map.empty) {
 
     // An Owner.name entry wins over a bare name one.
-    def field(owner: String, name: String): FieldOverride =
-      fields.get(s"$owner.$name").orElse(fields.get(name)).getOrElse(FieldOverride())
+    def field(owner: String, name: String): Field =
+      fields.get(s"$owner.$name").orElse(fields.get(name)).getOrElse(Field())
 
-    def typeOverride(name: String): TypeOverride = types.getOrElse(name, TypeOverride())
+    def typeOverride(name: String): Type = types.getOrElse(name, Type())
 
     // Overrides that don't fit the docs: they name a field, method or type the docs don't have (any more), so they'd
     // silently do nothing, or they use a setting where it doesn't apply.
@@ -56,17 +95,17 @@ object TgBotApiOverrides {
         case _: Sumtyp => List.empty
       }
       // A setting needs at least one of the fields its key names to be of a type it applies to.
-      def settingProblems(path: String, o: FieldOverride, named: List[(String, Boolean)]): List[String] =
+      def settingProblems(path: String, o: Field, named: List[(String, Boolean)]): List[String] =
         o.integer.filterNot(_ => named.exists { case (kind, _) => "\\b(Int|Long)\\b".r.findFirstIn(kind).isDefined })
           .map(_ => s"$path: integer only applies to an Integer").toList ++
           o.emptyVsOmitted.filterNot(_ => named.exists { case (kind, optional) => optional && kind.startsWith("Array of") })
-            .map(_ => s"$path: empty-vs-omitted only applies to an optional array").toList
+            .map(_ => s"$path: emptyVsOmitted only applies to an optional array").toList
       val fieldProblems = fields.toList.flatMap { case (key, o) =>
         key.split('.') match {
           case Array(owner, name) =>
             val path = s"fields.\"$key\""
             if (!owners.get(owner).exists(_.contains(name))) List(s"$path: the docs have no such field or param")
-            else if (o.optional && !typeOverride(owner).splitByType) List(s"$path: optional only applies to a type with split-by-type")
+            else if (o.optional && !typeOverride(owner).splitByType) List(s"$path: optional only applies to a type with splitByType")
             else settingProblems(path, o, params.collect { case (`owner`, `name`, kind, optional) => kind -> optional })
           case _ =>
             if (!allNames.contains(key)) List(s"fields.$key: the docs have no field or param of this name")
@@ -84,110 +123,78 @@ object TgBotApiOverrides {
           else List.empty
         val notSumtyp =
           if ((t.merge.nonEmpty || t.extraItems.nonEmpty) && !sumtyps.contains(name))
-            List(s"types.$name: merge and extra-items only apply to a sum type in the docs")
+            List(s"types.$name: merge and extraItems only apply to a sum type in the docs")
           else List.empty
         existence ++ notSumtyp ++
           t.merge.filterNot(m => sumtyps.contains(m) || entities.contains(m)).map(m => s"types.$name.merge: the docs have no type $m") ++
           t.extraItems.map(_.name).filter(n => entities.contains(n) || sumtyps.contains(n))
-            .map(n => s"types.$name.extra-items: the docs define $n now") ++
-          (if (t.splitByType && !entities.get(name).exists(_.contains("type"))) List(s"types.$name: split-by-type needs a type field")
+            .map(n => s"types.$name.extraItems: the docs define $n now") ++
+          (if (t.splitByType && !entities.get(name).exists(_.contains("type"))) List(s"types.$name: splitByType needs a type field")
            else List.empty)
       }
       (fieldProblems ++ typeProblems).sorted
     }
   }
 
-  lazy val default: Overrides = load(ConfigFactory.parseResources("tgbotapi-overrides.conf"))
+  val default: Overrides = Overrides(
+    fields = Map(
+      // "If not specified, the previous setting will be used"
+      "getUpdates.allowed_updates" -> Field(emptyVsOmitted = Some(Distinct)),
+      "setWebhook.allowed_updates" -> Field(emptyVsOmitted = Some(Distinct)),
+      // "If omitted, then all emoji reactions are allowed"
+      "ChatFullInfo.available_reactions" -> Field(emptyVsOmitted = Some(Distinct)),
+      // Not in the docs: the Bot API server keeps the current areas when it's omitted, and removes them on [].
+      "editStory.areas" -> Field(emptyVsOmitted = Some(Distinct)),
+      // These descriptions talk about empty or omitted lists, but mean the same by both.
+      "sendPoll.country_codes" -> Field(emptyVsOmitted = Some(Same)),
+      "Poll.country_codes" -> Field(emptyVsOmitted = Some(Same)),
+      "Giveaway.country_codes" -> Field(emptyVsOmitted = Some(Same)),
+      "ChatFullInfo.active_usernames" -> Field(emptyVsOmitted = Some(Same)),
+      "WebhookInfo.allowed_updates" -> Field(emptyVsOmitted = Some(Same)),
 
-  def parse(hocon: String): Overrides = load(ConfigFactory.parseString(hocon))
+      // The docs rarely state an integer's width, and no naming rule covers these, so they're checked against the Bot
+      // API server instead: telegram-bot-api Client.cpp at e3e9dd8 (Bot API 10.3), where each handler parses params and
+      // serializes fields.
+      // int64: parsed with to_integer<int64>, serialized from JsonDirectMessagesTopic.topic_id
+      "direct_messages_topic_id" -> Field(integer = Some(AsLong)),
+      // int64: parsed with to_integer<int64> in process_send_message_draft_query (the docs don't say)
+      "draft_id" -> Field(integer = Some(AsLong)),
+      // int32: get_forum_topic_id, serialized from td forum_topic_id:int32
+      "message_thread_id" -> Field(integer = Some(AsInt)),
+      // int32: JsonUpdate(td::int32 id, ...), and get_integer_arg for getUpdates offset
+      "update_id" -> Field(integer = Some(AsInt)),
+      "getUpdates.offset" -> Field(integer = Some(AsInt)),
+      // int32: td_api accent color ids
+      "accent_color_id" -> Field(integer = Some(AsInt)),
+      "profile_accent_color_id" -> Field(integer = Some(AsInt)),
+      // int32: get_integer_arg / get_required_int_field; some descriptions also say "Signed 32-bit identifier"
+      "request_id" -> Field(integer = Some(AsInt)),
+      // int32: poll option indexes
+      "option_ids" -> Field(integer = Some(AsInt)),
+      "correct_option_ids" -> Field(integer = Some(AsInt)),
 
-  private val fieldKeys = Set("empty-vs-omitted", "integer", "type", "optional")
-  private val typeKeys = Set("merge", "extra-items", "items", "split-by-type")
-  private val extraItemKeys = Set("name", "desc", "tag", "fields")
-  private val extraFieldKeys = Set("name", "type", "desc")
+      // A Unix time, though the description doesn't say so
+      "send_date" -> Field(integer = Some(AsLong)),
 
-  private def load(raw: Config): Overrides = {
-    val config = raw.resolve()
-    val errors = List.newBuilder[String]
-
-    def objects(c: Config, path: String): List[(String, Config)] =
-      if (!c.hasPath(path)) List.empty
-      else c.getObject(path).asScala.toList.map {
-        case (k, v: ConfigObject) => k -> v.toConfig
-        case (k, _)               => errors += s"$path.$k: expected an object"; k -> ConfigFactory.empty()
-      }
-
-    def checkKeys(c: Config, path: String, allowed: Set[String]): Unit =
-      c.root.keySet.asScala.toList.sorted.filterNot(allowed).foreach(k => errors += s"$path: unknown key $k")
-
-    def get[A](c: Config, path: String, key: String)(read: String => A): Option[A] =
-      if (!c.hasPath(key)) None
-      else Try(read(key)).fold(e => { errors += s"$path.$key: ${e.getMessage}"; None }, Some(_))
-
-    def required(c: Config, path: String, key: String): String =
-      get(c, path, key)(c.getString).getOrElse { if (!c.hasPath(key)) errors += s"$path: missing $key"; "" }
-
-    def oneOf(c: Config, path: String, key: String, values: Set[String]): Option[String] =
-      get(c, path, key)(c.getString).flatMap { v =>
-        if (values.contains(v)) Some(v)
-        else { errors += s"$path.$key: expected one of ${values.toList.sorted.mkString(", ")}, got $v"; None }
-      }
-
-    checkKeys(config, "overrides", Set("fields", "types"))
-
-    val fields = objects(config, "fields").map { case (key, c) =>
-      val path = s"fields.\"$key\""
-      checkKeys(c, path, fieldKeys)
-      key -> FieldOverride(
-        emptyVsOmitted = oneOf(c, path, "empty-vs-omitted", Set("distinct", "same")).map {
-          case "distinct" => Distinct
-          case _          => Same
-        },
-        integer = oneOf(c, path, "integer", Set("Int", "Long")).map {
-          case "Int" => AsInt
-          case _     => AsLong
-        },
-        tpe = get(c, path, "type")(c.getString),
-        optional = get(c, path, "optional")(c.getBoolean).getOrElse(false)
-      )
-    }.toMap
-
-    val types = objects(config, "types").map { case (name, c) =>
-      val path = s"types.$name"
-      checkKeys(c, path, typeKeys)
-      val extraItems = get(c, path, "extra-items")(c.getConfigList).toList.flatMap(_.asScala.toList).map { item =>
-        val itemPath = s"$path.extra-items"
-        checkKeys(item, itemPath, extraItemKeys)
-        val fields = get(item, itemPath, "fields")(item.getConfigList).toList.flatMap(_.asScala.toList).map { f =>
-          checkKeys(f, s"$itemPath.fields", extraFieldKeys)
-          EntityParam(required(f, s"$itemPath.fields", "name"), required(f, s"$itemPath.fields", "type"), required(f, s"$itemPath.fields", "desc"))
-        }
-        Entity(
-          required(item, itemPath, "name"),
-          required(item, itemPath, "desc"),
-          EntityParam("type", "__type_tag__", required(item, itemPath, "tag")) :: fields
-        )
-      }
-      name -> TypeOverride(
-        merge = get(c, path, "merge")(c.getStringList).map(_.asScala.toList).getOrElse(List.empty),
-        extraItems = extraItems,
-        items = get(c, path, "items")(c.getStringList).map(_.asScala.toList).getOrElse(List.empty),
-        splitByType = get(c, path, "split-by-type")(c.getBoolean).getOrElse(false)
-      )
-    }.toMap
-
-    // Merges don't chain: a type's items join one type, which isn't merged into another.
-    types.foreach { case (name, t) =>
-      t.merge.filter(m => types.get(m).exists(_.merge.nonEmpty))
-        .foreach(m => errors += s"types.$name.merge: $m merges types itself; merge those here instead")
-    }
-    types.toList.flatMap { case (name, t) => t.merge.map(_ -> name) }.groupBy(_._1).foreach { case (m, targets) =>
-      if (targets.size > 1) errors += s"$m is merged into ${targets.map(t => s"types.${t._2}").sorted.mkString(" and ")}"
-    }
-
-    errors.result() match {
-      case Nil  => Overrides(fields, types)
-      case errs => sys.error(s"Invalid overrides in $file:\n" + errs.mkString("\n"))
-    }
-  }
+      // The docs only say "Optional. For “pre” only", as for every other variant's field, but a pre may have no
+      // language.
+      "MessageEntity.language" -> Field(optional = true)
+    ),
+    types = Map(
+      // sendPoll's media params take an InputPollMedia, and InputPollOption's an InputPollOptionMedia: both are subsets
+      // of the InputMedia* types, so a single InputMedia serves them all. The docs list InputMediaVoiceNote in no sum
+      // type, though InputRichMessageMedia.media takes it among the others.
+      "InputMedia" -> Type(merge = List("InputPollMedia", "InputPollOptionMedia", "InputMediaVoiceNote")),
+      // Telegram sends a plain text as a bare string and a concatenation as an array; see the custom RichText codecs in
+      // iozhik/src/main/resources/tgbotapi.conf.
+      "RichText" -> Type(extraItems = List(
+        item("RichTextPlain", "Plain text.", "plain", EntityParam("text", "String", "The text")),
+        item("RichTextConcat", "Concatenation of rich texts.", "concat", EntityParam("texts", "List[RichText]", "The texts"))
+      )),
+      // The reply_markup params' "InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardRemove or ForceReply"
+      "KeyboardMarkup" -> Type(items = List("InlineKeyboardMarkup", "ReplyKeyboardMarkup", "ReplyKeyboardRemove", "ForceReply")),
+      // The docs give one MessageEntity, whose url, user, language and custom_emoji_id apply to one type each.
+      "MessageEntity" -> Type(splitByType = true)
+    )
+  )
 }

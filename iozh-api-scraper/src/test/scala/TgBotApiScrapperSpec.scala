@@ -3,6 +3,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import TgBotApiScrapper._
+import TgBotApiOverrides._
 
 class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
 
@@ -276,10 +277,10 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     ), o).collect { case e: Entity => e.table.head }.head
 
   // https://github.com/apimorphism/iozhik/issues/26
-  "An integer ID field whose wording and name have no override" must "fail the scrape, naming the field and the overrides file" in {
+  "An integer ID field whose wording and name have no override" must "fail the scrape, naming the field and the overrides object" in {
     val e = the[RuntimeException] thrownBy integerField("zork_id", "Unique identifier of the zork")
     e.getMessage should include("Foo.zork_id")
-    e.getMessage should include("integer = Int or Long")
+    e.getMessage should include("integer = Some(AsInt) or Some(AsLong)")
     e.getMessage should include(TgBotApiOverrides.file)
   }
 
@@ -307,7 +308,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     integerField("message_ids", "A list of identifiers of messages", "Foo", "Array of Integer").kind shouldBe "Array of Int"
     the[RuntimeException] thrownBy integerField("zork_ids", "The zorks", "Foo", "Array of Integer") should have message
       "Foo.zork_ids: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +
-        s"Read its description and give it integer = Int or Long in ${TgBotApiOverrides.file}."
+        s"Read its description and give it integer = Some(AsInt) or Some(AsLong) in ${TgBotApiOverrides.file}."
   }
 
   "An integer that is not an identifier" must "not need classifying" in {
@@ -331,19 +332,19 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     val e = the[RuntimeException] thrownBy
       integerField("update_id", "The update's unique identifier. This number may have more than 32 significant bits.")
     e.getMessage should include("Foo.update_id")
-    e.getMessage should include("integer = Int")
+    e.getMessage should include("integer = Some(AsInt)")
   }
 
   "An integer ID whose name makes it an Int, but whose description says it may exceed 32 bits" must "fail the scrape" in {
     val e = the[RuntimeException] thrownBy
-      integerField("message_id", "Unique message identifier. This number may have more than 32 significant bits.", o = overrides(""))
+      integerField("message_id", "Unique message identifier. This number may have more than 32 significant bits.", o = Overrides())
     e.getMessage should include("Foo.message_id")
     e.getMessage should include("its name")
   }
 
   "A user or chat ID" must "be a Long by its name, without an override" in {
     List("user_id", "receiver_user_id", "added_user_ids", "chat_id", "sender_chat_id", "new_owner_chat_id").foreach { name =>
-      integerField(name, "Unique identifier of the target", kind = if (name.endsWith("s")) "Array of Integer" else "Integer", o = overrides(""))
+      integerField(name, "Unique identifier of the target", kind = if (name.endsWith("s")) "Array of Integer" else "Integer", o = Overrides())
         .kind should endWith("Long")
     }
   }
@@ -351,27 +352,27 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
   "A message, story or checklist task ID" must "be an Int by its name, without an override" in {
     List("message_id", "message_ids", "giveaway_message_id", "from_story_id", "reply_to_checklist_task_id", "marked_as_done_task_ids")
       .foreach { name =>
-        integerField(name, "Identifier of the thing", kind = if (name.endsWith("s")) "Array of Integer" else "Integer", o = overrides(""))
+        integerField(name, "Identifier of the thing", kind = if (name.endsWith("s")) "Array of Integer" else "Integer", o = Overrides())
           .kind should endWith("Int")
       }
   }
 
   "A type's own id" must "be classified like <type>_id, without an override" in {
-    integerField("id", "Unique identifier of the story", "Story", o = overrides("")).kind shouldBe "Int"
-    integerField("id", "Unique identifier of the task", "InputChecklistTask", o = overrides("")).kind shouldBe "Int"
-    integerField("id", "Unique identifier of the user", "User", o = overrides("")).kind shouldBe "Long"
+    integerField("id", "Unique identifier of the story", "Story", o = Overrides()).kind shouldBe "Int"
+    integerField("id", "Unique identifier of the task", "InputChecklistTask", o = Overrides()).kind shouldBe "Int"
+    integerField("id", "Unique identifier of the user", "User", o = Overrides()).kind shouldBe "Long"
   }
 
   // https://github.com/apimorphism/iozhik/pull/37: sendPoll's question_parse_mode and description_parse_mode were Strings
   "A field named *parse_mode" must "be a ParseMode, without an override" in {
     List("parse_mode", "question_parse_mode", "description_parse_mode").foreach { name =>
-      integerField(name, "Mode for parsing entities", kind = "String", o = overrides("")).kind shouldBe "ParseMode"
+      integerField(name, "Mode for parsing entities", kind = "String", o = Overrides()).kind shouldBe "ParseMode"
     }
   }
 
   "A message thread ID" must "not be taken for a message ID" in {
     an[RuntimeException] should be thrownBy
-      integerField("message_thread_id", "Unique identifier of the forum topic", o = overrides(""))
+      integerField("message_thread_id", "Unique identifier of the forum topic", o = Overrides())
   }
 
   "An integer ID overridden to Long whose description says it may exceed 32 bits" must "still be a Long" in {
@@ -383,7 +384,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     integerField("draft_id", "Unique identifier of the message draft; must be non-zero.").kind shouldBe "Long"
   }
 
-  private def overrides(hocon: String) = TgBotApiOverrides.parse(hocon)
+  private def overrides(fields: (String, Field)*)(types: (String, Type)*) = Overrides(fields.toMap, types.toMap)
 
   private def doc(content: String) = JsoupBrowser.typed().parseString(s"""<div id="dev_page_content">$content</div>""")
 
@@ -391,7 +392,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     Entity(name, s"A $tag.", EntityParam("type", "__type_tag__", tag) :: fields.toList)
 
   "A field's type override" must "replace the docs' type, and still be wrapped when optional" in {
-    val o = overrides("fields { parse_mode { type = ParseMode } }")
+    val o = overrides("parse_mode" -> Field(tpe = Some("ParseMode")))()
     val m = TgBotApiScrapper.parse(doc(
       """<h4>sendFoo</h4>
         |<p>Use this method to send foo. Returns <em>True</em> on success.</p>
@@ -404,7 +405,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
   }
 
   "An Owner.name field override" must "win over a bare name one" in {
-    val o = overrides("""fields { zork_id { integer = Long }, "Foo.zork_id" { integer = Int } }""")
+    val o = overrides("zork_id" -> Field(integer = Some(AsLong)), "Foo.zork_id" -> Field(integer = Some(AsInt)))()
     def kind(owner: String) = TgBotApiScrapper.parse(doc(
       s"""<h4>$owner</h4><p>This object represents a foo.</p>
          |<table class="table"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
@@ -415,7 +416,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
   }
 
   "A merged type" must "bring its items, or itself when standalone, and its fields' types" in {
-    val o = overrides("types { Media { merge = [PollMedia, VoiceMedia] } }")
+    val o = overrides()("Media" -> Type(merge = List("PollMedia", "VoiceMedia")))
     val dsl = gen(List(
       Sumtyp("Media", "Some media.", List("PhotoMedia")),
       Sumtyp("PollMedia", "Poll media.", List("PhotoMedia", "VideoMedia")),
@@ -434,7 +435,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
   }
 
   "A docs type that's a union of types" must "become the one sum type holding them all" in {
-    val o = overrides("types { Markup { items = [Keyboard, Remove] } }")
+    val o = overrides()("Markup" -> Type(items = List("Keyboard", "Remove")))
     val dsl = gen(List(
       Sumtyp("Media", "Some media.", List("PhotoMedia", "VideoMedia", "VoiceMedia")),
       Entity("Keyboard", "A keyboard.", List(EntityParam("rows", "Array of String", "The rows"))),
@@ -454,21 +455,17 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     dsl should include("enum Markup {")
   }
 
-  it must "fail the scrape, naming the overrides file, when no type holds them all" in {
+  it must "fail the scrape, naming the overrides object, when no type holds them all" in {
     val e = the[RuntimeException] thrownBy gen(List(
       Sumtyp("Media", "Some media.", List("PhotoMedia")),
       Entity("Foo", "A foo.", List(EntityParam("media", "PhotoMedia or VoiceMedia", "The media")))
-    ), overrides(""))
+    ), Overrides())
     e.getMessage should include("Foo.media")
     e.getMessage should include(TgBotApiOverrides.file)
   }
 
   "A type's extra items" must "be generated as tagged items of it" in {
-    val o = overrides(
-      """types { Text { extra-items = [
-        |  { name = TextPlain, desc = "Plain text.", tag = plain, fields = [{ name = text, type = String, desc = "The text" }] }
-        |] } }""".stripMargin
-    )
+    val o = overrides()("Text" -> Type(extraItems = List(item("TextPlain", "Plain text.", "plain", EntityParam("text", "String", "The text")))))
     val dsl = gen(List(Sumtyp("Text", "A text.", List("TextBold")), tagged("TextBold", "bold")), o)
     dsl should include("TextPlain {")
     dsl should include("text : String")
@@ -476,7 +473,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
   }
 
   "A type split by type" must "get a variant per value, keeping overridden fields optional" in {
-    val o = overrides("""types { Entity { split-by-type = true } }, fields { "Entity.language" { optional = true } }""")
+    val o = overrides("Entity.language" -> Field(optional = true))("Entity" -> Type(splitByType = true))
     val items = TgBotApiScrapper.parse(doc(
       """<h4>Entity</h4><p>This object represents an entity.</p>
         |<table class="table"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -493,30 +490,6 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     dsl should include("language : Option[String]")
   }
 
-  "The shipped overrides file" must "load" in {
-    noException should be thrownBy TgBotApiOverrides.default
-  }
-
-  "An override with an unknown key" must "fail to load, naming the key and the overrides file" in {
-    val e = the[RuntimeException] thrownBy overrides("""fields { "getUpdates.allowed_updates" { empty-vs-ommited = distinct } }""")
-    e.getMessage should include("empty-vs-ommited")
-    e.getMessage should include(TgBotApiOverrides.file)
-  }
-
-  "An extra item missing a required key" must "fail to load, naming the key" in {
-    val e = the[RuntimeException] thrownBy overrides(
-      """types { Text { extra-items = [{ name = TextPlain, desc = "Plain text.", fields = [{ name = text, type = String }] }] } }"""
-    )
-    e.getMessage should include("types.Text.extra-items: missing tag")
-    e.getMessage should include("types.Text.extra-items.fields: missing desc")
-  }
-
-  "An override with an unknown value" must "fail to load, naming the allowed ones" in {
-    val e = the[RuntimeException] thrownBy overrides("""fields { user_id { integer = Long64 } }""")
-    e.getMessage should include("fields.\"user_id\".integer")
-    e.getMessage should include("Int, Long")
-  }
-
   private val fooPage = doc(
     """<h4>Foo</h4><p>This object represents a foo.</p>
       |<table class="table"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
@@ -526,23 +499,20 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
 
   "A scrape whose overrides all name things in the docs" must "succeed" in {
     TgBotApiScrapper.scrape(fooPage, overrides(
-      """fields { bars { empty-vs-omitted = same }, "Foo.bars" { empty-vs-omitted = distinct } }
-        |types { Media { merge = [Foo] } }""".stripMargin
-    )) should include("bars : Option[List[String]]")
+      "bars" -> Field(emptyVsOmitted = Some(Same)),
+      "Foo.bars" -> Field(emptyVsOmitted = Some(Distinct))
+    )("Media" -> Type(merge = List("Foo")))) should include("bars : Option[List[String]]")
   }
 
-  "A scrape whose overrides name things the docs don't have" must "fail, listing each of them and the overrides file" in {
+  "A scrape whose overrides name things the docs don't have" must "fail, listing each of them and the overrides object" in {
     val e = the[RuntimeException] thrownBy TgBotApiScrapper.scrape(fooPage, overrides(
-      """fields {
-        |  "Foo.bazs" { empty-vs-omitted = same }
-        |  "Qux.bars" { empty-vs-omitted = same }
-        |  bazs { integer = Long }
-        |}
-        |types {
-        |  Qux { merge = [Zork] }
-        |  Media { merge = [PollMedia] }
-        |  Foo { items = [Media] }
-        |}""".stripMargin
+      "Foo.bazs" -> Field(emptyVsOmitted = Some(Same)),
+      "Qux.bars" -> Field(emptyVsOmitted = Some(Same)),
+      "bazs" -> Field(integer = Some(AsLong))
+    )(
+      "Qux" -> Type(merge = List("Zork")),
+      "Media" -> Type(merge = List("PollMedia")),
+      "Foo" -> Type(items = List("Media"))
     ))
     e.getMessage should include(TgBotApiOverrides.file)
     List("Foo.bazs", "Qux.bars", "fields.bazs", "types.Qux", "types.Media.merge", "types.Foo").foreach { key =>
@@ -551,13 +521,11 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
   }
 
   "A scrape whose overrides merge or add items into a type that isn't a sum type" must "fail, naming it" in {
-    val e = the[RuntimeException] thrownBy TgBotApiScrapper.scrape(fooPage, overrides(
-      """types {
-        |  Foo { merge = [Media] }
-        |  Bar { items = [Foo], merge = [PhotoMedia] }
-        |  Baz { items = [Foo], extra-items = [{ name = BazPlain, desc = "Plain.", tag = plain, fields = [] }] }
-        |  Qux { items = [Foo], split-by-type = true }
-        |}""".stripMargin
+    val e = the[RuntimeException] thrownBy TgBotApiScrapper.scrape(fooPage, overrides()(
+      "Foo" -> Type(merge = List("Media")),
+      "Bar" -> Type(items = List("Foo"), merge = List("PhotoMedia")),
+      "Baz" -> Type(items = List("Foo"), extraItems = List(item("BazPlain", "Plain.", "plain"))),
+      "Qux" -> Type(items = List("Foo"), splitByType = true)
     ))
     List("types.Foo:", "types.Bar:", "types.Baz:", "types.Qux:").foreach { key =>
       e.getMessage should include(key)
@@ -573,7 +541,7 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
 
   "An integer override on a field that isn't an integer" must "fail the scrape" in {
     val e = the[RuntimeException] thrownBy
-      TgBotApiScrapper.scrape(fooField("name", "String", "The name"), overrides("""fields { "Foo.name" { integer = Long } }"""))
+      TgBotApiScrapper.scrape(fooField("name", "String", "The name"), overrides("Foo.name" -> Field(integer = Some(AsLong)))())
     e.getMessage should include("Foo.name")
     e.getMessage should include("integer")
   }
@@ -581,29 +549,29 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
   "An empty-vs-omitted override on a field that isn't an optional array" must "fail the scrape" in {
     val e = the[RuntimeException] thrownBy TgBotApiScrapper.scrape(
       fooField("bars", "Array of String", "The bars"),
-      overrides("""fields { "Foo.bars" { empty-vs-omitted = distinct } }""")
+      overrides("Foo.bars" -> Field(emptyVsOmitted = Some(Distinct)))()
     )
     e.getMessage should include("Foo.bars")
-    e.getMessage should include("empty-vs-omitted")
+    e.getMessage should include("emptyVsOmitted")
   }
 
   "A type override on an integer ID" must "replace the docs' type without needing an integer width too" in {
-    integerField("zork_ids", "The zorks", kind = "Array of Integer", o = overrides("""fields { "Foo.zork_ids" { type = "List[Long]" } }"""))
+    integerField("zork_ids", "The zorks", kind = "Array of Integer", o = overrides("Foo.zork_ids" -> Field(tpe = Some("List[Long]")))())
       .kind shouldBe "List[Long]"
   }
 
   "A type override naming a DSL type with two type arguments" must "come out as written, not as a union" in {
-    TgBotApiScrapper.scrape(fooField("res", "String", "The result"), overrides("""fields { "Foo.res" { type = "Either[Boolean, Message]" } }""")) should
+    TgBotApiScrapper.scrape(fooField("res", "String", "The result"), overrides("Foo.res" -> Field(tpe = Some("Either[Boolean, Message]")))()) should
       include("res : Either[Boolean, Message]")
   }
 
-  "A tagged type in no sum type" must "fail the scrape, naming it and the overrides file" in {
+  "A tagged type in no sum type" must "fail the scrape, naming it and the overrides object" in {
     // The old scraper added every tagged InputMedia* type to InputMedia; now one needs a merge entry, and fails without it.
     val e = the[RuntimeException] thrownBy gen(List(
       Sumtyp("InputMedia", "Some media.", List("InputMediaPhoto")),
       tagged("InputMediaPhoto", "photo"),
       tagged("InputMediaSticker", "sticker")
-    ), overrides(""))
+    ), Overrides())
     e.getMessage should include("InputMediaSticker")
     e.getMessage should not include "InputMediaPhoto"
     e.getMessage should include(TgBotApiOverrides.file)
@@ -611,21 +579,9 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
 
   it must "fail the scrape for a tagged item of a declared type, which is untagged" in {
     val e = the[RuntimeException] thrownBy gen(List(tagged("PhotoThing", "photo"), tagged("VideoThing", "video")),
-      overrides("types { Pair { items = [PhotoThing, VideoThing] } }"))
+      overrides()("Pair" -> Type(items = List("PhotoThing", "VideoThing"))))
     e.getMessage should include("PhotoThing")
     e.getMessage should include("VideoThing")
   }
 
-  "A merge of a type that merges types itself" must "fail to load" in {
-    val e = the[RuntimeException] thrownBy overrides("types { A { merge = [B] }, B { merge = [C] } }")
-    e.getMessage should include("types.A.merge")
-    e.getMessage should include(TgBotApiOverrides.file)
-  }
-
-  "A type merged into two types" must "fail to load" in {
-    val e = the[RuntimeException] thrownBy overrides("types { A { merge = [C] }, B { merge = [C] } }")
-    e.getMessage should include("C")
-    e.getMessage should include("types.A")
-    e.getMessage should include("types.B")
-  }
 }

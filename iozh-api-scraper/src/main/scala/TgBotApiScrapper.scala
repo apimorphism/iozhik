@@ -217,7 +217,7 @@ object TgBotApiScrapper extends IOApp {
         case None if emptyVsOmittedWording.findFirstIn(desc).isEmpty => s"(omitempty) ${trarr(kind)}"
         case None => sys.error(
           s"$owner.$f: the description may give an empty list and an omitted one different meanings. " +
-            s"Give it empty-vs-omitted = distinct or same in ${TgBotApiOverrides.file}."
+            s"Give it emptyVsOmitted = Some(Distinct) or Some(Same) in ${TgBotApiOverrides.file}."
         )
       }
 
@@ -497,15 +497,15 @@ object TgBotApiScrapper extends IOApp {
         if (!isInteger) false
         else if (hasLongWording && width.contains(TgBotApiOverrides.AsInt)) sys.error(
           s"$owner.$name: the description says it may not fit in an Int, but " +
-            (if (fieldOverride.integer.isDefined) s"it has integer = Int in ${TgBotApiOverrides.file}"
+            (if (fieldOverride.integer.isDefined) s"it has integer = Some(AsInt) in ${TgBotApiOverrides.file}"
              else "its name makes it an Int (TgBotApiScrapper.intIdName)") +
-            ". Check the Bot API server source and change it to Long."
+            ". Check the Bot API server source and change it to Some(AsLong)."
         )
         else if (hasLongWording || width.contains(TgBotApiOverrides.AsLong)) true
         else if (width.contains(TgBotApiOverrides.AsInt)) false
         else if (isIntegerId(name, descText)) sys.error(
           s"$owner.$name: this integer looks like an identifier, but it isn't known whether it fits in an Int. " +
-            s"Read its description and give it integer = Int or Long in ${TgBotApiOverrides.file}."
+            s"Read its description and give it integer = Some(AsInt) or Some(AsLong) in ${TgBotApiOverrides.file}."
         )
         else {
           descText.contains("size in bytes") ||
