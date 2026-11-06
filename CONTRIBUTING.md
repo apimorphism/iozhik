@@ -13,9 +13,10 @@ The main consumer of the Telegram Bot API pipeline is
 hand-edited there (see that repo's CONTRIBUTING.md). If you need a change in
 `telegramium-core`, the fix belongs in this repo, one of:
 
-- `iozh-api-scraper/src/main/resources/tgbotapi-overrides.conf` - corrections
+- `iozh-api-scraper/src/main/scala/TgBotApiOverrides.scala` - corrections
   to the Bot API docs for a specific field or type (integer widths, empty vs
-  omitted arrays, types merged or added); the file describes each kind. Give
+  omitted arrays, types merged or added), as Scala data, so a wrong key or value
+  fails to compile; `Field` and `Type` describe each setting. Give
   each entry a comment with its reason. An entry is for a field or type no
   rule in the scraper covers: when several entries share a reason, make it a
   rule in `TgBotApiScrapper.scala` instead. The scrape fails on an entry naming
@@ -41,7 +42,7 @@ root run:
 IOZHDIR="$PWD" sbt "iozh-api-scraper/runMain TgBotApiScrapper"
 
 # recompile tgbot.api -> <telegramium checkout>/telegramium-core/src/main/scala,
-# and the generators, the round-trip list, the Methods list and the optional arrays
+# and the generators, the round-trip list, the Methods list and the JSON fields list
 # -> src/test/scala-generated next to it
 # (full rewrite - everything under both trees is deleted and regenerated; the
 # third argument is required while the config has generate-gens on)

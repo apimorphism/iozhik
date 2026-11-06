@@ -431,7 +431,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
 
   "Generators" must "go into a test source tree of their own, one small object per type, with the round-trip list" in {
     val files = generateGens(gensDsl)
-    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "MethodCases.scala", "OptionalArrays.scala")
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "MethodCases.scala", "JsonFields.scala")
     files("GenTypes.scala") should include("object GenDated")
     files("GenTypes.scala") should include("object GenReply")
   }
@@ -460,24 +460,6 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
   "A sum type" must "pick only the variants without a required recursive field at size 0" in {
     val types = generateGens(gensDsl)("GenTypes.scala")
     types should include("sum[Text](List(GenTextPlain.gen, GenTextBold.gen), List(GenTextPlain.gen))")
-  }
-
-  "A required Either with a recursive side" must "pick only the other side at size 0" in {
-    val types = generateGens(
-      """
-        |namespace telegramium {
-        |  namespace bots(snake circe) {
-        |    Leaf {
-        |      date: Long
-        |    }
-        |    Chain {
-        |      next: Either[Leaf, Chain]
-        |    }
-        |  }
-        |}
-      """.stripMargin
-    )("GenTypes.scala")
-    types should include("eitherLeftAtZero(GenLeaf.gen, GenChain.gen)")
   }
 
   "Generators for types in more than one package" must "fail the generation" in {
@@ -530,7 +512,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         |}
       """.stripMargin
     )
-    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "OptionalArrays.scala")
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "JsonFields.scala")
   }
 
   "The round-trip list" must "hold the types with both an encoder and a decoder, and leave out encode-only types" in {
@@ -595,7 +577,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
   }
 
   // https://github.com/apimorphism/telegramium/issues/686
-  "The optional arrays" must "be the (omitempty) List fields, by type and JSON key, and nothing else" in {
+  "The JSON fields" must "list each case class a Method's arguments reach, with its fields' JSON keys and (omitempty) Lists marked" in {
     val arrays = generateGens(
       """
         |namespace telegramium {
@@ -606,18 +588,55 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         |      allowedUpdates: Option[List[String]]
         |      isRtl: Boolean
         |    }
+        |    enum InputMedia {
+        |      InputMediaPhoto {
+        |        type : "photo"
+        |        captionEntities: (omitempty) List[String]
+        |      }
+        |    }
+        |    Message {
+        |      entities: (omitempty) List[String]
+        |    }
         |    Methods (methodsFactory) {
         |      def send {
         |        message: Option[InputRichMessage]
+        |        media: List[InputMedia]
         |        chatId: Long
         |        captionEntities: (omitempty) List[String]
-        |      } => Method[Boolean]
+        |      } => Method[Message]
         |    }
         |  }
         |}
       """.stripMargin
-    )("OptionalArrays.scala")
-    arrays should include("""val all: Set[String] = Set("InputRichMessage.blocks", "SendReq.caption_entities")""")
+    )("JsonFields.scala")
+    val entries = arrays.linesIterator.map(_.trim).filter(_.startsWith("new FieldsOf[")).toList
+    entries shouldBe List(
+      """new FieldsOf[InputRichMessage]("InputRichMessage", List(key("is_rtl"), optionalArray("blocks"), key("rows"), key("allowed_updates")), x => List(x.isRtl, x.blocks, x.rows, x.allowedUpdates)),""",
+      """new FieldsOf[InputMediaPhoto]("InputMediaPhoto", List(optionalArray("caption_entities")), x => List(x.captionEntities)),""",
+      """new FieldsOf[SendReq]("SendReq", List(key("chat_id"), key("message"), key("media"), optionalArray("caption_entities")), x => List(x.chatId, x.message, x.media, x.captionEntities))"""
+    )
+  }
+
+  "The JSON fields of a factory in a subpackage" must "qualify its Req types" in {
+    val arrays = generateGens(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Dated {
+        |      date: Long
+        |    }
+        |    namespace client {
+        |      Methods (methodsFactory) {
+        |        def send {
+        |          captionEntities: (omitempty) List[String]
+        |        } => Method[Boolean]
+        |      }
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )("JsonFields.scala")
+    arrays should include("""new FieldsOf[client.SendReq]("SendReq", List(optionalArray("caption_entities")), x => List(x.captionEntities))""")
   }
 
   "A custom-gens entry" must "apply to the generated and the shrunk values of its type, and leave other types alone" in {

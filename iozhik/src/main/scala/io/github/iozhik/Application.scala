@@ -51,8 +51,8 @@ object Application extends IOApp {
           else formatter.format(Path.of(cfg.fmtConfigPath), file, code.body)
         (file, body)
       }))
-      // the generated test sources have a tree of their own, so they are wiped too
-      .evalTap(_ => cleanDir[F](dstDir) >> testDir.traverse_(cleanDir[F](_)))
+      // the generated test sources have a tree of their own, so they are wiped too, but only when they are generated
+      .evalTap(_ => cleanDir[F](dstDir) >> testDir.filter(_ => cfg.generateGens).traverse_(cleanDir[F](_)))
       .flatMap(Stream.emits(_))
       .flatMap { case (file, body) =>
         Stream.exec(async.delay(file.getParent.toFile.mkdirs()).void) ++

@@ -33,14 +33,19 @@ object ArbitraryGenerator {
     */
   private final case class FieldGen(gen: String, shrink: String, primitive: Boolean, refs: Set[String] = Set.empty)
 
-  /** One generated type: its object, and the pieces the round-trip list needs. */
+  /** A case class field, as the JSON fields list has it: its JSON key, and whether it's an (omitempty) List. */
+  private final case class JsonFieldGen(field: String, key: String, optionalArray: Boolean)
+
+  /** One generated type: its object, and the pieces the round-trip list and the JSON fields list need. */
   private final case class TypeGen(
     typeName: String,
+    scalaType: String,
     obj: String,
     roundTrip: Option[String],
     shrinks: Boolean,
     refs: Set[String],
-    optionalArrays: List[String] = Nil,
+    // a case class's fields; Nil for everything else
+    jsonFields: List[JsonFieldGen] = Nil,
   )
 
   // The same field-type decisions as genFieldType: which enums are wrapped in OpenEnum depends on the enclosing struct
@@ -53,17 +58,6 @@ object ArbitraryGenerator {
           val (fn, shrinkFn) = if (k.name == "List") ("list", "shrinkList") else ("opt", "shrinkOpt")
           val suffix = if (inner.primitive) "Prim" else ""
           FieldGen(s"$fn$suffix(${inner.gen})", s"$shrinkFn(${inner.shrink})", inner.primitive, inner.refs)
-        }
-      case "Either" =>
-        for {
-          a <- genFor(k.params(0), enclosing, depths, shrinking)
-          b <- genFor(k.params(1), enclosing, depths, shrinking)
-        } yield {
-          // at size 0 only the shallower side, like a sum type; a side without a depth never ends
-          val depth    = (p: Kind) => kindDepth(p, depths).getOrElse(Int.MaxValue)
-          val (da, db) = (depth(k.params(0)), depth(k.params(1)))
-          val fn = if (da < db) "eitherLeftAtZero" else if (db < da) "eitherRightAtZero" else "either"
-          FieldGen(s"$fn(${a.gen}, ${b.gen})", s"shrinkEither(${a.shrink}, ${b.shrink})", a.primitive && b.primitive, a.refs ++ b.refs)
         }
       case n if primitives.contains(n) => Right(FieldGen(primitives(n), NoShrink, primitive = true))
       case n =>
@@ -83,8 +77,6 @@ object ArbitraryGenerator {
   // How deep the shallowest value of a field type is, given the depths of the model types.
   private def kindDepth(k: Kind, depths: Map[String, Int]): Option[Int] = k.name match {
     case "List" | "Option" => Some(0)
-    // at size 0 an Either picks its shallower side
-    case "Either" => k.params.flatMap(kindDepth(_, depths)).minOption
     case n if primitives.contains(n) => Some(0)
     case n => depths.get(n)
   }
@@ -146,6 +138,7 @@ object ArbitraryGenerator {
          |}""".stripMargin
     TypeGen(
       typeName = typeName,
+      scalaType = scalaType,
       obj = body,
       roundTrip = roundTrip.map { isOpen =>
         val ctor = if (isOpen) "RoundTripCase.open" else "RoundTripCase"
@@ -193,7 +186,7 @@ object ArbitraryGenerator {
           if (shrinkers.isEmpty) NoShrink
           else s"shrinkFields[$tpe](x => List(${shrinkers.mkString(", ")}))"
         emit(typeName, tpe, s"deeper($body)", shrink, roundTrip, gens.flatMap(_._2.refs).toSet, meta)
-          .copy(optionalArrays = fields.filter(_.opts.contains("omitempty")).map(jsonName))
+          .copy(jsonFields = fields.map(f => JsonFieldGen(sanitize(f.name), jsonName(f), f.opts.contains("omitempty"))))
       }
   }
 
@@ -296,13 +289,14 @@ object ArbitraryGenerator {
     } yield methods ++ spaces
   }
 
+  // the Method type and the codecs of the Reqs are next to the factory
+  private def nextToFactory(factory: String, name: String): String = factory.split('.').init.appended(name).mkString(".")
+
   private def methodCases(factory: String, methods: List[MethodGen]): String = {
-    // the Method type and the codecs of the Reqs are next to the factory
-    def nextToFactory(name: String) = factory.split('.').init.appended(name).mkString(".")
     s"""${methods.map(_.req.obj).mkString("\n\n")}
        |
        |object MethodCases {
-       |  import ${nextToFactory("CirceImplicits")}._
+       |  import ${nextToFactory(factory, "CirceImplicits")}._
        |
        |  /** A Method, with the generator of the arguments it is built from, and those arguments as the factory encodes them,
        |    * before any file is attached.
@@ -311,7 +305,7 @@ object ArbitraryGenerator {
        |    val name: String,
        |    val gen: Gen[A],
        |    val shrink: Shrink[A],
-       |    val method: A => ${nextToFactory("Method")}[_],
+       |    val method: A => ${nextToFactory(factory, "Method")}[_],
        |    val json: A => Json
        |  )
        |
@@ -323,11 +317,30 @@ object ArbitraryGenerator {
        |}""".stripMargin
   }
 
-  private def optionalArrays(types: List[TypeGen]): String = {
-    val entries = types.flatMap(t => t.optionalArrays.map(k => s""""${t.typeName}.$k""""))
-    s"""object OptionalArrays {
-       |  /** The (omitempty) List fields, as <type>.<JSON key>: left out of the JSON when empty, never sent as []. */
-       |  val all: Set[String] = Set(${entries.mkString(", ")})
+  // Only the case classes a Method's arguments reach: the list is what the wire checks walk them with
+  private def jsonFields(types: List[TypeGen], methods: List[MethodGen]): String = {
+    val byName = types.map(t => t.typeName -> t).toMap
+    @scala.annotation.tailrec
+    def reach(seen: Set[String], todo: List[String]): Set[String] = todo match {
+      case Nil                  => seen
+      case n :: rest if seen(n) => reach(seen, rest)
+      case n :: rest            => reach(seen + n, byName.get(n).toList.flatMap(_.refs) ++ rest)
+    }
+    val reqs = methods.map(_.req)
+    val reachable = reach(Set.empty, reqs.flatMap(_.refs))
+    val entries = (types.filter(t => reachable(t.typeName)) ++ reqs).filter(_.jsonFields.nonEmpty).map { t =>
+      val keys = t.jsonFields.map(f => s"""${if (f.optionalArray) "optionalArray" else "key"}("${f.key}")""")
+      // in the same order as the keys
+      val values = t.jsonFields.map(f => s"x.${f.field}")
+      s"""new FieldsOf[${t.scalaType}]("${t.typeName}", List(${keys.mkString(", ")}), x => List(${values.mkString(", ")}))"""
+    }
+    s"""object JsonFields {
+       |  import GenPrims._
+       |
+       |  /** Each case class a Method's arguments reach, with its fields' JSON keys. */
+       |  val all: List[FieldsOf[_]] = List(
+       |${entries.map("    " + _).mkString(",\n")}
+       |  )
        |}""".stripMargin
   }
 
@@ -396,7 +409,7 @@ object ArbitraryGenerator {
         ),
       ) ++ factoryMethods.map { case (factory, methods) =>
         file(pkg, "MethodCases.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.Json\nimport io.circe.syntax._", methodCases(factory, methods))
-      } :+ file(pkg, "OptionalArrays.scala", "", optionalArrays(types ++ factoryMethods.toList.flatMap(_._2).map(_.req)))
+      } :+ file(pkg, "JsonFields.scala", "", jsonFields(types, factoryMethods.toList.flatMap(_._2)))
     })
   }
 }
