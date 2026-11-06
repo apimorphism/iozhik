@@ -128,7 +128,6 @@ class ScalaApiGeneratorV1 {
 
   def genJsonCodecs(struc: Struc)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val d = delimiter
-    val useSnake = meta.space.opts.contains("snake")
     val useOpenEnums = struc.kind.exists(k => useOpenEnum(k, struc = None))
     struc.shape match {
       case union @ Shape.Union(true, _) =>
@@ -270,7 +269,7 @@ class ScalaApiGeneratorV1 {
           val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
           val decoderForBody = fields
             .map{ case (fname, k) =>
-              val n = if (useSnake) { camel2snake(fname) } else { fname }
+              val n = jsonName(fname)
               if (k.startsWith("List")) {
                 s"""_$fname <- h.getOrElse[$k]("$n")(List.empty)"""
               } else {
@@ -305,7 +304,7 @@ class ScalaApiGeneratorV1 {
           // (omitempty) List fields encode to null when empty, so the filter below leaves them out of the JSON
           val encoderFields = (struc.allFields
             .map{ y =>
-              val n = if (useSnake) { camel2snake(y.name) } else { y.name }
+              val n = jsonName(y)
               val fn = sanitize(y.name)
               if (y.opts.contains("omitempty")) {
                 s""""$n" -> (if (x.$fn.isEmpty) Json.Null else x.$fn.asJson)"""
@@ -954,7 +953,7 @@ class ScalaApiGeneratorV1 {
                     )
                   }
                 val fileC = s.variants.collectFirst { case w: Wrapp => w.name.name }.get
-                val fn = if (meta.space.opts.contains("snake")) { camel2snake(fname) } else { fname }
+                val fn = jsonName(fname)
                 (
                   s"""${fname}Part""",
                   s"""${fname}Part <- ${fname}PartF""",
