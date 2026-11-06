@@ -577,7 +577,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
   }
 
   // https://github.com/apimorphism/telegramium/issues/686
-  "The optional arrays" must "be the (omitempty) List fields, by type and JSON key, and nothing else" in {
+  "The optional arrays" must "be the (omitempty) List fields reachable from a Method's arguments, each with its JSON key and nothing else" in {
     val arrays = generateGens(
       """
         |namespace telegramium {
@@ -588,18 +588,56 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         |      allowedUpdates: Option[List[String]]
         |      isRtl: Boolean
         |    }
+        |    enum InputMedia {
+        |      InputMediaPhoto {
+        |        type : "photo"
+        |        captionEntities: (omitempty) List[String]
+        |      }
+        |    }
+        |    Message {
+        |      entities: (omitempty) List[String]
+        |    }
         |    Methods (methodsFactory) {
         |      def send {
         |        message: Option[InputRichMessage]
+        |        media: List[InputMedia]
         |        chatId: Long
         |        captionEntities: (omitempty) List[String]
-        |      } => Method[Boolean]
+        |      } => Method[Message]
         |    }
         |  }
         |}
       """.stripMargin
     )("OptionalArrays.scala")
-    arrays should include("""val all: Set[String] = Set("InputRichMessage.blocks", "SendReq.caption_entities")""")
+    val entries = arrays.linesIterator.map(_.trim).filter(_.startsWith("new OptionalArray[")).toList
+    entries shouldBe List(
+      """new OptionalArray[InputRichMessage]("InputRichMessage", "blocks", _.blocks),""",
+      """new OptionalArray[InputMediaPhoto]("InputMediaPhoto", "caption_entities", _.captionEntities),""",
+      """new OptionalArray[SendReq]("SendReq", "caption_entities", _.captionEntities)"""
+    )
+  }
+
+  "The optional arrays of a factory in a subpackage" must "qualify its Req types and import its codecs" in {
+    val arrays = generateGens(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    Dated {
+        |      date: Long
+        |    }
+        |    namespace client {
+        |      Methods (methodsFactory) {
+        |        def send {
+        |          captionEntities: (omitempty) List[String]
+        |        } => Method[Boolean]
+        |      }
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    )("OptionalArrays.scala")
+    arrays should include("import client.CirceImplicits._")
+    arrays should include("""new OptionalArray[client.SendReq]("SendReq", "caption_entities", _.captionEntities)""")
   }
 
   "A custom-gens entry" must "apply to the generated and the shrunk values of its type, and leave other types alone" in {

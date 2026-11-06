@@ -33,14 +33,16 @@ object ArbitraryGenerator {
     */
   private final case class FieldGen(gen: String, shrink: String, primitive: Boolean, refs: Set[String] = Set.empty)
 
-  /** One generated type: its object, and the pieces the round-trip list needs. */
+  /** One generated type: its object, and the pieces the round-trip list and the optional arrays need. */
   private final case class TypeGen(
     typeName: String,
+    scalaType: String,
     obj: String,
     roundTrip: Option[String],
     shrinks: Boolean,
     refs: Set[String],
-    optionalArrays: List[String] = Nil,
+    // (omitempty) List fields: the field, and its JSON key
+    optionalArrays: List[(String, String)] = Nil,
   )
 
   // The same field-type decisions as genFieldType: which enums are wrapped in OpenEnum depends on the enclosing struct
@@ -133,6 +135,7 @@ object ArbitraryGenerator {
          |}""".stripMargin
     TypeGen(
       typeName = typeName,
+      scalaType = scalaType,
       obj = body,
       roundTrip = roundTrip.map { isOpen =>
         val ctor = if (isOpen) "RoundTripCase.open" else "RoundTripCase"
@@ -180,7 +183,7 @@ object ArbitraryGenerator {
           if (shrinkers.isEmpty) NoShrink
           else s"shrinkFields[$tpe](x => List(${shrinkers.mkString(", ")}))"
         emit(typeName, tpe, s"deeper($body)", shrink, roundTrip, gens.flatMap(_._2.refs).toSet, meta)
-          .copy(optionalArrays = fields.filter(_.opts.contains("omitempty")).map(jsonName))
+          .copy(optionalArrays = fields.filter(_.opts.contains("omitempty")).map(f => sanitize(f.name) -> jsonName(f)))
       }
   }
 
@@ -283,13 +286,14 @@ object ArbitraryGenerator {
     } yield methods ++ spaces
   }
 
+  // the Method type and the codecs of the Reqs are next to the factory
+  private def nextToFactory(factory: String, name: String): String = factory.split('.').init.appended(name).mkString(".")
+
   private def methodCases(factory: String, methods: List[MethodGen]): String = {
-    // the Method type and the codecs of the Reqs are next to the factory
-    def nextToFactory(name: String) = factory.split('.').init.appended(name).mkString(".")
     s"""${methods.map(_.req.obj).mkString("\n\n")}
        |
        |object MethodCases {
-       |  import ${nextToFactory("CirceImplicits")}._
+       |  import ${nextToFactory(factory, "CirceImplicits")}._
        |
        |  /** A Method, with the generator of the arguments it is built from, and those arguments as the factory encodes them,
        |    * before any file is attached.
@@ -298,7 +302,7 @@ object ArbitraryGenerator {
        |    val name: String,
        |    val gen: Gen[A],
        |    val shrink: Shrink[A],
-       |    val method: A => ${nextToFactory("Method")}[_],
+       |    val method: A => ${nextToFactory(factory, "Method")}[_],
        |    val json: A => Json
        |  )
        |
@@ -310,11 +314,27 @@ object ArbitraryGenerator {
        |}""".stripMargin
   }
 
-  private def optionalArrays(types: List[TypeGen]): String = {
-    val entries = types.flatMap(t => t.optionalArrays.map(k => s""""${t.typeName}.$k""""))
+  // Only the types a Method's arguments reach: the list is what the wire checks look for in them
+  private def optionalArrays(types: List[TypeGen], methods: List[MethodGen]): String = {
+    val byName = types.map(t => t.typeName -> t).toMap
+    @scala.annotation.tailrec
+    def reach(seen: Set[String], todo: List[String]): Set[String] = todo match {
+      case Nil                  => seen
+      case n :: rest if seen(n) => reach(seen, rest)
+      case n :: rest            => reach(seen + n, byName.get(n).toList.flatMap(_.refs) ++ rest)
+    }
+    val reqs = methods.map(_.req)
+    val reachable = reach(Set.empty, reqs.flatMap(_.refs))
+    val entries = (types.filter(t => reachable(t.typeName)) ++ reqs).flatMap { t =>
+      t.optionalArrays.map { case (field, key) => s"""new OptionalArray[${t.scalaType}]("${t.typeName}", "$key", _.$field)""" }
+    }
     s"""object OptionalArrays {
-       |  /** The (omitempty) List fields, as <type>.<JSON key>: left out of the JSON when empty, never sent as []. */
-       |  val all: Set[String] = Set(${entries.mkString(", ")})
+       |  /** The (omitempty) List fields a Method's arguments reach, each with its JSON key: left out of the JSON when
+       |    * empty, never sent as [].
+       |    */
+       |  val all: List[OptionalArray[_]] = List(
+       |${entries.map("    " + _).mkString(",\n")}
+       |  )
        |}""".stripMargin
   }
 
@@ -383,7 +403,15 @@ object ArbitraryGenerator {
         ),
       ) ++ factoryMethods.map { case (factory, methods) =>
         file(pkg, "MethodCases.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.Json\nimport io.circe.syntax._", methodCases(factory, methods))
-      } :+ file(pkg, "OptionalArrays.scala", "", optionalArrays(types ++ factoryMethods.toList.flatMap(_._2).map(_.req)))
+      } :+ file(
+        pkg,
+        "OptionalArrays.scala",
+        // each entry encodes its type, so it needs the codecs of the model and of the Reqs
+        (List(s"import $pkg.CirceImplicits._") ++
+          factoryMethods.toList.map(_._1).filter(_.contains('.')).map(f => s"import ${nextToFactory(f, "CirceImplicits")}._") :+
+          s"import $pkg.GenPrims.OptionalArray").mkString("\n"),
+        optionalArrays(types, factoryMethods.toList.flatMap(_._2))
+      )
     })
   }
 }

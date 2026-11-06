@@ -88,6 +88,18 @@ object GenPrims {
   // a custom-gens fix applies to the shrunk values too, so shrinking can't produce what the generator never would
   def fixed[A](s: Shrink[A], fix: A => A): Shrink[A] = Shrink(a => s.shrink(a).map(fix).filter(_ != a))
 
+  /** An (omitempty) List field, with its JSON key, and the type's encoder to find the key in. */
+  final class OptionalArray[A](val typeName: String, val key: String, values: A => List[_])(
+    implicit encoder: Encoder[A],
+    tag: ClassTag[A]
+  ) {
+    def name: String = typeName + "." + key
+
+    /** For a value of the field's type: the field, and the JSON under its key (None: left out). */
+    def in(a: Any): Option[(List[_], Option[io.circe.Json])] =
+      tag.unapply(a).map(x => (values(x), encoder(x).hcursor.downField(key).focus))
+  }
+
   /** A type with both an encoder and a decoder, with the generator to feed it. */
   final class RoundTripCase[A](
     val name: String,
