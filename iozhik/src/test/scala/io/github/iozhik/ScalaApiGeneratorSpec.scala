@@ -431,7 +431,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
 
   "Generators" must "go into a test source tree of their own, one small object per type, with the round-trip list" in {
     val files = generateGens(gensDsl)
-    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "MethodCases.scala", "OptionalArrays.scala")
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "MethodCases.scala", "JsonFields.scala")
     files("GenTypes.scala") should include("object GenDated")
     files("GenTypes.scala") should include("object GenReply")
   }
@@ -512,7 +512,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         |}
       """.stripMargin
     )
-    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "OptionalArrays.scala")
+    files.keySet shouldBe Set("GenPrims.scala", "GenTypes.scala", "RoundTrips.scala", "JsonFields.scala")
   }
 
   "The round-trip list" must "hold the types with both an encoder and a decoder, and leave out encode-only types" in {
@@ -577,7 +577,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
   }
 
   // https://github.com/apimorphism/telegramium/issues/686
-  "The optional arrays" must "be the (omitempty) List fields reachable from a Method's arguments, each with its JSON key and nothing else" in {
+  "The JSON fields" must "list each case class a Method's arguments reach, with its fields' JSON keys and (omitempty) Lists marked" in {
     val arrays = generateGens(
       """
         |namespace telegramium {
@@ -608,16 +608,16 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         |  }
         |}
       """.stripMargin
-    )("OptionalArrays.scala")
-    val entries = arrays.linesIterator.map(_.trim).filter(_.startsWith("new OptionalArray[")).toList
+    )("JsonFields.scala")
+    val entries = arrays.linesIterator.map(_.trim).filter(_.startsWith("new FieldsOf[")).toList
     entries shouldBe List(
-      """new OptionalArray[InputRichMessage]("InputRichMessage", "blocks", _.blocks),""",
-      """new OptionalArray[InputMediaPhoto]("InputMediaPhoto", "caption_entities", _.captionEntities),""",
-      """new OptionalArray[SendReq]("SendReq", "caption_entities", _.captionEntities)"""
+      """new FieldsOf[InputRichMessage]("InputRichMessage", List(key("is_rtl"), optionalArray("blocks"), key("rows"), key("allowed_updates")), x => List(x.isRtl, x.blocks, x.rows, x.allowedUpdates)),""",
+      """new FieldsOf[InputMediaPhoto]("InputMediaPhoto", List(optionalArray("caption_entities")), x => List(x.captionEntities)),""",
+      """new FieldsOf[SendReq]("SendReq", List(key("chat_id"), key("message"), key("media"), optionalArray("caption_entities")), x => List(x.chatId, x.message, x.media, x.captionEntities))"""
     )
   }
 
-  "The optional arrays of a factory in a subpackage" must "qualify its Req types and import its codecs" in {
+  "The JSON fields of a factory in a subpackage" must "qualify its Req types" in {
     val arrays = generateGens(
       """
         |namespace telegramium {
@@ -635,9 +635,8 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         |  }
         |}
       """.stripMargin
-    )("OptionalArrays.scala")
-    arrays should include("import client.CirceImplicits._")
-    arrays should include("""new OptionalArray[client.SendReq]("SendReq", "caption_entities", _.captionEntities)""")
+    )("JsonFields.scala")
+    arrays should include("""new FieldsOf[client.SendReq]("SendReq", List(optionalArray("caption_entities")), x => List(x.captionEntities))""")
   }
 
   "A custom-gens entry" must "apply to the generated and the shrunk values of its type, and leave other types alone" in {

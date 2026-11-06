@@ -33,7 +33,10 @@ object ArbitraryGenerator {
     */
   private final case class FieldGen(gen: String, shrink: String, primitive: Boolean, refs: Set[String] = Set.empty)
 
-  /** One generated type: its object, and the pieces the round-trip list and the optional arrays need. */
+  /** A case class field, as the JSON fields list has it: its JSON key, and whether it's an (omitempty) List. */
+  private final case class JsonFieldGen(field: String, key: String, optionalArray: Boolean)
+
+  /** One generated type: its object, and the pieces the round-trip list and the JSON fields list need. */
   private final case class TypeGen(
     typeName: String,
     scalaType: String,
@@ -41,8 +44,8 @@ object ArbitraryGenerator {
     roundTrip: Option[String],
     shrinks: Boolean,
     refs: Set[String],
-    // (omitempty) List fields: the field, and its JSON key
-    optionalArrays: List[(String, String)] = Nil,
+    // a case class's fields; Nil for everything else
+    jsonFields: List[JsonFieldGen] = Nil,
   )
 
   // The same field-type decisions as genFieldType: which enums are wrapped in OpenEnum depends on the enclosing struct
@@ -183,7 +186,7 @@ object ArbitraryGenerator {
           if (shrinkers.isEmpty) NoShrink
           else s"shrinkFields[$tpe](x => List(${shrinkers.mkString(", ")}))"
         emit(typeName, tpe, s"deeper($body)", shrink, roundTrip, gens.flatMap(_._2.refs).toSet, meta)
-          .copy(optionalArrays = fields.filter(_.opts.contains("omitempty")).map(f => sanitize(f.name) -> jsonName(f)))
+          .copy(jsonFields = fields.map(f => JsonFieldGen(sanitize(f.name), jsonName(f), f.opts.contains("omitempty"))))
       }
   }
 
@@ -314,8 +317,8 @@ object ArbitraryGenerator {
        |}""".stripMargin
   }
 
-  // Only the types a Method's arguments reach: the list is what the wire checks look for in them
-  private def optionalArrays(types: List[TypeGen], methods: List[MethodGen]): String = {
+  // Only the case classes a Method's arguments reach: the list is what the wire checks walk them with
+  private def jsonFields(types: List[TypeGen], methods: List[MethodGen]): String = {
     val byName = types.map(t => t.typeName -> t).toMap
     @scala.annotation.tailrec
     def reach(seen: Set[String], todo: List[String]): Set[String] = todo match {
@@ -325,14 +328,17 @@ object ArbitraryGenerator {
     }
     val reqs = methods.map(_.req)
     val reachable = reach(Set.empty, reqs.flatMap(_.refs))
-    val entries = (types.filter(t => reachable(t.typeName)) ++ reqs).flatMap { t =>
-      t.optionalArrays.map { case (field, key) => s"""new OptionalArray[${t.scalaType}]("${t.typeName}", "$key", _.$field)""" }
+    val entries = (types.filter(t => reachable(t.typeName)) ++ reqs).filter(_.jsonFields.nonEmpty).map { t =>
+      val keys = t.jsonFields.map(f => s"""${if (f.optionalArray) "optionalArray" else "key"}("${f.key}")""")
+      // in the same order as the keys
+      val values = t.jsonFields.map(f => s"x.${f.field}")
+      s"""new FieldsOf[${t.scalaType}]("${t.typeName}", List(${keys.mkString(", ")}), x => List(${values.mkString(", ")}))"""
     }
-    s"""object OptionalArrays {
-       |  /** The (omitempty) List fields a Method's arguments reach, each with its JSON key: left out of the JSON when
-       |    * empty, never sent as [].
-       |    */
-       |  val all: List[OptionalArray[_]] = List(
+    s"""object JsonFields {
+       |  import GenPrims._
+       |
+       |  /** Each case class a Method's arguments reach, with its fields' JSON keys. */
+       |  val all: List[FieldsOf[_]] = List(
        |${entries.map("    " + _).mkString(",\n")}
        |  )
        |}""".stripMargin
@@ -403,15 +409,7 @@ object ArbitraryGenerator {
         ),
       ) ++ factoryMethods.map { case (factory, methods) =>
         file(pkg, "MethodCases.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.Json\nimport io.circe.syntax._", methodCases(factory, methods))
-      } :+ file(
-        pkg,
-        "OptionalArrays.scala",
-        // each entry encodes its type, so it needs the codecs of the model and of the Reqs
-        (List(s"import $pkg.CirceImplicits._") ++
-          factoryMethods.toList.map(_._1).filter(_.contains('.')).map(f => s"import ${nextToFactory(f, "CirceImplicits")}._") :+
-          s"import $pkg.GenPrims.OptionalArray").mkString("\n"),
-        optionalArrays(types, factoryMethods.toList.flatMap(_._2))
-      )
+      } :+ file(pkg, "JsonFields.scala", "", jsonFields(types, factoryMethods.toList.flatMap(_._2)))
     })
   }
 }

@@ -42,7 +42,7 @@ root run:
 IOZHDIR="$PWD" sbt "iozh-api-scraper/runMain TgBotApiScrapper"
 
 # recompile tgbot.api -> <telegramium checkout>/telegramium-core/src/main/scala,
-# and the generators, the round-trip list, the Methods list and the optional arrays
+# and the generators, the round-trip list, the Methods list and the JSON fields list
 # -> src/test/scala-generated next to it
 # (full rewrite - everything under both trees is deleted and regenerated; the
 # third argument is required while the config has generate-gens on)
