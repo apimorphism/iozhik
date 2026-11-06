@@ -379,6 +379,13 @@ class TgBotApiScrapperSpec extends AnyFlatSpec with Matchers {
     integerField("user_id", "Identifier of the user. This number may have more than 32 significant bits.").kind shouldBe "Long"
   }
 
+  // The encoders write each field under camel2snake of its name, which the scraper made with camelify: telegramium's
+  // wire check takes its keys from the same camel2snake, so only this catches a change to either
+  "camel2snake" must "give back each Bot API name camelify was given, digits and one-letter parts included" in {
+    val names = List("text", "chat_id", "show_caption_above_media", "mpeg4_file_id", "street_line1", "x_shift")
+    names.map(n => io.github.iozhik.scalagen.ScalaApiGeneratorUtils.camel2snake(TgBotApiScrapper.camelify(n))) shouldBe names
+  }
+
   // The Bot API server parses draft_id as int64 (telegram-bot-api Client.cpp, process_send_message_draft_query).
   "A draft_id" must "be a Long" in {
     integerField("draft_id", "Unique identifier of the message draft; must be non-zero.").kind shouldBe "Long"
