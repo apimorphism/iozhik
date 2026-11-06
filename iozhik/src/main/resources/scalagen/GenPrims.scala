@@ -53,14 +53,6 @@ object GenPrims {
     Gen.sized(n => if (n <= 0) pick(atZero) else pick(all))
   }
 
-  def either[A, B](a: => Gen[A], b: => Gen[B]): Gen[Either[A, B]] =
-    Gen.oneOf(Gen.lzy(a).map(Left(_)), Gen.lzy(b).map(Right(_)))
-  // one side is shallower: at size 0 only that one, like a sum type, so a recursive side ends there
-  def eitherLeftAtZero[A, B](a: => Gen[A], b: => Gen[B]): Gen[Either[A, B]] =
-    Gen.sized(n => if (n <= 0) Gen.lzy(a).map(Left(_)) else either(a, b))
-  def eitherRightAtZero[A, B](a: => Gen[A], b: => Gen[B]): Gen[Either[A, B]] =
-    Gen.sized(n => if (n <= 0) Gen.lzy(b).map(Right(_)) else either(a, b))
-
   // Only Known values: Unknown values are receive-only
   def openEnum[A](g: => Gen[A]): Gen[iozhik.OpenEnum[A]] = Gen.lzy(g).map(iozhik.OpenEnum.Known(_))
 
@@ -79,11 +71,6 @@ object GenPrims {
         val dropOne = if (l.size > 1) l.indices.toStream.map(i => l.patch(i, Nil, 1)) else Stream.empty
         Nil #:: dropOne #::: l.indices.toStream.flatMap(i => s.shrink(l(i)).map(l.updated(i, _)))
       }
-    }
-  def shrinkEither[A, B](sa: => Shrink[A], sb: => Shrink[B]): Shrink[Either[A, B]] =
-    Shrink {
-      case Left(a) => sa.shrink(a).map(Left(_))
-      case Right(b) => sb.shrink(b).map(Right(_))
     }
   def shrinkOpenEnum[A](s: => Shrink[A]): Shrink[iozhik.OpenEnum[A]] =
     Shrink {

@@ -54,17 +54,6 @@ object ArbitraryGenerator {
           val suffix = if (inner.primitive) "Prim" else ""
           FieldGen(s"$fn$suffix(${inner.gen})", s"$shrinkFn(${inner.shrink})", inner.primitive, inner.refs)
         }
-      case "Either" =>
-        for {
-          a <- genFor(k.params(0), enclosing, depths, shrinking)
-          b <- genFor(k.params(1), enclosing, depths, shrinking)
-        } yield {
-          // at size 0 only the shallower side, like a sum type; a side without a depth never ends
-          val depth    = (p: Kind) => kindDepth(p, depths).getOrElse(Int.MaxValue)
-          val (da, db) = (depth(k.params(0)), depth(k.params(1)))
-          val fn = if (da < db) "eitherLeftAtZero" else if (db < da) "eitherRightAtZero" else "either"
-          FieldGen(s"$fn(${a.gen}, ${b.gen})", s"shrinkEither(${a.shrink}, ${b.shrink})", a.primitive && b.primitive, a.refs ++ b.refs)
-        }
       case n if primitives.contains(n) => Right(FieldGen(primitives(n), NoShrink, primitive = true))
       case n =>
         meta.symt.resolve(k) match {
@@ -83,8 +72,6 @@ object ArbitraryGenerator {
   // How deep the shallowest value of a field type is, given the depths of the model types.
   private def kindDepth(k: Kind, depths: Map[String, Int]): Option[Int] = k.name match {
     case "List" | "Option" => Some(0)
-    // at size 0 an Either picks its shallower side
-    case "Either" => k.params.flatMap(kindDepth(_, depths)).minOption
     case n if primitives.contains(n) => Some(0)
     case n => depths.get(n)
   }

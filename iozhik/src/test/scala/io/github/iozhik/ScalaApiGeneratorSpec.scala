@@ -462,24 +462,6 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     types should include("sum[Text](List(GenTextPlain.gen, GenTextBold.gen), List(GenTextPlain.gen))")
   }
 
-  "A required Either with a recursive side" must "pick only the other side at size 0" in {
-    val types = generateGens(
-      """
-        |namespace telegramium {
-        |  namespace bots(snake circe) {
-        |    Leaf {
-        |      date: Long
-        |    }
-        |    Chain {
-        |      next: Either[Leaf, Chain]
-        |    }
-        |  }
-        |}
-      """.stripMargin
-    )("GenTypes.scala")
-    types should include("eitherLeftAtZero(GenLeaf.gen, GenChain.gen)")
-  }
-
   "Generators for types in more than one package" must "fail the generation" in {
     gensError(
       """
