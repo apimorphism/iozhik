@@ -542,7 +542,7 @@ namespace telegramium {
         checklists */
         canSendPolls          : Boolean
         /* <em>True</em>, if the user is allowed to send animations, 
-        games, stickers and use inline bots */
+        games, stickers, widgets and use inline bots */
         canSendOtherMessages  : Boolean
         /* <em>True</em>, if the user is allowed to add web page 
         previews to their messages */
@@ -565,6 +565,50 @@ namespace telegramium {
         /* Date when restrictions will be lifted for this user; Unix 
         time. If 0, then the user is restricted forever. */
         untilDate             : Long
+      }
+             
+    }
+          
+    enum ChatShareTheme {
+    
+      /* The theme based on a unique gift owned by the user or the chat.  */
+      ChatShareThemeUniqueGift {
+        type : "unique_gift:0"
+        /* The gift */
+        gift : UniqueGift
+      }
+             
+      /* The theme with emoji placed on a background.  */
+      ChatShareThemeEmoji {
+        type : "emoji:1"
+        /* The emoji; 0-6 regular or custom emoji */
+        emojis               : List[EmojiType]
+        /* <em>Optional</em>. Identifier of the backdrop used as the 
+        background; omitted if the default background is used. Use 
+        <a 
+        href="https://core.telegram.org/bots/api#getchatsharethemebackdrops">getChatShareThemeBackdrops</a> 
+        to get details about the backdrop. */
+        backgroundBackdropId : Option[Int]
+      }
+             
+    }
+          
+    enum EmojiType {
+    
+      /* A custom emoji.  */
+      EmojiTypeCustomEmoji {
+        type : "custom_emoji:0"
+        /* Identifier of the custom emoji. Use <a 
+        href="https://core.telegram.org/bots/api#getcustomemojistickers">getCustomEmojiStickers</a> 
+        to get full information about the sticker. */
+        customEmojiId : String
+      }
+             
+      /* A regular emoji.  */
+      EmojiTypeEmoji {
+        type : "emoji:1"
+        /* The emoji */
+        emoji : String
       }
              
     }
@@ -1833,11 +1877,95 @@ namespace telegramium {
              
       /* Represents the <a 
         href="https://core.telegram.org/bots/api#inputmessagecontent">content</a> of a 
+        message with an <a href="https://core.telegram.org/bots/widgets">HTML widget</a> 
+        to be sent as the result of an inline query. Currently, widgets can't be sent in 
+        response to inline queries in the production environment.  */
+      InputWidgetMessageContent {
+        /* HTML code of the widget, 1-32768 bytes. The code must not 
+        exceed 4096 bytes when compressed by zlib with the maximum 
+        compression level. */
+        html                  : String
+        /* <em>Optional</em>. Width of the widget in logical pixels; 
+        omit if the widget must occupy the whole width of the 
+        message bubble. The width is clamped by the app to the range 
+        from 200 to the maximum width of the message bubble. */
+        width                 : Option[Int]
+        /* <em>Optional</em>. Height of the widget in logical pixels; 
+        omit if the height of the widget isn't fixed. The height is 
+        clamped by the app to the range 50-600. */
+        height                : Option[Int]
+        /* <em>Optional</em>. Public data of the widget, 0-1024 bytes, 
+        which will be available wherever the widget is shown. If the 
+        widget is shared, then all messages with it will have the 
+        same public data. */
+        publicData            : Option[String]
+        /* <em>Optional</em>. Data of the widget, which is specific to 
+        the message, 0-1024 bytes */
+        chatData              : Option[String]
+        /* <em>Optional</em>. Widget caption, 0-1024 characters after 
+        entities parsing */
+        caption               : Option[String]
+        /* <em>Optional</em>. Mode for parsing entities in the widget 
+        caption. See <a 
+        href="https://core.telegram.org/bots/api#formatting-options">formatting 
+        options</a> for more details. */
+        parseMode             : Option[ParseMode]
+        /* <em>Optional</em>. List of special entities that appear in 
+        the caption, which can be specified instead of 
+        <em>parse_mode</em> */
+        captionEntities       : (omitempty) List[MessageEntity]
+        /* <em>Optional</em>. Pass <em>True</em> if the caption must 
+        be shown above the widget */
+        showCaptionAboveMedia : Option[Boolean]
+        /* <em>Optional</em>. Pass <em>True</em> to allow the widget 
+        to send queries to the bot */
+        allowQueries          : Option[Boolean]
+        /* <em>Optional</em>. Pass <em>True</em> to create a shared 
+        widget. Each message sent from the result creates a separate 
+        shared widget, whose identifier is received by the bot only 
+        in the field <em>widget_id</em> of queries from the widget. 
+        To send an existing shared widget in response to an inline 
+        query, use <a 
+        href="https://core.telegram.org/bots/api#inputsharedwidgetmessagecontent">InputSharedWidgetMessageContent</a> 
+        instead. */
+        isShared              : Option[Boolean]
+      }
+             
+      /* Represents the <a 
+        href="https://core.telegram.org/bots/api#inputmessagecontent">content</a> of a 
         rich message to be sent as the result of an inline query.  */
       InputRichMessageContent {
         /* The message to be sent. Only previously uploaded files may 
         be used in the message. */
         richMessage : InputRichMessage
+      }
+             
+      /* Represents the <a 
+        href="https://core.telegram.org/bots/api#inputmessagecontent">content</a> of a 
+        message with a shared widget to be sent as the result of an inline query. 
+        Currently, widgets can't be sent in response to inline queries in the production 
+        environment.  */
+      InputSharedWidgetMessageContent {
+        /* Unique identifier of the shared widget created by the bot */
+        widgetId              : String
+        /* <em>Optional</em>. Data of the widget, which is specific to 
+        the message, 0-1024 bytes */
+        chatData              : Option[String]
+        /* <em>Optional</em>. Widget caption, 0-1024 characters after 
+        entities parsing */
+        caption               : Option[String]
+        /* <em>Optional</em>. Mode for parsing entities in the widget 
+        caption. See <a 
+        href="https://core.telegram.org/bots/api#formatting-options">formatting 
+        options</a> for more details. */
+        parseMode             : Option[ParseMode]
+        /* <em>Optional</em>. List of special entities that appear in 
+        the caption, which can be specified instead of 
+        <em>parse_mode</em> */
+        captionEntities       : (omitempty) List[MessageEntity]
+        /* <em>Optional</em>. Pass <em>True</em> if the caption must 
+        be shown above the widget */
+        showCaptionAboveMedia : Option[Boolean]
       }
              
     }
@@ -2419,15 +2547,19 @@ namespace telegramium {
         /* <em>Optional</em>. Message is a voice message, information 
         about the file */
         voice                         : Option[Voice]
+        /* <em>Optional</em>. Message is an HTML widget, information 
+        about the widget */
+        widget                        : Option[Widget]
         /* <em>Optional</em>. Caption for the animation, audio, 
-        document, paid media, photo, video or voice */
+        document, live photo, paid media, photo, video, voice, or 
+        widget */
         caption                       : Option[String]
         /* <em>Optional</em>. For messages with a caption, special 
         entities like usernames, URLs, bot commands, etc. that 
         appear in the caption */
         captionEntities               : (omitempty) List[MessageEntity]
         /* <em>Optional</em>. <em>True</em>, if the caption must be 
-        shown above the message media */
+        shown above the message media or the widget */
         showCaptionAboveMedia         : Option[Boolean]
         /* <em>Optional</em>. <em>True</em>, if the message media is 
         covered by a spoiler animation */
@@ -2610,6 +2742,10 @@ namespace telegramium {
         /* <em>Optional</em>. Service message: the price for paid 
         messages has changed in the chat */
         paidMessagePriceChanged       : Option[PaidMessagePriceChanged]
+        /* <em>Optional</em>. Service message: the sender of the 
+        message used a link of the other user, which allows sending 
+        messages to the user without paying Telegram Stars */
+        paidMessagesWaived            : Option[PaidMessagesWaived]
         /* <em>Optional</em>. Service message: answer option was added 
         to a poll */
         pollOptionAdded               : Option[PollOptionAdded]
@@ -2631,6 +2767,9 @@ namespace telegramium {
         /* <em>Optional</em>. Service message: payment for a suggested 
         post was refunded */
         suggestedPostRefunded         : Option[SuggestedPostRefunded]
+        /* <em>Optional</em>. Service message: a transfer with a TON 
+        wallet */
+        tonWalletTransfer             : Option[TonWalletTransfer]
         /* <em>Optional</em>. Service message: video chat scheduled */
         videoChatScheduled            : Option[VideoChatScheduled]
         /* <em>Optional</em>. Service message: video chat started */
@@ -2739,14 +2878,14 @@ namespace telegramium {
         type : "expandable_blockquote:5"
       }
              
-      /* spoiler  */
-      SpoilerMessageEntity {
-        type : "spoiler:6"
-      }
-             
       /* email  */
       EmailMessageEntity {
-        type : "email:7"
+        type : "email:6"
+      }
+             
+      /* spoiler  */
+      SpoilerMessageEntity {
+        type : "spoiler:7"
       }
              
       /* blockquote  */
@@ -2805,21 +2944,31 @@ namespace telegramium {
         user : User
       }
              
-      /* url  */
-      UrlMessageEntity {
-        type : "url:17"
-      }
-             
       /* text_link  */
       TextLinkMessageEntity {
-        type : "text_link:18"
+        type : "text_link:17"
         /* URL that will be opened after user taps on the text */
         url  : String
       }
              
+      /* url  */
+      UrlMessageEntity {
+        type : "url:18"
+      }
+             
+      /* ton_address  */
+      TonAddressMessageEntity {
+        type : "ton_address:19"
+      }
+             
+      /* bank_card_number  */
+      BankCardNumberMessageEntity {
+        type : "bank_card_number:20"
+      }
+             
       /* phone_number  */
       PhoneNumberMessageEntity {
-        type : "phone_number:19"
+        type : "phone_number:21"
       }
              
     }
@@ -3665,9 +3814,18 @@ namespace telegramium {
         text : RichText
       }
              
+      /* An address in the TON blockchain.  */
+      RichTextTonAddress {
+        type : "ton_address:27"
+        /* Text of the address */
+        text    : RichText
+        /* The address */
+        address : String
+      }
+             
       /* A link to a reference.  */
       RichTextReferenceLink {
-        type : "reference_link:27"
+        type : "reference_link:28"
         /* The link text */
         text          : RichText
         /* The name of the reference */
@@ -3825,6 +3983,39 @@ namespace telegramium {
              
     }
           
+    enum WidgetQueryType {
+    
+      /* The query contains data signed by a TON wallet of the user who sent the query. 
+        The data is signed for the domain <code>botᐸbot_idᐳ</code>, where 
+        <code>ᐸbot_idᐳ</code> is the identifier of the bot.  */
+      WidgetQueryTypeSignData {
+        type : "sign_data:0"
+        /* The wallet that signed the data */
+        wallet   : WidgetQueryWallet
+        /* JSON-serialized signed data */
+        signData : String
+      }
+             
+      /* The query notifies the bot about a transaction sent from a TON wallet of the 
+        user who sent the query.  */
+      WidgetQueryTypeSentTransaction {
+        type : "sent_transaction:1"
+        /* The wallet from which the transaction was sent */
+        wallet  : WidgetQueryWallet
+        /* Value of <em>msg_hash</em> of the transaction */
+        msgHash : String
+      }
+             
+      /* The query contains data for the bot.  */
+      WidgetQueryTypeData {
+        type : "data:2"
+        /* <em>Optional</em>. TON wallet card of the user who sent the 
+        query, if it was sent to the bot along with the query */
+        walletCard : Option[TonWalletCard]
+      }
+             
+    }
+          
     /* This object describes the types of gifts that can be gifted to a user or a 
       chat.  */
     AcceptedGiftTypes {
@@ -3897,6 +4088,29 @@ namespace telegramium {
       most 52 significant bits, so a signed 64-bit integer or 
       double-precision float type are safe for storing this value. */
       fileSize     : Option[Long]
+    }
+           
+    /* Describes the position of a rectangle area on a story media or a TON wallet 
+      card.  */
+    AreaPosition {
+      /* The abscissa of the area's center, as a percentage of the 
+      media or the card width */
+      xPercentage            : Float
+      /* The ordinate of the area's center, as a percentage of the 
+      media or the card height */
+      yPercentage            : Float
+      /* The width of the area's rectangle, as a percentage of the 
+      media or the card width */
+      widthPercentage        : Float
+      /* The height of the area's rectangle, as a percentage of the 
+      media or the card height */
+      heightPercentage       : Float
+      /* The clockwise rotation angle of the rectangle, in degrees; 
+      0-360 */
+      rotationAngle          : Float
+      /* The radius of the rectangle corner rounding, as a 
+      percentage of the media or the card width */
+      cornerRadiusPercentage : Float
     }
            
     /* This object represents an audio file to be treated as music by the Telegram 
@@ -4517,6 +4731,13 @@ namespace telegramium {
       href="https://core.telegram.org/bots/api#community">Community</a> 
       to which the chat belongs */
       community                          : Option[Community]
+      /* <em>Optional</em>. For private chats, the TON wallet card 
+      of the user, which is shown on their profile page */
+      tonWalletCard                      : Option[TonWalletCard]
+      /* <em>Optional</em>. For private chats, supergroups and 
+      channels, the theme of the screen for sharing a link to the 
+      user or the chat; omitted if the default theme is used */
+      shareTheme                         : Option[ChatShareTheme]
     }
            
     /* Represents an invite link for a chat.  */
@@ -4665,7 +4886,8 @@ namespace telegramium {
       send polls and checklists */
       canSendPolls          : Option[Boolean]
       /* <em>Optional</em>. <em>True</em>, if the user is allowed to 
-      send animations, games, stickers and use inline bots */
+      send animations, games, stickers, widgets and use inline 
+      bots */
       canSendOtherMessages  : Option[Boolean]
       /* <em>Optional</em>. <em>True</em>, if the user is allowed to 
       add web page previews to their messages */
@@ -4712,6 +4934,24 @@ namespace telegramium {
       is supposed to be the same over time and for different bots. 
       Can't be used to download or reuse the file. */
       bigFileUniqueId   : String
+    }
+           
+    /* This object describes a backdrop, which can be used as the background of a 
+      theme of the screen for sharing a link to a user or a chat.  */
+    ChatShareThemeBackdrop {
+      /* Unique identifier of the backdrop */
+      id     : Int
+      /* Name of the backdrop */
+      name   : String
+      /* Colors of the backdrop */
+      colors : UniqueGiftBackdropColors
+    }
+           
+    /* This object contains a list of backdrops, which can be used as the background 
+      of a theme of the screen for sharing a link to a user or a chat.  */
+    ChatShareThemeBackdrops {
+      /* The list of backdrops */
+      backdrops : List[ChatShareThemeBackdrop]
     }
            
     /* This object contains information about a chat that was shared with the bot 
@@ -5049,14 +5289,28 @@ namespace telegramium {
            
     /*  */
     EphemeralMessageParameters {
-      /* Identifier of the user who will receive the message. It is 
-      not guaranteed that the user will receive the message, 
-      especially if they are offline. See <a 
+      /* <em>Optional</em>. Identifier of the user who will receive 
+      the message; required unless the message is sent as an 
+      ephemeral reply to a callback query. If omitted, then the 
+      parameter <em>chat_id</em> of the method is ignored. If 
+      specified together with <em>callback_query_id</em>, then it 
+      must be the identifier of the user who pressed the button. 
+      Must be omitted for messages sent in chats where the bot 
+      isn't a member, unless the message is a reply to an 
+      ephemeral message. It is not guaranteed that the user will 
+      receive the message, especially if they are offline. See <a 
       href="https://core.telegram.org/bots/api#ephemeral-messages-and-commands">here</a> 
       for more details. */
-      receiverUserId              : Long
+      receiverUserId              : Option[Long]
       /* <em>Optional</em>. Identifier of the callback query which 
-      triggered the message, if any */
+      triggered the message, if any. If specified and 
+      <em>receiver_user_id</em> is omitted, then the message is 
+      sent as an ephemeral reply to the callback query and will be 
+      shown only to the user who pressed the button. Ephemeral 
+      replies can't be sent to callback queries from messages in 
+      channel direct messages chats. The bot must still answer the 
+      callback query using <a 
+      href="https://core.telegram.org/bots/api#answercallbackquery">answerCallbackQuery</a>. */
       callbackQueryId             : Option[String]
       /* <em>Optional</em>. Pass <em>True</em> if the ephemeral 
       message must be shown in place of the original message. Must 
@@ -5114,6 +5368,9 @@ namespace telegramium {
       /* <em>Optional</em>. Message is a voice message, information 
       about the file */
       voice              : Option[Voice]
+      /* <em>Optional</em>. Message is an HTML widget, information 
+      about the widget */
+      widget             : Option[Widget]
       /* <em>Optional</em>. <em>True</em>, if the message media is 
       covered by a spoiler animation */
       hasMediaSpoiler    : Option[Boolean]
@@ -5507,7 +5764,7 @@ namespace telegramium {
       href="https://core.telegram.org/bots/api#answerwebappquery">answerWebAppQuery</a>. 
       Available only in private chats between a user and the bot. 
       Not supported for messages sent on behalf of a business 
-      account. */
+      account and ephemeral messages. */
       webApp                       : Option[WebAppInfo]
       /* <em>Optional</em>. An HTTPS URL used to automatically 
       authorize the user. Can be used as a replacement for the <a 
@@ -5960,7 +6217,13 @@ namespace telegramium {
       requestId         : Int
       /* <em>Optional</em>. Suggested name for the bot */
       suggestedName     : Option[String]
-      /* <em>Optional</em>. Suggested username for the bot */
+      /* <em>Optional</em>. Suggested username for the bot. The 
+      username must end with “bot”. If the user creating the bot 
+      has a Telegram Premium subscription, then the username can 
+      also end with “agent”, “ai”, “app”, “game”, or “gay”; in 
+      this case, the username will be assigned to the bot as a 
+      secondary username, and a regular username ending with “bot” 
+      will be assigned to the bot automatically. */
       suggestedUsername : Option[String]
     }
            
@@ -6299,6 +6562,13 @@ namespace telegramium {
       paidMessageStarCount : Int
     }
            
+    /* Describes a service message about the sender of the message using a link of the 
+      other user, which allows sending messages to the user without paying Telegram 
+      Stars. Currently holds no information.  */
+    PaidMessagesWaived {
+  
+    }
+           
     /* Describes Telegram Passport data shared with the bot by the user.  */
     PassportData {
       /* Array with information about documents and other Telegram 
@@ -6630,7 +6900,7 @@ namespace telegramium {
       messageId                : Option[Int]
       /* <em>Optional</em>. If the message to be replied to is from 
       a different chat, unique identifier for the chat or username 
-      of the bot, supergroup or channel in the format 
+      of the bot, supergroup, or channel in the format 
       <code>&#064;username</code>. Not supported for messages sent 
       on behalf of a business account, messages from channel 
       direct messages chats and ephemeral messages. */
@@ -6668,8 +6938,59 @@ namespace telegramium {
       entities that appear in the quote. It can be specified 
       instead of <em>quote_parse_mode</em>. */
       quoteEntities            : (omitempty) List[MessageEntity]
+      /* <em>Optional</em>. A JSON-serialized list of quoted parts 
+      of the <a 
+      href="https://core.telegram.org/bots/api#richmessage">rich 
+      message</a> to be replied to. Must contain one element for 
+      each quoted text of the message in the order of their 
+      appearance. Each of the following is a separate quoted text: 
+      the text of a paragraph, a heading, a preformatted block, a 
+      footer, or a mathematical expression; the text and the 
+      credit of a block quotation or a pull quotation; the summary 
+      of a details block; the caption and each cell of a table; 
+      the text and the credit of a caption of a media block, a 
+      collage, a slideshow, or a map. Texts of blocks nested in 
+      lists, block quotations, details, collages, and slideshows 
+      are separate quoted texts too. The first and the last 
+      elements can contain only a part of the corresponding text; 
+      all other elements must contain the whole text. Formatting 
+      of the quoted parts must be kept, and rich texts must be 
+      nested in the same way as in the message received from the 
+      server. Mathematical expressions must be quoted entirely. 
+      Buttons in <a 
+      href="https://core.telegram.org/bots/api#richblockbuttons">RichBlockButtons</a>, 
+      anchors and dividers can't be quoted. Up to 32 quoted texts 
+      with total length up to 1024 characters can be specified. 
+      Only plain text, <a 
+      href="https://core.telegram.org/bots/api#richtextbold">RichTextBold</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextitalic">RichTextItalic</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextunderline">RichTextUnderline</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextstrikethrough">RichTextStrikethrough</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextspoiler">RichTextSpoiler</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextsubscript">RichTextSubscript</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextsuperscript">RichTextSuperscript</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextdatetime">RichTextDateTime</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextcustomemoji">RichTextCustomEmoji</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextmathematicalexpression">RichTextMathematicalExpression</a>, 
+      and arrays of them are kept in the quote; other rich text 
+      types are replaced with their text. If non-empty, then 
+      <em>quote</em>, <em>quote_parse_mode</em> and 
+      <em>quote_entities</em> are ignored. */
+      quoteRichTexts           : (omitempty) List[RichText]
       /* <em>Optional</em>. Position of the quote in the original 
-      message in UTF-16 code units */
+      message in UTF-16 code units. For quotes from rich messages, 
+      it is the position in the text formed by joining plain texts 
+      of all quotable texts of the message, separated by line 
+      feeds. */
       quotePosition            : Option[Int]
       /* <em>Optional</em>. Identifier of the specific checklist 
       task to be replied to */
@@ -6874,6 +7195,25 @@ namespace telegramium {
       photo     : (omitempty) List[PhotoSize]
     }
            
+    /* This object represents an incoming query from a forwarded message with a shared 
+      widget created by the bot. Use <a 
+      href="https://core.telegram.org/bots/api#answerwidgetquery">answerWidgetQuery</a> 
+      to answer the query. Each user can send at most 5 queries per 5 seconds to the 
+      bot from all its widgets.  */
+    SharedWidgetQuery {
+      /* Unique identifier for this query */
+      id       : String
+      /* Sender */
+      from     : User
+      /* Type of the query */
+      type     : WidgetQueryType
+      /* Data of the query, 1-64 bytes */
+      data     : String
+      /* Unique identifier of the shared widget, which sent the 
+      query */
+      widgetId : String
+    }
+           
     /* This object represents a shipping address.  */
     ShippingAddress {
       /* Two-letter <a 
@@ -7039,31 +7379,9 @@ namespace telegramium {
     /* Describes a clickable area on a story media.  */
     StoryArea {
       /* Position of the area */
-      position : StoryAreaPosition
+      position : AreaPosition
       /* Type of the area */
       type     : StoryAreaType
-    }
-           
-    /* Describes the position of a clickable area within a story.  */
-    StoryAreaPosition {
-      /* The abscissa of the area's center, as a percentage of the 
-      media width */
-      xPercentage            : Float
-      /* The ordinate of the area's center, as a percentage of the 
-      media height */
-      yPercentage            : Float
-      /* The width of the area's rectangle, as a percentage of the 
-      media width */
-      widthPercentage        : Float
-      /* The height of the area's rectangle, as a percentage of the 
-      media height */
-      heightPercentage       : Float
-      /* The clockwise rotation angle of the rectangle, in degrees; 
-      0-360 */
-      rotationAngle          : Float
-      /* The radius of the rectangle corner rounding, as a 
-      percentage of the media width */
-      cornerRadiusPercentage : Float
     }
            
     /* This object contains basic information about a successful payment. Note that if 
@@ -7251,21 +7569,118 @@ namespace telegramium {
       replied to by the given message.  */
     TextQuote {
       /* Text of the quoted part of a message that is replied to by 
-      the given message */
-      text     : String
+      the given message; may be empty if the quote was chosen from 
+      a rich message */
+      text      : String
       /* <em>Optional</em>. Special entities that appear in the 
       quote. Currently, only <em>bold</em>, <em>italic</em>, 
       <em>underline</em>, <em>strikethrough</em>, 
       <em>spoiler</em>, <em>custom_emoji</em>, and 
       <em>date_time</em> entities are kept in quotes. */
-      entities : (omitempty) List[MessageEntity]
+      entities  : (omitempty) List[MessageEntity]
+      /* <em>Optional</em>. Rich text of the quote if it was chosen 
+      from a <a 
+      href="https://core.telegram.org/bots/api#richmessage">rich 
+      message</a>. May contain only plain text, <a 
+      href="https://core.telegram.org/bots/api#richtextbold">RichTextBold</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextitalic">RichTextItalic</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextunderline">RichTextUnderline</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextstrikethrough">RichTextStrikethrough</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextspoiler">RichTextSpoiler</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextsubscript">RichTextSubscript</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextsuperscript">RichTextSuperscript</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextdatetime">RichTextDateTime</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextcustomemoji">RichTextCustomEmoji</a>, 
+      <a 
+      href="https://core.telegram.org/bots/api#richtextmathematicalexpression">RichTextMathematicalExpression</a>, 
+      and arrays of them. */
+      richTexts : (omitempty) List[RichText]
       /* Approximate quote position in the original message in 
-      UTF-16 code units as specified by the sender */
-      position : Int
+      UTF-16 code units as specified by the sender. For quotes 
+      from rich messages, it is the position in the text formed by 
+      joining plain texts of all quotable texts of the message, 
+      separated by line feeds. */
+      position  : Int
       /* <em>Optional</em>. <em>True</em>, if the quote was chosen 
       manually by the message sender. Otherwise, the quote was 
       added automatically by the server. */
-      isManual : Option[Boolean]
+      isManual  : Option[Boolean]
+    }
+           
+    /* This object represents an NFT in the TON blockchain.  */
+    TonNft {
+      /* Address of the NFT */
+      address           : String
+      /* <em>Optional</em>. Address of the collection to which the 
+      NFT belongs; omitted if unknown */
+      collectionAddress : Option[String]
+      /* Index of the NFT among all NFTs from the collection as a 
+      decimal number */
+      index             : String
+      /* Name of the NFT */
+      name              : String
+      /* Description of the NFT */
+      description       : String
+      /* <em>Optional</em>. Attributes of the NFT */
+      attributes        : (omitempty) List[TonNftAttribute]
+      /* <em>Optional</em>. The unique gift corresponding to the NFT */
+      gift              : Option[UniqueGift]
+    }
+           
+    /* This object represents an attribute of an NFT in the TON blockchain.  */
+    TonNftAttribute {
+      /* Trait type of the attribute */
+      traitType : String
+      /* Value of the attribute */
+      value     : String
+    }
+           
+    /* This object describes a TON wallet card, which is shown on the profile page of 
+      a user to everyone.  */
+    TonWalletCard {
+      /* Address of the wallet */
+      address              : String
+      /* Balance of the wallet, in the <em>smallest units</em> of 
+      the cryptocurrency, as a decimal number */
+      amount               : String
+      /* Stickers placed on the card */
+      stickers             : List[TonWalletCardSticker]
+      /* <em>Optional</em>. Address of the NFT of one of the 
+      stickers, whose colors must be used for the card background; 
+      omitted if the default background must be used */
+      backgroundNftAddress : Option[String]
+    }
+           
+    /* This object describes a sticker on a TON wallet card.  */
+    TonWalletCardSticker {
+      /* Position of the sticker on the card */
+      position : AreaPosition
+      /* The NFT shown as the sticker */
+      nft      : TonNft
+    }
+           
+    /* Describes a service message about a transfer with a TON wallet.  */
+    TonWalletTransfer {
+      /* Unique identifier of the transaction; may be empty if the 
+      transfer hasn't been sent yet */
+      transactionId : String
+      /* Address of the transfer peer in the TON blockchain */
+      peerAddress   : String
+      /* The amount of transferred cryptocurrency, in the 
+      <em>smallest units</em> of the cryptocurrency, as a decimal 
+      number; negative for outgoing transfers */
+      amount        : String
+      /* <em>Optional</em>. Comment added to the transfer; omitted 
+      if the comment is encrypted */
+      comment       : Option[String]
     }
            
     /* This object describes a unique gift that was upgraded from a regular gift.  */
@@ -7498,6 +7913,12 @@ namespace telegramium {
       chosenInlineResult       : Option[ChosenInlineResult]
       /* <em>Optional</em>. New incoming callback query */
       callbackQuery            : Option[CallbackQuery]
+      /* <em>Optional</em>. New incoming query from a widget in a 
+      message sent by the bot or via the bot */
+      widgetQuery              : Option[WidgetQuery]
+      /* <em>Optional</em>. New incoming query from a forwarded 
+      message with a shared widget */
+      sharedWidgetQuery        : Option[SharedWidgetQuery]
       /* <em>Optional</em>. New incoming shipping query. Only for 
       invoices with flexible price. */
       shippingQuery            : Option[ShippingQuery]
@@ -7880,6 +8301,86 @@ namespace telegramium {
       allowedUpdates               : (omitempty) List[String]
     }
            
+    /* This object describes an <a href="https://core.telegram.org/bots/widgets">HTML 
+      widget</a>.  */
+    Widget {
+      /* <em>Optional</em>. Unique identifier of the shared widget, 
+      which can be used to send the widget again using the method 
+      <a 
+      href="https://core.telegram.org/bots/api#sendsharedwidget">sendSharedWidget</a>; 
+      omitted if the widget isn't shared */
+      id         : Option[String]
+      /* <em>Optional</em>. Width of the widget in logical pixels; 
+      omitted if the widget must occupy the whole width of the 
+      message bubble */
+      width      : Option[Int]
+      /* <em>Optional</em>. Height of the widget in logical pixels; 
+      omitted if the height of the widget isn't fixed */
+      height     : Option[Int]
+      /* HTML code of the widget */
+      html       : String
+      /* <em>Optional</em>. Public data of the widget, which is 
+      available wherever the widget is shown. All messages with a 
+      shared widget have the same public data. */
+      publicData : Option[String]
+      /* <em>Optional</em>. Data of the widget, which is specific to 
+      the message */
+      chatData   : Option[String]
+    }
+           
+    /* This object represents an incoming query from a widget in a message sent by the 
+      bot or via the bot. Use <a 
+      href="https://core.telegram.org/bots/api#answerwidgetquery">answerWidgetQuery</a> 
+      to answer the query. Each user can send at most 5 queries per 5 seconds to the 
+      bot from all its widgets.  */
+    WidgetQuery {
+      /* Unique identifier for this query */
+      id              : String
+      /* Sender */
+      from            : User
+      /* <em>Optional</em>. Chat with the message containing the 
+      widget; omitted if the widget is in an inline message */
+      chat            : Option[Chat]
+      /* <em>Optional</em>. Identifier of the message containing the 
+      widget; omitted if the widget is in an inline message */
+      messageId       : Option[Int]
+      /* <em>Optional</em>. Identifier of the inline message 
+      containing the widget */
+      inlineMessageId : Option[String]
+      /* Global identifier, uniquely corresponding to the chat to 
+      which the message with the widget was sent */
+      chatInstance    : String
+      /* <em>Optional</em>. For widgets in inline messages, type of 
+      the chat to which the message was sent. Can be either 
+      “sender” for a private chat with the inline query sender, 
+      “private”, “group”, “supergroup”, or “channel”. */
+      chatType        : Option[String]
+      /* Type of the query */
+      type            : WidgetQueryType
+      /* Data of the query, 1-64 bytes */
+      data            : String
+      /* <em>Optional</em>. Unique identifier of the shared widget, 
+      which sent the query; omitted if the widget isn't shared */
+      widgetId        : Option[String]
+    }
+           
+    /* This object describes a TON wallet of the user, which is used in a query from a 
+      widget.  */
+    WidgetQueryWallet {
+      /* Address of the wallet */
+      address   : String
+      /* Balance of the wallet, in the <em>smallest units</em> of 
+      the cryptocurrency, as a decimal number */
+      amount    : String
+      /* <em>Optional</em>. Hex-encoded public key of the wallet; 
+      omitted if unknown */
+      publicKey : Option[String]
+      /* <em>Optional</em>. Base64-encoded serialized StateInit of 
+      the wallet contract; omitted if and only if 
+      <em>public_key</em> is omitted */
+      stateInit : Option[String]
+    }
+           
     /* This object represents a service message about a user allowing a bot to write 
       messages after adding it to the attachment menu, launching a Web App from a 
       link, or accepting an explicit request from a Web App sent by the method <a 
@@ -8068,6 +8569,20 @@ namespace telegramium {
           result        : InlineQueryResult
         } => Method[SentWebAppMessage]
       
+        /* Use this method to send an answer to a query from a widget. The query must be 
+          answered within 15 seconds. The answer is received only by the widget that sent 
+          the query and doesn't change data of the widget; use <a 
+          href="https://core.telegram.org/bots/api#editmessagewidgetdata">editMessageWidgetData</a> 
+          or <a 
+          href="https://core.telegram.org/bots/api#editsharedwidgetdata">editSharedWidgetData</a> 
+          to change it. On success, <em>True</em> is returned.  */
+        def answerWidgetQuery {
+          /* Unique identifier for the query to be answered */
+          widgetQueryId : String
+          /* Data to be returned to the widget, 0-1024 bytes */
+          data          : Option[String]
+        } => Method[Boolean]
+      
         /* Use this method to approve a chat join request. The bot must be an 
           administrator in the chat for this to work and must have the 
           <em>can_invite_users</em> administrator right. Returns <em>True</em> on success.  */
@@ -8180,8 +8695,8 @@ namespace telegramium {
         } => Method[Boolean]
       
         /* Use this method to copy messages of any kind. Service messages, paid media 
-          messages, giveaway messages, giveaway winners messages, and invoice messages 
-          can't be copied. A quiz <a 
+          messages, giveaway messages, giveaway winners messages, invoice messages, and 
+          widget messages can't be copied. A quiz <a 
           href="https://core.telegram.org/bots/api#poll">poll</a> can be copied only if 
           the value of the field <em>correct_option_ids</em> is known to the bot. The 
           method is analogous to the method <a 
@@ -8191,7 +8706,7 @@ namespace telegramium {
           message on success.  */
         def copyMessage {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
@@ -8203,7 +8718,7 @@ namespace telegramium {
           direct messages chat */
           directMessagesTopicId   : Option[Long]
           /* Unique identifier for the chat where the original message 
-          was sent (or username of the target bot, supergroup or 
+          was sent (or username of the target bot, supergroup, or 
           channel in the format <code>&#064;username</code>) */
           fromChatId              : ChatId
           /* Message identifier in the chat specified in 
@@ -8260,8 +8775,8 @@ namespace telegramium {
       
         /* Use this method to copy messages of any kind. If some of the specified messages 
           can't be found or copied, they are skipped. Service messages, paid media 
-          messages, giveaway messages, giveaway winners messages, and invoice messages 
-          can't be copied. A quiz <a 
+          messages, giveaway messages, giveaway winners messages, invoice messages, and 
+          widget messages can't be copied. A quiz <a 
           href="https://core.telegram.org/bots/api#poll">poll</a> can be copied only if 
           the value of the field <em>correct_option_ids</em> is known to the bot. The 
           method is analogous to the method <a 
@@ -8272,7 +8787,7 @@ namespace telegramium {
           messages is returned.  */
         def copyMessages {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
@@ -8284,7 +8799,7 @@ namespace telegramium {
           a direct messages chat */
           directMessagesTopicId : Option[Long]
           /* Unique identifier for the chat where the original messages 
-          were sent (or username of the target bot, supergroup or 
+          were sent (or username of the target bot, supergroup, or 
           channel in the format <code>&#064;username</code>) */
           fromChatId            : ChatId
           /* A JSON-serialized list of 1-100 identifiers of messages in 
@@ -8359,7 +8874,10 @@ namespace telegramium {
         /* Use this method to create a topic in a forum supergroup chat or a private chat 
           with a user. In the case of a supergroup chat the bot must be an administrator 
           in the chat for this to work and must have the <em>can_manage_topics</em> 
-          administrator right. Returns information about the created topic as a <a 
+          administrator right. In the case of a private chat, a link to the topic can be 
+          created in the format 
+          <code>https://t.me/ᐸbot_usernameᐳ/ᐸmessage_thread_idᐳ</code>; the link opens the 
+          topic only for the user. Returns information about the created topic as a <a 
           href="https://core.telegram.org/bots/api#forumtopic">ForumTopic</a> object.  */
         def createForumTopic {
           /* Unique identifier for the target chat or username of the 
@@ -8549,6 +9067,20 @@ namespace telegramium {
           actorChatId : Option[Long]
         } => Method[Boolean]
       
+        /* Deletes a regular gift owned by a managed business account without receiving 
+          Telegram Stars for it. Requires the <em>can_convert_gifts_to_stars</em> business 
+          bot right. The gift can be deleted only if it isn't limited (the field 
+          <em>total_count</em> of the <a 
+          href="https://core.telegram.org/bots/api#gift">Gift</a> is omitted) and wasn't 
+          refunded. Returns <em>True</em> on success.  */
+        def deleteBusinessAccountGift {
+          /* Unique identifier of the business connection */
+          businessConnectionId : String
+          /* Unique identifier of the regular gift that should be 
+          deleted */
+          ownedGiftId          : String
+        } => Method[Boolean]
+      
         /* Delete messages on behalf of a business account. Requires the 
           <em>can_delete_sent_messages</em> business bot right to delete messages sent by 
           the bot itself, or the <em>can_delete_all_messages</em> business bot right to 
@@ -8644,7 +9176,7 @@ namespace telegramium {
       Returns <em>True</em> on success.  */
         def deleteMessage {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId    : ChatId
           /* Identifier of the message to delete */
@@ -8673,7 +9205,7 @@ namespace telegramium {
           success.  */
         def deleteMessages {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId     : ChatId
           /* A JSON-serialized list of 1-100 identifiers of messages to 
@@ -8921,7 +9453,7 @@ namespace telegramium {
           businessConnectionId  : Option[String]
           /* Required if <em>inline_message_id</em> is not specified. 
           Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. */
           chatId                : Option[ChatId]
           /* Required if <em>inline_message_id</em> is not specified. 
@@ -8984,7 +9516,7 @@ namespace telegramium {
           businessConnectionId : Option[String]
           /* Required if <em>inline_message_id</em> is not specified. 
           Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. */
           chatId               : Option[ChatId]
           /* Required if <em>inline_message_id</em> is not specified. 
@@ -9039,7 +9571,7 @@ namespace telegramium {
           businessConnectionId : Option[String]
           /* Required if <em>inline_message_id</em> is not specified. 
           Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. */
           chatId               : Option[ChatId]
           /* Required if <em>inline_message_id</em> is not specified. 
@@ -9069,7 +9601,7 @@ namespace telegramium {
           businessConnectionId : Option[String]
           /* Required if <em>inline_message_id</em> is not specified. 
           Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. */
           chatId               : Option[ChatId]
           /* Required if <em>inline_message_id</em> is not specified. 
@@ -9097,7 +9629,7 @@ namespace telegramium {
           businessConnectionId : Option[String]
           /* Required if <em>inline_message_id</em> is not specified. 
           Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. */
           chatId               : Option[ChatId]
           /* Required if <em>inline_message_id</em> is not specified. 
@@ -9129,6 +9661,45 @@ namespace telegramium {
           keyboard</a> */
           replyMarkup          : Option[InlineKeyboardMarkup]
         } => Method[Either[Boolean, Message]]
+      
+        /* Use this method to edit data of a widget in a message sent by the bot or via 
+          the bot (for inline bots). Public data of a shared widget can be changed at most 
+          once per second. On success, <em>True</em> is returned.  */
+        def editMessageWidgetData {
+          /* Required if <em>inline_message_id</em> is not specified. 
+          Unique identifier for the target chat or username of the 
+          target supergroup in the format <code>&#064;username</code>. */
+          chatId          : Option[ChatId]
+          /* Required if <em>inline_message_id</em> is not specified. 
+          Identifier of the message with the widget. */
+          messageId       : Option[Int]
+          /* Required if <em>chat_id</em> and <em>message_id</em> are 
+          not specified. Identifier of the inline message. */
+          inlineMessageId : Option[String]
+          /* New public data of the widget, 0-1024 bytes; pass an empty 
+          string to remove the public data. If omitted, then the 
+          public data isn't changed. */
+          publicData      : Option[String]
+          /* New data of the widget, which is specific to the message, 
+          0-1024 bytes; pass an empty string to remove the data. If 
+          omitted, then the data isn't changed. */
+          chatData        : Option[String]
+        } => Method[Boolean]
+      
+        /* Use this method to edit public data of a shared widget created by the bot. A 
+          shared widget can be edited at most once per second. On success, <em>True</em> 
+          is returned.  */
+        def editSharedWidgetData {
+          /* Unique identifier of the shared widget */
+          widgetId   : String
+          /* New public data of the widget, 0-1024 bytes; pass an empty 
+          string to remove the public data */
+          publicData : String
+          /* The maximum amount of time in seconds that the public data 
+          of the widget may be cached client-side; 5-3600. If omitted, 
+          then the current value is kept, which is 30 by default. */
+          cacheTime  : Option[Int]
+        } => Method[Boolean]
       
         /* Edits a story previously posted by the bot on behalf of a managed business 
           account. Requires the <em>can_manage_stories</em> business bot right. Returns <a 
@@ -9197,7 +9768,7 @@ namespace telegramium {
           href="https://core.telegram.org/bots/api#message">Message</a> is returned.  */
         def forwardMessage {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
@@ -9209,7 +9780,7 @@ namespace telegramium {
           forwarded to a direct messages chat */
           directMessagesTopicId   : Option[Long]
           /* Unique identifier for the chat where the original message 
-          was sent (or username of the target bot, supergroup or 
+          was sent (or username of the target bot, supergroup, or 
           channel in the format <code>&#064;username</code>) */
           fromChatId              : ChatId
           /* New start timestamp for the forwarded video in the message */
@@ -9240,7 +9811,7 @@ namespace telegramium {
           messages is returned.  */
         def forwardMessages {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
@@ -9252,7 +9823,7 @@ namespace telegramium {
           forwarded to a direct messages chat */
           directMessagesTopicId : Option[Long]
           /* Unique identifier for the chat where the original messages 
-          were sent (or username of the target bot, supergroup or 
+          were sent (or username of the target bot, supergroup, or 
           channel in the format <code>&#064;username</code>) */
           fromChatId            : ChatId
           /* A JSON-serialized list of 1-100 identifiers of messages in 
@@ -9428,6 +9999,15 @@ namespace telegramium {
           chatId : Option[Long]
         } => Method[MenuButton]
       
+        /* Use this method to get the list of backdrops, which can be used as the 
+          background of a theme of the screen for sharing a link to a user or a chat. 
+          Requires no parameters. Returns a <a 
+          href="https://core.telegram.org/bots/api#chatsharethemebackdrops">ChatShareThemeBackdrops</a> 
+          object.  */
+        def getChatShareThemeBackdrops {
+      
+        } => Method[ChatShareThemeBackdrops]
+      
         /* Use this method to get information about custom emoji stickers by their 
           identifiers. Returns an Array of <a 
           href="https://core.telegram.org/bots/api#sticker">Sticker</a> objects.  */
@@ -9581,6 +10161,14 @@ namespace telegramium {
           /* Name of the sticker set */
           name : String
         } => Method[StickerSet]
+      
+        /* Use this method to get information about a unique gift by its name. Returns a 
+          <a href="https://core.telegram.org/bots/api#uniquegift">UniqueGift</a> object on 
+          success.  */
+        def getUniqueGift {
+          /* Unique name of the gift */
+          name : String
+        } => Method[UniqueGift]
       
         /* Use this method to receive incoming updates using long polling (<a 
           href="https://en.wikipedia.org/wiki/Push_technology#Long_polling">wiki</a>). 
@@ -10147,9 +10735,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -10247,9 +10836,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -10427,9 +11017,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -10492,7 +11083,7 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId    : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId                  : ChatId
           /* Unique identifier for the target message thread (topic) of 
@@ -10550,9 +11141,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId        : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                      : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                      : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -10678,9 +11270,9 @@ namespace telegramium {
           identifier of the target user who will receive the gift. */
           userId        : Option[Long]
           /* Required if <em>user_id</em> is not specified. Unique 
-          identifier for the chat or username of the channel (in the 
-          format <code>&#064;username</code>) that will receive the 
-          gift. */
+          identifier for the chat that will receive the gift or 
+          username of the channel in the format 
+          <code>&#064;username</code>. */
           chatId        : Option[ChatId]
           /* Identifier of the gift; limited gifts can't be sent to 
           channel chats */
@@ -10710,7 +11302,7 @@ namespace telegramium {
           href="https://core.telegram.org/bots/api#message">Message</a> is returned.  */
         def sendInvoice {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId                    : ChatId
           /* Unique identifier for the target message thread (topic) of 
@@ -10850,9 +11442,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target channel (in the format 
-          <code>&#064;channelusername</code>) */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -10933,9 +11526,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11010,7 +11604,7 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId  : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId                : ChatId
           /* Unique identifier for the target message thread (topic) of 
@@ -11051,9 +11645,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11158,7 +11753,7 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId    : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. If the chat is a channel, all 
           Telegram Star proceeds from this media will be credited to 
           the chat's balance. Otherwise, they will be credited to the 
@@ -11232,9 +11827,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11311,7 +11907,7 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId   : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. Polls can't be sent to channel 
           direct messages chats. */
           chatId                 : ChatId
@@ -11448,9 +12044,10 @@ namespace telegramium {
           user can send rich messages. */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11528,6 +12125,65 @@ namespace telegramium {
           keepOnStop      : Option[Boolean]
         } => Method[Boolean]
       
+        /* Use this method to send again a shared widget created by the bot. Currently, in 
+          the production environment, widgets can be sent only to private chats, and sent 
+          widgets automatically have protected content and therefore can't be forwarded. 
+          On success, the sent <a 
+          href="https://core.telegram.org/bots/api#message">Message</a> is returned.  */
+        def sendSharedWidget {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup in the format <code>&#064;username</code> */
+          chatId                : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
+          messageThreadId       : Option[Int]
+          /* Unique identifier of the shared widget */
+          widgetId              : String
+          /* Data of the widget, which is specific to the message, 
+          0-1024 bytes */
+          chatData              : Option[String]
+          /* Widget caption, 0-1024 characters after entities parsing */
+          caption               : Option[String]
+          /* Mode for parsing entities in the widget caption. See <a 
+          href="https://core.telegram.org/bots/api#formatting-options">formatting 
+          options</a> for more details. */
+          parseMode             : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of 
+          <em>parse_mode</em> */
+          captionEntities       : (omitempty) List[MessageEntity]
+          /* Pass <em>True</em> if the caption must be shown above the 
+          widget */
+          showCaptionAboveMedia : Option[Boolean]
+          /* Sends the message <a 
+          href="https://telegram.org/blog/channels-2-0#silent-messages">silently</a>. 
+          Users will receive a notification with no sound. */
+          disableNotification   : Option[Boolean]
+          /* Protects the contents of the sent message from forwarding 
+          and saving */
+          protectContent        : Option[Boolean]
+          /* Pass <em>True</em> to allow up to 1000 messages per second, 
+          ignoring <a 
+          href="https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once">broadcasting 
+          limits</a> for a fee of 0.1 Telegram Stars per message. The 
+          relevant Stars will be withdrawn from the bot's balance. */
+          allowPaidBroadcast    : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId       : Option[String]
+          /* Description of the message to reply to */
+          replyParameters       : Option[ReplyParameters]
+          /* Additional interface options. A JSON-serialized object for 
+          an <a 
+          href="https://core.telegram.org/bots/features#inline-keyboards">inline 
+          keyboard</a>, <a 
+          href="https://core.telegram.org/bots/features#keyboards">custom 
+          reply keyboard</a>, instructions to remove a reply keyboard 
+          or to force a reply from the user. */
+          replyMarkup           : Option[KeyboardMarkup]
+        } => Method[Message]
+      
         /* Use this method to send static .WEBP, <a 
           href="https://telegram.org/blog/animated-stickers">animated</a> .TGS, or <a 
           href="https://telegram.org/blog/video-stickers-better-reactions">video</a> .WEBM 
@@ -11538,9 +12194,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11602,9 +12259,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11680,9 +12338,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11785,9 +12444,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11864,9 +12524,10 @@ namespace telegramium {
           which the message will be sent */
           businessConnectionId       : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
-          <code>&#064;username</code> */
-          chatId                     : ChatId
+          target bot, supergroup, or channel in the format 
+          <code>&#064;username</code>; required unless the message is 
+          sent as an ephemeral reply to a callback query */
+          chatId                     : Option[ChatId]
           /* Unique identifier for the target message thread (topic) of 
           a forum; for forum supergroups and private chats of bots 
           with forum topic mode enabled only */
@@ -11928,6 +12589,89 @@ namespace telegramium {
           reply keyboard</a>, instructions to remove a reply keyboard 
           or to force a reply from the user. */
           replyMarkup                : Option[KeyboardMarkup]
+        } => Method[Message]
+      
+        /* Use this method to send a message with an <a 
+          href="https://core.telegram.org/bots/widgets">HTML widget</a>. Currently, in the 
+          production environment, widgets can be sent only to private chats, and sent 
+          widgets automatically have protected content and therefore can't be forwarded. 
+          On success, the sent <a 
+          href="https://core.telegram.org/bots/api#message">Message</a> is returned.  */
+        def sendWidget {
+          /* Unique identifier for the target chat or username of the 
+          target supergroup in the format <code>&#064;username</code> */
+          chatId                : ChatId
+          /* Unique identifier for the target message thread (topic) of 
+          a forum; for forum supergroups and private chats of bots 
+          with forum topic mode enabled only */
+          messageThreadId       : Option[Int]
+          /* HTML code of the widget, 1-32768 bytes. The code must not 
+          exceed 4096 bytes when compressed by zlib with the maximum 
+          compression level. */
+          html                  : String
+          /* Width of the widget in logical pixels; omit if the widget 
+          must occupy the whole width of the message bubble. The width 
+          is clamped by the app to the range from 200 to the maximum 
+          width of the message bubble. */
+          width                 : Option[Int]
+          /* Height of the widget in logical pixels; omit if the height 
+          of the widget isn't fixed. The height is clamped by the app 
+          to the range 50-600. */
+          height                : Option[Int]
+          /* Public data of the widget, 0-1024 bytes, which will be 
+          available wherever the widget is shown. If the widget is 
+          shared, then all messages with it will have the same public 
+          data. */
+          publicData            : Option[String]
+          /* Data of the widget, which is specific to the message, 
+          0-1024 bytes */
+          chatData              : Option[String]
+          /* Widget caption, 0-1024 characters after entities parsing */
+          caption               : Option[String]
+          /* Mode for parsing entities in the widget caption. See <a 
+          href="https://core.telegram.org/bots/api#formatting-options">formatting 
+          options</a> for more details. */
+          parseMode             : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the caption, which can be specified instead of 
+          <em>parse_mode</em> */
+          captionEntities       : (omitempty) List[MessageEntity]
+          /* Pass <em>True</em> if the caption must be shown above the 
+          widget */
+          showCaptionAboveMedia : Option[Boolean]
+          /* Pass <em>True</em> to allow the widget to send queries to 
+          the bot */
+          allowQueries          : Option[Boolean]
+          /* Pass <em>True</em> to create a shared widget, which can be 
+          sent again using the method <a 
+          href="https://core.telegram.org/bots/api#sendsharedwidget">sendSharedWidget</a> */
+          isShared              : Option[Boolean]
+          /* Sends the message <a 
+          href="https://telegram.org/blog/channels-2-0#silent-messages">silently</a>. 
+          Users will receive a notification with no sound. */
+          disableNotification   : Option[Boolean]
+          /* Protects the contents of the sent message from forwarding 
+          and saving */
+          protectContent        : Option[Boolean]
+          /* Pass <em>True</em> to allow up to 1000 messages per second, 
+          ignoring <a 
+          href="https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once">broadcasting 
+          limits</a> for a fee of 0.1 Telegram Stars per message. The 
+          relevant Stars will be withdrawn from the bot's balance. */
+          allowPaidBroadcast    : Option[Boolean]
+          /* Unique identifier of the message effect to be added to the 
+          message; for private chats only */
+          messageEffectId       : Option[String]
+          /* Description of the message to reply to */
+          replyParameters       : Option[ReplyParameters]
+          /* Additional interface options. A JSON-serialized object for 
+          an <a 
+          href="https://core.telegram.org/bots/features#inline-keyboards">inline 
+          keyboard</a>, <a 
+          href="https://core.telegram.org/bots/features#keyboards">custom 
+          reply keyboard</a>, instructions to remove a reply keyboard 
+          or to force a reply from the user. */
+          replyMarkup           : Option[KeyboardMarkup]
         } => Method[Message]
       
         /* Changes the bio of a managed business account. Requires the 
@@ -12165,7 +12909,7 @@ namespace telegramium {
           the channel. Bots can't use paid reactions. Returns <em>True</em> on success.  */
         def setMessageReaction {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId    : ChatId
           /* Identifier of the target message. If the message belongs to 
@@ -12462,7 +13206,7 @@ namespace telegramium {
           businessConnectionId : Option[String]
           /* Required if <em>inline_message_id</em> is not specified. 
           Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. */
           chatId               : Option[ChatId]
           /* Required if <em>inline_message_id</em> is not specified. 
@@ -12484,7 +13228,7 @@ namespace telegramium {
           which the message to be edited was sent */
           businessConnectionId : Option[String]
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code> */
           chatId               : ChatId
           /* Identifier of the original message with the poll */
@@ -12669,14 +13413,24 @@ namespace telegramium {
           success.  */
         def verifyChat {
           /* Unique identifier for the target chat or username of the 
-          target bot, supergroup or channel in the format 
+          target bot, supergroup, or channel in the format 
           <code>&#064;username</code>. Channel direct messages chats 
           can't be verified. */
-          chatId            : ChatId
+          chatId                     : ChatId
           /* Custom description for the verification; 0-70 characters. 
           Must be empty if the organization isn't allowed to provide a 
           custom verification description. */
-          customDescription : Option[String]
+          customDescription          : Option[String]
+          /* Mode for parsing entities in the custom description. See <a 
+          href="https://core.telegram.org/bots/api#formatting-options">formatting 
+          options</a> for more details. Only “text_link” entities are 
+          supported. */
+          customDescriptionParseMode : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the custom description, which can be specified instead of 
+          <em>custom_description_parse_mode</em>. Only “text_link” 
+          entities are supported. */
+          customDescriptionEntities  : (omitempty) List[MessageEntity]
         } => Method[Boolean]
       
         /* Verifies a user <a 
@@ -12685,11 +13439,21 @@ namespace telegramium {
           success.  */
         def verifyUser {
           /* Unique identifier of the target user */
-          userId            : Long
+          userId                     : Long
           /* Custom description for the verification; 0-70 characters. 
           Must be empty if the organization isn't allowed to provide a 
           custom verification description. */
-          customDescription : Option[String]
+          customDescription          : Option[String]
+          /* Mode for parsing entities in the custom description. See <a 
+          href="https://core.telegram.org/bots/api#formatting-options">formatting 
+          options</a> for more details. Only “text_link” entities are 
+          supported. */
+          customDescriptionParseMode : Option[ParseMode]
+          /* A JSON-serialized list of special entities that appear in 
+          the custom description, which can be specified instead of 
+          <em>custom_description_parse_mode</em>. Only “text_link” 
+          entities are supported. */
+          customDescriptionEntities  : (omitempty) List[MessageEntity]
         } => Method[Boolean]
       }
     }
