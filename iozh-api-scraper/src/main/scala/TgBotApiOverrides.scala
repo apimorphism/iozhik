@@ -151,6 +151,7 @@ object TgBotApiOverrides {
       "Giveaway.country_codes" -> Field(emptyVsOmitted = Some(Same)),
       "ChatFullInfo.active_usernames" -> Field(emptyVsOmitted = Some(Same)),
       "WebhookInfo.allowed_updates" -> Field(emptyVsOmitted = Some(Same)),
+      "ReplyParameters.quote_rich_texts" -> Field(emptyVsOmitted = Some(Same)),
 
       // The docs rarely state an integer's width, and no naming rule covers these, so they're checked against the Bot
       // API server instead: telegram-bot-api Client.cpp at e3e9dd8 (Bot API 10.3), where each handler parses params and
@@ -172,6 +173,11 @@ object TgBotApiOverrides {
       // int32: poll option indexes
       "option_ids" -> Field(integer = Some(AsInt)),
       "correct_option_ids" -> Field(integer = Some(AsInt)),
+      // Bot API 10.4, checked against telegram-bot-api Client.cpp at 7232881.
+      // int32: td_api profileShareThemeEmoji background_backdrop_id:int32
+      "background_backdrop_id" -> Field(integer = Some(AsInt)),
+      // int32: td_api profileShareThemeBackdrop id:int32
+      "ChatShareThemeBackdrop.id" -> Field(integer = Some(AsInt)),
 
       // A Unix time, though the description doesn't say so
       "send_date" -> Field(integer = Some(AsLong)),
