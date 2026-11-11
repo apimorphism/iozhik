@@ -65,9 +65,11 @@ object ArbitraryGenerator {
           case Some(s: Struc) =>
             val obj = objName(n)
             val shrinks = shrinking(n)
-            if (s.shape.isEnum && useOpenEnum(k, enclosing))
-              Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
-            else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
+            if (s.shape.isEnum && useOpenEnum(k, enclosing)) {
+              // the field holding the type tag, as the decoder reads it; none for an enum of strings
+              val tag = s.typet().fold("None")(t => "Some(\"" + t.name + "\")")
+              Right(FieldGen(s"openEnum($obj.gen, $tag)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
+            } else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
           case other => Left(s"no generator for kind $n (resolved: $other)")
         }
     }
@@ -399,7 +401,7 @@ object ArbitraryGenerator {
     }.map(_.flatMap { case (pkgPath, types, factoryMethods) =>
       val pkg = pkgPath.mkString(".")
       List(
-        file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder}\nimport scala.reflect.ClassTag", prims),
+        file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder, Json}\nimport scala.reflect.ClassTag", prims),
         file(pkg, "GenTypes.scala", "import org.scalacheck.{Gen, Shrink}", types.map(_.obj).mkString("\n\n")),
         file(
           pkg,
