@@ -37,7 +37,7 @@ object ScalaApiGeneratorUtils {
         .getOrElse(sanitizedName + (if (x.params.nonEmpty) body else ""))
     } yield kind
 
-  def wrapWithOpenEnum(tpe: String): String = "iozhik.OpenEnum[" + tpe + "]"
+  def wrapWithOpenEnum(tpe: String): String = "iozhik.JsonOpenEnum[" + tpe + "]"
 
   def genFieldType(x: Kind, struc: Option[Kind], wrapEnumType: String => String = wrapWithOpenEnum)(implicit meta: GeneratorMeta): Either[String, String] =
     for {
