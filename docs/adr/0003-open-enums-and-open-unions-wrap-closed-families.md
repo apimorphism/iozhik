@@ -20,7 +20,7 @@ Research: the payload split (a string for enums, raw JSON for objects) is the no
 
 ## Consequences
 
-- A field is wrapped only when its type and the structure holding it are reachable from a method's result. Method parameters and types that are only sent take the plain type.
+- A field is wrapped only when its type and the structure holding it are reachable from a method's result. Method parameters and types that are only sent take the plain type: a string enum there is closed (`sendDice.emoji: Option[Emoji]`), so a bot can't send a value this version doesn't know.
 - The `OpenEnum` file has no circe import: a string enum's codecs are generated with the enum. `OpenUnion` names `Json` because its unknown value is a JSON object.
 - Typing a string field (`Chat.type` as `OpenEnum[ChatType]`) takes an enum in the scraper's header and an override. `chat.type == "private"` then still compiles on Scala 2 with only a warning, and is always false.
 - `OpenEnum.Unknown("private")` and `Known(ChatTypePrivate)` are different values that encode the same. Only the decoder is expected to build unknown values, apart from tests.
