@@ -65,14 +65,18 @@ object ArbitraryGenerator {
           case Some(s: Struc) =>
             val obj = objName(n)
             val shrinks = shrinking(n)
-            if (s.shape.isEnum && useOpenEnum(k, enclosing))
-              Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
-            else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
+            if (s.shape.isEnum && useOpenEnum(k, enclosing)) {
+              val (gen, shrink) = tagField(s).fold((s"openEnum($obj.gen)", "shrinkOpenEnum"))(t => (s"openUnion($obj.gen, \"$t\")", "shrinkOpenUnion"))
+              Right(FieldGen(gen, if (shrinks) s"$shrink($obj.shrink)" else NoShrink, primitive = false, Set(n)))
+            } else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
           case other => Left(s"no generator for kind $n (resolved: $other)")
         }
     }
 
   private val NoShrink = "noShrink"
+
+  // The field holding an OpenUnion's type tag, as the decoder reads it; None for an enum of strings, an OpenEnum
+  private def tagField(s: Struc): Option[String] = s.typet().map(_.name)
 
   // How deep the shallowest value of a field type is, given the depths of the model types.
   private def kindDepth(k: Kind, depths: Map[String, Int]): Option[Int] = k.name match {
@@ -124,6 +128,8 @@ object ArbitraryGenerator {
     roundTrip: Option[Boolean],
     refs: Set[String],
     meta: GeneratorMeta,
+    // for a type decoded as an OpenEnum: where its type tag is
+    openTagField: Option[String] = None,
   ): TypeGen = {
     val obj = objName(typeName)
     val custom = meta.cfg.customGens.get(typeName)
@@ -141,8 +147,9 @@ object ArbitraryGenerator {
       scalaType = scalaType,
       obj = body,
       roundTrip = roundTrip.map { isOpen =>
-        val ctor = if (isOpen) "RoundTripCase.open" else "RoundTripCase"
-        s"""$ctor[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
+        if (isOpen) openTagField.fold(s"""RoundTripCase.openEnum[$scalaType]("$typeName", $obj.gen, $obj.shrink)""")(t =>
+          s"""RoundTripCase.openUnion[$scalaType]("$typeName", $obj.gen, $obj.shrink, "$t")""")
+        else s"""RoundTripCase[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
       },
       shrinks = shrinkBody != NoShrink,
       refs = refs,
@@ -235,7 +242,7 @@ object ArbitraryGenerator {
             if (shrinkable.isEmpty) NoShrink
             else
               s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
-        } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), all.toSet, meta)
+        } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), all.toSet, meta, tagField(x))
       case Shape.Record =>
         kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false), depths, shrinking))
           .map(List(_))
@@ -399,7 +406,7 @@ object ArbitraryGenerator {
     }.map(_.flatMap { case (pkgPath, types, factoryMethods) =>
       val pkg = pkgPath.mkString(".")
       List(
-        file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder}\nimport scala.reflect.ClassTag", prims),
+        file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder, Json}\nimport scala.reflect.ClassTag", prims),
         file(pkg, "GenTypes.scala", "import org.scalacheck.{Gen, Shrink}", types.map(_.obj).mkString("\n\n")),
         file(
           pkg,

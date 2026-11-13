@@ -9,7 +9,7 @@ object CirceUtils {
   def genMergedCirceCodecs(parent: Struc, kind: String, typeTag: String, typet: Typet, leaves: List[Struc])(
     implicit meta: GeneratorMeta
   ): Either[String, (String, String)] = {
-    val wrapEnumType = if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenEnum.Known(_))" else ""
+    val wrapEnumType = if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenUnion.Known(_))" else ""
     leaves.traverse { leaf =>
       val postfix = if (leaf.isCaseObject) ".type" else ""
       leaf
@@ -41,7 +41,7 @@ object CirceUtils {
     implicit meta: GeneratorMeta
   ): Either[String, (String, String)] = {
     val postfix = if (leaf.isCaseObject) ".type" else ""
-    val wrapEnumType = if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenEnum.Known(_))" else ""
+    val wrapEnumType = if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenUnion.Known(_))" else ""
     leaf
       .kind
       .map(_.name)

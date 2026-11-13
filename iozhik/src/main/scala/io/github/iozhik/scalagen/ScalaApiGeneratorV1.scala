@@ -38,7 +38,7 @@ class ScalaApiGeneratorV1 {
 
   def sanitize(name: String): String = GeneratorUtils.sanitize(name, keywords)
 
-  def genField(x: Field, struc: Option[Kind], withDoc: Boolean = true, isDef: Boolean = false, wrapEnumType: String => String = wrapWithOpenEnum)(
+  def genField(x: Field, struc: Option[Kind], withDoc: Boolean = true, isDef: Boolean = false, wrapEnumType: (Struc, String) => String = wrapWithOpenEnum)(
     implicit meta: GeneratorMeta
   ): Either[String, String] = {
     for {
@@ -150,8 +150,8 @@ class ScalaApiGeneratorV1 {
           } yield {
             val tag = "\"" + typet.name + "\""
             val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
-            val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
-            val unknownCase = if (useOpenEnums) s"Decoder.const(iozhik.OpenEnum.Unknown[$name](unknown))" 
+            val wrappedName = if (useOpenEnums) wrapWithOpenEnum(struc, name) else name
+            val unknownCase = if (useOpenEnums) s"Decoder.instance[$wrappedName](c => Right(iozhik.OpenUnion.Unknown(unknown, c.value)))" 
               else s"""throw iozhik.DecodingError(s"Unknown type for $name: $$unknown")"""
             val generatedEncoder = s"""
               |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
@@ -217,25 +217,41 @@ class ScalaApiGeneratorV1 {
                   )
                 }
               }
+            // an open enum without a type tag is an OpenEnum, whose Unknown holds a string, so it can only have strings
+            _ <- Either.cond(
+              !useOpenEnums || (union.wrapps.isEmpty && union.leaves.isEmpty), (),
+              s"$kind: an open enum without a type tag must have only string items"
+            )
           } yield {
             val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
-            val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
-            val wrapEnumType = if (useOpenEnums) ".map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(iozhik.OpenEnum.Unknown(_)))" else ""
             val encoder = s"""
               |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
               |  ${cases.map(_._1).intercalate(d)}
               |}
             """.stripMargin
-            val decoder = if (isCodKind(struc)) {
-              meta.cfg.customDecoders.get(kind).getOrElse(s"""
-                |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = {
+            // An OpenEnum looks the string up, and keeps one it doesn't know; it encodes back to the same string.
+            val openEncoder = if (useOpenEnums) s"""
+              |implicit lazy val ${name.toLowerCase}OpenEncoder: Encoder[iozhik.OpenEnum[$name]] = {
+              |  case iozhik.OpenEnum.Known(x) => Encoder[$name].apply(x)
+              |  case iozhik.OpenEnum.Unknown(s) => Json.fromString(s)
+              |}
+            """.stripMargin else ""
+            val generatedDecoder =
+              if (useOpenEnums) s"""
+                |implicit lazy val ${name.toLowerCase}Decoder: Decoder[iozhik.OpenEnum[$name]] = Decoder[String].map {
+                |  ${union.enumstrs.map(e => s"case \"${e.target}\" => iozhik.OpenEnum.Known(${e.name.name})").intercalate(d)}
+                |  case s => iozhik.OpenEnum.Unknown(s)
+                |}
+              """.stripMargin
+              else s"""
+                |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name] = {
                 |  List[Decoder[$name]](
                 |    ${cases.map(_._2).intercalate(",")}
-                |  ).reduceLeft(_ or _)$wrapEnumType
+                |  ).reduceLeft(_ or _)
                 |}
-              """.stripMargin)
-            } else ""  
-            val body = encoder + d + decoder
+              """.stripMargin
+            val decoder = if (isCodKind(struc)) meta.cfg.customDecoders.get(kind).getOrElse(generatedDecoder) else ""
+            val body = encoder + d + openEncoder + d + decoder
             List(Code(
               body = body,
               packageObject = "CirceImplicits",
@@ -571,7 +587,7 @@ class ScalaApiGeneratorV1 {
     if (docsText.nonEmpty) s"$delimiter/** $docsText */$delimiter" else ""
   }
 
-  def genStruc(x: Struc, wrapEnumType: String => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
+  def genStruc(x: Struc, wrapEnumType: (Struc, String) => String)(implicit meta: GeneratorMeta): Either[String, List[Code]] = {
     val kindOrDefault = x.kind.getOrElse(Kind("$$"))
     val isUnion = x.shape match {
       case Shape.Record   => false
@@ -673,7 +689,7 @@ class ScalaApiGeneratorV1 {
           imports = importKind(y),
           packageObject = "__this_trait__",
         ))),
-        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))), wrapEnumType = identity)
+        y => genStruc(y.copy(kind = Option(Kind(x.kind.name.capitalize + DomPostfix))), wrapEnumType = noWrap)
       )
       cod <- genDefunCod(x)
       domName <- x.dom.fold(
@@ -815,7 +831,7 @@ class ScalaApiGeneratorV1 {
       kind <- genKind(x.kind)
       params <- x.dom.fold(
         _ => Right(List.empty),
-        struc => constructorFields(struc).traverse(genField(_, struc = Some(x.kind), withDoc = false, wrapEnumType = identity))
+        struc => constructorFields(struc).traverse(genField(_, struc = Some(x.kind), withDoc = false, wrapEnumType = noWrap))
       )
       reqName = x.kind.name.capitalize + DomPostfix
       dom <- x.dom.fold(
@@ -826,7 +842,7 @@ class ScalaApiGeneratorV1 {
         struc => genStruc(struc.copy(
           kind = Option(Kind(reqName)),
           typets = Typet("", "method", List.empty, x.kind.name, None) :: struc.typets
-        ), wrapEnumType = identity)
+        ), wrapEnumType = noWrap)
       )
       cod <- genDefunCod(x)
       codName <- genDefunCodName(x)

@@ -25,21 +25,27 @@ object ScalaApiGeneratorUtils {
   def jsonName(name: String)(implicit meta: GeneratorMeta): String =
     if (meta.space.opts.contains("snake")) camel2snake(name) else name
 
-  def genKind(x: Kind, wrapEnumType: String => String = identity)(implicit meta: GeneratorMeta): Either[String, String] =
+  def genKind(x: Kind, wrapEnumType: (Struc, String) => String = noWrap)(implicit meta: GeneratorMeta): Either[String, String] =
     for {
       items <- x.params.map(p => genKind(p, wrapEnumType)).sequence
       body = "[" + items.mkString(", ") + "]"
       sanitizedName = sanitize(x.name, keywords)
       kind = meta.symt.resolve(x).collect {
         case e: Struc if e.shape.isEnum && useOpenEnum(x, struc = None) =>
-          wrapEnumType(sanitizedName + (if (x.params.nonEmpty) body else ""))
+          wrapEnumType(e, sanitizedName + (if (x.params.nonEmpty) body else ""))
         }
         .getOrElse(sanitizedName + (if (x.params.nonEmpty) body else ""))
     } yield kind
 
-  def wrapWithOpenEnum(tpe: String): String = "iozhik.OpenEnum[" + tpe + "]"
+  // A tagged-object family is an OpenUnion, whose Unknown keeps the JSON object; an enum of strings is an OpenEnum,
+  // whose Unknown keeps the string.
+  def openWrapper(e: Struc): String = if (e.typets.nonEmpty) "iozhik.OpenUnion" else "iozhik.OpenEnum"
 
-  def genFieldType(x: Kind, struc: Option[Kind], wrapEnumType: String => String = wrapWithOpenEnum)(implicit meta: GeneratorMeta): Either[String, String] =
+  def wrapWithOpenEnum(e: Struc, tpe: String): String = openWrapper(e) + "[" + tpe + "]"
+
+  val noWrap: (Struc, String) => String = (_, tpe) => tpe
+
+  def genFieldType(x: Kind, struc: Option[Kind], wrapEnumType: (Struc, String) => String = wrapWithOpenEnum)(implicit meta: GeneratorMeta): Either[String, String] =
     for {
       items <- x.params.map(p => genFieldType(p, struc, wrapEnumType)).sequence
       body = if (x.params.nonEmpty) "[" + items.mkString(", ") + "]" else ""
@@ -48,7 +54,7 @@ object ScalaApiGeneratorUtils {
           if s.isCaseObject =>
           sanitize(x.name, keywords) + ".type" + body
         case e: Struc if e.shape.isEnum && useOpenEnum(x, struc) =>
-          wrapEnumType(sanitize(x.name, keywords) + body)
+          wrapEnumType(e, sanitize(x.name, keywords) + body)
         }
         .getOrElse(sanitize(x.name, keywords) + body)
     } yield fieldType
