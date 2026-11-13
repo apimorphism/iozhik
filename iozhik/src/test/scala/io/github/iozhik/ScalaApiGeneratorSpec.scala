@@ -561,10 +561,10 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     """.stripMargin
   }
 
-  "A Method's arguments" must "not be wrapped in OpenEnum, unlike the fields of a decodable type" in {
+  "A Method's arguments" must "not be wrapped in OpenUnion, unlike the fields of a decodable type" in {
     val openEnums = cfg.copy(generateGens = true, openEnum = OpenEnumConfig(enabled = true, excludeTypes = List.empty))
     val files = generateGens(modeDsl(inClient = false), openEnums)
-    files("GenTypes.scala") should include("""openEnum(GenMode.gen, Some("type")).map { a0 => Settings(mode = a0) }""")
+    files("GenTypes.scala") should include("""openUnion(GenMode.gen, "type").map { a0 => Settings(mode = a0) }""")
     files("MethodCases.scala") should include("GenMode.gen.map { a0 => SetModeReq(mode = a0) }")
   }
 

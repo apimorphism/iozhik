@@ -11,6 +11,13 @@ namespace telegramium {
       item EmojiBowling     = "🎳"
     }
 
+    enum ChatType {
+      item ChatTypePrivate    = "private"
+      item ChatTypeGroup      = "group"
+      item ChatTypeSupergroup = "supergroup"
+      item ChatTypeChannel    = "channel"
+    }
+
     enum ParseMode {
       item Markdown  = "Markdown"
       item Markdown2 = "MarkdownV2"
@@ -4399,7 +4406,7 @@ namespace telegramium {
       id               : Long
       /* Type of the chat, can be either “private”, “group”, 
       “supergroup” or “channel” */
-      type             : String
+      type             : ChatType
       /* <em>Optional</em>. Title, for supergroups, channels and 
       group chats */
       title            : Option[String]
@@ -4547,7 +4554,7 @@ namespace telegramium {
       id                                 : Long
       /* Type of the chat, can be either “private”, “group”, 
       “supergroup” or “channel” */
-      type                               : String
+      type                               : ChatType
       /* <em>Optional</em>. Title, for supergroups, channels and 
       group chats */
       title                              : Option[String]
@@ -5136,7 +5143,7 @@ namespace telegramium {
     /* This object represents an animated emoji that displays a random value.  */
     Dice {
       /* Emoji on which the dice throw animation is based */
-      emoji : String
+      emoji : Emoji
       /* Value of the dice, 1-6 for “🎲”, “🎯” and “🎳” base emoji, 
       1-5 for “🏀” and “⚽” base emoji, 1-64 for “🎰” base emoji */
       value : Int
