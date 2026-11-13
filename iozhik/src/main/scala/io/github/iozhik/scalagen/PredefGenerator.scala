@@ -17,36 +17,26 @@ object PredefGenerator {
         body = """package iozhik
         
         import io.circe.Encoder
+        import io.circe.Json
         
         /**
-          * Indicates that the enumeration is open and can accept values beyond those already specified. `Raw` is how
-          * the wire format holds a value: an Unknown one keeps it, to encode back to.
+          * Indicates that the enumeration is open and can accept values beyond those already specified.
           */
-        sealed trait OpenEnum[+T, +Raw]
+        sealed trait OpenEnum[+T]
         
         object OpenEnum {
-          case class Known[T](value: T) extends OpenEnum[T, Nothing]
-          /** A value this version doesn't know: its type tag, and what it was decoded from, which it encodes back to. */
-          case class Unknown[Raw](value: String, raw: Raw) extends OpenEnum[Nothing, Raw]
+          case class Known[T](value: T) extends OpenEnum[T]
+          /** A value this version doesn't know: its type tag, and the JSON it was decoded from, which it encodes back to. */
+          case class Unknown[T](value: String, raw: Json) extends OpenEnum[T]
 
-          def apply[T](value: T): OpenEnum[T, Nothing] = Known(value)
+          def apply[T](value: T): OpenEnum[T] = Known(value)
 
-          // here, not next to JsonOpenEnum: Scala 3 doesn't look for implicits in package objects
-          implicit def encoder[T: Encoder, Raw: Encoder]: Encoder[OpenEnum[T, Raw]] = {
+          implicit def encoder[T: Encoder]: Encoder[OpenEnum[T]] = {
             case Known(value) => Encoder[T].apply(value)
-            case Unknown(_, raw) => Encoder[Raw].apply(raw)
+            case Unknown(_, raw) => raw
           }
         }""",
         name = "OpenEnum.scala",
-        path = "iozhik"
-      ),
-      Code(
-        body = """package object iozhik {
-        
-          /** An OpenEnum read from JSON: an Unknown value keeps the JSON it was decoded from. */
-          type JsonOpenEnum[+T] = OpenEnum[T, io.circe.Json]
-        }""",
-        name = "package.scala",
         path = "iozhik"
       )
     )

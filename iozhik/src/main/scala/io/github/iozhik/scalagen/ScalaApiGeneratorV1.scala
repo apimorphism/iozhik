@@ -151,7 +151,7 @@ class ScalaApiGeneratorV1 {
             val tag = "\"" + typet.name + "\""
             val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
             val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
-            val unknownCase = if (useOpenEnums) s"Decoder.instance[$wrappedName](c => Right(iozhik.OpenEnum.Unknown(unknown, c.value)))" 
+            val unknownCase = if (useOpenEnums) s"Decoder.instance[$wrappedName](c => Right(iozhik.OpenEnum.Unknown[$name](unknown, c.value)))" 
               else s"""throw iozhik.DecodingError(s"Unknown type for $name: $$unknown")"""
             val generatedEncoder = s"""
               |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
@@ -220,7 +220,7 @@ class ScalaApiGeneratorV1 {
           } yield {
             val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
             val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
-            val wrapEnumType = if (useOpenEnums) s".map[$wrappedName](iozhik.OpenEnum.Known(_)).or(Decoder[String].map[$wrappedName](s => iozhik.OpenEnum.Unknown(s, Json.fromString(s))))" else ""
+            val wrapEnumType = if (useOpenEnums) s".map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(s => iozhik.OpenEnum.Unknown[$name](s, Json.fromString(s))))" else ""
             val encoder = s"""
               |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
               |  ${cases.map(_._1).intercalate(d)}
