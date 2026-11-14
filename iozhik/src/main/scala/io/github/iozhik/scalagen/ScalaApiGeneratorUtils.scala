@@ -25,36 +25,43 @@ object ScalaApiGeneratorUtils {
   def jsonName(name: String)(implicit meta: GeneratorMeta): String =
     if (meta.space.opts.contains("snake")) camel2snake(name) else name
 
-  def genKind(x: Kind, wrapEnumType: (Struc, String) => String = noWrap)(implicit meta: GeneratorMeta): Either[String, String] =
+  def genKind(x: Kind, wrap: (Struc, String) => String = noWrap)(implicit meta: GeneratorMeta): Either[String, String] =
     for {
-      items <- x.params.map(p => genKind(p, wrapEnumType)).sequence
+      items <- x.params.map(p => genKind(p, wrap)).sequence
       body = "[" + items.mkString(", ") + "]"
       sanitizedName = sanitize(x.name, keywords)
       kind = meta.symt.resolve(x).collect {
         case e: Struc if e.shape.isEnum && useOpenEnum(x, struc = None) =>
-          wrapEnumType(e, sanitizedName + (if (x.params.nonEmpty) body else ""))
+          wrap(e, sanitizedName + (if (x.params.nonEmpty) body else ""))
         }
         .getOrElse(sanitizedName + (if (x.params.nonEmpty) body else ""))
     } yield kind
 
-  // A tagged-object family is an OpenUnion, whose Unknown keeps the JSON object; an enum of strings is an OpenEnum,
-  // whose Unknown keeps the string.
-  def openWrapper(e: Struc): String = if (e.typets.nonEmpty) "iozhik.OpenUnion" else "iozhik.OpenEnum"
+  // How an open family is wrapped where a bot receives it.
+  sealed trait OpenKind { def wrapper: String }
+  object OpenKind {
+    // A family of objects told apart by a type tag, held in `tagField`: its Unknown keeps the JSON object.
+    final case class Union(tagField: String) extends OpenKind { val wrapper = "iozhik.OpenUnion" }
+    // An enum of strings: its Unknown keeps the string.
+    case object Enum extends OpenKind { val wrapper = "iozhik.OpenEnum" }
+  }
 
-  def wrapWithOpenEnum(e: Struc, tpe: String): String = openWrapper(e) + "[" + tpe + "]"
+  def openKind(e: Struc): OpenKind = e.typet().fold[OpenKind](OpenKind.Enum)(t => OpenKind.Union(t.name))
+
+  def wrapOpen(e: Struc, tpe: String): String = openKind(e).wrapper + "[" + tpe + "]"
 
   val noWrap: (Struc, String) => String = (_, tpe) => tpe
 
-  def genFieldType(x: Kind, struc: Option[Kind], wrapEnumType: (Struc, String) => String = wrapWithOpenEnum)(implicit meta: GeneratorMeta): Either[String, String] =
+  def genFieldType(x: Kind, struc: Option[Kind], wrap: (Struc, String) => String = wrapOpen)(implicit meta: GeneratorMeta): Either[String, String] =
     for {
-      items <- x.params.map(p => genFieldType(p, struc, wrapEnumType)).sequence
+      items <- x.params.map(p => genFieldType(p, struc, wrap)).sequence
       body = if (x.params.nonEmpty) "[" + items.mkString(", ") + "]" else ""
       fieldType = meta.symt.resolve(x).collect {
         case s: Struc
           if s.isCaseObject =>
           sanitize(x.name, keywords) + ".type" + body
         case e: Struc if e.shape.isEnum && useOpenEnum(x, struc) =>
-          wrapEnumType(e, sanitize(x.name, keywords) + body)
+          wrap(e, sanitize(x.name, keywords) + body)
         }
         .getOrElse(sanitize(x.name, keywords) + body)
     } yield fieldType

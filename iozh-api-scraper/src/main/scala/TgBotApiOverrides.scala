@@ -154,6 +154,7 @@ object TgBotApiOverrides {
       "ReplyParameters.quote_rich_texts" -> Field(emptyVsOmitted = Some(Same)),
 
       // The docs give these as a String, listing the values in the description; the enums are declared in the scraper.
+      // They share a reason, but no rule can name the enum yet: apimorphism/iozhik#42 adds one and removes these.
       "Chat.type" -> Field(tpe = Some("ChatType")),
       "ChatFullInfo.type" -> Field(tpe = Some("ChatType")),
       "Dice.emoji" -> Field(tpe = Some("Emoji")),
