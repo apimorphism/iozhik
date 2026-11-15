@@ -11,7 +11,7 @@ An unknown value of a string enum is only its string (`OpenEnum.Unknown(value)`)
 - **Leaving it, and documenting that values with unknown parts shouldn't be sent back**: rejected because it leaves a silent corruption in place, and Bot API 10.4's `quote_rich_texts` asks bots to send back exactly what they received.
 - **Keeping the payload in a type of our own** (a small `Document`, as smithy4s has) so the wrapper doesn't name circe's `Json`. Spiked and rejected as overkill: it reorders keys, loses `-0`, and adds a conversion whose losses the round-trip tests can't see.
 
-Every surveyed library that can send an unknown variant back keeps its whole payload; those that keep only the tag refuse to serialize it ([research](../research/forward-compatible-enums.md), sections 2 and 5).
+Every surveyed library that can send an unknown variant back keeps its whole payload; those that keep only the tag refuse to serialize it.
 
 ## Consequences
 

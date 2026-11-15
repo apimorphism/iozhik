@@ -16,7 +16,7 @@ The aim, in the maintainer's words: no noise on the request path, forced handlin
 - **Typing request fields as `OpenEnum[T]`** so a bot can send a string this version doesn't know: rejected as unneeded. The library supports one Bot API version and tries not to fail on newer ones, no more.
 - **Hiding the `Unknown` constructors** behind a normalising constructor: it guarded the sending of hand-built unknown strings, which isn't supported. They are plain case classes.
 
-Research: the payload split (a string for enums, raw JSON for objects) is the norm; a generic wrapper around an object union is rare, and no surveyed library ships this exact pair ([precedents](../research/two-wrapper-design-precedents.md)). Among Telegramium's public consumers the wrapper is rarely met and nobody has written a helper to hide it ([usage](../research/openenum-consumer-usage.md)).
+Research: the payload split (a string for enums, raw JSON for objects) is the norm; a generic wrapper around an object union is rare, and no surveyed library ships this exact pair. Among Telegramium's public consumers the wrapper is rarely met and nobody has written a helper to hide it.
 
 ## Consequences
 
