@@ -423,13 +423,6 @@ object TgBotApiScrapper extends IOApp {
        |      item EmojiBowling     = "🎳"
        |    }
        |
-       |    enum ChatType {
-       |      item ChatTypePrivate    = "private"
-       |      item ChatTypeGroup      = "group"
-       |      item ChatTypeSupergroup = "supergroup"
-       |      item ChatTypeChannel    = "channel"
-       |    }
-       |
        |    enum ParseMode {
        |      item Markdown  = "Markdown"
        |      item Markdown2 = "MarkdownV2"

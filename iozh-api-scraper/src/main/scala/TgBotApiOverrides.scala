@@ -153,13 +153,6 @@ object TgBotApiOverrides {
       "WebhookInfo.allowed_updates" -> Field(emptyVsOmitted = Some(Same)),
       "ReplyParameters.quote_rich_texts" -> Field(emptyVsOmitted = Some(Same)),
 
-      // The docs give these as a String, listing the values in the description; the enums are declared in the scraper.
-      // They share a reason, but no rule can name the enum yet: apimorphism/iozhik#42 adds one and removes these.
-      "Chat.type" -> Field(tpe = Some("ChatType")),
-      "ChatFullInfo.type" -> Field(tpe = Some("ChatType")),
-      "Dice.emoji" -> Field(tpe = Some("Emoji")),
-      "sendDice.emoji" -> Field(tpe = Some("Emoji")),
-
       // The docs rarely state an integer's width, and no naming rule covers these, so they're checked against the Bot
       // API server instead: telegram-bot-api Client.cpp at e3e9dd8 (Bot API 10.3), where each handler parses params and
       // serializes fields.

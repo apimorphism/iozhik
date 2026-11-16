@@ -692,7 +692,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     ) should include("Target: an open family without a type tag is an OpenEnum and must have only string items")
   }
 
-  "The string fields typed in the real Bot API" must "be an OpenEnum where received and the plain enum where sent" in {
+  "A family of the real Bot API" must "be an OpenUnion where received and plain where sent" in {
     val apiFile = List("iozhtest/src/main/resources/tgbot.api", "../iozhtest/src/main/resources/tgbot.api")
       .map(new java.io.File(_))
       .find(_.exists)
@@ -705,10 +705,6 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
       codes <- new ScalaApiGeneratorV1().gen(model, open.copy(openEnum = open.openEnum.copy(excludeTypes = List("MaybeInaccessibleMessage", "IFile"))))
     } yield codes.map(c => c.name -> squashed(c.body)).toMap
     val files = result.fold(err => fail(s"Generation failed: $err"), identity)
-    files("Chat.scala") should include("`type`: iozhik.OpenEnum[ChatType]")
-    files("ChatFullInfo.scala") should include("`type`: iozhik.OpenEnum[ChatType]")
-    files("Dice.scala") should include("emoji: iozhik.OpenEnum[Emoji]")
-    files("SendDiceReq.scala") should include("emoji: Option[Emoji]")
     files("SendMessageReq.scala") should include("parseMode: Option[ParseMode]")
     files("SendMessageReq.scala") should include("entities: List[MessageEntity]")
     files("MaybeInaccessibleMessage.scala") should include("entities: List[iozhik.OpenUnion[MessageEntity]]")
