@@ -6,13 +6,10 @@ import io.github.iozhik.GeneratorUtils.delim
 import io.github.iozhik.scalagen.ScalaApiGeneratorUtils._
 
 object CirceUtils {
-  // a variant of an open union decodes to a Known
-  private def asKnown(parent: Struc)(implicit meta: GeneratorMeta): String =
-    if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenUnion.Known(_))" else ""
-
   def genMergedCirceCodecs(parent: Struc, kind: String, typeTag: String, typet: Typet, leaves: List[Struc])(
     implicit meta: GeneratorMeta
   ): Either[String, (String, String)] = {
+    val wrapEnumType = if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenEnum.Known(_))" else ""
     leaves.traverse { leaf =>
       val postfix = if (leaf.isCaseObject) ".type" else ""
       leaf
@@ -35,7 +32,7 @@ object CirceUtils {
         val (encs, decs) = codecs.unzip
         (
           encs.intercalate(delim),
-          "case \"" + typeTag + "\"" + s" => List[Decoder[$kind]](" + decs.map(_ + ".widen").intercalate(",") + s").reduceLeft(_ or _)${asKnown(parent)}"
+          "case \"" + typeTag + "\"" + s" => List[Decoder[$kind]](" + decs.map(_ + ".widen").intercalate(",") + s").reduceLeft(_ or _)$wrapEnumType"
         )
       }
   }
@@ -44,6 +41,7 @@ object CirceUtils {
     implicit meta: GeneratorMeta
   ): Either[String, (String, String)] = {
     val postfix = if (leaf.isCaseObject) ".type" else ""
+    val wrapEnumType = if (parent.kind.exists(k => useOpenEnum(k, struc = None))) ".map(iozhik.OpenEnum.Known(_))" else ""
     leaf
       .kind
       .map(_.name)
@@ -52,7 +50,7 @@ object CirceUtils {
         if (leaf.embeds.isEmpty) {
           (
             s"case $typeTag: $kindName$postfix => $typeTag.asJson",
-            "case \"" + typeTag + "\"" + s" => Decoder[$kindName$postfix]${asKnown(parent)}"
+            "case \"" + typeTag + "\"" + s" => Decoder[$kindName$postfix]$wrapEnumType"
           )
         } else {
           val (enc, dec) = genEmbedsCodecs(parent, typet, leaf, kindName, typeTag, postfix)

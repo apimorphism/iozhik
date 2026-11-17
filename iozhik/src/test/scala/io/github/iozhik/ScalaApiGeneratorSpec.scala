@@ -609,28 +609,26 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
 
   "An open family" must "be wrapped in a received type and plain in a Method's arguments" in {
     val code = squashed(generateOpen(openDsl))
-    code should include("final case class Settings(mode: iozhik.OpenUnion[Mode], level: iozhik.OpenEnum[Level])")
+    code should include("final case class Settings(mode: iozhik.OpenEnum[Mode], level: iozhik.OpenEnum[Level])")
     code should include("final case class SetModeReq(mode: Mode, level: Level)")
   }
 
-  "The decoder of an open union" must "fail on a missing tag or a malformed known variant, and keep the JSON of an unknown one" in {
+  "The decoder of an open family with a type tag" must "fail on a missing tag or a malformed known variant, and keep the JSON of an unknown one" in {
     val code = squashed(generateOpen(openDsl))
     // a missing tag, or one that isn't a string, fails here
-    code should include("""modeDecoder: Decoder[iozhik.OpenUnion[Mode]] = for { fType <- Decoder[String].prepare(_.downField("type"))""")
+    code should include("""modeDecoder: Decoder[iozhik.OpenEnum[Mode]] = for { fType <- Decoder[String].prepare(_.downField("type"))""")
     // a known tag goes to its variant's decoder with no fallback, so a malformed variant is a failure, not an Unknown
-    code should include("""case "on" => Decoder[ModeOn].map(iozhik.OpenUnion.Known(_))""")
-    code should include("""case "off" => Decoder[ModeOff.type].map(iozhik.OpenUnion.Known(_))""")
-    code should include("case unknown => Decoder.instance[iozhik.OpenUnion[Mode]](c => Right(iozhik.OpenUnion.Unknown(unknown, c.value)))")
+    code should include("""case "on" => Decoder[ModeOn].map(iozhik.OpenEnum.Known(_))""")
+    code should include("""case "off" => Decoder[ModeOff.type].map(iozhik.OpenEnum.Known(_))""")
+    code should include("case unknown => Decoder.instance[iozhik.OpenEnum[Mode]](c => Right(iozhik.OpenEnum.Unknown(unknown)(c.value)))")
   }
 
-  "The codecs of an open enum" must "read a string only, keep one they don't know, and write it back" in {
+  "The decoder of an open enum of strings" must "read a string only, and keep one it doesn't know as JSON" in {
     val code = squashed(generateOpen(openDsl))
     // a value that isn't a string fails here
     code should include("levelDecoder: Decoder[iozhik.OpenEnum[Level]] = Decoder[String].map {")
     code should include("""case "low" => iozhik.OpenEnum.Known(LevelLow)""")
-    code should include("case s => iozhik.OpenEnum.Unknown(s)")
-    code should include("levelOpenEncoder: Encoder[iozhik.OpenEnum[Level]] = {")
-    code should include("case iozhik.OpenEnum.Unknown(s) => Json.fromString(s)")
+    code should include("case s => iozhik.OpenEnum.Unknown(s)(Json.fromString(s))")
     // what a bot sends is the plain enum
     code should include("levelEncoder: Encoder[Level] = {")
   }
@@ -645,10 +643,9 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     code should include("final case class Settings(mode: Mode, level: Level)")
     code should include("""case unknown => throw iozhik.DecodingError(s"Unknown type for Mode: $unknown")""")
     code should not include "iozhik.OpenEnum["
-    code should not include "iozhik.OpenUnion["
   }
 
-  "The wrappers" must "be plain case classes: OpenEnum without circe, OpenUnion writing an Unknown back as its JSON" in {
+  "The wrapper" must "write an Unknown back as its JSON, and lift a plain value only" in {
     val result = for {
       space <- Parser.Grammar.parse(openDsl)
       model <- Generator.Model.translate(space)
@@ -657,16 +654,14 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     val files = result.fold(err => fail(s"Generation failed: $err"), identity)
     val openEnum = files("OpenEnum.scala")
     openEnum should include("final case class Known[T](value: T) extends OpenEnum[T]")
-    openEnum should include("final case class Unknown(value: String) extends OpenEnum[Nothing]")
-    openEnum should not include "circe"
-    openEnum should not include "implicit"
-    val openUnion = files("OpenUnion.scala")
-    openUnion should include("final case class Unknown(tag: String, raw: Json) extends OpenUnion[Nothing]")
-    openUnion should include("case Unknown(_, raw) => raw")
+    // raw is outside the pattern, so a match on master's Unknown(value) still compiles
+    openEnum should include("final case class Unknown(value: String)(val raw: Json) extends OpenEnum[Nothing]")
+    openEnum should include("case unknown: Unknown => unknown.raw")
     // the only conversion goes from a plain value to a Known
-    "implicit def".r.findAllIn(openUnion).size shouldBe 2
-    openUnion should include("implicit def lift[T](value: T): OpenUnion[T] = Known(value)")
-    openUnion should include("implicit def encoder[T: Encoder]: Encoder[OpenUnion[T]]")
+    "implicit def".r.findAllIn(openEnum).size shouldBe 2
+    openEnum should include("implicit def lift[T](value: T): OpenEnum[T] = Known(value)")
+    openEnum should include("implicit def encoder[T: Encoder]: Encoder[OpenEnum[T]]")
+    files.keySet should not contain "OpenUnion.scala"
   }
 
   "An open family without a type tag that has items other than strings" must "fail the generation" in {
@@ -689,10 +684,10 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         |}
       """.stripMargin,
       open
-    ) should include("Target: an open family without a type tag is an OpenEnum and must have only string items")
+    ) should include("Target: an open family without a type tag must have only string items")
   }
 
-  "A family of the real Bot API" must "be an OpenUnion where received and plain where sent" in {
+  "A family of the real Bot API" must "be an OpenEnum where received and plain where sent" in {
     val apiFile = List("iozhtest/src/main/resources/tgbot.api", "../iozhtest/src/main/resources/tgbot.api")
       .map(new java.io.File(_))
       .find(_.exists)
@@ -707,12 +702,12 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     val files = result.fold(err => fail(s"Generation failed: $err"), identity)
     files("SendMessageReq.scala") should include("parseMode: Option[ParseMode]")
     files("SendMessageReq.scala") should include("entities: List[MessageEntity]")
-    files("MaybeInaccessibleMessage.scala") should include("entities: List[iozhik.OpenUnion[MessageEntity]]")
+    files("MaybeInaccessibleMessage.scala") should include("entities: List[iozhik.OpenEnum[MessageEntity]]")
     // told apart by date, not by a type tag, so it is not open
     files("CallbackQuery.scala") should include("message: Option[MaybeInaccessibleMessage]")
   }
 
-  "A Method's arguments" must "be generated plain, unlike the fields of a decodable type" in {
+  "A Method's arguments" must "not be wrapped in OpenEnum, unlike the fields of a decodable type" in {
     val openEnums = open.copy(generateGens = true)
     val files = generateGens(modeDsl(inClient = false), openEnums)
     files("GenTypes.scala") should include("""openUnion(GenMode.gen, "type").map { a0 => Settings(mode = a0) }""")
