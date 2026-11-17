@@ -48,7 +48,7 @@ object ArbitraryGenerator {
     jsonFields: List[JsonFieldGen] = Nil,
   )
 
-  // The same field-type decisions as genFieldType: which enums are wrapped in OpenEnum depends on the enclosing struct
+  // The same field-type decisions as genFieldType: which enums are wrapped in an OpenEnum or an OpenUnion depends on the enclosing struct
   // and the codomain set, so this goes through useOpenEnum rather than working it out again. A composite whose type
   // isn't in `shrinking` gets noShrink, so it gets no shrink entry.
   private def genFor(k: Kind, enclosing: Option[Kind], depths: Map[String, Int], shrinking: Set[String])(implicit meta: GeneratorMeta): Either[String, FieldGen] =
@@ -280,7 +280,7 @@ object ArbitraryGenerator {
           for {
             struc <- d.dom.left.map(k => s"no generator for the arguments of $name: it takes a $k, not fields")
             params = constructorFields(struc)
-            // the Req encloses its params: a type that is never decoded, so, as in the factory, no param is an OpenEnum
+            // the Req encloses its params: a type that is never decoded, so, as in the factory, no param is an OpenEnum or an OpenUnion
             req <- genCaseClass(reqName, params, Some(Kind(reqName)), decodable = false, depths, shrinking, scalaType = Some(q + reqName))
           } yield {
             // the Req is a case object when it has no params, as genCaseClass decides
