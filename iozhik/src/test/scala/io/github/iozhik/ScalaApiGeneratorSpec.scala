@@ -620,7 +620,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     // a known tag goes to its variant's decoder with no fallback, so a malformed variant is a failure, not an Unknown
     code should include("""case "on" => Decoder[ModeOn].map(iozhik.OpenEnum.Known(_))""")
     code should include("""case "off" => Decoder[ModeOff.type].map(iozhik.OpenEnum.Known(_))""")
-    code should include("case unknown => Decoder.instance[iozhik.OpenEnum[Mode]](c => Right(iozhik.OpenEnum.Unknown(unknown)(c.value)))")
+    code should include("case unknown => Decoder.instance[iozhik.OpenEnum[Mode]](c => Right(iozhik.OpenEnum.Unknown(unknown, c.value)))")
   }
 
   "The decoder of an open enum of strings" must "read a string only, and keep one it doesn't know as JSON" in {
@@ -628,7 +628,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     // a value that isn't a string fails here
     code should include("levelDecoder: Decoder[iozhik.OpenEnum[Level]] = Decoder[String].map {")
     code should include("""case "low" => iozhik.OpenEnum.Known(LevelLow)""")
-    code should include("case s => iozhik.OpenEnum.Unknown(s)(Json.fromString(s))")
+    code should include("case s => iozhik.OpenEnum.Unknown(s, Json.fromString(s))")
     // what a bot sends is the plain enum
     code should include("levelEncoder: Encoder[Level] = {")
   }
@@ -654,9 +654,8 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     val files = result.fold(err => fail(s"Generation failed: $err"), identity)
     val openEnum = files("OpenEnum.scala")
     openEnum should include("final case class Known[T](value: T) extends OpenEnum[T]")
-    // raw is outside the pattern, so a match on master's Unknown(value) still compiles
-    openEnum should include("final case class Unknown(value: String)(val raw: Json) extends OpenEnum[Nothing]")
-    openEnum should include("case unknown: Unknown => unknown.raw")
+    openEnum should include("final case class Unknown(value: String, raw: Json) extends OpenEnum[Nothing]")
+    openEnum should include("case Unknown(_, raw) => raw")
     // the only conversion goes from a plain value to a Known
     "implicit def".r.findAllIn(openEnum).size shouldBe 2
     openEnum should include("implicit def lift[T](value: T): OpenEnum[T] = Known(value)")

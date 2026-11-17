@@ -63,7 +63,7 @@ object GenPrims {
   def openEnum[A](g: => Gen[A]): Gen[iozhik.OpenEnum[A]] =
     Gen.frequency(
       9 -> Gen.lzy(g).map(iozhik.OpenEnum.Known(_)),
-      1 -> genUnknownTag.map(s => iozhik.OpenEnum.Unknown(s)(Json.fromString(s)))
+      1 -> genUnknownTag.map(s => iozhik.OpenEnum.Unknown(s, Json.fromString(s)))
     )
 
   private val genUnknownTag: Gen[String] = Gen.listOfN(6, Gen.alphaLowerChar).map("future_" + _.mkString)
@@ -72,7 +72,8 @@ object GenPrims {
     for {
       unknownTag <- genUnknownTag
       fieldValue <- genString
-    } yield iozhik.OpenEnum.Unknown(unknownTag)(
+    } yield iozhik.OpenEnum.Unknown(
+      unknownTag,
       Json.obj(tagField -> Json.fromString(unknownTag), "future_field" -> Json.fromString(fieldValue))
     )
 

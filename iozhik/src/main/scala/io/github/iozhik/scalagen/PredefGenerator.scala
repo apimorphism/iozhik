@@ -31,15 +31,9 @@ object PredefGenerator {
 
           /**
             * A value this version doesn't know: the enum's string or the object's type tag, and the JSON it was decoded
-            * from, which it encodes back to. `raw` is outside the pattern, so a match reads `case Unknown(value)`.
+            * from, which it encodes back to.
             */
-          final case class Unknown(value: String)(val raw: Json) extends OpenEnum[Nothing] {
-            override def equals(that: Any): Boolean = that match {
-              case u: Unknown => u.value == value && u.raw == raw
-              case _ => false
-            }
-            override def hashCode: Int = (value, raw).##
-          }
+          final case class Unknown(value: String, raw: Json) extends OpenEnum[Nothing]
 
           def apply[T](value: T): OpenEnum[T] = Known(value)
 
@@ -51,7 +45,7 @@ object PredefGenerator {
 
           implicit def encoder[T: Encoder]: Encoder[OpenEnum[T]] = {
             case Known(value) => Encoder[T].apply(value)
-            case unknown: Unknown => unknown.raw
+            case Unknown(_, raw) => raw
           }
         }""",
         name = "OpenEnum.scala",
