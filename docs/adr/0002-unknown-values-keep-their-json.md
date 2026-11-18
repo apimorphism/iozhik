@@ -2,7 +2,7 @@
 
 An unknown value of a tagged-object family holds the JSON Telegram sent along with its tag (`OpenEnum.Unknown(tag, raw)`) and encodes back to it. It used to keep only the tag and encode that as a bare string, which a rich text reads as plain text (apimorphism/telegramium#723). telegramium-core is generated API types that mirror the wire, so decoding and then encoding must give back what Telegram sent. Policy about content a bot can't read belongs in telegramium-high, if anywhere.
 
-An unknown value of a string enum holds its string, and the same string as JSON: the string is the whole wire value. [ADR-0003](0003-one-open-wrapper-for-enums-and-unions.md) records why both kinds share one type.
+An unknown value of a string enum holds its string, and the same string as JSON: the string is the whole wire value. [ADR-0003](0003-one-openenum-for-strings-and-objects.md) records why both kinds share one type.
 
 ## Considered Options
 

@@ -67,8 +67,8 @@ object ArbitraryGenerator {
             val shrinks = shrinking(n)
             if (s.shape.isEnum && useOpenEnum(k, enclosing)) {
               val gen = openKind(s) match {
-                case OpenKind.Enum     => s"openEnum($obj.gen)"
-                case OpenKind.Union(t) => s"openUnion($obj.gen, \"$t\")"
+                case OpenKind.Strings   => s"openStrings($obj.gen)"
+                case OpenKind.Tagged(t) => s"openTagged($obj.gen, \"$t\")"
               }
               Right(FieldGen(gen, if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
             } else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
@@ -148,8 +148,8 @@ object ArbitraryGenerator {
       scalaType = scalaType,
       obj = body,
       roundTrip = Option.when(decodable)(open match {
-        case Some(OpenKind.Enum)     => s"""RoundTripCase.openEnum[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
-        case Some(OpenKind.Union(t)) => s"""RoundTripCase.openUnion[$scalaType]("$typeName", $obj.gen, $obj.shrink, "$t")"""
+        case Some(OpenKind.Strings)   => s"""RoundTripCase.openStrings[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
+        case Some(OpenKind.Tagged(t)) => s"""RoundTripCase.openTagged[$scalaType]("$typeName", $obj.gen, $obj.shrink, "$t")"""
         case None                    => s"""RoundTripCase[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
       }),
       shrinks = shrinkBody != NoShrink,

@@ -43,12 +43,12 @@ object ScalaApiGeneratorUtils {
   sealed trait OpenKind
   object OpenKind {
     // A family of objects told apart by a type tag, held in `tagField`.
-    final case class Union(tagField: String) extends OpenKind
+    final case class Tagged(tagField: String) extends OpenKind
     // An enum of strings.
-    case object Enum extends OpenKind
+    case object Strings extends OpenKind
   }
 
-  def openKind(e: Struc): OpenKind = e.typet().fold[OpenKind](OpenKind.Enum)(t => OpenKind.Union(t.name))
+  def openKind(e: Struc): OpenKind = e.typet().fold[OpenKind](OpenKind.Strings)(t => OpenKind.Tagged(t.name))
 
   def genFieldType(x: Kind, struc: Option[Kind], wrapEnumType: String => String = wrapWithOpenEnum)(implicit meta: GeneratorMeta): Either[String, String] =
     for {

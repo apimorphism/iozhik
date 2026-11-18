@@ -730,7 +730,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     } yield codes.map(c => c.name -> squashed(c.body)).toMap
     val files = result.fold(err => fail(s"Generation failed: $err"), identity)
     files("Echo.scala") should include("final case class Echo(modes: List[iozhik.OpenEnum[Mode]] = List.empty, other: List[Mode] = List.empty)")
-    files("GenTypes.scala") should include("""list(openUnion(GenMode.gen, "type"))""")
+    files("GenTypes.scala") should include("""list(openTagged(GenMode.gen, "type"))""")
   }
 
   "A field the config includes that the API doesn't have" must "fail the generation" in {
@@ -741,7 +741,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
   "A Method's arguments" must "not be wrapped in OpenEnum, unlike the fields of a decodable type" in {
     val openEnums = open.copy(generateGens = true)
     val files = generateGens(modeDsl(inClient = false), openEnums)
-    files("GenTypes.scala") should include("""openUnion(GenMode.gen, "type").map { a0 => Settings(mode = a0) }""")
+    files("GenTypes.scala") should include("""openTagged(GenMode.gen, "type").map { a0 => Settings(mode = a0) }""")
     files("MethodCases.scala") should include("GenMode.gen.map { a0 => SetModeReq(mode = a0) }")
   }
 
