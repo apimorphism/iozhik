@@ -561,10 +561,187 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     """.stripMargin
   }
 
+  private val open = cfg.copy(openEnum = OpenEnumConfig(enabled = true, excludeTypes = List.empty))
+
+  private def generateOpen(dsl: String): String = {
+    val result = for {
+      space <- Parser.Grammar.parse(dsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, open)
+    } yield codes.map(_.body).mkString("\n")
+    result.fold(err => fail(s"Generation failed: $err"), identity)
+  }
+
+  // a string enum and a tagged-object family, each both received (in Settings) and sent (in setMode)
+  private val openDsl =
+    """
+      |namespace telegramium {
+      |  namespace bots(snake circe) {
+      |    enum Level {
+      |      item LevelLow  = "low"
+      |      item LevelHigh = "high"
+      |    }
+      |    enum Mode {
+      |      ModeOn {
+      |        type : "on:0"
+      |        since : Int
+      |      }
+      |      ModeOff {
+      |        type : "off:1"
+      |      }
+      |    }
+      |    Settings {
+      |      mode: Mode
+      |      level: Level
+      |    }
+      |    Methods (methodsFactory) {
+      |      def setMode {
+      |        mode: Mode
+      |        level: Level
+      |      } => Method[Settings]
+      |    }
+      |  }
+      |}
+    """.stripMargin
+
+  // whitespace aside: the generated code isn't formatted here
+  private def squashed(s: String): String = s.replaceAll("\\s+", " ")
+
+  "An open family" must "be wrapped in a received type and plain in a Method's arguments" in {
+    val code = squashed(generateOpen(openDsl))
+    code should include("final case class Settings(mode: iozhik.OpenEnum[Mode], level: iozhik.OpenEnum[Level])")
+    code should include("final case class SetModeReq(mode: Mode, level: Level)")
+  }
+
+  "The decoder of an open family with a type tag" must "fail on a missing tag or a malformed known variant, and keep the JSON of an unknown one" in {
+    val code = squashed(generateOpen(openDsl))
+    // a missing tag, or one that isn't a string, fails here
+    code should include("""modeDecoder: Decoder[iozhik.OpenEnum[Mode]] = for { fType <- Decoder[String].prepare(_.downField("type"))""")
+    // a known tag goes to its variant's decoder with no fallback, so a malformed variant is a failure, not an Unknown
+    code should include("""case "on" => Decoder[ModeOn].map(iozhik.OpenEnum.Known(_))""")
+    code should include("""case "off" => Decoder[ModeOff.type].map(iozhik.OpenEnum.Known(_))""")
+    code should include("case unknown => Decoder.instance[iozhik.OpenEnum[Mode]](c => Right(iozhik.OpenEnum.Unknown(unknown, c.value)))")
+  }
+
+  "The decoder of an open enum of strings" must "read a string only, and keep one it doesn't know as JSON" in {
+    val code = squashed(generateOpen(openDsl))
+    // a value that isn't a string fails here
+    code should include("levelDecoder: Decoder[iozhik.OpenEnum[Level]] = Decoder[String].map {")
+    code should include("""case "low" => iozhik.OpenEnum.Known(LevelLow)""")
+    code should include("case s => iozhik.OpenEnum.Unknown(s, Json.fromString(s))")
+    // what a bot sends is the plain enum
+    code should include("levelEncoder: Encoder[Level] = {")
+  }
+
+  "A family that isn't open" must "fail to decode an unknown tag, and get no OpenEnum codecs" in {
+    val result = for {
+      space <- Parser.Grammar.parse(openDsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, cfg)
+    } yield squashed(codes.map(_.body).mkString("\n"))
+    val code = result.fold(err => fail(s"Generation failed: $err"), identity)
+    code should include("final case class Settings(mode: Mode, level: Level)")
+    code should include("""case unknown => throw iozhik.DecodingError(s"Unknown type for Mode: $unknown")""")
+    code should not include "iozhik.OpenEnum["
+  }
+
+  "An open family without a type tag that has items other than strings" must "fail the generation" in {
+    gensError(
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum Target {
+        |      item TargetAll = "all"
+        |      wrap TargetId (id) = Long
+        |    }
+        |    Settings {
+        |      target: Target
+        |    }
+        |    Methods (methodsFactory) {
+        |      def getSettings {
+        |      } => Method[Settings]
+        |    }
+        |  }
+        |}
+      """.stripMargin,
+      open
+    ) should include("Target: an open family without a type tag must have only string items")
+  }
+
+  "A family of the real Bot API" must "be an OpenEnum where received and plain where sent" in {
+    val apiFile = List("iozhtest/src/main/resources/tgbot.api", "../iozhtest/src/main/resources/tgbot.api")
+      .map(new java.io.File(_))
+      .find(_.exists)
+      .getOrElse(fail("tgbot.api not found"))
+    val source = scala.io.Source.fromFile(apiFile, "UTF-8")
+    val dsl    = try source.mkString finally source.close()
+    val result = for {
+      space <- Parser.Grammar.parse(dsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(
+        model,
+        open.copy(openEnum = open.openEnum.copy(
+          excludeTypes = List("MaybeInaccessibleMessage", "IFile"),
+          includeFields = List("ReplyParameters.quoteRichTexts", "ReplyParameters.quoteEntities")
+        ))
+      )
+    } yield codes.map(c => c.name -> squashed(c.body)).toMap
+    val files = result.fold(err => fail(s"Generation failed: $err"), identity)
+    files("SendMessageReq.scala") should include("parseMode: Option[ParseMode]")
+    files("SendMessageReq.scala") should include("entities: List[MessageEntity]")
+    // a quote gives back what it quotes, Unknown values included
+    files("ReplyParameters.scala") should include("quoteRichTexts: List[iozhik.OpenEnum[RichText]]")
+    files("ReplyParameters.scala") should include("quoteEntities: List[iozhik.OpenEnum[MessageEntity]]")
+    files("MaybeInaccessibleMessage.scala") should include("entities: List[iozhik.OpenEnum[MessageEntity]]")
+    // told apart by date, not by a type tag, so it is not open
+    files("CallbackQuery.scala") should include("message: Option[MaybeInaccessibleMessage]")
+  }
+
+  "A field of a sent type that the config includes" must "be wrapped as if received, in its generator too" in {
+    val dsl =
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum Mode {
+        |      ModeOn {
+        |        type : "on:0"
+        |      }
+        |    }
+        |    Settings {
+        |      mode: Mode
+        |    }
+        |    Echo {
+        |      modes: List[Mode]
+        |      other: List[Mode]
+        |    }
+        |    Methods (methodsFactory) {
+        |      def echo {
+        |        echo: Echo
+        |      } => Method[Settings]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    val config = open.copy(generateGens = true, openEnum = open.openEnum.copy(includeFields = List("Echo.modes")))
+    val result = for {
+      space <- Parser.Grammar.parse(dsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, config)
+    } yield codes.map(c => c.name -> squashed(c.body)).toMap
+    val files = result.fold(err => fail(s"Generation failed: $err"), identity)
+    files("Echo.scala") should include("final case class Echo(modes: List[iozhik.OpenEnum[Mode]] = List.empty, other: List[Mode] = List.empty)")
+    files("GenTypes.scala") should include("""list(openTagged(GenMode.gen, "type"))""")
+  }
+
+  "A field the config includes that the API doesn't have" must "fail the generation" in {
+    gensError(modeDsl(inClient = false), open.copy(openEnum = open.openEnum.copy(includeFields = List("Settings.mode", "Settings.gone", "Gone.mode")))) should
+      include("open-enum.include-fields names fields the API doesn't have: Settings.gone, Gone.mode")
+  }
+
   "A Method's arguments" must "not be wrapped in OpenEnum, unlike the fields of a decodable type" in {
-    val openEnums = cfg.copy(generateGens = true, openEnum = OpenEnumConfig(enabled = true, excludeTypes = List.empty))
+    val openEnums = open.copy(generateGens = true)
     val files = generateGens(modeDsl(inClient = false), openEnums)
-    files("GenTypes.scala") should include("openEnum(GenMode.gen).map { a0 => Settings(mode = a0) }")
+    files("GenTypes.scala") should include("""openTagged(GenMode.gen, "type").map { a0 => Settings(mode = a0) }""")
     files("MethodCases.scala") should include("GenMode.gen.map { a0 => SetModeReq(mode = a0) }")
   }
 

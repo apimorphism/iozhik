@@ -65,9 +65,13 @@ object ArbitraryGenerator {
           case Some(s: Struc) =>
             val obj = objName(n)
             val shrinks = shrinking(n)
-            if (s.shape.isEnum && useOpenEnum(k, enclosing))
-              Right(FieldGen(s"openEnum($obj.gen)", if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
-            else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
+            if (s.shape.isEnum && useOpenEnum(k, enclosing)) {
+              val gen = openKind(s) match {
+                case OpenKind.Strings   => s"openStrings($obj.gen)"
+                case OpenKind.Tagged(t) => s"openTagged($obj.gen, \"$t\")"
+              }
+              Right(FieldGen(gen, if (shrinks) s"shrinkOpenEnum($obj.shrink)" else NoShrink, primitive = false, Set(n)))
+            } else Right(FieldGen(s"$obj.gen", if (shrinks) s"$obj.shrink" else NoShrink, primitive = false, Set(n)))
           case other => Left(s"no generator for kind $n (resolved: $other)")
         }
     }
@@ -121,9 +125,12 @@ object ArbitraryGenerator {
     scalaType: String,
     genBody: String,
     shrinkBody: String,
-    roundTrip: Option[Boolean],
+    // whether the type has a decoder as well as an encoder, so it goes into the round-trip list
+    decodable: Boolean,
     refs: Set[String],
     meta: GeneratorMeta,
+    // how the type is wrapped when decoded, if it is
+    open: Option[OpenKind] = None,
   ): TypeGen = {
     val obj = objName(typeName)
     val custom = meta.cfg.customGens.get(typeName)
@@ -140,10 +147,11 @@ object ArbitraryGenerator {
       typeName = typeName,
       scalaType = scalaType,
       obj = body,
-      roundTrip = roundTrip.map { isOpen =>
-        val ctor = if (isOpen) "RoundTripCase.open" else "RoundTripCase"
-        s"""$ctor[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
-      },
+      roundTrip = Option.when(decodable)(open match {
+        case Some(OpenKind.Strings)   => s"""RoundTripCase.openStrings[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
+        case Some(OpenKind.Tagged(t)) => s"""RoundTripCase.openTagged[$scalaType]("$typeName", $obj.gen, $obj.shrink, "$t")"""
+        case None                    => s"""RoundTripCase[$scalaType]("$typeName", $obj.gen, $obj.shrink)"""
+      }),
       shrinks = shrinkBody != NoShrink,
       refs = refs,
     )
@@ -153,7 +161,7 @@ object ArbitraryGenerator {
     typeName: String,
     fields: List[Field],
     enclosing: Option[Kind],
-    roundTrip: Option[Boolean],
+    decodable: Boolean,
     depths: Map[String, Int],
     shrinking: Set[String],
     // how the type is spelled where the generator is, when that's not its bare name
@@ -161,9 +169,9 @@ object ArbitraryGenerator {
   )(implicit meta: GeneratorMeta): Either[String, TypeGen] = {
     val tpe = scalaType.getOrElse(typeName)
     if (fields.isEmpty)
-      Right(emit(typeName, s"$tpe.type", s"Gen.const($tpe)", NoShrink, roundTrip, Set.empty, meta))
+      Right(emit(typeName, s"$tpe.type", s"Gen.const($tpe)", NoShrink, decodable, Set.empty, meta))
     else
-      fields.traverse(f => genFor(f.kind, enclosing, depths, shrinking).map(f -> _)).map { gens =>
+      fields.traverse(f => genFor(f.kind, enclosingFor(f, enclosing), depths, shrinking).map(f -> _)).map { gens =>
         // A flat zip of zips: Gen.zip takes up to 9. Not a for comprehension: a closure per field overflows the Scala 2
         // compiler's stack on the hundred-field types. Fields are passed by name, so the compiler checks the order.
         def group(nodes: List[(String, String)]): List[(String, String)] =
@@ -185,7 +193,7 @@ object ArbitraryGenerator {
         val shrink =
           if (shrinkers.isEmpty) NoShrink
           else s"shrinkFields[$tpe](x => List(${shrinkers.mkString(", ")}))"
-        emit(typeName, tpe, s"deeper($body)", shrink, roundTrip, gens.flatMap(_._2.refs).toSet, meta)
+        emit(typeName, tpe, s"deeper($body)", shrink, decodable, gens.flatMap(_._2.refs).toSet, meta)
           .copy(jsonFields = fields.map(f => JsonFieldGen(sanitize(f.name), jsonName(f), f.opts.contains("omitempty"))))
       }
   }
@@ -199,7 +207,7 @@ object ArbitraryGenerator {
     x.shape match {
       case Shape.Union(false, _) => Right(Nil)
       case u @ Shape.Union(true, _) =>
-        val isOpen = x.kind.exists(k => useOpenEnum(k, struc = None))
+        val open = Option.when(x.kind.exists(k => useOpenEnum(k, struc = None)))(openKind(x))
         for {
           name <- kind
           // an abstract variant gets no generator of its own, and Gen.oneOf needs at least one
@@ -216,11 +224,11 @@ object ArbitraryGenerator {
               val shrink =
                 if (g.shrink == NoShrink) NoShrink
                 else s"Shrink[$n](x => ${g.shrink}.shrink(x.${sanitize(w.fname)}).map($n(_)))"
-              emit(n, n, s"deeper(${g.gen}.map($n(_)))", shrink, Some(false), g.refs, meta)
+              emit(n, n, s"deeper(${g.gen}.map($n(_)))", shrink, decodable = true, g.refs, meta)
             }
           }
           enumStrs = u.enumstrs.map { e =>
-            emit(e.name.name, s"${e.name.name}.type", s"Gen.const(${e.name.name})", NoShrink, Some(false), Set.empty, meta)
+            emit(e.name.name, s"${e.name.name}.type", s"Gen.const(${e.name.name})", NoShrink, decodable = true, Set.empty, meta)
           }
           all = variants(x)
           gens = (vs: List[String]) => vs.map(objName(_) + ".gen").mkString(", ")
@@ -235,9 +243,9 @@ object ArbitraryGenerator {
             if (shrinkable.isEmpty) NoShrink
             else
               s"shrinkSum[$name](${shrinkable.map(v => s"variant(${objName(v)}.shrink)").mkString(", ")})"
-        } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, Option.when(decodable)(isOpen), all.toSet, meta)
+        } yield leaves ++ wrapps ++ enumStrs :+ emit(name, name, parentBody, parentShrink, decodable, all.toSet, meta, open)
       case Shape.Record =>
-        kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, Option.when(decodable)(false), depths, shrinking))
+        kind.flatMap(genCaseClass(_, constructorFields(x), x.kind, decodable, depths, shrinking))
           .map(List(_))
     }
   }
@@ -273,7 +281,7 @@ object ArbitraryGenerator {
             struc <- d.dom.left.map(k => s"no generator for the arguments of $name: it takes a $k, not fields")
             params = constructorFields(struc)
             // the Req encloses its params: a type that is never decoded, so, as in the factory, no param is an OpenEnum
-            req <- genCaseClass(reqName, params, Some(Kind(reqName)), None, depths, shrinking, scalaType = Some(q + reqName))
+            req <- genCaseClass(reqName, params, Some(Kind(reqName)), decodable = false, depths, shrinking, scalaType = Some(q + reqName))
           } yield {
             // the Req is a case object when it has no params, as genCaseClass decides
             val tpe = if (params.isEmpty) s"$q$reqName.type" else q + reqName
@@ -399,7 +407,7 @@ object ArbitraryGenerator {
     }.map(_.flatMap { case (pkgPath, types, factoryMethods) =>
       val pkg = pkgPath.mkString(".")
       List(
-        file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder}\nimport scala.reflect.ClassTag", prims),
+        file(pkg, "GenPrims.scala", "import org.scalacheck.{Gen, Shrink}\nimport io.circe.{Decoder, Encoder, Json}\nimport scala.reflect.ClassTag", prims),
         file(pkg, "GenTypes.scala", "import org.scalacheck.{Gen, Shrink}", types.map(_.obj).mkString("\n\n")),
         file(
           pkg,

@@ -42,7 +42,7 @@ class ScalaApiGeneratorV1 {
     implicit meta: GeneratorMeta
   ): Either[String, String] = {
     for {
-      kind <- genFieldType(x.kind, struc, wrapEnumType)
+      kind <- genFieldType(x.kind, enclosingFor(x, struc), wrapEnumType)
     } yield {
       val d = delimiter
       val docsBody = if (withDoc) x.doc.split("\n").toList.map(_.trim).intercalate("\n* ") else ""
@@ -151,7 +151,7 @@ class ScalaApiGeneratorV1 {
             val tag = "\"" + typet.name + "\""
             val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
             val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
-            val unknownCase = if (useOpenEnums) s"Decoder.const(iozhik.OpenEnum.Unknown[$name](unknown))" 
+            val unknownCase = if (useOpenEnums) s"Decoder.instance[$wrappedName](c => Right(iozhik.OpenEnum.Unknown(unknown, c.value)))" 
               else s"""throw iozhik.DecodingError(s"Unknown type for $name: $$unknown")"""
             val generatedEncoder = s"""
               |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
@@ -217,24 +217,33 @@ class ScalaApiGeneratorV1 {
                   )
                 }
               }
+            // an open family without a type tag tells its values apart by their string, so it can only have strings
+            _ <- Either.cond(
+              !useOpenEnums || (union.wrapps.isEmpty && union.leaves.isEmpty), (),
+              s"$kind: an open family without a type tag must have only string items"
+            )
           } yield {
             val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
-            val wrappedName = if (useOpenEnums) wrapWithOpenEnum(name) else name
-            val wrapEnumType = if (useOpenEnums) ".map(iozhik.OpenEnum.Known(_)).or(Decoder[String].map(iozhik.OpenEnum.Unknown(_)))" else ""
             val encoder = s"""
               |implicit lazy val ${name.toLowerCase}Encoder: Encoder[$name] = {
               |  ${cases.map(_._1).intercalate(d)}
               |}
             """.stripMargin
-            val decoder = if (isCodKind(struc)) {
-              meta.cfg.customDecoders.get(kind).getOrElse(s"""
-                |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$wrappedName] = {
+            val generatedDecoder =
+              if (useOpenEnums) s"""
+                |implicit lazy val ${name.toLowerCase}Decoder: Decoder[iozhik.OpenEnum[$name]] = Decoder[String].map {
+                |  ${union.enumstrs.map(e => s"case \"${e.target}\" => iozhik.OpenEnum.Known(${e.name.name})").intercalate(d)}
+                |  case s => iozhik.OpenEnum.Unknown(s, Json.fromString(s))
+                |}
+              """.stripMargin
+              else s"""
+                |implicit lazy val ${name.toLowerCase}Decoder: Decoder[$name] = {
                 |  List[Decoder[$name]](
                 |    ${cases.map(_._2).intercalate(",")}
-                |  ).reduceLeft(_ or _)$wrapEnumType
+                |  ).reduceLeft(_ or _)
                 |}
-              """.stripMargin)
-            } else ""  
+              """.stripMargin
+            val decoder = if (isCodKind(struc)) meta.cfg.customDecoders.get(kind).getOrElse(generatedDecoder) else ""
             val body = encoder + d + decoder
             List(Code(
               body = body,
@@ -262,7 +271,7 @@ class ScalaApiGeneratorV1 {
             .find(y => y.opts.contains("omitempty") && y.kind.name != "List")
             .map(y => s"$kind.${y.name}: (omitempty) is only supported on List fields")
             .toLeft(())
-          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, struc.kind))
+          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, enclosingFor(y, struc.kind)))
           fields = struc.allFields.map(y => y.name).zip(fieldKinds)
         } yield {
           val postfix = if (!struc.isCaseObject) "" else ".type"
@@ -474,7 +483,7 @@ class ScalaApiGeneratorV1 {
           .map(path => s"import $path.uPickleImplicits._")
         for {
           kind <- struc.kind.map(_.name).toRight("No kind name")
-          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, struc.kind))
+          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, enclosingFor(y, struc.kind)))
           fields = struc.allFields.map(y => y.name).zip(fieldKinds)
         } yield {
           val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
@@ -1221,9 +1230,20 @@ class ScalaApiGeneratorV1 {
     }
   }
 
+  // Every "Type.field" of the API, to check the ones the config names: a name the API no longer has would otherwise
+  // be ignored without a word.
+  private def fieldNames(x: Space): Set[String] = {
+    def struc(s: Struc): List[String] =
+      s.kind.toList.flatMap(k => s.allFields.map(f => k.name + "." + f.name)) ++
+        s.variants.collect { case v: Struc => v }.flatMap(struc)
+    (x.strucs.flatMap(struc) ++ x.spaces.flatMap(fieldNames)).toSet
+  }
+
   def gen(x: Generator.Model.Space, cfg: GeneratorConfig): Either[String, List[Code]] = {
     val d = delimiter
-    genSpace(x, cfg, x.symbol).map{ list =>
+    val missing = cfg.openEnum.includeFields.filterNot(fieldNames(x))
+    Either.cond(missing.isEmpty, (), s"open-enum.include-fields names fields the API doesn't have: ${missing.mkString(", ")}")
+      .flatMap(_ => genSpace(x, cfg, x.symbol)).map{ list =>
       val commons = list.filter(_.name.isEmpty)
         .groupBy(_.path)
         .filter(_._2.nonEmpty)

@@ -39,6 +39,17 @@ object ScalaApiGeneratorUtils {
 
   def wrapWithOpenEnum(tpe: String): String = "iozhik.OpenEnum[" + tpe + "]"
 
+  // What an open family's Unknown value is decoded from.
+  sealed trait OpenKind
+  object OpenKind {
+    // A family of objects told apart by a type tag, held in `tagField`.
+    final case class Tagged(tagField: String) extends OpenKind
+    // An enum of strings.
+    case object Strings extends OpenKind
+  }
+
+  def openKind(e: Struc): OpenKind = e.typet().fold[OpenKind](OpenKind.Strings)(t => OpenKind.Tagged(t.name))
+
   def genFieldType(x: Kind, struc: Option[Kind], wrapEnumType: String => String = wrapWithOpenEnum)(implicit meta: GeneratorMeta): Either[String, String] =
     for {
       items <- x.params.map(p => genFieldType(p, struc, wrapEnumType)).sequence
@@ -76,6 +87,11 @@ object ScalaApiGeneratorUtils {
     meta.cfg.openEnum.enabled && 
       !meta.cfg.openEnum.excludeTypes.contains(k.name) && 
       struc.forall(meta.codKinds.contains) && meta.codKinds.contains(k)
+
+  // The struct a field's type is decided in: none for a field the config wraps although its struct is only sent, so
+  // the field is wrapped as if received.
+  def enclosingFor(field: Field, struc: Option[Kind])(implicit meta: GeneratorMeta): Option[Kind] =
+    if (struc.exists(s => meta.cfg.openEnum.includeFields.contains(s.name + "." + field.name))) None else struc
 
   def isCodKind(struc: Struc)(implicit meta: GeneratorMeta): Boolean = struc.kind.exists(meta.codKinds.contains)
 
