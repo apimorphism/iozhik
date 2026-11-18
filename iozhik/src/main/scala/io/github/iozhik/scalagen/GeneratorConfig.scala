@@ -9,7 +9,8 @@ object GeneratorConfig {
   implicit val generatorConfigReader: ConfigReader[GeneratorConfig] = deriveReader
 }
 
-final case class OpenEnumConfig(enabled: Boolean, excludeTypes: List[String])
+// includeFields: fields of a type that is only sent, as "Type.field", that are wrapped as if received
+final case class OpenEnumConfig(enabled: Boolean, excludeTypes: List[String], includeFields: List[String] = List.empty)
 
 object OpenEnumConfig {
   implicit val openEnumConfigReader: ConfigReader[OpenEnumConfig] = deriveReader

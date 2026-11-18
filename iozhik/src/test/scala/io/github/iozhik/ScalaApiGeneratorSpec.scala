@@ -696,14 +696,59 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     val result = for {
       space <- Parser.Grammar.parse(dsl)
       model <- Generator.Model.translate(space)
-      codes <- new ScalaApiGeneratorV1().gen(model, open.copy(openEnum = open.openEnum.copy(excludeTypes = List("MaybeInaccessibleMessage", "IFile"))))
+      codes <- new ScalaApiGeneratorV1().gen(
+        model,
+        open.copy(openEnum = open.openEnum.copy(
+          excludeTypes = List("MaybeInaccessibleMessage", "IFile"),
+          includeFields = List("ReplyParameters.quoteRichTexts")
+        ))
+      )
     } yield codes.map(c => c.name -> squashed(c.body)).toMap
     val files = result.fold(err => fail(s"Generation failed: $err"), identity)
     files("SendMessageReq.scala") should include("parseMode: Option[ParseMode]")
     files("SendMessageReq.scala") should include("entities: List[MessageEntity]")
+    // a quote gives back what it quotes, Unknown values included
+    files("ReplyParameters.scala") should include("quoteRichTexts: List[iozhik.OpenEnum[RichText]]")
+    files("ReplyParameters.scala") should include("quoteEntities: List[MessageEntity]")
     files("MaybeInaccessibleMessage.scala") should include("entities: List[iozhik.OpenEnum[MessageEntity]]")
     // told apart by date, not by a type tag, so it is not open
     files("CallbackQuery.scala") should include("message: Option[MaybeInaccessibleMessage]")
+  }
+
+  "A field of a sent type that the config includes" must "be wrapped as if received, in its generator too" in {
+    val dsl =
+      """
+        |namespace telegramium {
+        |  namespace bots(snake circe) {
+        |    enum Mode {
+        |      ModeOn {
+        |        type : "on:0"
+        |      }
+        |    }
+        |    Settings {
+        |      mode: Mode
+        |    }
+        |    Echo {
+        |      modes: List[Mode]
+        |      other: List[Mode]
+        |    }
+        |    Methods (methodsFactory) {
+        |      def echo {
+        |        echo: Echo
+        |      } => Method[Settings]
+        |    }
+        |  }
+        |}
+      """.stripMargin
+    val config = open.copy(generateGens = true, openEnum = open.openEnum.copy(includeFields = List("Echo.modes")))
+    val result = for {
+      space <- Parser.Grammar.parse(dsl)
+      model <- Generator.Model.translate(space)
+      codes <- new ScalaApiGeneratorV1().gen(model, config)
+    } yield codes.map(c => c.name -> squashed(c.body)).toMap
+    val files = result.fold(err => fail(s"Generation failed: $err"), identity)
+    files("Echo.scala") should include("final case class Echo(modes: List[iozhik.OpenEnum[Mode]] = List.empty, other: List[Mode] = List.empty)")
+    files("GenTypes.scala") should include("""list(openUnion(GenMode.gen, "type"))""")
   }
 
   "A Method's arguments" must "not be wrapped in OpenEnum, unlike the fields of a decodable type" in {

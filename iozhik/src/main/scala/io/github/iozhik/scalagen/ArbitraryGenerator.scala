@@ -171,7 +171,7 @@ object ArbitraryGenerator {
     if (fields.isEmpty)
       Right(emit(typeName, s"$tpe.type", s"Gen.const($tpe)", NoShrink, decodable, Set.empty, meta))
     else
-      fields.traverse(f => genFor(f.kind, enclosing, depths, shrinking).map(f -> _)).map { gens =>
+      fields.traverse(f => genFor(f.kind, enclosingFor(f, enclosing), depths, shrinking).map(f -> _)).map { gens =>
         // A flat zip of zips: Gen.zip takes up to 9. Not a for comprehension: a closure per field overflows the Scala 2
         // compiler's stack on the hundred-field types. Fields are passed by name, so the compiler checks the order.
         def group(nodes: List[(String, String)]): List[(String, String)] =

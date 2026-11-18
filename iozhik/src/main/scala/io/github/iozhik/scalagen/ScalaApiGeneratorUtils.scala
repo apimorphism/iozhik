@@ -88,6 +88,11 @@ object ScalaApiGeneratorUtils {
       !meta.cfg.openEnum.excludeTypes.contains(k.name) && 
       struc.forall(meta.codKinds.contains) && meta.codKinds.contains(k)
 
+  // The struct a field's type is decided in: none for a field the config wraps although its struct is only sent, so
+  // the field is wrapped as if received.
+  def enclosingFor(field: Field, struc: Option[Kind])(implicit meta: GeneratorMeta): Option[Kind] =
+    if (struc.exists(s => meta.cfg.openEnum.includeFields.contains(s.name + "." + field.name))) None else struc
+
   def isCodKind(struc: Struc)(implicit meta: GeneratorMeta): Boolean = struc.kind.exists(meta.codKinds.contains)
 
   def collectCodKinds(space: Space)(implicit symt: Symtable): Set[Kind] = {

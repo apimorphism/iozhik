@@ -42,7 +42,7 @@ class ScalaApiGeneratorV1 {
     implicit meta: GeneratorMeta
   ): Either[String, String] = {
     for {
-      kind <- genFieldType(x.kind, struc, wrapEnumType)
+      kind <- genFieldType(x.kind, enclosingFor(x, struc), wrapEnumType)
     } yield {
       val d = delimiter
       val docsBody = if (withDoc) x.doc.split("\n").toList.map(_.trim).intercalate("\n* ") else ""
@@ -271,7 +271,7 @@ class ScalaApiGeneratorV1 {
             .find(y => y.opts.contains("omitempty") && y.kind.name != "List")
             .map(y => s"$kind.${y.name}: (omitempty) is only supported on List fields")
             .toLeft(())
-          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, struc.kind))
+          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, enclosingFor(y, struc.kind)))
           fields = struc.allFields.map(y => y.name).zip(fieldKinds)
         } yield {
           val postfix = if (!struc.isCaseObject) "" else ".type"
@@ -483,7 +483,7 @@ class ScalaApiGeneratorV1 {
           .map(path => s"import $path.uPickleImplicits._")
         for {
           kind <- struc.kind.map(_.name).toRight("No kind name")
-          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, struc.kind))
+          fieldKinds <- struc.allFields.traverse(y => genFieldType(y.kind, enclosingFor(y, struc.kind)))
           fields = struc.allFields.map(y => y.name).zip(fieldKinds)
         } yield {
           val name = kind + versionPostfix(struc.minVersion, struc.maxVersion)
