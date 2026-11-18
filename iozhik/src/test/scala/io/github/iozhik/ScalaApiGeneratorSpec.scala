@@ -655,7 +655,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     val openEnum = files("OpenEnum.scala")
     openEnum should include("final case class Known[T](value: T) extends OpenEnum[T]")
     openEnum should include("final case class Unknown(value: String, raw: Json) extends OpenEnum[Nothing] {")
-    openEnum should include("override def toString: String = s\"Unknown($value,${raw.noSpaces})\"")
+    openEnum should include("override def toString: String = s\"Unknown($value)\"")
     openEnum should include("case Unknown(_, raw) => raw")
     // the only conversion goes from a plain value to a Known
     "implicit def".r.findAllIn(openEnum).size shouldBe 2

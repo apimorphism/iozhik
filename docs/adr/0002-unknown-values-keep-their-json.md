@@ -1,6 +1,6 @@
 # Unknown values keep the JSON they were decoded from
 
-An unknown value of a tagged-object family holds the JSON Telegram sent along with its tag (`OpenEnum.Unknown(tag)(raw)`) and encodes back to it. It used to keep only the tag and encode that as a bare string, which a rich text reads as plain text (apimorphism/telegramium#723). telegramium-core is generated API types that mirror the wire, so decoding and then encoding must give back what Telegram sent. Policy about content a bot can't read belongs in telegramium-high, if anywhere.
+An unknown value of a tagged-object family holds the JSON Telegram sent along with its tag (`OpenEnum.Unknown(tag, raw)`) and encodes back to it. It used to keep only the tag and encode that as a bare string, which a rich text reads as plain text (apimorphism/telegramium#723). telegramium-core is generated API types that mirror the wire, so decoding and then encoding must give back what Telegram sent. Policy about content a bot can't read belongs in telegramium-high, if anywhere.
 
 An unknown value of a string enum holds its string, and the same string as JSON: the string is the whole wire value. [ADR-0003](0003-one-open-wrapper-for-enums-and-unions.md) records why both kinds share one type.
 
@@ -16,6 +16,15 @@ Every surveyed library that can send an unknown variant back keeps its whole pay
 ## Consequences
 
 - `raw` is public: a bot may read it to handle a type this version doesn't know.
-- Only Unknown values pass through unchanged. Unknown fields inside known values are still dropped when a value is encoded, e.g. an optional field Telegram adds to `RichTextBold`. Telegram treats a missing optional field as absent, so the result is degraded, not wrong.
-- Pass-through only matters where a type can be sent back at all. Today that is only rich text.
+- `Unknown.toString` shows only the tag, e.g. `Unknown(date_time)`, because `raw` may hold personal data. For the same reason, telegramium-high's `onUnknownUpdate` reports only the names of unknown keys. A bot that wants the JSON reads `raw`.
+- Only Unknown values pass through unchanged. Unknown fields inside known values are dropped when a value is encoded, e.g. a field Telegram adds to `RichTextBold`. That is an accepted gap, not a harmless one:
+  - Telegram compares every field of a quoted entity. Quoting a `date_time` entity back gets `QUOTE_TEXT_INVALID` if its `date_time_format` is left out, set to `""`, or sent with a different `unix_time` (checked live).
+  - So once a quotable kind gains a field, a bot on an older telegramium can't quote text that has it until it upgrades. Elsewhere such a field is lost without any error.
+
+  It was accepted for 11.1004.0 to limit its scope. The failure apimorphism/telegramium#723 hit was a new kind, which an Unknown value covers. Keeping unknown fields would mean a field on about 80 types and a change to the patterns of every bot. apimorphism/iozhik#44 records what keeping them would take. With a visible field, adding it later breaks positional patterns on those types.
+- Pass-through only matters where an Unknown value can be sent back at all:
+  - the two quote fields, `ReplyParameters.quoteRichTexts` and `quoteEntities`;
+  - the parts nested in a `RichText`.
+
+  See ADR-0003.
 - A known tag whose object fails to decode is a decoding failure, not an Unknown value: turning it into one would hide an incompatible change as silent data loss.
