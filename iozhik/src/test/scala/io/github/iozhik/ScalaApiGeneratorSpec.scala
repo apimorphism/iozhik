@@ -700,7 +700,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
         model,
         open.copy(openEnum = open.openEnum.copy(
           excludeTypes = List("MaybeInaccessibleMessage", "IFile"),
-          includeFields = List("ReplyParameters.quoteRichTexts")
+          includeFields = List("ReplyParameters.quoteRichTexts", "ReplyParameters.quoteEntities")
         ))
       )
     } yield codes.map(c => c.name -> squashed(c.body)).toMap
@@ -709,7 +709,7 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     files("SendMessageReq.scala") should include("entities: List[MessageEntity]")
     // a quote gives back what it quotes, Unknown values included
     files("ReplyParameters.scala") should include("quoteRichTexts: List[iozhik.OpenEnum[RichText]]")
-    files("ReplyParameters.scala") should include("quoteEntities: List[MessageEntity]")
+    files("ReplyParameters.scala") should include("quoteEntities: List[iozhik.OpenEnum[MessageEntity]]")
     files("MaybeInaccessibleMessage.scala") should include("entities: List[iozhik.OpenEnum[MessageEntity]]")
     // told apart by date, not by a type tag, so it is not open
     files("CallbackQuery.scala") should include("message: Option[MaybeInaccessibleMessage]")
@@ -749,6 +749,11 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     val files = result.fold(err => fail(s"Generation failed: $err"), identity)
     files("Echo.scala") should include("final case class Echo(modes: List[iozhik.OpenEnum[Mode]] = List.empty, other: List[Mode] = List.empty)")
     files("GenTypes.scala") should include("""list(openUnion(GenMode.gen, "type"))""")
+  }
+
+  "A field the config includes that the API doesn't have" must "fail the generation" in {
+    gensError(modeDsl(inClient = false), open.copy(openEnum = open.openEnum.copy(includeFields = List("Settings.mode", "Settings.gone", "Gone.mode")))) should
+      include("open-enum.include-fields names fields the API doesn't have: Settings.gone, Gone.mode")
   }
 
   "A Method's arguments" must "not be wrapped in OpenEnum, unlike the fields of a decodable type" in {

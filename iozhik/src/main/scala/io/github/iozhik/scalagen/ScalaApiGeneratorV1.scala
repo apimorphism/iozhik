@@ -1230,9 +1230,20 @@ class ScalaApiGeneratorV1 {
     }
   }
 
+  // Every "Type.field" of the API, to check the ones the config names: a name the API no longer has would otherwise
+  // be ignored without a word.
+  private def fieldNames(x: Space): Set[String] = {
+    def struc(s: Struc): List[String] =
+      s.kind.toList.flatMap(k => s.allFields.map(f => k.name + "." + f.name)) ++
+        s.variants.collect { case v: Struc => v }.flatMap(struc)
+    (x.strucs.flatMap(struc) ++ x.spaces.flatMap(fieldNames)).toSet
+  }
+
   def gen(x: Generator.Model.Space, cfg: GeneratorConfig): Either[String, List[Code]] = {
     val d = delimiter
-    genSpace(x, cfg, x.symbol).map{ list =>
+    val missing = cfg.openEnum.includeFields.filterNot(fieldNames(x))
+    Either.cond(missing.isEmpty, (), s"open-enum.include-fields names fields the API doesn't have: ${missing.mkString(", ")}")
+      .flatMap(_ => genSpace(x, cfg, x.symbol)).map{ list =>
       val commons = list.filter(_.name.isEmpty)
         .groupBy(_.path)
         .filter(_._2.nonEmpty)
