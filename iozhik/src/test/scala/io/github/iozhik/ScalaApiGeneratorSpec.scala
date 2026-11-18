@@ -654,12 +654,14 @@ class ScalaApiGeneratorSpec extends AnyFlatSpec with Matchers {
     val files = result.fold(err => fail(s"Generation failed: $err"), identity)
     val openEnum = files("OpenEnum.scala")
     openEnum should include("final case class Known[T](value: T) extends OpenEnum[T]")
-    openEnum should include("final case class Unknown(value: String, raw: Json) extends OpenEnum[Nothing]")
+    openEnum should include("final case class Unknown(value: String, raw: Json) extends OpenEnum[Nothing] {")
+    openEnum should include("override def toString: String = s\"Unknown($value,${raw.noSpaces})\"")
     openEnum should include("case Unknown(_, raw) => raw")
     // the only conversion goes from a plain value to a Known
     "implicit def".r.findAllIn(openEnum).size shouldBe 2
     openEnum should include("implicit def lift[T](value: T): OpenEnum[T] = Known(value)")
     openEnum should include("implicit def encoder[T: Encoder]: Encoder[OpenEnum[T]]")
+    openEnum should include("def equalsKnown[U](value: U)(implicit ev: U <:< T): Boolean = e == Known(value)")
     files.keySet should not contain "OpenUnion.scala"
   }
 
