@@ -150,6 +150,8 @@ object TgBotApiOverrides {
       "Poll.country_codes" -> Field(emptyVsOmitted = Some(Same)),
       "Giveaway.country_codes" -> Field(emptyVsOmitted = Some(Same)),
       "ChatFullInfo.active_usernames" -> Field(emptyVsOmitted = Some(Same)),
+      // telegram-bot-api d94d4fb: serialized only if non-empty
+      "BotFullInfo.active_usernames" -> Field(emptyVsOmitted = Some(Same)),
       "WebhookInfo.allowed_updates" -> Field(emptyVsOmitted = Some(Same)),
       "ReplyParameters.quote_rich_texts" -> Field(emptyVsOmitted = Some(Same)),
 
